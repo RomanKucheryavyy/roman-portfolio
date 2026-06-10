@@ -1,133 +1,176 @@
 'use client'
-import { useRef, useState, useEffect } from 'react'
-import { gsap, ScrollTrigger } from '@/hooks/useGSAP'
-import { useStore } from '@/stores/useStore'
-import { submitContact } from '@/lib/supabase'
-import { sanitize } from '@/lib/sanitize'
-import MagneticButton from '@/components/ui/MagneticButton'
+import { useState } from 'react'
 import { Send, Github, Linkedin, Mail, CheckCircle } from 'lucide-react'
+import Reveal from '@/components/Reveal'
+import SectionHeader from '@/components/SectionHeader'
+import { submitContact } from '@/lib/supabase'
 import { LINKS } from '@/lib/constants'
 
+const clean = (value: string, max: number) => value.trim().slice(0, max)
+
 export default function Contact() {
-  const sectionRef = useRef<HTMLElement>(null)
-  const setCursorVariant = useStore((s) => s.setCursorVariant)
-  const [form, setForm] = useState({ name: '', email: '', message: '' })
+  const [form, setForm] = useState({ name: '', email: '', message: '', company: '' })
   const [status, setStatus] = useState<'idle' | 'sending' | 'sent' | 'error'>('idle')
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!form.name || !form.email || !form.message) return
+    if (status === 'sending' || status === 'sent') return
+    // Honeypot: real visitors never see or fill this field
+    if (form.company) {
+      setStatus('sent')
+      return
+    }
     setStatus('sending')
     try {
-      const clean = { name: sanitize(form.name), email: sanitize(form.email), message: sanitize(form.message) }
-      const { error } = await submitContact(clean)
+      const { error } = await submitContact({
+        name: clean(form.name, 200),
+        email: clean(form.email, 200),
+        message: clean(form.message, 2000),
+      })
       if (error) throw error
       setStatus('sent')
-      setForm({ name: '', email: '', message: '' })
-    } catch { setStatus('error') }
+      setForm({ name: '', email: '', message: '', company: '' })
+    } catch {
+      setStatus('error')
+    }
   }
 
-  useEffect(() => {
-    if (!sectionRef.current) return
-    const els = sectionRef.current.querySelectorAll('[data-reveal]')
-    gsap.fromTo(els,
-      { opacity: 0, y: 40 },
-      {
-        opacity: 1, y: 0, duration: 1, ease: 'expo.out', stagger: 0.1,
-        scrollTrigger: { trigger: sectionRef.current, start: 'top 80%', once: true },
-      }
-    )
-  }, [])
+  const inputClass =
+    'w-full rounded-lg border border-line bg-card/60 px-4 py-3 text-sm text-cream placeholder:text-cream/25 transition-colors focus:border-amber/60 focus:outline-none'
 
   return (
-    <section ref={sectionRef} id="contact" className="py-24 px-6 md:px-16 relative z-10">
-      <div className="max-w-4xl mx-auto">
-        <p data-reveal className="font-mono text-xs tracking-[0.3em] uppercase text-white/30 mb-3">
-          // 04. Contact
-        </p>
-        <h2 data-reveal className="font-display text-4xl md:text-6xl font-bold tracking-tight text-white mb-4">
-          Let&apos;s <span className="text-gradient">Compose</span>
-        </h2>
-        <p data-reveal className="text-white/40 mb-12 max-w-lg">
-          Have a project in mind? Drop a note — I read every message.
-        </p>
+    <section id="contact" className="border-t border-line px-5 py-24 md:px-8 md:py-32">
+      <div className="mx-auto w-full max-w-5xl">
+        <SectionHeader
+          index="04"
+          kicker="Contact"
+          title="Get in touch"
+          sub="Have a project in mind, or just want to talk shop? Drop a note — I read every message."
+        />
 
-        <div className="grid grid-cols-1 lg:grid-cols-5 gap-12">
-          {/* Form */}
-          <form onSubmit={handleSubmit} data-reveal className="lg:col-span-3 space-y-8">
-            {['name', 'email', 'message'].map((field) => (
-              <div key={field}>
-                <label className="block font-mono text-[10px] text-white/30 uppercase tracking-wider mb-3">
-                  {field}
-                </label>
-                {field === 'message' ? (
-                  <textarea
-                    required rows={4}
-                    value={form.message}
-                    onChange={(e) => setForm(f => ({ ...f, message: e.target.value }))}
-                    className="w-full bg-transparent border-b border-white/10 pb-3 text-white font-body placeholder:text-white/15 focus:outline-none focus:border-white/40 transition-colors duration-500 resize-none cursor-text"
-                    placeholder="Tell me about your project..."
-                    onFocus={() => setCursorVariant('hidden')}
-                    onBlur={() => setCursorVariant('default')}
-                  />
-                ) : (
+        <div className="mt-14 grid gap-12 lg:grid-cols-5">
+          <Reveal className="lg:col-span-3">
+            <form onSubmit={handleSubmit} className="space-y-5">
+              <div className="grid gap-5 sm:grid-cols-2">
+                <div>
+                  <label htmlFor="name" className="mb-2 block font-mono text-[11px] uppercase tracking-wider text-cream/45">
+                    Name
+                  </label>
                   <input
-                    type={field === 'email' ? 'email' : 'text'}
+                    id="name"
+                    type="text"
                     required
-                    value={form[field as 'name' | 'email']}
-                    onChange={(e) => setForm(f => ({ ...f, [field]: e.target.value }))}
-                    className="w-full bg-transparent border-b border-white/10 pb-3 text-white font-body placeholder:text-white/15 focus:outline-none focus:border-white/40 transition-colors duration-500 cursor-text"
-                    placeholder={field === 'name' ? 'Your name' : 'your@email.com'}
-                    onFocus={() => setCursorVariant('hidden')}
-                    onBlur={() => setCursorVariant('default')}
+                    autoComplete="name"
+                    value={form.name}
+                    onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
+                    className={inputClass}
+                    placeholder="Your name"
                   />
-                )}
+                </div>
+                <div>
+                  <label htmlFor="email" className="mb-2 block font-mono text-[11px] uppercase tracking-wider text-cream/45">
+                    Email
+                  </label>
+                  <input
+                    id="email"
+                    type="email"
+                    required
+                    autoComplete="email"
+                    value={form.email}
+                    onChange={(e) => setForm((f) => ({ ...f, email: e.target.value }))}
+                    className={inputClass}
+                    placeholder="your@email.com"
+                  />
+                </div>
               </div>
-            ))}
-            <button
-              type="submit"
-              disabled={status === 'sending' || status === 'sent'}
-              className="flex items-center gap-2 px-8 py-3 rounded-full font-mono text-sm font-semibold tracking-wider uppercase transition-all duration-300 cursor-pointer disabled:opacity-50 bg-white text-black hover:opacity-80"
-            >
-              {status === 'sent' ? <><CheckCircle size={16} /> Sent</> : status === 'sending' ? 'Sending...' : <><Send size={16} /> Send</>}
-            </button>
-          </form>
-
-          {/* Sidebar */}
-          <div data-reveal className="lg:col-span-2 space-y-6">
-            <div className="p-5 rounded-xl border border-white/5 bg-[#0a0a0a]">
-              <h3 className="font-mono text-[10px] text-white/25 uppercase tracking-wider mb-3">Connect</h3>
-              {[
-                { href: LINKS.github, icon: Github, label: 'GitHub' },
-                { href: LINKS.linkedin, icon: Linkedin, label: 'LinkedIn' },
-                { href: `mailto:${LINKS.email}`, icon: Mail, label: 'Email' },
-              ].map(({ href, icon: Icon, label }) => (
-                <a
-                  key={label} href={href} target="_blank" rel="noopener noreferrer"
-                  className="flex items-center gap-3 text-white/40 hover:text-white transition-colors py-1.5 cursor-pointer"
-                  onMouseEnter={() => setCursorVariant('hover')}
-                  onMouseLeave={() => setCursorVariant('default')}
+              <div>
+                <label htmlFor="message" className="mb-2 block font-mono text-[11px] uppercase tracking-wider text-cream/45">
+                  Message
+                </label>
+                <textarea
+                  id="message"
+                  required
+                  rows={5}
+                  value={form.message}
+                  onChange={(e) => setForm((f) => ({ ...f, message: e.target.value }))}
+                  className={`${inputClass} resize-none`}
+                  placeholder="Tell me about your project..."
+                />
+              </div>
+              {/* Honeypot */}
+              <div className="hidden" aria-hidden="true">
+                <label htmlFor="company">Company</label>
+                <input
+                  id="company"
+                  type="text"
+                  tabIndex={-1}
+                  autoComplete="off"
+                  value={form.company}
+                  onChange={(e) => setForm((f) => ({ ...f, company: e.target.value }))}
+                />
+              </div>
+              <div className="flex flex-wrap items-center gap-4">
+                <button
+                  type="submit"
+                  disabled={status === 'sending' || status === 'sent'}
+                  className="inline-flex items-center gap-2 rounded-full bg-amber px-6 py-3 font-mono text-sm font-semibold text-ink transition-opacity hover:opacity-85 disabled:opacity-50"
                 >
-                  <Icon size={14} /> <span className="text-sm">{label}</span>
-                </a>
-              ))}
-            </div>
-            <div className="p-5 rounded-xl border border-white/5 bg-[#0a0a0a]">
-              <h3 className="font-mono text-[10px] text-white/25 uppercase tracking-wider mb-2">Location</h3>
-              <p className="text-white text-sm">Auburn, WA</p>
-              <p className="text-white/30 text-xs mt-1">Pacific Time (UTC-8)</p>
-            </div>
-          </div>
-        </div>
+                  {status === 'sent' ? (
+                    <>
+                      <CheckCircle size={15} aria-hidden="true" /> Sent — thank you
+                    </>
+                  ) : status === 'sending' ? (
+                    'Sending…'
+                  ) : (
+                    <>
+                      <Send size={15} aria-hidden="true" /> Send message
+                    </>
+                  )}
+                </button>
+                <p aria-live="polite" className="text-sm text-cream/45">
+                  {status === 'error' && (
+                    <>
+                      Something went wrong — email me at{' '}
+                      <a href={`mailto:${LINKS.email}`} className="text-amber underline-offset-4 hover:underline">
+                        {LINKS.email}
+                      </a>
+                    </>
+                  )}
+                </p>
+              </div>
+            </form>
+          </Reveal>
 
-        {/* Footer */}
-        <div className="mt-24 pt-8 border-t border-white/5 flex flex-col sm:flex-row items-center justify-between gap-4">
-          <p className="font-mono text-[10px] text-white/20">
-            &copy; {new Date().getFullYear()} Roman Kucheryavyy
-          </p>
-          <p className="font-mono text-[10px] text-white/10">
-            Built with Next.js, Three.js, GSAP & Tailwind
-          </p>
+          <Reveal delay={100} className="lg:col-span-2">
+            <div className="space-y-4">
+              <div className="rounded-2xl border border-line bg-card/60 p-5">
+                <h3 className="font-mono text-[11px] uppercase tracking-wider text-cream/40">Connect</h3>
+                <ul className="mt-3 space-y-1">
+                  {[
+                    { href: LINKS.github, icon: Github, label: 'GitHub' },
+                    { href: LINKS.linkedin, icon: Linkedin, label: 'LinkedIn' },
+                    { href: `mailto:${LINKS.email}`, icon: Mail, label: LINKS.email },
+                  ].map(({ href, icon: Icon, label }) => (
+                    <li key={label}>
+                      <a
+                        href={href}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center gap-3 py-1.5 text-sm text-cream/60 transition-colors hover:text-amber"
+                      >
+                        <Icon size={15} aria-hidden="true" /> {label}
+                      </a>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+              <div className="rounded-2xl border border-line bg-card/60 p-5">
+                <h3 className="font-mono text-[11px] uppercase tracking-wider text-cream/40">Location</h3>
+                <p className="mt-3 text-sm text-cream/75">Auburn, WA</p>
+                <p className="mt-1 text-xs text-cream/40">Pacific Time (UTC−8)</p>
+              </div>
+            </div>
+          </Reveal>
         </div>
       </div>
     </section>
