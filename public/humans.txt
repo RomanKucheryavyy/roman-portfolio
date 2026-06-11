@@ -1,0 +1,20 @@
+/* TEAM */
+Conductor & Engineer: Roman Kucheryavyy
+Site: https://romankucheryavyy.com
+GitHub: https://github.com/RomanKucheryavyy
+Location: Auburn, WA — Pacific Time
+
+/* THANKS */
+My wife and daughter — the reason for all of it.
+The FUBC Band, for teaching me that structure and improvisation
+are the same skill.
+
+/* SITE */
+Stack: Next.js, TypeScript, three.js, GSAP, framer-motion,
+       Tailwind CSS, Netlify
+Score: terrain waves in raw GLSL, spotlights in pure CSS,
+       a starfield on a 2D canvas, and a scroll bar that
+       reads like sheet music.
+Last performance: 2026
+
+         𝄞═══♩═══♪═══♫═══♪═══♬═══

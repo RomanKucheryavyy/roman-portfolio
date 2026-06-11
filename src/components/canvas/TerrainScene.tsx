@@ -179,13 +179,15 @@ export default function TerrainScene({
     camera.position.set(0, 16, cameraZ)
     camera.lookAt(new THREE.Vector3(0, 28, 0))
 
-    const clock = new THREE.Clock()
     const terrain = new Terrain(planeSize, speed)
     scene.add(terrain.mesh)
 
     let raf = 0
+    let last = performance.now()
     const loop = () => {
-      terrain.render(clock.getDelta())
+      const now = performance.now()
+      terrain.render((now - last) / 1000)
+      last = now
       renderer.render(scene, camera)
       raf = requestAnimationFrame(loop)
     }

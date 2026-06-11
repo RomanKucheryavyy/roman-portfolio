@@ -10,6 +10,7 @@ import ScrollProgress from '@/components/effects/ScrollProgress'
 import SectionTransition from '@/components/effects/SectionTransition'
 import SectionFade from '@/components/effects/SectionFade'
 import CodePeek from '@/components/effects/CodePeek'
+import ConsoleSignature from '@/components/effects/ConsoleSignature'
 import Loader from '@/components/ui/Loader'
 import Cursor from '@/components/ui/Cursor'
 import Nav from '@/components/ui/Nav'
@@ -69,6 +70,7 @@ function AppContent() {
 
   return (
     <>
+      <ConsoleSignature />
       <DynamicFavicon />
       <AmbientBackground />
       <ScrollProgress />
