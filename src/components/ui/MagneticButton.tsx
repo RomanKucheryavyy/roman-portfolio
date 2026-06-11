@@ -28,9 +28,10 @@ export default function MagneticButton({ children, className = '', href, onClick
     setCursorVariant('default')
   }
 
+  const isExternal = !!href && !href.startsWith('#') && !href.startsWith('/')
   const Tag = href ? 'a' : 'button'
   const props = href
-    ? { href, target: '_blank', rel: 'noopener noreferrer' }
+    ? { href, ...(isExternal ? { target: '_blank', rel: 'noopener noreferrer' } : {}) }
     : { onClick, type: 'button' as const }
 
   return (

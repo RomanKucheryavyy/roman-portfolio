@@ -2,31 +2,117 @@
 @import "tailwindcss";
 
 @theme {
-  --color-void: #000000;
-  --color-surface: #0a0a0a;
-  --color-surface-light: #111111;
-  --color-white: #ffffff;
-  --color-white-muted: #888888;
-  --color-white-dim: #444444;
-  --color-red: #ff2d55;
-  --color-green: #30d158;
   --font-display: 'Archivo', system-ui, sans-serif;
   --font-body: 'Space Grotesk', system-ui, sans-serif;
   --font-mono: 'JetBrains Mono', monospace;
+
   --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+
+  --color-pure-white: #fff;
+  --color-spectrum-red: #ff2d55;
+  --color-spectrum-orange: #ff6b35;
+  --color-spectrum-amber: #ffb800;
+  --color-spectrum-green: #30d158;
+  --color-spectrum-teal: #00c7be;
+  --color-spectrum-blue: #5ac8fa;
+  --color-spectrum-purple: #af52de;
+
+  --color-gray-300: #aaa;
+  --color-gray-400: #888;
+  --color-gray-500: #666;
+  --color-gray-700: #222;
+  --color-gray-800: #1a1a1a;
+
+  --radius-sm: 6px;
+  --radius-lg: 16px;
+  --radius-xl: 24px;
+  --radius-2xl: 1rem;
+  --radius-full: 9999px;
+}
+
+/* ── Semantic design tokens ── */
+:root {
+  --color-bg-void: var(--color-black);
+  --color-bg-surface: #0a0a0a;
+  --color-bg-elevated: #111;
+  --color-bg-overlay: #000c;
+  --color-text-primary: #fff;
+  --color-text-secondary: #ffffffb3;
+  --color-text-tertiary: #ffffff80;
+  --color-text-muted: #ffffff4d;
+  --color-text-ghost: #ffffff26;
+  --color-text-invisible: #ffffff0f;
+  --color-border-subtle: #ffffff0d;
+  --color-border-default: #ffffff1a;
+  --color-border-strong: #fff3;
+  --color-border-hover: #fff6;
+  --gradient-brand: linear-gradient(135deg, var(--color-spectrum-red), var(--color-spectrum-orange), var(--color-spectrum-amber), var(--color-spectrum-green), var(--color-spectrum-teal), var(--color-spectrum-blue), var(--color-spectrum-purple), var(--color-spectrum-red));
+  --gradient-brand-horizontal: linear-gradient(90deg, var(--color-spectrum-red), var(--color-spectrum-orange), var(--color-spectrum-amber), var(--color-spectrum-green), var(--color-spectrum-blue), var(--color-spectrum-purple));
+  --nav-bg: #0009;
+  --nav-border: var(--color-border-subtle);
+  --nav-text: var(--color-text-muted);
+  --nav-text-active: var(--color-text-primary);
+  --card-bg: var(--color-bg-surface);
+  --card-border: var(--color-border-subtle);
+  --card-border-hover: var(--color-border-strong);
+  --hero-subtitle: var(--color-text-tertiary);
+  --section-label: var(--color-text-muted);
+  --section-description: var(--color-text-tertiary);
+  --btn-primary-bg: var(--color-pure-white);
+  --btn-primary-text: var(--color-black);
+  --btn-ghost-border: var(--color-border-strong);
+  --btn-ghost-text: var(--color-text-tertiary);
+  --terminal-bg: var(--color-bg-surface);
+  --terminal-border: var(--color-border-subtle);
+  --terminal-dot-red: #ff5f57;
+  --terminal-dot-yellow: #febc2e;
+  --terminal-dot-green: #28c840;
+  --cert-accent-developer: var(--color-pure-white);
+  --cert-accent-consultant: var(--color-gray-400);
+  --cert-accent-ai: var(--color-spectrum-purple);
+  --cert-accent-admin: var(--color-spectrum-green);
 }
 
 /* ── Base ── */
-* { cursor: none; }
+@media (pointer: fine) {
+  * { cursor: none; }
+}
+
 html { background: #000; color: #fff; }
-body { font-family: var(--font-body); -webkit-font-smoothing: antialiased; overflow-x: hidden; }
+
+body {
+  font-family: var(--font-body);
+  -webkit-font-smoothing: antialiased;
+  touch-action: pan-y;
+  overflow-x: hidden;
+}
+
 ::selection { background: #fff; color: #000; }
-::-webkit-scrollbar { width: 0; }
+
+::-webkit-scrollbar { width: 0; height: 0; }
+
+html {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  overscroll-behavior: none;
+  /* GSAP entrances park cards at translateX(±80) before they reveal;
+     clip keeps that pre-reveal overflow from making the page pannable. */
+  overflow-x: clip;
+}
+
 canvas { touch-action: none; }
 
-/* ── RGB Gradient ── */
+@media (pointer: coarse) {
+  html, body { touch-action: pan-y; -ms-touch-action: pan-y; }
+}
+
+@media (max-width: 768px) {
+  .mobile-scroll-hide::-webkit-scrollbar { display: none; }
+}
+
+/* ── Brand gradient text ── */
 .text-gradient {
-  background: linear-gradient(135deg, #ff2d55, #ff6b35, #ffb800, #30d158, #00c7be, #5ac8fa, #af52de, #ff2d55);
+  background: var(--gradient-brand);
   background-size: 200% 200%;
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
@@ -64,20 +150,46 @@ canvas { touch-action: none; }
 
 /* ── Scroll Progress ── */
 .scroll-progress {
-  position: fixed; top: 0; left: 0; height: 2px; z-index: 100;
-  background: linear-gradient(90deg, #ff2d55, #ff6b35, #ffb800, #30d158, #5ac8fa, #af52de);
+  position: fixed; top: 0; left: 0;
+  width: 100%;
+  height: 3px;
+  z-index: 150;
+  background: var(--gradient-brand-horizontal);
+  background-size: 200% 100%;
   transform-origin: left; transform: scaleX(0);
+  animation: gradient-shift 6s ease infinite;
 }
 
 /* ── Magnetic Button ── */
 .magnetic-btn { transition: transform 0.3s var(--ease-out-expo); }
 
-/* ── Card Flip ── */
+/* ── Card Flip (touch flips via .flipped) ── */
 .flip-card { perspective: 1000px; }
-.flip-card-inner { transition: transform 0.6s cubic-bezier(0.4,0,0.2,1); transform-style: preserve-3d; }
+.flip-card-inner {
+  position: relative;
+  transition: transform 0.6s cubic-bezier(0.4,0,0.2,1);
+  transform-style: preserve-3d;
+}
 .flip-card:hover .flip-card-inner { transform: rotateY(180deg); }
-.flip-card-front, .flip-card-back { backface-visibility: hidden; }
-.flip-card-back { transform: rotateY(180deg); }
+.flip-card-front, .flip-card-back {
+  backface-visibility: hidden;
+  overflow: hidden;
+  -webkit-transform: translateZ(0);
+}
+.flip-card-back {
+  transform: rotateY(180deg);
+  -webkit-transform: rotateY(180deg) translateZ(1px);
+}
+@media (hover: none) {
+  .flip-card:hover .flip-card-inner { transform: none; }
+  .flip-card.flipped .flip-card-inner { transform: rotateY(180deg); }
+}
+
+/* ── Code syntax highlight (CodePeek) ── */
+.code-comment { color: #ffffff40; font-style: italic; }
+.code-keyword { color: #af52dee6; }
+.code-string  { color: #30d158cc; }
+.code-number  { color: #ffb300cc; }
 
 /* ── Reduced Motion ── */
 @media (prefers-reduced-motion: reduce) {

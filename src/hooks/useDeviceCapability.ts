@@ -16,16 +16,12 @@ const DEFAULTS: DeviceCapability = {
 }
 
 export function useDeviceCapability(): DeviceCapability {
-  const [cap, setCap] = useState<DeviceCapability>(DEFAULTS)
+  const [capability, setCapability] = useState<DeviceCapability>(DEFAULTS)
 
   useEffect(() => {
-    const isMobile = window.matchMedia('(pointer: coarse)').matches
-      || window.innerWidth < 768
-
-    // Heuristic: low-end if mobile or less than 4 logical cores
+    const isMobile = window.matchMedia('(pointer: coarse)').matches || window.innerWidth < 768
     const isLowEnd = isMobile || (navigator.hardwareConcurrency ?? 4) < 4
-
-    setCap({
+    setCapability({
       isMobile,
       isLowEnd,
       particleCount: isMobile ? 500 : 1500,
@@ -33,5 +29,5 @@ export function useDeviceCapability(): DeviceCapability {
     })
   }, [])
 
-  return cap
+  return capability
 }

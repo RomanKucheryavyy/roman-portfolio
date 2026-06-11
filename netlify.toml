@@ -2,5 +2,12 @@
   command = "npm run build"
   publish = ".next"
 
+[build.environment]
+  # RESUME_PIN's value is embedded by Netlify itself into the generated
+  # server-handler runtime (run-config.json, tracer.cjs, server.js), which
+  # the secrets scanner then flags — a false positive that fails every
+  # GitHub-triggered build. The PIN never appears in client output.
+  SECRETS_SCAN_OMIT_KEYS = "RESUME_PIN"
+
 [[plugins]]
   package = "@netlify/plugin-nextjs"

@@ -1,57 +1,104 @@
 'use client'
-import { useEffect, useState, useRef } from 'react'
-import dynamic from 'next/dynamic'
+import { useEffect, useState } from 'react'
+import Lenis from 'lenis'
+import { gsap, ScrollTrigger } from '@/hooks/useGSAP'
 import { useMouseTracking } from '@/hooks/useMouseVelocity'
-import { useLenis } from '@/hooks/useLenis'
 import { useStore } from '@/stores/useStore'
+import DynamicFavicon from '@/components/effects/DynamicFavicon'
+import AmbientBackground from '@/components/effects/AmbientBackground'
+import ScrollProgress from '@/components/effects/ScrollProgress'
+import SectionTransition from '@/components/effects/SectionTransition'
+import SectionFade from '@/components/effects/SectionFade'
+import CodePeek from '@/components/effects/CodePeek'
 import Loader from '@/components/ui/Loader'
 import Cursor from '@/components/ui/Cursor'
 import Nav from '@/components/ui/Nav'
 import Hero from '@/components/sections/Hero'
-import Arsenal from '@/components/sections/Arsenal'
+import Measures from '@/components/sections/Measures'
 import Projects from '@/components/sections/Projects'
-import About from '@/components/sections/About'
-import Contact from '@/components/sections/Contact'
+import Compositions from '@/components/sections/Compositions'
+import Conductor from '@/components/sections/Conductor'
+import Compose from '@/components/sections/Compose'
 
-// Full-page WebGL canvas — loaded client-side only
-const Scene = dynamic(() => import('@/components/canvas/Scene'), { ssr: false })
+const SECTIONS = ['hero', 'measures', 'symphony', 'compositions', 'conductor', 'compose']
 
 function AppContent() {
   useMouseTracking()
-  useLenis()
-  const scrollProgress = useStore((s) => s.scrollProgress)
-  const progressRef = useRef<HTMLDivElement>(null)
+  const setActiveSection = useStore((s) => s.setActiveSection)
+  const setScrollVelocity = useStore((s) => s.setScrollVelocity)
+  const setScrollProgress = useStore((s) => s.setScrollProgress)
 
-  // Update scroll progress bar
+  // Lenis smooth scroll wired into GSAP's ticker + ScrollTrigger
   useEffect(() => {
-    if (progressRef.current) {
-      progressRef.current.style.transform = `scaleX(${scrollProgress})`
+    const lenis = new Lenis({
+      duration: 1.2,
+      easing: (t: number) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+      touchMultiplier: 2,
+    })
+    let smoothed = 0
+    lenis.on('scroll', (e: { velocity: number; progress: number }) => {
+      ScrollTrigger.update()
+      const v = Math.min(Math.abs(e.velocity) / 2000, 1)
+      smoothed += (v - smoothed) * 0.1
+      setScrollVelocity(smoothed)
+      setScrollProgress(e.progress)
+    })
+    const raf = (time: number) => lenis.raf(time * 1000)
+    gsap.ticker.add(raf)
+    gsap.ticker.lagSmoothing(0)
+    return () => {
+      gsap.ticker.remove(raf)
+      lenis.destroy()
     }
-  }, [scrollProgress])
+  }, [setScrollVelocity, setScrollProgress])
+
+  // Active-section tracking
+  useEffect(() => {
+    const observers = SECTIONS.map((id) => {
+      const el = document.getElementById(id)
+      if (!el) return null
+      const io = new IntersectionObserver(
+        ([entry]) => { if (entry.isIntersecting) setActiveSection(id) },
+        { threshold: 0.15, rootMargin: '-5% 0px -5% 0px' }
+      )
+      io.observe(el)
+      return io
+    })
+    return () => observers.forEach((io) => io?.disconnect())
+  }, [setActiveSection])
 
   return (
     <>
-      {/* Fixed full-page WebGL canvas — behind everything */}
-      <Scene />
-
-      {/* Scroll progress bar */}
-      <div ref={progressRef} className="scroll-progress" />
-
-      {/* Noise grain overlay */}
+      <DynamicFavicon />
+      <AmbientBackground />
+      <ScrollProgress />
       <div className="noise-overlay" aria-hidden="true" />
-
-      {/* UI layer */}
       <Loader />
       <Cursor />
       <Nav />
-
-      {/* Scrolling DOM content — sits on top of canvas */}
+      <CodePeek />
       <main className="relative z-[1]">
         <Hero />
-        <Arsenal />
-        <Projects />
-        <About />
-        <Contact />
+        <SectionTransition commentText="// end of hero" />
+        <SectionFade transition="slide-right">
+          <Measures />
+        </SectionFade>
+        <SectionTransition commentText="/* loading arsenal */" />
+        <SectionFade transition="stack-up">
+          <Projects />
+        </SectionFade>
+        <SectionTransition commentText="// compiling projects..." />
+        <SectionFade transition="fade-center">
+          <Compositions />
+        </SectionFade>
+        <SectionTransition commentText="/* premiering original works */" />
+        <SectionFade transition="fade-center">
+          <Conductor />
+        </SectionFade>
+        <SectionTransition commentText="/* the conductor speaks */" />
+        <SectionFade transition="slide-up">
+          <Compose />
+        </SectionFade>
       </main>
     </>
   )
@@ -64,16 +111,11 @@ export default function Home() {
 
   if (!mounted) {
     return (
-      <div className="fixed inset-0 z-[200] bg-black flex flex-col items-center justify-center gap-6">
-        <h1 className="font-display text-3xl sm:text-5xl md:text-7xl font-black tracking-tighter text-white text-center leading-tight animate-fade-in">
-          ROMAN<br /><span className="text-white/50">KUCHERYAVYY</span>
-        </h1>
+      <div className="fixed inset-0 z-[200] bg-black flex flex-col items-center justify-center">
         <div className="w-48 h-px bg-white/10 relative overflow-hidden">
           <div className="absolute inset-0 bg-white origin-left animate-progress" />
         </div>
-        <p className="font-mono text-xs text-white/20 mt-6 tracking-wider animate-fade-in-delayed">
-          {'> orchestrating logic & art'}
-        </p>
+        <p className="font-mono text-[10px] text-white/20 mt-4 tracking-wider">{'> initializing...'}</p>
       </div>
     )
   }

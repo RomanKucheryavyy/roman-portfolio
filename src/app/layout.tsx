@@ -6,6 +6,7 @@ export const metadata: Metadata = {
   title: SITE.title,
   description: SITE.description,
   metadataBase: new URL(SITE.url),
+  manifest: '/manifest.json',
   openGraph: {
     title: SITE.title,
     description: SITE.description,
@@ -23,6 +24,8 @@ export const metadata: Metadata = {
 export const viewport: Viewport = {
   width: 'device-width',
   initialScale: 1,
+  maximumScale: 1,
+  userScalable: false,
   themeColor: '#000000',
 }
 
