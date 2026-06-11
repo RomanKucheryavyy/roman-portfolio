@@ -103,10 +103,10 @@ export const COMPOSITIONS = [
   {
     id: 'alongside-events',
     title: 'Alongside Events',
-    tagline: 'SaaS for mobile event vendors',
-    status: 'Runs my own business',
+    tagline: 'Event toolkit for the family coffee cart',
+    status: 'Runs the family cart',
     description:
-      'Quotes, invoices, contracts, and a client CRM purpose-built for mobile coffee cart operators — born from running my family’s espresso cart at weddings and corporate events. The business software I wished existed, so I composed it myself.',
+      'Quotes, invoices, contracts, and a client CRM purpose-built for mobile coffee cart operators — born from my family’s espresso cart and the weddings it serves. The software we wished existed, so I composed it myself.',
     stack: ['Next.js', 'TypeScript', 'Tailwind', 'PDF generation'],
     color: '#ffb800',
   },

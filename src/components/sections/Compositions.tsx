@@ -62,8 +62,8 @@ export default function Compositions() {
           </ScatterText>
         </h2>
         <p data-reveal className="text-white/40 max-w-lg mb-16">
-          Client work pays the bills; these are the pieces I write for myself. AI-heavy products I design,
-          build, and run every day — each one solving a problem I actually have.
+          Personal projects, composed entirely on my own time. AI-heavy pieces I design, build, and run
+          after hours — each one solving a problem I actually have.
         </p>
 
         <RevealMask direction="bottom" duration={1.2}>

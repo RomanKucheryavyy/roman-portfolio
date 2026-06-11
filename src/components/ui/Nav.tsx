@@ -1,7 +1,7 @@
 'use client'
 import { useCallback, useEffect, useState } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
-import { Award, Music, User, Mail, Lock, AudioLines } from 'lucide-react'
+import { Award, Music, User, Mail, Lock, AudioLines, X } from 'lucide-react'
 import { NAV_ITEMS, LINKS } from '@/lib/constants'
 import { useStore } from '@/stores/useStore'
 
@@ -148,6 +148,7 @@ export default function Nav() {
   }, [menuOpen])
 
   return (
+    <>
     <motion.div
       className="fixed top-0 left-0 right-0 z-[100] px-4 pt-4 md:px-4"
       initial={{ y: -80, opacity: 0 }}
@@ -200,8 +201,10 @@ export default function Nav() {
           />
         </button>
       </nav>
+    </motion.div>
 
-      {/* Mobile terminal menu */}
+      {/* Mobile terminal menu — sibling of the animated bar so its
+          fixed positioning is viewport-relative, never transform-trapped */}
       <AnimatePresence>
         {menuOpen && (
           <motion.div
@@ -301,6 +304,26 @@ export default function Nav() {
                     </div>
                   </button>
                 </motion.div>
+                <motion.div
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: 0.15 + 0.08 * (NAV_ITEMS.length + 1) }}
+                >
+                  <button
+                    onClick={() => setMenuOpen(false)}
+                    className="text-left cursor-pointer group py-2.5 mt-2"
+                    aria-label="Close menu"
+                  >
+                    <div className="flex items-center">
+                      <span className="font-mono text-[11px] text-red-400/40 mr-2">&gt;</span>
+                      <span className="font-mono text-[10px] text-white/20 mr-3 w-6">exit</span>
+                      <X className="h-4 w-4 mr-2 text-white/30" />
+                      <span className="font-mono text-xl tracking-tight text-white/40 group-active:text-white/70 transition-all duration-200">
+                        /close
+                      </span>
+                    </div>
+                  </button>
+                </motion.div>
               </div>
             </div>
 
@@ -323,6 +346,6 @@ export default function Nav() {
           </motion.div>
         )}
       </AnimatePresence>
-    </motion.div>
+    </>
   )
 }
