@@ -7,6 +7,7 @@ import { useGyroParallax } from '@/hooks/useGyroParallax'
 import ScatterText from '@/components/effects/ScatterText'
 import RevealMask from '@/components/effects/RevealMask'
 import MobileReveal from '@/components/effects/MobileReveal'
+import YearInMeasures from '@/components/effects/YearInMeasures'
 
 const CODE_LINES = [
   '// Roman Kucheryavyy',
@@ -257,6 +258,10 @@ export default function Conductor() {
             </MobileReveal>
           </div>
         </RevealMask>
+
+        <MobileReveal>
+          <YearInMeasures />
+        </MobileReveal>
 
         {/* Timeline */}
         <div className="mt-16 relative pt-4 pb-2">
