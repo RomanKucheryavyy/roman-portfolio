@@ -23,7 +23,7 @@ export const RESUME_DATA: ResumeData = {
   github: 'https://github.com/RomanKucheryavyy',
   website: 'https://romankucheryavyy.com',
   summary:
-    "Senior Technical Support Engineer at Salesforce on the Signature Success team, supporting the platform's most strategic Fortune 500 and enterprise customers. 8x Salesforce certified with a BS in Computer Science and a passion for building full-stack web and iOS applications. Combines deep technical expertise in Apex, Sales Cloud, and Salesforce's agentic AI stack with strong stakeholder collaboration to resolve complex, mission-critical issues and deliver measurable customer value.",
+    "Senior Technical Support Engineer at Salesforce on the Signature Success team, supporting the platform's most strategic Fortune 500 and enterprise customers. 8x Salesforce certified with a BS in Computer Science, and a hands-on builder of AI-powered products — multi-agent systems on the Claude API spanning investing, operations, and personal knowledge tools, alongside full-stack web and iOS applications. Combines deep technical expertise in Apex, Sales Cloud, and Salesforce's agentic AI stack with strong stakeholder collaboration to resolve complex, mission-critical issues and deliver measurable customer value.",
   experience: [
     {
       company: 'Salesforce',
@@ -99,6 +99,29 @@ export const RESUME_DATA: ResumeData = {
     'Node.js', 'Firebase', 'Supabase', 'Git', 'Data Cloud', 'CRMA',
   ],
   projects: [
+    {
+      name: 'Praxis — AI-Augmented Trading Platform',
+      tech: 'Next.js, TypeScript, Claude API, Alpaca API',
+      bullets: [
+        'Built a multi-agent investing platform where 18 rule-based and LLM-driven investor personas debate every position and an AI portfolio manager synthesizes their views into sized trade proposals.',
+        'Runs daily in paper trading through the Alpaca API, with a Discovery Engine that screens for spinoffs, activist positions, and cyclical opportunities.',
+      ],
+    },
+    {
+      name: 'Alongside Brain — Personal AI Knowledge System',
+      tech: 'Python, Claude API, Slack API, Obsidian',
+      bullets: [
+        'Built an always-on personal AI system: a Slack bot captures natural-language notes, reminders, and expenses, and Claude routes each capture into an Obsidian knowledge vault.',
+        'Runs 24/7 on Windows with scheduled digests, Gmail and Calendar sync, and pattern detection across daily logs.',
+      ],
+    },
+    {
+      name: 'Alongside Events — Event Operations Platform',
+      tech: 'Next.js, TypeScript, Tailwind CSS, PDF generation',
+      bullets: [
+        'Designed and built a multi-tenant platform covering quotes, invoices, contracts, and client CRM for mobile event vendors, running a family espresso cart operation end to end.',
+      ],
+    },
     {
       name: 'FUBC Coffee iOS App',
       tech: 'Swift, SwiftUI, Firebase, Supabase',

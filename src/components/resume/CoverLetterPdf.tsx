@@ -2,12 +2,12 @@ import { Document, Page, Text, View, StyleSheet } from '@react-pdf/renderer'
 import type { ResumeData } from '@/lib/resume-data'
 
 const styles = StyleSheet.create({
-  page: { paddingVertical: 56, paddingHorizontal: 60, fontSize: 10.5, fontFamily: 'Helvetica', color: '#111', lineHeight: 1.5 },
-  name: { fontSize: 18, fontFamily: 'Helvetica-Bold', marginBottom: 2 },
-  contact: { fontSize: 8.5, color: '#555', marginBottom: 1 },
+  page: { paddingVertical: 56, paddingHorizontal: 60, fontSize: 10.5, fontFamily: 'Helvetica', color: '#111' },
+  name: { fontSize: 18, fontFamily: 'Helvetica-Bold', marginBottom: 4 },
+  contact: { fontSize: 8.5, color: '#555', marginBottom: 2, lineHeight: 1.4 },
   divider: { borderBottomWidth: 1, borderBottomColor: '#bbb', marginTop: 10, marginBottom: 18 },
   subject: { fontSize: 9, color: '#555', marginBottom: 14 },
-  body: { fontSize: 10.5, color: '#222' },
+  body: { fontSize: 10.5, color: '#222', lineHeight: 1.5 },
 })
 
 interface CoverLetterPDFProps {

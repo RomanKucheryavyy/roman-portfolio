@@ -2,10 +2,13 @@ import { Document, Page, Text, View, StyleSheet } from '@react-pdf/renderer'
 import type { ResumeData } from '@/lib/resume-data'
 
 const styles = StyleSheet.create({
-  page: { paddingVertical: 36, paddingHorizontal: 44, fontSize: 9, fontFamily: 'Helvetica', color: '#111', lineHeight: 1.35 },
-  name: { fontSize: 20, fontFamily: 'Helvetica-Bold', textAlign: 'center', marginBottom: 4 },
-  contact: { fontSize: 8, color: '#555', textAlign: 'center', marginBottom: 2 },
-  summary: { fontSize: 9, color: '#333', marginTop: 8, marginBottom: 4 },
+  // NOTE: no page-level lineHeight — @react-pdf computes unitless multipliers
+  // against the font size where they're DEFINED and inherits the result, so a
+  // page value sized for 9pt body text would clip the 20pt name.
+  page: { paddingVertical: 36, paddingHorizontal: 44, fontSize: 9, fontFamily: 'Helvetica', color: '#111' },
+  name: { fontSize: 20, fontFamily: 'Helvetica-Bold', textAlign: 'center', marginBottom: 8 },
+  contact: { fontSize: 8, color: '#555', textAlign: 'center', marginBottom: 3, lineHeight: 1.4 },
+  summary: { fontSize: 9, color: '#333', marginTop: 8, marginBottom: 4, lineHeight: 1.45 },
   sectionTitle: {
     fontSize: 10, fontFamily: 'Helvetica-Bold', textTransform: 'uppercase', letterSpacing: 1,
     borderBottomWidth: 1, borderBottomColor: '#bbb', paddingBottom: 2, marginTop: 10, marginBottom: 6,
@@ -17,9 +20,10 @@ const styles = StyleSheet.create({
   dates: { fontSize: 8, color: '#555' },
   bullet: { flexDirection: 'row', marginTop: 2, paddingLeft: 8 },
   bulletDot: { width: 8, fontSize: 9 },
-  bulletText: { flex: 1, fontSize: 8.5, color: '#333' },
-  listItem: { fontSize: 8.5, color: '#333', marginBottom: 2, paddingLeft: 8 },
-  skills: { fontSize: 8.5, color: '#333' },
+  bulletText: { flex: 1, fontSize: 8.5, color: '#333', lineHeight: 1.4 },
+  eduDegree: { fontSize: 8.5, color: '#333', marginTop: 1.5, lineHeight: 1.4 },
+  listItem: { fontSize: 8.5, color: '#333', marginBottom: 2, paddingLeft: 8, lineHeight: 1.4 },
+  skills: { fontSize: 8.5, color: '#333', lineHeight: 1.45 },
   projectName: { fontSize: 9, fontFamily: 'Helvetica-Bold' },
   projectTech: { fontSize: 8.5, fontFamily: 'Helvetica', color: '#555' },
 })
@@ -70,7 +74,7 @@ export default function ResumePDF({ resume }: { resume: ResumeData }) {
               <Text style={styles.company}>{edu.school}, {edu.location}</Text>
               <Text style={styles.dates}>{edu.dates}</Text>
             </View>
-            <Text style={styles.bulletText}>
+            <Text style={styles.eduDegree}>
               {edu.degree}
               {edu.gpa ? ` (${edu.gpa} GPA)` : ''}
             </Text>
