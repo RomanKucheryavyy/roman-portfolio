@@ -5,22 +5,23 @@ const styles = StyleSheet.create({
   // NOTE: no page-level lineHeight — @react-pdf computes unitless multipliers
   // against the font size where they're DEFINED and inherits the result, so a
   // page value sized for 9pt body text would clip the 20pt name.
-  page: { paddingVertical: 36, paddingHorizontal: 44, fontSize: 9, fontFamily: 'Helvetica', color: '#111' },
-  name: { fontSize: 20, fontFamily: 'Helvetica-Bold', textAlign: 'center', marginBottom: 8 },
-  contact: { fontSize: 8, color: '#555', textAlign: 'center', marginBottom: 3, lineHeight: 1.4 },
-  summary: { fontSize: 9, color: '#333', marginTop: 8, marginBottom: 4, lineHeight: 1.45 },
+  page: { paddingVertical: 26, paddingHorizontal: 40, fontSize: 9, fontFamily: 'Helvetica', color: '#111' },
+  name: { fontSize: 19, fontFamily: 'Helvetica-Bold', textAlign: 'center', marginBottom: 6 },
+  contact: { fontSize: 8, color: '#555', textAlign: 'center', marginBottom: 2, lineHeight: 1.35 },
+  summary: { fontSize: 9, color: '#333', marginTop: 6, marginBottom: 2, lineHeight: 1.4 },
   sectionTitle: {
     fontSize: 10, fontFamily: 'Helvetica-Bold', textTransform: 'uppercase', letterSpacing: 1,
-    borderBottomWidth: 1, borderBottomColor: '#bbb', paddingBottom: 2, marginTop: 10, marginBottom: 6,
+    borderBottomWidth: 1, borderBottomColor: '#bbb', paddingBottom: 2, marginTop: 7, marginBottom: 4,
   },
-  entry: { marginBottom: 8 },
+  inlineList: { fontSize: 8.5, color: '#333', lineHeight: 1.4 },
+  entry: { marginBottom: 6 },
   rowBetween: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-end' },
   company: { fontSize: 9.5, fontFamily: 'Helvetica-Bold' },
   title: { fontSize: 9, fontFamily: 'Helvetica-Bold', color: '#222' },
   dates: { fontSize: 8, color: '#555' },
-  bullet: { flexDirection: 'row', marginTop: 2, paddingLeft: 8 },
+  bullet: { flexDirection: 'row', marginTop: 1.5, paddingLeft: 8 },
   bulletDot: { width: 8, fontSize: 9 },
-  bulletText: { flex: 1, fontSize: 8.5, color: '#333', lineHeight: 1.4 },
+  bulletText: { flex: 1, fontSize: 8.5, color: '#333', lineHeight: 1.35 },
   eduDegree: { fontSize: 8.5, color: '#333', marginTop: 1.5, lineHeight: 1.4 },
   listItem: { fontSize: 8.5, color: '#333', marginBottom: 2, paddingLeft: 8, lineHeight: 1.4 },
   skills: { fontSize: 8.5, color: '#333', lineHeight: 1.45 },
@@ -63,21 +64,23 @@ export default function ResumePDF({ resume }: { resume: ResumeData }) {
         ))}
 
         <Text style={styles.sectionTitle}>Certifications</Text>
-        {resume.certifications.map((cert, i) => (
-          <Text key={i} style={styles.listItem}>• {cert.name} – {cert.date}</Text>
-        ))}
+        <Text style={styles.inlineList}>
+          <Text style={{ fontFamily: 'Helvetica-Bold' }}>
+            {resume.certifications.length}x Salesforce Certified:
+          </Text>{' '}
+          {resume.certifications.map((cert) => `${cert.name} (${cert.date})`).join('  ·  ')}
+        </Text>
 
         <Text style={styles.sectionTitle}>Education</Text>
         {resume.education.map((edu, i) => (
-          <View key={i} style={{ marginBottom: 5 }}>
-            <View style={styles.rowBetween}>
-              <Text style={styles.company}>{edu.school}, {edu.location}</Text>
-              <Text style={styles.dates}>{edu.dates}</Text>
-            </View>
+          <View key={i} style={[styles.rowBetween, { marginBottom: 3 }]}>
             <Text style={styles.eduDegree}>
+              <Text style={{ fontFamily: 'Helvetica-Bold' }}>{edu.school}, {edu.location}</Text>
+              {' — '}
               {edu.degree}
               {edu.gpa ? ` (${edu.gpa} GPA)` : ''}
             </Text>
+            <Text style={styles.dates}>{edu.dates}</Text>
           </View>
         ))}
 

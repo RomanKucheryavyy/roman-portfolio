@@ -124,23 +124,21 @@ function ResumePreview({ resume }: { resume: ResumeData }) {
       ))}
 
       <h2 className={headingClass}>Certifications</h2>
-      <ul className="list-disc ml-4 space-y-0.5 mb-4">
-        {resume.certifications.map((cert, i) => (
-          <li key={i} className="text-[10px] text-gray-700">{cert.name} – {cert.date}</li>
-        ))}
-      </ul>
+      <p className="text-[10px] text-gray-700 mb-4 leading-relaxed">
+        <span className="font-bold">{resume.certifications.length}x Salesforce Certified:</span>{' '}
+        {resume.certifications.map((cert) => `${cert.name} (${cert.date})`).join('  ·  ')}
+      </p>
 
       <h2 className={headingClass}>Education</h2>
       {resume.education.map((edu, i) => (
-        <div key={i} className="mb-2">
-          <div className="flex justify-between items-baseline">
-            <h3 className="font-bold text-[11px]">{edu.school}, {edu.location}</h3>
-            <p className="text-gray-500 text-[10px]">{edu.dates}</p>
-          </div>
+        <div key={i} className="flex justify-between items-baseline mb-1">
           <p className="text-[10px] text-gray-700">
+            <span className="font-bold">{edu.school}, {edu.location}</span>
+            {' — '}
             {edu.degree}
             {edu.gpa ? ` (${edu.gpa} GPA)` : ''}
           </p>
+          <p className="text-gray-500 text-[10px]">{edu.dates}</p>
         </div>
       ))}
 
