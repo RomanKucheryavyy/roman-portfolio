@@ -6,7 +6,9 @@ import { useStore } from '@/stores/useStore'
 const CHARS = '01!@#$%^&*<>/\\|{}[]~`±§'
 const TARGETS = ['R', 'K', '.']
 const SCRAMBLE_SPEEDS = [60, 45, 70]
-const LOCK_TIMES = [800, 1300, 1700]
+const LOCK_TIMES = [500, 900, 1300]
+const BURST_AT = 2200
+const HANDOFF_AFTER = 600
 
 /** Boot loader: three glyphs scramble through symbols, lock into "R K .",
  *  then burst into particles and hand off to the page. */
@@ -95,8 +97,8 @@ export default function Loader() {
           ease: 'power2.inOut',
           onComplete: () => { container.style.display = 'none' },
         })
-      }, 700))
-    }, 3000))
+      }, HANDOFF_AFTER))
+    }, BURST_AT))
 
     return () => {
       intervals.forEach(clearInterval)

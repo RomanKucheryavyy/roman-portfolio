@@ -76,7 +76,7 @@ export default function YearInMeasures() {
   let lastMonth = -1
 
   return (
-    <div ref={wrapRef} className="mt-8 rounded-xl border border-white/5 bg-[#0a0a0a] overflow-hidden">
+    <div ref={wrapRef} className="hud-corners mt-8 rounded-xl border border-white/5 bg-[#0a0a0a]">
       <div className="flex items-center justify-between px-5 pt-4">
         <p className="font-mono text-[10px] text-white/25 uppercase tracking-wider">
           {'// git log --since="1 year ago"'}

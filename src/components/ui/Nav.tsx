@@ -57,14 +57,14 @@ const gradientVariants = {
   initial: { opacity: 0, scale: 0.8 },
   hover: {
     opacity: 1,
-    scale: 2,
+    scale: 1.4, // stay inside the pill's footprint — 2x bled into neighbors
     transition: {
-      opacity: { duration: 0.5, ease: [0.4, 0, 0.2, 1] as const },
-      scale: { duration: 0.5, type: 'spring' as const, stiffness: 300, damping: 25 },
+      opacity: { duration: 0.35, ease: [0.4, 0, 0.2, 1] as const },
+      scale: { duration: 0.35, type: 'spring' as const, stiffness: 300, damping: 25 },
     },
   },
 }
-const flipSpring = { type: 'spring', stiffness: 100, damping: 20, duration: 0.5 } as const
+const flipSpring = { type: 'spring', stiffness: 320, damping: 26 } as const
 
 function NavItem({
   label,
@@ -77,12 +77,17 @@ function NavItem({
   isActive?: boolean
   onClick: () => void
 }) {
-  const buttonClass = `flex items-center gap-2 px-3 py-2 relative z-10 rounded-xl text-xs font-mono uppercase tracking-wider cursor-pointer transition-colors ${
+  // no position class here — the front face adds `relative`, the back face
+  // `absolute`; sharing `relative` let it override `absolute` (Tailwind emits
+  // it later) and every pill stacked its two faces vertically.
+  const buttonClass = `flex items-center gap-1.5 lg:gap-2 px-2 lg:px-3 py-1.5 lg:py-2 z-10 rounded-xl text-[10px] lg:text-xs font-mono uppercase tracking-wider whitespace-nowrap cursor-pointer transition-colors ${
     isActive ? 'text-white' : 'text-white/40'
   }`
   const content = (
     <>
-      <span className={`transition-colors duration-300 ${config.iconColor}`}>{config.icon}</span>
+      <span className={`hidden lg:inline-flex items-center transition-colors duration-300 ${config.iconColor}`}>
+        {config.icon}
+      </span>
       {label}
     </>
   )
@@ -109,19 +114,19 @@ function NavItem({
       )}
       <motion.button
         onClick={onClick}
-        className={buttonClass}
+        className={`${buttonClass} relative`}
         variants={frontVariants}
         transition={flipSpring}
-        style={{ transformStyle: 'preserve-3d', transformOrigin: 'center bottom' }}
+        style={{ transformStyle: 'preserve-3d', transformOrigin: 'center bottom', backfaceVisibility: 'hidden' }}
       >
         {content}
       </motion.button>
       <motion.button
         onClick={onClick}
-        className={`${buttonClass} absolute inset-0 z-10`}
+        className={`${buttonClass} absolute inset-0 z-10 justify-center`}
         variants={backVariants}
         transition={flipSpring}
-        style={{ transformStyle: 'preserve-3d', transformOrigin: 'center top', transform: 'rotateX(90deg)' }}
+        style={{ transformStyle: 'preserve-3d', transformOrigin: 'center top', backfaceVisibility: 'hidden' }}
         tabIndex={-1}
         aria-hidden="true"
       >
@@ -155,7 +160,7 @@ export default function Nav() {
       animate={isLoaded ? { y: 0, opacity: 1 } : {}}
       transition={{ type: 'spring', stiffness: 200, damping: 30, delay: 0.3 }}
     >
-      <nav className="px-4 py-2 md:px-5 md:py-2.5 flex items-center justify-between rounded-2xl border border-white/[0.06] w-full bg-black/80 backdrop-blur-lg">
+      <nav className="px-4 py-2 md:px-4 lg:px-5 md:py-2 lg:py-2.5 flex items-center justify-between rounded-2xl border border-white/[0.06] w-full bg-black/70 backdrop-blur-xl shadow-[inset_0_1px_0_rgba(255,255,255,0.06),0_8px_32px_rgba(0,0,0,0.4)]">
         <a
           href="#"
           className="font-display font-bold text-sm md:text-base tracking-tight text-white cursor-pointer relative z-20"
@@ -167,7 +172,7 @@ export default function Nav() {
         </a>
 
         {/* Desktop */}
-        <div className="hidden md:flex items-center gap-1">
+        <div className="hidden md:flex items-center gap-0.5 lg:gap-1">
           {NAV_ITEMS.map((item) => {
             const id = item.href.slice(1)
             const config = ITEM_CONFIG[id]

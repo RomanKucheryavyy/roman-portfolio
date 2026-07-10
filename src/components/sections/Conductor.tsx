@@ -130,7 +130,7 @@ export default function Conductor() {
       </svg>
 
       <div className="max-w-6xl mx-auto">
-        <p data-reveal className="font-mono text-xs tracking-[0.3em] uppercase text-white/30 mb-3">
+        <p data-reveal className="section-label font-mono text-xs tracking-[0.3em] uppercase text-white/30 mb-3">
           {'// 04. About'}
         </p>
         <h2 data-section-heading className="font-display text-4xl md:text-6xl font-bold tracking-tight text-white mb-12">

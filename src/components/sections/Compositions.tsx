@@ -44,7 +44,7 @@ export default function Compositions() {
   return (
     <section ref={sectionRef} id="compositions" className="py-24 px-6 md:px-16 relative z-10">
       <div className="max-w-6xl mx-auto">
-        <p data-reveal className="font-mono text-xs tracking-[0.3em] uppercase text-white/30 mb-3">
+        <p data-reveal className="section-label font-mono text-xs tracking-[0.3em] uppercase text-white/30 mb-3">
           {'// 03. Original Works'}
         </p>
         <h2 data-section-heading className="font-display text-4xl md:text-6xl font-bold tracking-tight text-white mb-4">
@@ -71,14 +71,15 @@ export default function Compositions() {
             {COMPOSITIONS.map((work, i) => (
               <MobileReveal key={work.id} delay={100 * i}>
                 <article
-                  className="composition-card group relative h-full rounded-xl border border-white/5 bg-[#0a0a0a] overflow-hidden transition-colors duration-500 hover:border-white/15"
+                  className="hud-corners composition-card group relative h-full rounded-xl border border-white/5 bg-[#0a0a0a] transition-all duration-500 hover:border-white/15 hover:-translate-y-1"
                   style={{ borderLeft: `2px solid ${work.color}` }}
                   onMouseEnter={() => setCursorVariant('text')}
                   onMouseLeave={() => setCursorVariant('default')}
                 >
-                  {/* faint color wash on hover */}
+                  {/* faint color wash on hover (rounded itself — the card can't
+                      use overflow-hidden without clipping the HUD corners) */}
                   <div
-                    className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-700 pointer-events-none"
+                    className="absolute inset-0 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-700 pointer-events-none"
                     style={{ background: `radial-gradient(ellipse 80% 50% at 50% 0%, ${work.color}14, transparent 70%)` }}
                   />
                   <div className="relative p-6 md:p-7 flex flex-col h-full">

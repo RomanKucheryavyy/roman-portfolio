@@ -369,7 +369,7 @@ export default function Projects() {
     <>
       <section ref={sectionRef} id="symphony" className="relative py-16 sm:py-24 min-h-screen flex flex-col overflow-hidden">
         <div className="relative z-10 px-6 md:px-16 mb-6 md:mb-12">
-          <p data-reveal className="font-mono text-xs tracking-[0.3em] uppercase text-white/30 mb-3">
+          <p data-reveal className="section-label font-mono text-xs tracking-[0.3em] uppercase text-white/30 mb-3">
             {'// 02. Projects & Work'}
           </p>
           <h2

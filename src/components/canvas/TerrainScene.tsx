@@ -210,10 +210,13 @@ export default function TerrainScene({
   }, [cameraZ, planeSize, speed])
 
   return (
-    <div ref={wrapRef} style={{ position: 'absolute', inset: 0, width, height }}>
+    // pointer-events none: this canvas fills the hero viewport — if it takes
+    // touches, `touch-action` rules eat vertical swipes and the page can't
+    // scroll on phones until something else catches the gesture.
+    <div ref={wrapRef} style={{ position: 'absolute', inset: 0, width, height, pointerEvents: 'none' }}>
       <canvas
         ref={canvasRef}
-        style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', zIndex: 1 }}
+        style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', zIndex: 1, pointerEvents: 'none' }}
       />
     </div>
   )
