@@ -128,11 +128,11 @@ class Terrain {
   time: number
   mesh: THREE.Mesh
 
-  constructor(planeSize: number, speed: number) {
+  constructor(planeSize: number, speed: number, segments: number = planeSize) {
     this.uniforms = { time: { type: 'f', value: 0 } }
     this.time = speed
     this.mesh = new THREE.Mesh(
-      new THREE.PlaneGeometry(planeSize, planeSize, planeSize, planeSize),
+      new THREE.PlaneGeometry(planeSize, planeSize, segments, segments),
       new THREE.RawShaderMaterial({
         uniforms: this.uniforms,
         vertexShader: VERTEX_SHADER,
@@ -169,17 +169,22 @@ export default function TerrainScene({
     const canvas = canvasRef.current
     if (!canvas) return
 
+    // Phones get half the mesh density and a lower DPR cap — the wave
+    // silhouette is indistinguishable at 375px and the battery notices.
+    const coarse = window.matchMedia('(pointer: coarse)').matches
+    const maxDpr = coarse ? 1.5 : 2
+
     const renderer = new THREE.WebGLRenderer({ canvas, antialias: false })
     renderer.setSize(window.innerWidth, window.innerHeight)
     renderer.setClearColor(0x000000, 0)
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, maxDpr))
 
     const scene = new THREE.Scene()
     const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 1, 10000)
     camera.position.set(0, 16, cameraZ)
     camera.lookAt(new THREE.Vector3(0, 28, 0))
 
-    const terrain = new Terrain(planeSize, speed)
+    const terrain = new Terrain(planeSize, speed, coarse ? 128 : 256)
     scene.add(terrain.mesh)
 
     let raf = 0

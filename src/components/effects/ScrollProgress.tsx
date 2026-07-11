@@ -62,7 +62,7 @@ export default function ScrollProgress() {
     <div className="fixed top-0 left-0 w-full z-[150] group" aria-hidden="true">
       <svg
         viewBox="0 0 100 32"
-        className="w-full h-3 transition-opacity duration-500 opacity-10 group-hover:opacity-40"
+        className="w-full h-4 md:h-3 transition-opacity duration-500 opacity-30 md:opacity-10 md:group-hover:opacity-40"
         preserveAspectRatio="none"
         fill="none"
       >

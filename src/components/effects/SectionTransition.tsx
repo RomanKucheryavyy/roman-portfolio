@@ -36,8 +36,7 @@ export default function SectionTransition({ commentText }: { commentText: string
     >
       <span
         ref={textRef}
-        className="absolute font-mono text-[11px] tracking-wider"
-        style={{ opacity: 0.1, color: '#ffffff' }}
+        className="absolute font-mono text-[11px] tracking-wider text-white/25 md:text-white/10"
       >
         {commentText}
       </span>

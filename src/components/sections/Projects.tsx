@@ -17,7 +17,8 @@ const SPRING = { type: 'spring', stiffness: 170, damping: 26 } as const
 
 function CardMedia({ project, isFront, isMobileDeck }: { project: Project; isFront: boolean; isMobileDeck: boolean }) {
   const isApp = 'isApp' in project && project.isApp
-  if (isApp) {
+  // Spline's 3D iPhone is a multi-MB desktop flourish; phones get the static shot.
+  if (isApp && !isMobileDeck) {
     return (
       <div className="absolute inset-0 bg-black">
         {isFront && (
@@ -218,24 +219,27 @@ function DesktopDeck({ onCardClick }: { onCardClick: (index: number) => void }) 
 function MobileDeck() {
   const [deck, setDeck] = useState<Project[]>([...PROJECTS])
   const [counter, setCounter] = useState(0)
-  const [exitDirection, setExitDirection] = useState<'up' | 'down' | null>(null)
+  const [exitDirection, setExitDirection] = useState<'left' | 'right' | null>(null)
 
-  const dragY = useMotionValue(0)
-  const rotateX = useTransform(dragY, [-200, 0, 200], [10, 0, -10])
+  // Horizontal drag on purpose: a vertical drag axis + touchAction none on a
+  // card covering most of the viewport made the page unscrollable past the
+  // deck — the audit's single worst mobile finding.
+  const dragX = useMotionValue(0)
+  const rotateZ = useTransform(dragX, [-200, 0, 200], [-6, 0, 6])
 
-  const handleDragEnd = (_: unknown, info: { offset: { y: number }; velocity: { y: number } }) => {
-    const oy = info.offset.y
-    const vy = info.velocity.y
-    if (Math.abs(oy) > 40 || Math.abs(vy) > 400) {
-      if (oy < 0 || vy < 0) {
-        setExitDirection('up')
+  const handleDragEnd = (_: unknown, info: { offset: { x: number }; velocity: { x: number } }) => {
+    const ox = info.offset.x
+    const vx = info.velocity.x
+    if (Math.abs(ox) > 40 || Math.abs(vx) > 400) {
+      if (ox < 0 || vx < 0) {
+        setExitDirection('left')
         setTimeout(() => {
           setDeck((d) => [...d.slice(1), d[0]])
           setCounter((c) => (c + 1) % PROJECTS.length)
           setExitDirection(null)
         }, 150)
       } else {
-        setExitDirection('down')
+        setExitDirection('right')
         setTimeout(() => {
           setDeck((d) => [d[d.length - 1], ...d.slice(0, -1)])
           setCounter((c) => (c - 1 + PROJECTS.length) % PROJECTS.length)
@@ -243,7 +247,7 @@ function MobileDeck() {
         }, 150)
       }
     }
-    dragY.set(0)
+    dragX.set(0)
   }
 
   return (
@@ -261,10 +265,9 @@ function MobileDeck() {
                   key={project.id}
                   className="absolute w-full h-full list-none overflow-hidden rounded-2xl border border-white/10"
                   style={{
-                    touchAction: 'none',
+                    touchAction: 'pan-y',
                     boxShadow: isFront ? '0 20px 40px rgba(0,0,0,0.6)' : '0 10px 20px rgba(0,0,0,0.3)',
-                    rotateX: isFront ? rotateX : 0,
-                    transformPerspective: 800,
+                    rotateZ: isFront ? rotateZ : 0,
                   }}
                   animate={{
                     top: `${-(5 * i)}%`,
@@ -275,10 +278,10 @@ function MobileDeck() {
                   }}
                   exit={{ opacity: 0, scale: 0.8, transition: { duration: 0.2 } }}
                   transition={SPRING}
-                  drag={isFront && 'y'}
-                  dragConstraints={{ top: 0, bottom: 0 }}
+                  drag={isFront && 'x'}
+                  dragConstraints={{ left: 0, right: 0 }}
                   dragElastic={0.7}
-                  onDrag={(_, info) => { if (isFront) dragY.set(info.offset.y) }}
+                  onDrag={(_, info) => { if (isFront) dragX.set(info.offset.x) }}
                   onDragEnd={handleDragEnd}
                   whileDrag={isFront ? { zIndex: deck.length + 1, scale: 1.02 } : {}}
                 >
@@ -287,7 +290,7 @@ function MobileDeck() {
                     <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent pointer-events-none" />
                   </div>
                   <div className="absolute bottom-0 left-0 right-0 p-5 z-10">
-                    <p className="font-mono text-[10px] text-white/30 mb-2 tracking-wider">
+                    <p className="font-mono text-[10px] text-white/50 mb-2 tracking-wider">
                       {String(originalIndex + 1).padStart(2, '0')} / {String(PROJECTS.length).padStart(2, '0')}
                     </p>
                     <h3 className="font-display text-3xl font-black tracking-tighter text-white leading-[0.9] mb-3">
@@ -298,7 +301,7 @@ function MobileDeck() {
                         <p className="text-white/50 text-sm mb-4 leading-relaxed">{project.description}</p>
                         <div className="flex flex-wrap gap-2 mb-4">
                           {project.tags.map((tag) => (
-                            <span key={tag} className="px-2 py-1 rounded-full text-[9px] font-mono border border-white/10 text-white/30">
+                            <span key={tag} className="px-2 py-1 rounded-full text-[10px] font-mono border border-white/15 text-white/45">
                               {tag}
                             </span>
                           ))}
@@ -335,7 +338,7 @@ function MobileDeck() {
           />
         ))}
       </div>
-      <p className="font-mono text-[10px] text-white/20 tracking-wider">Swipe up/down to browse</p>
+      <p className="font-mono text-[11px] text-white/50 tracking-wider">Swipe ← → through the setlist</p>
     </div>
   )
 }
@@ -367,7 +370,7 @@ export default function Projects() {
 
   return (
     <>
-      <section ref={sectionRef} id="symphony" className="relative py-16 sm:py-24 min-h-screen flex flex-col overflow-hidden">
+      <section ref={sectionRef} id="symphony" className="relative py-16 sm:py-24 min-h-svh flex flex-col overflow-hidden">
         <div className="relative z-10 px-6 md:px-16 mb-6 md:mb-12">
           <p data-reveal className="section-label font-mono text-xs tracking-[0.3em] uppercase text-white/30 mb-3">
             {'// 02. Projects & Work'}
@@ -394,7 +397,7 @@ export default function Projects() {
             {isMobile ? 'Swipe through the setlist.' : 'Drag through the setlist. Click any piece to hear its story.'}
           </p>
         </div>
-        <div className="flex-1 flex items-center justify-center px-4 pt-16 md:pt-8">
+        <div className="flex-1 flex items-center justify-center px-4 pt-8">
           {isMobile ? <MobileDeck /> : <DesktopDeck onCardClick={setProjectIndex} />}
         </div>
       </section>

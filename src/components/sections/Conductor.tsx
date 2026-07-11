@@ -116,7 +116,7 @@ export default function Conductor() {
   }, [])
 
   return (
-    <section ref={sectionRef} id="conductor" className="py-24 px-6 md:px-16 relative z-10">
+    <section ref={sectionRef} id="conductor" className="py-14 md:py-24 px-6 md:px-16 relative z-10">
       <svg className="absolute w-0 h-0" aria-hidden="true">
         <defs>
           <filter id="halftone">
@@ -159,7 +159,6 @@ export default function Conductor() {
                   fill
                   className="object-cover object-top transition-all duration-700"
                   sizes="(max-width: 1024px) 100vw, 33vw"
-                  priority
                 />
                 <div
                   className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 mix-blend-multiply"
@@ -185,9 +184,10 @@ export default function Conductor() {
                   <div className="w-2.5 h-2.5 rounded-full bg-[#28c840]" />
                   <span className="ml-3 font-mono text-[10px] text-white/20">roman@portfolio ~</span>
                 </div>
-                <div className="p-5 font-mono text-xs leading-relaxed">
+                <div className="p-5 font-mono text-[11px] sm:text-xs leading-relaxed overflow-x-auto mobile-scroll-hide">
+                  <div className="w-max min-w-full">
                   {CODE_LINES.map((line, i) => (
-                    <div key={i} className="flex">
+                    <div key={i} className="flex whitespace-pre">
                       <span className="text-white/15 select-none w-5 text-right mr-3 flex-shrink-0">{i + 1}</span>
                       <span
                         className={
@@ -204,6 +204,7 @@ export default function Conductor() {
                   <div className="flex mt-1">
                     <span className="text-white/15 select-none w-5 text-right mr-3">{CODE_LINES.length + 1}</span>
                     <span className="w-1.5 h-3.5 bg-white/50 inline-block" style={{ animation: 'blink 1s step-end infinite' }} />
+                  </div>
                   </div>
                 </div>
                 <div className="px-5 pb-5 space-y-3 border-t border-white/5 pt-4">
@@ -263,8 +264,18 @@ export default function Conductor() {
           <YearInMeasures />
         </MobileReveal>
 
-        {/* Timeline */}
-        <div className="mt-16 relative pt-4 pb-2">
+        {/* Timeline — vertical "git log" on phones, horizontal staff on larger screens */}
+        <div className="mt-10 sm:hidden relative pl-1">
+          <div className="absolute left-[4px] top-2 bottom-2 w-px bg-white/20" />
+          {TIMELINE.map((item) => (
+            <div key={item.year} className="flex items-center gap-4 py-2.5">
+              <div className="w-2.5 h-2.5 rounded-full bg-white border border-white/50 relative z-10 shrink-0 -ml-[1px]" />
+              <span className="font-mono text-xs text-white/70 w-10 shrink-0">{item.year}</span>
+              <span className="font-mono text-[11px] text-white/50">{item.label}</span>
+            </div>
+          ))}
+        </div>
+        <div className="mt-16 relative pt-4 pb-2 hidden sm:block">
           <div
             data-timeline-line
             className="absolute left-0 w-full h-px bg-white/20 origin-left"

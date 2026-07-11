@@ -44,17 +44,20 @@ function CertCard({ cert }: { cert: (typeof CERTIFICATIONS)[number] }) {
           style={{ borderLeft: `2px solid ${accent}` }}
         >
           <div ref={spotlightRef} className="absolute inset-0 rounded-xl pointer-events-none" />
-          <span className="font-mono text-[10px] text-white/20 uppercase tracking-wider">{cert.category}</span>
+          <span className="font-mono text-[10px] text-white/35 uppercase tracking-wider">{cert.category}</span>
           <h3 className="font-display text-lg font-bold text-white mt-2">{cert.short}</h3>
-          <p className="relative z-10 font-mono text-[10px] text-white/30">{cert.date}</p>
+          <div className="relative z-10 flex items-center justify-between">
+            <p className="font-mono text-[10px] text-white/30">{cert.date}</p>
+            <span className="md:hidden font-mono text-[10px] text-white/40">tap ↻</span>
+          </div>
         </div>
         <div
-          className="flip-card-back absolute inset-0 rounded-xl border border-white/10 bg-[#111] p-6 flex flex-col justify-center"
+          className="flip-card-back absolute inset-0 rounded-xl border border-white/10 bg-[#111] p-4 sm:p-6 flex flex-col justify-center"
           style={{ borderLeft: `2px solid ${accent}` }}
         >
-          <h3 className="font-display text-base font-bold text-white mb-2">{cert.name}</h3>
-          <p className="font-mono text-xs text-white/40">Salesforce Certified</p>
-          <p className="font-mono text-xs text-white/30 mt-2">{cert.date}</p>
+          <h3 className="font-display text-sm sm:text-base font-bold text-white mb-2">{cert.name}</h3>
+          <p className="font-mono text-[11px] sm:text-xs text-white/40">Salesforce Certified</p>
+          <p className="font-mono text-[11px] sm:text-xs text-white/30 mt-2">{cert.date}</p>
         </div>
       </div>
     </div>
@@ -91,7 +94,7 @@ export default function Measures() {
   }, [])
 
   return (
-    <section ref={sectionRef} id="measures" className="py-24 px-6 md:px-16 relative z-10">
+    <section ref={sectionRef} id="measures" className="py-14 md:py-24 px-6 md:px-16 relative z-10">
       <div className="max-w-6xl mx-auto relative">
         <DNAHelix />
         <p data-reveal className="section-label font-mono text-xs tracking-[0.3em] uppercase text-white/30 mb-3">
@@ -111,7 +114,7 @@ export default function Measures() {
             The Measures
           </ScatterText>
         </h2>
-        <p data-reveal className="text-white/40 max-w-lg mb-16">
+        <p data-reveal className="text-white/40 max-w-lg mb-10 md:mb-16">
           Eight certifications, one CS degree, and a relentless habit of learning. Each credential here was
           earned in the field — not a checklist, but a growing repertoire.
         </p>

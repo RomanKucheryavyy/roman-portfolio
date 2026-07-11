@@ -82,12 +82,17 @@ export default function YearInMeasures() {
           {'// git log --since="1 year ago"'}
         </p>
         {total !== null && (
-          <p className="font-mono text-[10px] text-white/30">{total.toLocaleString()} contributions</p>
+          <p className="font-mono text-[10px] text-white/30">
+            <span className="md:hidden text-white/40 mr-2">← swipe</span>
+            {total.toLocaleString()} contributions
+          </p>
         )}
       </div>
       <h3 className="px-5 pt-1 font-display text-lg font-bold text-white">
         A Year in <span className="text-gradient">Measures</span>
       </h3>
+      <div className="relative">
+        <div className="md:hidden pointer-events-none absolute inset-y-0 right-0 w-10 bg-gradient-to-l from-[#0a0a0a] z-10" />
       <div className="overflow-x-auto mobile-scroll-hide px-5 pb-4 pt-2">
         <svg
           viewBox={`0 0 ${width} 68`}
@@ -115,7 +120,7 @@ export default function YearInMeasures() {
               elements.push(
                 <g key={`bar-${week.start}`}>
                   <line x1={x - STEP / 2} y1="12" x2={x - STEP / 2} y2="44" stroke="rgba(255,255,255,0.12)" strokeWidth="0.5" />
-                  <text x={x - STEP / 2} y="58" fontSize="6" fill="rgba(255,255,255,0.25)" fontFamily="monospace" textAnchor="middle">
+                  <text x={x - STEP / 2} y="58" fontSize="8" fill="rgba(255,255,255,0.3)" fontFamily="monospace" textAnchor="middle">
                     {MONTHS[month]}
                   </text>
                 </g>
@@ -148,7 +153,8 @@ export default function YearInMeasures() {
           <line x1={width - 10} y1="12" x2={width - 10} y2="44" stroke="rgba(255,255,255,0.25)" strokeWidth="1.4" />
         </svg>
       </div>
-      <p className="px-5 pb-4 font-mono text-[9px] text-white/15">
+      </div>
+      <p className="px-5 pb-4 font-mono text-[10px] text-white/40">
         Every week of GitHub activity is a note — busier weeks play higher and faster. Rests are real rests.
       </p>
     </div>

@@ -23,6 +23,18 @@ export default function Loader() {
     const particleContainer = particleRef.current
     if (!container || !particleContainer) return
 
+    // Repeat visits within a session skip the boot — a flourish once,
+    // a delay twice.
+    if (sessionStorage.getItem('booted')) {
+      setLoaded(true)
+      gsap.to(container, {
+        opacity: 0,
+        duration: 0.3,
+        onComplete: () => { container.style.display = 'none' },
+      })
+      return
+    }
+
     const intervals: ReturnType<typeof setInterval>[] = []
     const timeouts: ReturnType<typeof setTimeout>[] = []
 
@@ -90,6 +102,7 @@ export default function Loader() {
       })
 
       timeouts.push(setTimeout(() => {
+        sessionStorage.setItem('booted', '1')
         setLoaded(true)
         gsap.to(container, {
           opacity: 0,

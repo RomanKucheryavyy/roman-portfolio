@@ -192,7 +192,7 @@ export default function Nav() {
 
         {/* Mobile hamburger */}
         <button
-          className="md:hidden relative w-7 h-7 flex items-center justify-center cursor-pointer z-[102]"
+          className="md:hidden relative w-11 h-11 -my-2 -mr-2 flex items-center justify-center cursor-pointer z-[102]"
           aria-label={menuOpen ? 'Close menu' : 'Open menu'}
           onClick={() => setMenuOpen((o) => !o)}
         >
@@ -297,7 +297,7 @@ export default function Nav() {
                 >
                   <button
                     onClick={() => { setMenuOpen(false); window.location.href = '/resume' }}
-                    className="text-left cursor-pointer group py-2.5 mt-2"
+                    className="w-full text-left cursor-pointer group py-2.5 mt-2"
                   >
                     <div className="flex items-center">
                       <span className="font-mono text-[11px] text-yellow-400/40 mr-2">&gt;</span>
@@ -316,7 +316,7 @@ export default function Nav() {
                 >
                   <button
                     onClick={() => setMenuOpen(false)}
-                    className="text-left cursor-pointer group py-2.5 mt-2"
+                    className="w-full text-left cursor-pointer group py-2.5 mt-2"
                     aria-label="Close menu"
                   >
                     <div className="flex items-center">

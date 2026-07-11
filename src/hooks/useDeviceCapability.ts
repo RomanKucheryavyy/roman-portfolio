@@ -1,5 +1,5 @@
 'use client'
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 
 interface DeviceCapability {
   isMobile: boolean
@@ -15,19 +15,23 @@ const DEFAULTS: DeviceCapability = {
   enablePostProcessing: true,
 }
 
+/**
+ * Synchronous initialization — the page gates rendering behind a mounted
+ * check, so window exists on first client render. A post-mount effect here
+ * used to flash the desktop deck (and download the desktop-only modal) on
+ * every phone visit before correcting itself.
+ */
 export function useDeviceCapability(): DeviceCapability {
-  const [capability, setCapability] = useState<DeviceCapability>(DEFAULTS)
-
-  useEffect(() => {
+  const [capability] = useState<DeviceCapability>(() => {
+    if (typeof window === 'undefined') return DEFAULTS
     const isMobile = window.matchMedia('(pointer: coarse)').matches || window.innerWidth < 768
-    const isLowEnd = isMobile || (navigator.hardwareConcurrency ?? 4) < 4
-    setCapability({
+    return {
       isMobile,
-      isLowEnd,
+      isLowEnd: isMobile || (navigator.hardwareConcurrency ?? 4) < 4,
       particleCount: isMobile ? 500 : 1500,
       enablePostProcessing: !isMobile,
-    })
-  }, [])
+    }
+  })
 
   return capability
 }

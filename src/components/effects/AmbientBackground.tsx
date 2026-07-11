@@ -54,10 +54,17 @@ export default function AmbientBackground() {
       aria-hidden="true"
     >
       {isMobile && (
+        // A fixed-size glow moved by position — gradient strings themselves
+        // can't interpolate, so animating `background` just snapped.
         <div
-          className="absolute inset-0 transition-all duration-[1200ms] ease-in-out"
+          className="absolute w-[150vw] h-[150vw] rounded-full"
           style={{
-            background: `radial-gradient(ellipse 80% 60% at ${focus.x} ${focus.y}, rgba(255,255,255,0.04) 0%, rgba(255,255,255,0.01) 40%, transparent 70%)`,
+            left: focus.x,
+            top: focus.y,
+            transform: 'translate(-50%, -50%)',
+            transition: 'left 1.2s ease-in-out, top 1.2s ease-in-out',
+            background:
+              'radial-gradient(circle, rgba(255,255,255,0.06) 0%, rgba(255,255,255,0.015) 40%, transparent 70%)',
           }}
         />
       )}
