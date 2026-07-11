@@ -23,7 +23,7 @@ export const RESUME_DATA: ResumeData = {
   github: 'https://github.com/RomanKucheryavyy',
   website: 'https://romankucheryavyy.com',
   summary:
-    'Senior Technical Support Engineer at Salesforce (Signature Success) supporting Fortune 500 and strategic enterprise customers. 8x Salesforce certified with a BS in Computer Science, and a builder of AI-powered products — multi-agent systems on the Claude API. Deep expertise in Apex, Sales Cloud, and the Agentforce agentic AI stack.',
+    'Senior Technical Support Engineer at Salesforce (Signature Success) supporting Fortune 500 and strategic enterprise customers — 1,200+ cases at a 4.9/5.0 CSAT. 8x Salesforce certified with a BS in Computer Science, and a builder of AI-powered products — multi-agent systems on the Claude API. Deep expertise in Apex, Sales Cloud, and the Agentforce agentic AI stack.',
   experience: [
     {
       company: 'Salesforce',
@@ -31,7 +31,7 @@ export const RESUME_DATA: ResumeData = {
       title: 'Senior Technical Support Engineer — Signature Success',
       dates: 'April 2026 – Present',
       bullets: [
-        "Serve as the single point of technical accountability for Salesforce's most strategic Signature-tier enterprise customers, including Fortune 500 accounts.",
+        "Single point of technical accountability for Salesforce's most strategic Signature-tier enterprise customers — 1,214 cases closed since joining Salesforce at a 4.9/5.0 average CSAT, 0% SLA misses, and 119% of productivity target.",
         'Resolve complex multi-org Sales Cloud issues — Apex, SOQL, API integrations, governor limits — and lead root cause analysis on SEV-1 production incidents.',
         'Partner directly with Salesforce R&D, Engineering, and Account Success teams to drive resolution of platform-level defects; manage escalations and recovery efforts for high-risk enterprise accounts.',
         'Champion adoption of Salesforce agentic AI (Agentforce), guiding strategic customers through mission-critical AI implementations.',
@@ -56,7 +56,6 @@ export const RESUME_DATA: ResumeData = {
       bullets: [
         'Supported federal government agencies using Microsoft products, creating and resolving support tickets within defined SLAs.',
         'Partnered with internal Microsoft support and operations teams to identify and resolve systemic faults.',
-        'Communicated case status and emerging-issue findings to customers, service managers, and leadership.',
       ],
     },
   ],
@@ -117,7 +116,7 @@ export const RESUME_DATA: ResumeData = {
       name: 'Alongside Events — Event Operations Platform',
       tech: 'Next.js, TypeScript, Tailwind CSS',
       bullets: [
-        'Designed a multi-tenant platform covering quotes, invoices, contracts, and client CRM for mobile event vendors, running a family espresso cart operation end to end.',
+        'Engineered the technical stack behind a working espresso cart: QR-code guest ordering, fully functional networked thermal label printing, and automated post-event recaps.',
       ],
     },
   ],

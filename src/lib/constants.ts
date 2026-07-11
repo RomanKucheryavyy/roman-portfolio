@@ -103,11 +103,11 @@ export const COMPOSITIONS = [
   {
     id: 'alongside-events',
     title: 'Alongside Events',
-    tagline: 'Event toolkit for the family coffee cart',
+    tagline: 'The tech stack behind the family coffee cart',
     status: 'Runs the family cart',
     description:
-      'Quotes, invoices, contracts, and a client CRM purpose-built for mobile coffee cart operators — born from my family’s espresso cart and the weddings it serves. The software we wished existed, so I composed it myself.',
-    stack: ['Next.js', 'TypeScript', 'Tailwind', 'PDF generation'],
+      'QR-code ordering guests scan right at the cart, automated post-event recaps, and fully functional networked thermal label printing — every technical piece a mobile espresso bar needs, composed from scratch and battle-tested at real weddings.',
+    stack: ['Next.js', 'TypeScript', 'QR ordering', 'Thermal print server'],
     color: '#ffb800',
   },
   {
