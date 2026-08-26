@@ -3,14 +3,16 @@ import { useEffect, useRef } from 'react'
 import { useStore } from '@/stores/useStore'
 
 export function useMouseTracking() {
-  const prev = useRef({ x: 0, y: 0, time: Date.now() })
+  // time starts at 0 and is stamped on the first move; reading the clock in a
+  // ref initializer is a render-time side effect.
+  const prev = useRef({ x: 0, y: 0, time: 0 })
   const setMousePosition = useStore((s) => s.setMousePosition)
   const setMouseVelocity = useStore((s) => s.setMouseVelocity)
 
   useEffect(() => {
     const onMove = (e: MouseEvent) => {
       const now = Date.now()
-      const dt = Math.max(now - prev.current.time, 1)
+      const dt = prev.current.time === 0 ? 1 : Math.max(now - prev.current.time, 1)
       const vx = (e.clientX - prev.current.x) / dt
       const vy = (e.clientY - prev.current.y) / dt
 

@@ -1,5 +1,6 @@
 'use client'
 import { useEffect, useRef, useState } from 'react'
+import { ExternalLink } from 'lucide-react'
 import { gsap } from '@/hooks/useGSAP'
 import { useStore } from '@/stores/useStore'
 import ScatterText from '@/components/effects/ScatterText'
@@ -10,6 +11,8 @@ import { COMPOSITIONS } from '@/lib/constants'
 function CompositionCard({ work, index }: { work: (typeof COMPOSITIONS)[number]; index: number }) {
   const setCursorVariant = useStore((s) => s.setCursorVariant)
   const [expanded, setExpanded] = useState(false)
+  // Only the public works carry a url, so the card has to ask before it links.
+  const liveUrl = 'url' in work ? work.url : null
 
   return (
     <article
@@ -53,15 +56,28 @@ function CompositionCard({ work, index }: { work: (typeof COMPOSITIONS)[number];
             </span>
           ))}
         </div>
+        {liveUrl && (
+          <a
+            href={liveUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="mt-5 inline-flex items-center gap-2 self-start font-mono text-[11px] text-white/55 border border-white/15 rounded-full px-4 py-2 transition-colors duration-300 hover:text-white hover:border-white/40"
+            onMouseEnter={() => setCursorVariant('hover')}
+            onMouseLeave={() => setCursorVariant('text')}
+          >
+            <ExternalLink size={12} />
+            {liveUrl.replace(/^https?:\/\//, '')}
+          </a>
+        )}
       </div>
     </article>
   )
 }
 
 /**
- * Original works — the products Roman composes and operates himself
- * (Praxis, Alongside Events, Alongside Brain). Private builds, so the cards
- * tell the story instead of linking out.
+ * Original works — the products Roman composes and operates himself.
+ * Most are private builds, so the card tells the story; the ones that are
+ * public (Sembly) carry a link to the live thing.
  */
 export default function Compositions() {
   const sectionRef = useRef<HTMLElement>(null)
@@ -117,7 +133,7 @@ export default function Compositions() {
         </p>
 
         <RevealMask direction="bottom" duration={1.2}>
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {COMPOSITIONS.map((work, i) => (
               <MobileReveal key={work.id} delay={100 * i}>
                 <CompositionCard work={work} index={i} />

@@ -15,6 +15,14 @@ const SPLINE_IPHONE_URL = 'https://prod.spline.design/Mi7zxeQ50WnJzGOr/scene.spl
 type Project = (typeof PROJECTS)[number]
 const SPRING = { type: 'spring', stiffness: 170, damping: 26 } as const
 
+/**
+ * How many cards are drawn behind the front one. The stack offsets each card by
+ * -10% and 6% of scale, so rendering the whole list sent the tail of a longer
+ * deck climbing out of its own frame at half size. Five reads as depth; the
+ * rest wait their turn off-stage.
+ */
+const STACK_DEPTH = 5
+
 function CardMedia({ project, isFront, isMobileDeck }: { project: Project; isFront: boolean; isMobileDeck: boolean }) {
   const isApp = 'isApp' in project && project.isApp
   // Spline's 3D iPhone is a multi-MB desktop flourish; phones get the static shot.
@@ -104,7 +112,7 @@ function DesktopDeck({ onCardClick }: { onCardClick: (index: number) => void }) 
       <div className="relative w-[85vw] sm:w-[75vw] md:w-[60vw] lg:w-[50vw] xl:w-[44vw] aspect-[16/10] overflow-visible">
         <ul className="relative w-full h-full m-0 p-0">
           <AnimatePresence>
-            {deck.map((project, i) => {
+            {deck.slice(0, STACK_DEPTH).map((project, i) => {
               const isFront = i === 0
               const brightness = Math.max(0.3, 1 - 0.15 * i)
               const originalIndex = PROJECTS.findIndex((p) => p.id === project.id)
@@ -124,7 +132,7 @@ function DesktopDeck({ onCardClick }: { onCardClick: (index: number) => void }) 
                     top: `${-(10 * i)}%`,
                     scale: 1 - 0.06 * i,
                     filter: `brightness(${brightness})`,
-                    zIndex: deck.length - i,
+                    zIndex: STACK_DEPTH - i,
                     opacity: exitDirection && isFront ? 0 : 1,
                   }}
                   exit={{ opacity: 0, scale: 0.8, transition: { duration: 0.2 } }}
@@ -134,7 +142,7 @@ function DesktopDeck({ onCardClick }: { onCardClick: (index: number) => void }) 
                   dragElastic={0.7}
                   onDrag={(_, info) => { if (isFront) dragY.set(info.offset.y) }}
                   onDragEnd={handleDragEnd}
-                  whileDrag={isFront ? { zIndex: deck.length + 1, cursor: 'grabbing', scale: 1.02 } : {}}
+                  whileDrag={isFront ? { zIndex: STACK_DEPTH + 1, cursor: 'grabbing', scale: 1.02 } : {}}
                   onHoverStart={() => { if (isFront) { setHovered(true); setCursorVariant('text') } }}
                   onHoverEnd={() => { setHovered(false); setCursorVariant('default') }}
                   onClick={() => { if (isFront) onCardClick(originalIndex) }}
@@ -255,7 +263,7 @@ function MobileDeck() {
       <div className="relative w-[88vw] aspect-[3/4]" style={{ overflow: 'clip visible' }}>
         <ul className="relative w-full h-full m-0 p-0">
           <AnimatePresence>
-            {deck.map((project, i) => {
+            {deck.slice(0, STACK_DEPTH).map((project, i) => {
               const isFront = i === 0
               const brightness = Math.max(0.3, 1 - 0.15 * i)
               const originalIndex = PROJECTS.findIndex((p) => p.id === project.id)
@@ -273,7 +281,7 @@ function MobileDeck() {
                     top: `${-(5 * i)}%`,
                     scale: 1 - 0.05 * i,
                     filter: `brightness(${brightness})`,
-                    zIndex: deck.length - i,
+                    zIndex: STACK_DEPTH - i,
                     opacity: exitDirection && isFront ? 0 : 1,
                   }}
                   exit={{ opacity: 0, scale: 0.8, transition: { duration: 0.2 } }}
@@ -283,7 +291,7 @@ function MobileDeck() {
                   dragElastic={0.7}
                   onDrag={(_, info) => { if (isFront) dragX.set(info.offset.x) }}
                   onDragEnd={handleDragEnd}
-                  whileDrag={isFront ? { zIndex: deck.length + 1, scale: 1.02 } : {}}
+                  whileDrag={isFront ? { zIndex: STACK_DEPTH + 1, scale: 1.02 } : {}}
                 >
                   <div className="absolute inset-0 overflow-hidden rounded-2xl">
                     <CardMedia project={project} isFront={isFront} isMobileDeck />

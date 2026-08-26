@@ -1,5 +1,6 @@
 'use client'
 import { useEffect, useRef, useState } from 'react'
+import { useMediaQuery } from '@/hooks/useMediaQuery'
 
 interface MobileRevealProps {
   children: React.ReactNode
@@ -13,12 +14,8 @@ interface MobileRevealProps {
  */
 export default function MobileReveal({ children, delay = 0, className = '' }: MobileRevealProps) {
   const ref = useRef<HTMLDivElement>(null)
-  const [isMobile, setIsMobile] = useState(false)
+  const isMobile = useMediaQuery('(max-width: 768px)')
   const [visible, setVisible] = useState(false)
-
-  useEffect(() => {
-    setIsMobile(window.matchMedia('(max-width: 768px)').matches)
-  }, [])
 
   useEffect(() => {
     if (!isMobile) return

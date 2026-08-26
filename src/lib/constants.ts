@@ -76,6 +76,16 @@ export const PROJECTS = [
     color: '#D97706',
   },
   {
+    id: 'nelectric',
+    title: 'Nelectric Power Systems',
+    url: 'https://nelectricpowersystems.com',
+    image: '/images/projects/nelectric.png',
+    description:
+      'A licensed electrician in three languages. English, Ukrainian, and Russian side by side, a 60-second quote form wired to a real lead pipeline, and a private dashboard that tells the owner which calls the site actually earned.',
+    tags: ['Web Design', 'Lead Gen', 'Serverless'],
+    color: '#38BDF8',
+  },
+  {
     id: 'fubc-coffee-ios',
     title: 'FUBC Coffee iOS',
     url: 'https://apps.apple.com/us/app/fubc-coffee/id6760352447',
@@ -88,8 +98,21 @@ export const PROJECTS = [
   },
 ] as const
 
-/** Original works — the products I compose, own, and operate. */
+/** Original works — the products I compose, own, and operate.
+ *  `url` is optional: most of these are private builds, so the card tells the
+ *  story instead of linking out. Where one is public, the card links to it. */
 export const COMPOSITIONS = [
+  {
+    id: 'sembly',
+    title: 'Sembly',
+    tagline: 'Scheduling for worship teams',
+    status: 'Live at sembly.app',
+    url: 'https://sembly.app',
+    description:
+      'The answer to "am I playing this Sunday?" — on the phone that gets asked. Volunteers see the dates they serve, their position, the running order with every song key, and the sheet music; leaders plan a whole month from the same screen. Row-level security in Postgres is the actual boundary, so a volunteer only ever sees the services they are on.',
+    stack: ['Next.js', 'Supabase', 'Tailwind', 'PWA'],
+    color: '#af52de',
+  },
   {
     id: 'praxis',
     title: 'Praxis',

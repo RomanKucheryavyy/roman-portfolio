@@ -73,7 +73,6 @@ export default function YearInMeasures() {
   const max = Math.max(...weeks.map((w) => w.count), 1)
   const width = X0 + weeks.length * STEP + 24
 
-  let lastMonth = -1
 
   return (
     <div ref={wrapRef} className="hud-corners mt-8 rounded-xl border border-white/5 bg-[#0a0a0a]">
@@ -112,8 +111,11 @@ export default function YearInMeasures() {
             const x = X0 + i * STEP
             const d = new Date(`${week.start}T00:00:00Z`)
             const month = d.getUTCMonth()
-            const monthChanged = month !== lastMonth
-            lastMonth = month
+            // Derived from the neighbour rather than a running `let`, so drawing a
+            // week has no effect on the next one.
+            const prevMonth =
+              i === 0 ? -1 : new Date(`${weeks[i - 1].start}T00:00:00Z`).getUTCMonth()
+            const monthChanged = month !== prevMonth
 
             const elements = []
             if (monthChanged && i > 0) {

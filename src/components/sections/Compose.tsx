@@ -44,39 +44,89 @@ const burstFrom = (x: number, y: number, host: HTMLElement) => {
   }
 }
 
+const DRAFT_KEY = 'compose:draft'
+const EMPTY = { name: '', email: '', message: '' }
+
 export default function Compose() {
   const sectionRef = useRef<HTMLElement>(null)
   const windowRef = useRef<HTMLDivElement>(null)
   const bodyRef = useRef<HTMLDivElement>(null)
   const burstHostRef = useRef<HTMLDivElement>(null)
   const setCursorVariant = useStore((s) => s.setCursorVariant)
-  const [form, setForm] = useState({ name: '', email: '', message: '' })
+  const [form, setForm] = useState(EMPTY)
   const [status, setStatus] = useState<'idle' | 'sending' | 'sent' | 'error'>('idle')
   const [savedAt, setSavedAt] = useState<string | null>(null)
+  const [errorKind, setErrorKind] = useState<'rate_limited' | 'generic'>('generic')
+  // Bots fill every field they can see; humans take longer than a second and a half.
+  // Stamped on mount rather than in the initializer — reading the clock during
+  // render is a side effect, and 0 fails open, which is the right way to fail.
+  const openedAt = useRef(0)
+  const botField = useRef('')
 
-  // fake autosave tick — a draft always feels safer when something is watching it
+  // Restore an unsent draft. The "saved" label in the title bar used to be
+  // theatre on a timer — now it marks a write that actually happened.
   useEffect(() => {
+    openedAt.current = Date.now()
+    try {
+      const stored = localStorage.getItem(DRAFT_KEY)
+      if (stored) {
+        const draft = JSON.parse(stored) as Partial<typeof EMPTY>
+        setForm({ ...EMPTY, ...draft })
+      }
+    } catch {
+      /* private mode, quota, corrupt JSON — a missing draft is not worth a failure */
+    }
+  }, [])
+
+  useEffect(() => {
+    if (status === 'sent') return
     if (!form.name && !form.email && !form.message) return
-    const t = setTimeout(() => setSavedAt(new Date().toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })), 800)
+    const t = setTimeout(() => {
+      try {
+        localStorage.setItem(DRAFT_KEY, JSON.stringify(form))
+        setSavedAt(new Date().toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }))
+      } catch {
+        /* nothing to tell the visitor — the message still sends */
+      }
+    }, 800)
     return () => clearTimeout(t)
-  }, [form])
+  }, [form, status])
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
     if (!form.name || !form.email || !form.message) return
     setStatus('sending')
     try {
-      const res = await fetch('/', {
+      const res = await fetch('/api/contact', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-        body: new URLSearchParams({ 'form-name': 'contact', ...form }).toString(),
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          ...form,
+          botField: botField.current,
+          elapsedMs: Date.now() - openedAt.current,
+        }),
       })
-      if (!res.ok) throw new Error('Submission failed')
+      if (!res.ok) {
+        const { error } = (await res.json().catch(() => ({}))) as { error?: string }
+        setErrorKind(error === 'rate_limited' ? 'rate_limited' : 'generic')
+        throw new Error(error ?? 'delivery_failed')
+      }
+      try {
+        localStorage.removeItem(DRAFT_KEY)
+      } catch {
+        /* the draft outliving the send is harmless */
+      }
       setStatus('sent')
     } catch {
       setStatus('error')
     }
   }
+
+  // If delivery breaks, the visitor's own mail app opens with the letter intact.
+  // A lead that took someone two minutes to type should never die in a toast.
+  const mailtoFallback = `mailto:${LINKS.email}?subject=${encodeURIComponent(
+    form.name ? `Message from ${form.name}` : 'Message from your site'
+  )}&body=${encodeURIComponent(`${form.message}\n\n— ${form.name} <${form.email}>`)}`
 
   // send choreography: body fades, window collapses to its title bar, corners burst
   useEffect(() => {
@@ -154,12 +204,8 @@ export default function Compose() {
           Got a project, an idea, or just want to talk shop? You&apos;re already writing the email.
         </p>
 
-        {/* Netlify Forms registration (build-time detection) */}
-        <form name="contact" data-netlify="true" netlify-honeypot="bot-field" hidden>
-          <input name="name" />
-          <input name="email" />
-          <textarea name="message" />
-        </form>
+        {/* Netlify's build-time form detection reads public/__forms.html, not this
+            React tree — a form declared here never reaches the published HTML. */}
 
         <MobileReveal>
           <div ref={burstHostRef} data-reveal className="relative">
@@ -198,12 +244,18 @@ export default function Compose() {
               {/* the email body — every field is part of the letter */}
               <div ref={bodyRef}>
                 <form onSubmit={handleSubmit} className="p-5 space-y-3">
-                  <input type="hidden" name="form-name" value="contact" />
-                  <p className="hidden">
-                    <label>
-                      Don&apos;t fill this out: <input name="bot-field" />
-                    </label>
-                  </p>
+                  {/* Honeypot. Hidden from people and from screen readers, irresistible to bots. */}
+                  <div className="hidden" aria-hidden="true">
+                    <label htmlFor="compose-bot">Don&apos;t fill this out</label>
+                    <input
+                      id="compose-bot"
+                      name="bot-field"
+                      type="text"
+                      tabIndex={-1}
+                      autoComplete="off"
+                      onChange={(e) => { botField.current = e.target.value }}
+                    />
+                  </div>
 
                   <div className="flex items-center gap-3">
                     <span className="font-mono text-[10px] text-white/25 w-10 shrink-0">To:</span>
@@ -304,8 +356,18 @@ export default function Compose() {
                     </button>
                   </div>
                   {status === 'error' && (
-                    <p aria-live="polite" className="font-mono text-[11px] text-white/45">
-                      Something broke — email me directly at{' '}
+                    <p role="alert" className="font-mono text-[11px] leading-relaxed text-white/45">
+                      {errorKind === 'rate_limited' ? (
+                        <>That&apos;s a few messages in a row — give it ten minutes, or reach me at{' '}</>
+                      ) : (
+                        <>
+                          Your draft is safe and still here.{' '}
+                          <a href={mailtoFallback} className="text-white/70 underline underline-offset-4">
+                            Open it in your mail app
+                          </a>{' '}
+                          — or write to{' '}
+                        </>
+                      )}
                       <a href={`mailto:${LINKS.email}`} className="text-white/70 underline underline-offset-4">
                         {LINKS.email}
                       </a>

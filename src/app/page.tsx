@@ -1,8 +1,9 @@
 'use client'
-import { useEffect, useState } from 'react'
+import { useEffect } from 'react'
 import Lenis from 'lenis'
 import { gsap, ScrollTrigger } from '@/hooks/useGSAP'
 import { useMouseTracking } from '@/hooks/useMouseVelocity'
+import { useIsHydrated } from '@/hooks/useMediaQuery'
 import { useStore } from '@/stores/useStore'
 import DynamicFavicon from '@/components/effects/DynamicFavicon'
 import AmbientBackground from '@/components/effects/AmbientBackground'
@@ -18,10 +19,11 @@ import Hero from '@/components/sections/Hero'
 import Measures from '@/components/sections/Measures'
 import Projects from '@/components/sections/Projects'
 import Compositions from '@/components/sections/Compositions'
+import Manifesto from '@/components/sections/Manifesto'
 import Conductor from '@/components/sections/Conductor'
 import Compose from '@/components/sections/Compose'
 
-const SECTIONS = ['hero', 'measures', 'symphony', 'compositions', 'conductor', 'compose']
+const SECTIONS = ['hero', 'measures', 'symphony', 'compositions', 'interlude', 'conductor', 'compose']
 
 function AppContent() {
   useMouseTracking()
@@ -94,6 +96,10 @@ function AppContent() {
           <Compositions />
         </SectionFade>
         <SectionTransition commentText="/* premiering original works */" />
+        <SectionFade transition="slide-right">
+          <Manifesto />
+        </SectionFade>
+        <SectionTransition commentText="// decoding signal..." />
         <SectionFade transition="fade-center">
           <Conductor />
         </SectionFade>
@@ -107,9 +113,7 @@ function AppContent() {
 }
 
 export default function Home() {
-  const [mounted, setMounted] = useState(false)
-
-  useEffect(() => { setMounted(true) }, [])
+  const mounted = useIsHydrated()
 
   if (!mounted) {
     return (

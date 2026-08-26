@@ -1,5 +1,6 @@
 'use client'
 import { useEffect, useRef, useState } from 'react'
+import { useMediaQuery } from '@/hooks/useMediaQuery'
 
 interface SectionFadeProps {
   children: React.ReactNode
@@ -14,12 +15,8 @@ interface SectionFadeProps {
  */
 export default function SectionFade({ children, className = '' }: SectionFadeProps) {
   const ref = useRef<HTMLDivElement>(null)
-  const [isMobile, setIsMobile] = useState(false)
+  const isMobile = useMediaQuery('(max-width: 768px)')
   const [visible, setVisible] = useState(false)
-
-  useEffect(() => {
-    setIsMobile(window.matchMedia('(max-width: 768px)').matches)
-  }, [])
 
   useEffect(() => {
     if (!isMobile) return

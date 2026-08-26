@@ -1,5 +1,6 @@
 'use client'
 import { useCallback, useEffect, useRef, useState } from 'react'
+import Link from 'next/link'
 import { Lock, Mail, FileText, WandSparkles, Download, ArrowLeft, LoaderCircle } from 'lucide-react'
 import { RESUME_DATA, type ResumeData } from '@/lib/resume-data'
 
@@ -72,9 +73,9 @@ function PinGate({ onUnlock }: { onUnlock: (pin: string) => void }) {
             {verifying ? 'Verifying...' : 'Unlock'}
           </button>
         </form>
-        <a href="/" className="inline-block mt-6 text-white/20 text-xs font-mono hover:text-white/40 transition-colors">
+        <Link href="/" className="inline-block mt-6 text-white/20 text-xs font-mono hover:text-white/40 transition-colors">
           ← Back to portfolio
-        </a>
+        </Link>
       </div>
     </div>
   )
@@ -295,9 +296,9 @@ export default function ResumeBuilder() {
     <div className="min-h-screen bg-black">
       <header className="border-b border-white/5 px-6 py-4 flex items-center justify-between">
         <div className="flex items-center gap-4">
-          <a href="/" className="text-white/30 hover:text-white transition-colors">
+          <Link href="/" className="text-white/30 hover:text-white transition-colors">
             <ArrowLeft size={18} />
-          </a>
+          </Link>
           <h1 className="font-display text-lg font-bold text-white">
             Resume <span className="text-gradient">Builder</span>
           </h1>

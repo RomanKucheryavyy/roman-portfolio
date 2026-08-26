@@ -1,7 +1,8 @@
 'use client'
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef } from 'react'
 import { gsap } from '@/hooks/useGSAP'
 import { useStore } from '@/stores/useStore'
+import { useMediaQuery } from '@/hooks/useMediaQuery'
 
 const SECTION_COLORS: Record<string, string> = {
   hero: '#000010',
@@ -29,11 +30,7 @@ const SECTION_FOCUS: Record<string, { x: string; y: string }> = {
 export default function AmbientBackground() {
   const ref = useRef<HTMLDivElement>(null)
   const activeSection = useStore((s) => s.activeSection)
-  const [isMobile, setIsMobile] = useState(false)
-
-  useEffect(() => {
-    setIsMobile(window.innerWidth < 768 || window.matchMedia('(pointer: coarse)').matches)
-  }, [])
+  const isMobile = useMediaQuery('(max-width: 767px), (pointer: coarse)')
 
   useEffect(() => {
     if (isMobile || !ref.current) return

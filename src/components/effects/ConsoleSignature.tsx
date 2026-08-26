@@ -8,7 +8,6 @@ export default function ConsoleSignature() {
   useEffect(() => {
     if (signed) return
     signed = true
-    /* eslint-disable no-console */
     console.log(
       '%c𝄞%c═══♩═══♪═══♫═══♪═══♬═══%c\n\n' +
         '%cRoman Kucheryavyy%c — Orchestrating Logic & Art\n\n' +
@@ -24,7 +23,6 @@ export default function ConsoleSignature() {
       'font-size: 12px; color: rgba(255,255,255,0.5);',
       'font-size: 12px; font-family: monospace; color: #30d158;'
     )
-    /* eslint-enable no-console */
   }, [])
 
   return null

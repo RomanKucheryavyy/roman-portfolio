@@ -1,5 +1,6 @@
 'use client'
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef } from 'react'
+import { useMediaQuery } from '@/hooks/useMediaQuery'
 import { TECH_SKILLS } from '@/lib/constants'
 
 /**
@@ -7,12 +8,8 @@ import { TECH_SKILLS } from '@/lib/constants'
  * right edge of the Measures section. Desktop only.
  */
 export default function DNAHelix() {
-  const [isMobile, setIsMobile] = useState(false)
+  const isMobile = useMediaQuery('(max-width: 767px), (pointer: coarse)')
   const innerRef = useRef<HTMLDivElement>(null)
-
-  useEffect(() => {
-    setIsMobile(window.innerWidth < 768 || window.matchMedia('(pointer: coarse)').matches)
-  }, [])
 
   useEffect(() => {
     if (isMobile) return

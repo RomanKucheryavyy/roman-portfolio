@@ -1,6 +1,7 @@
 'use client'
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef } from 'react'
 import { useStore } from '@/stores/useStore'
+import { useMediaQuery } from '@/hooks/useMediaQuery'
 
 const TRAIL_COUNT = 3
 
@@ -10,15 +11,15 @@ const TRAIL_COUNT = 3
  * cursor:none only applies under pointer:fine).
  */
 export default function Cursor() {
-  const [isTouch, setIsTouch] = useState(false)
+  // Matches the `@media (pointer: fine)` rule in globals.css that hides the
+  // native cursor. Keying off `ontouchstart` as well used to leave
+  // touch-capable laptops with no cursor at all: hidden by CSS, and the
+  // custom one bailed out.
+  const isTouch = useMediaQuery('(pointer: coarse)')
   const mainRef = useRef<HTMLDivElement>(null)
   const glowRef = useRef<HTMLDivElement>(null)
   const trailRefs = useRef<(HTMLDivElement | null)[]>([])
   const cursorVariant = useStore((s) => s.cursorVariant)
-
-  useEffect(() => {
-    setIsTouch('ontouchstart' in window || window.matchMedia('(pointer: coarse)').matches)
-  }, [])
 
   useEffect(() => {
     if (isTouch) return

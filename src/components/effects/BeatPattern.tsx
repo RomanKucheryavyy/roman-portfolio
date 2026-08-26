@@ -1,5 +1,6 @@
 'use client'
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef } from 'react'
+import { useMediaQuery } from '@/hooks/useMediaQuery'
 
 /**
  * The standard 4/4 conducting diagram — down, inside, outside, up — engraved
@@ -25,11 +26,7 @@ export default function BeatPattern() {
   const trail1Ref = useRef<SVGCircleElement>(null)
   const trail2Ref = useRef<SVGCircleElement>(null)
   const wrapRef = useRef<SVGSVGElement>(null)
-  const [reduced, setReduced] = useState(false)
-
-  useEffect(() => {
-    setReduced(window.matchMedia('(prefers-reduced-motion: reduce)').matches)
-  }, [])
+  const reduced = useMediaQuery('(prefers-reduced-motion: reduce)')
 
   useEffect(() => {
     if (reduced) return

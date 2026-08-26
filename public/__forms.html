@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Form registration</title>
+    <meta name="robots" content="noindex" />
+  </head>
+  <body>
+    <!--
+      This file exists only so Netlify's build-time form detection can find the
+      form. Netlify parses the *static* HTML in the publish directory; the app's
+      page is a client component that renders a loading shell until React mounts,
+      so a form declared inside a React tree is never seen and the form is never
+      registered. That is why submissions used to vanish.
+
+      /api/contact posts here server-side. Keep the field names in sync with
+      src/app/api/contact/route.ts.
+    -->
+    <form name="contact" data-netlify="true" netlify-honeypot="bot-field" hidden>
+      <input type="hidden" name="form-name" value="contact" />
+      <input type="text" name="bot-field" />
+      <input type="text" name="name" />
+      <input type="email" name="email" />
+      <textarea name="message"></textarea>
+    </form>
+  </body>
+</html>
