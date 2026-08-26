@@ -86,6 +86,28 @@ export const PROJECTS = [
     color: '#38BDF8',
   },
   {
+    id: 'eminence-rentals',
+    title: 'Eminence Rentals',
+    url: 'https://eminencerentals.com',
+    image: '/images/projects/eminence-rentals.png',
+    description:
+      'The art of arrival, booked in five steps. Dates, driver details, a digitally signed waiver, identity verification, and a Rolls-Royce at the door — a full rental desk with no paperwork anywhere in it.',
+    tags: ['Web App', 'Booking Flow', 'Full-Stack'],
+    color: '#4F8EFF',
+  },
+  {
+    // No `url` yet — the client still owes a phone number and a WA L&I
+    // registration, and the build refuses production without them.
+    id: 'dtm-plumbing',
+    title: 'DanTheMan Plumbing',
+    status: 'Launching soon',
+    image: '/images/projects/dtm-plumbing.png',
+    description:
+      'One man, one truck, and a number that actually rings him. Behind the sign painting sits a real lead pipeline: every enquiry is stored before an email is even attempted, so a mail outage flags the lead instead of losing the customer.',
+    tags: ['Web Design', 'Lead Pipeline', 'Next.js'],
+    color: '#B23A32',
+  },
+  {
     id: 'fubc-coffee-ios',
     title: 'FUBC Coffee iOS',
     url: 'https://apps.apple.com/us/app/fubc-coffee/id6760352447',

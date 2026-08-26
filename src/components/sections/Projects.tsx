@@ -2,7 +2,7 @@
 import { useCallback, useEffect, useRef, useState, lazy, Suspense, type ComponentType } from 'react'
 import Image from 'next/image'
 import { AnimatePresence, motion, useMotionValue, useTransform } from 'framer-motion'
-import { ChevronUp, ChevronDown, ExternalLink, Smartphone } from 'lucide-react'
+import { ChevronUp, ChevronDown, Clock, ExternalLink, Smartphone } from 'lucide-react'
 import { gsap } from '@/hooks/useGSAP'
 import { useStore } from '@/stores/useStore'
 import { useDeviceCapability } from '@/hooks/useDeviceCapability'
@@ -22,6 +22,10 @@ const SPRING = { type: 'spring', stiffness: 170, damping: 26 } as const
  * rest wait their turn off-stage.
  */
 const STACK_DEPTH = 5
+
+/** Not every piece is public yet; an unbuilt client site has no link to give. */
+const liveUrlOf = (project: Project): string | null => ('url' in project ? project.url : null)
+const statusOf = (project: Project): string | null => ('status' in project ? project.status : null)
 
 function CardMedia({ project, isFront, isMobileDeck }: { project: Project; isFront: boolean; isMobileDeck: boolean }) {
   const isApp = 'isApp' in project && project.isApp
@@ -117,6 +121,8 @@ function DesktopDeck({ onCardClick }: { onCardClick: (index: number) => void }) 
               const brightness = Math.max(0.3, 1 - 0.15 * i)
               const originalIndex = PROJECTS.findIndex((p) => p.id === project.id)
               const isApp = 'isApp' in project && project.isApp
+              const liveUrl = liveUrlOf(project)
+              const status = statusOf(project)
               return (
                 <motion.li
                   key={project.id}
@@ -178,16 +184,23 @@ function DesktopDeck({ onCardClick }: { onCardClick: (index: number) => void }) 
                           </span>
                         ))}
                       </div>
-                      <a
-                        href={project.url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="inline-flex items-center gap-2 font-mono text-sm text-white border border-white/20 px-5 py-2.5 rounded-full hover:bg-white hover:text-black transition-all duration-300 pointer-events-auto"
-                        onClick={(e) => e.stopPropagation()}
-                      >
-                        {isApp ? <Smartphone size={14} /> : <ExternalLink size={14} />}
-                        {isApp ? 'App Store' : 'Visit Site'}
-                      </a>
+                      {liveUrl ? (
+                        <a
+                          href={liveUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-2 font-mono text-sm text-white border border-white/20 px-5 py-2.5 rounded-full hover:bg-white hover:text-black transition-all duration-300 pointer-events-auto"
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          {isApp ? <Smartphone size={14} /> : <ExternalLink size={14} />}
+                          {isApp ? 'App Store' : 'Visit Site'}
+                        </a>
+                      ) : (
+                        <span className="inline-flex items-center gap-2 font-mono text-sm text-white/45 border border-dashed border-white/15 px-5 py-2.5 rounded-full">
+                          <Clock size={14} />
+                          {status ?? 'In development'}
+                        </span>
+                      )}
                     </motion.div>
                   </div>
                 </motion.li>
@@ -268,6 +281,8 @@ function MobileDeck() {
               const brightness = Math.max(0.3, 1 - 0.15 * i)
               const originalIndex = PROJECTS.findIndex((p) => p.id === project.id)
               const isApp = 'isApp' in project && project.isApp
+              const liveUrl = liveUrlOf(project)
+              const status = statusOf(project)
               return (
                 <motion.li
                   key={project.id}
@@ -314,15 +329,22 @@ function MobileDeck() {
                             </span>
                           ))}
                         </div>
-                        <a
-                          href={project.url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="inline-flex items-center gap-2 font-mono text-sm text-white border border-white/20 px-4 py-2 rounded-full active:bg-white active:text-black transition-all duration-300"
-                        >
-                          {isApp ? <Smartphone size={14} /> : <ExternalLink size={14} />}
-                          {isApp ? 'App Store' : 'Visit Site'}
-                        </a>
+                        {liveUrl ? (
+                          <a
+                            href={liveUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center gap-2 font-mono text-sm text-white border border-white/20 px-4 py-2 rounded-full active:bg-white active:text-black transition-all duration-300"
+                          >
+                            {isApp ? <Smartphone size={14} /> : <ExternalLink size={14} />}
+                            {isApp ? 'App Store' : 'Visit Site'}
+                          </a>
+                        ) : (
+                          <span className="inline-flex items-center gap-2 font-mono text-sm text-white/45 border border-dashed border-white/15 px-4 py-2 rounded-full">
+                            <Clock size={14} />
+                            {status ?? 'In development'}
+                          </span>
+                        )}
                       </>
                     )}
                   </div>
