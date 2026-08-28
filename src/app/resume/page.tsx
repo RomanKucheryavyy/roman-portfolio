@@ -341,7 +341,7 @@ export default function ResumeBuilder() {
                   value={resume.summary}
                   rows={4}
                   onChange={(e) => setResume({ ...resume, summary: e.target.value })}
-                  className="w-full bg-white/5 border border-white/10 rounded-lg p-3 text-white text-sm font-body focus:outline-none focus:border-white/30 resize-none transition-colors"
+                  className="w-full bg-white/5 border border-white/10 rounded-lg p-3 text-white text-base md:text-sm font-body focus:outline-none focus:border-white/30 resize-none transition-colors"
                 />
               </Section>
               {resume.experience.map((exp, i) => (
@@ -370,7 +370,7 @@ export default function ResumeBuilder() {
                   onChange={(e) =>
                     setResume({ ...resume, skills: e.target.value.split(',').map((s) => s.trim()).filter(Boolean) })
                   }
-                  className="w-full bg-white/5 border border-white/10 rounded-lg p-3 text-white text-sm font-body focus:outline-none focus:border-white/30 transition-colors"
+                  className="w-full bg-white/5 border border-white/10 rounded-lg p-3 text-white text-base md:text-sm font-body focus:outline-none focus:border-white/30 transition-colors"
                 />
               </Section>
             </div>
@@ -441,7 +441,7 @@ export default function ResumeBuilder() {
                   value={companyName}
                   onChange={(e) => setCompanyName(e.target.value)}
                   placeholder="e.g. Google, Amazon..."
-                  className="w-full bg-white/5 border border-white/10 rounded-lg p-3 text-white text-sm font-body focus:outline-none focus:border-white/30 placeholder:text-white/15 transition-colors"
+                  className="w-full bg-white/5 border border-white/10 rounded-lg p-3 text-white text-base md:text-sm font-body focus:outline-none focus:border-white/30 placeholder:text-white/15 transition-colors"
                 />
               </Section>
               <Section title="Paste Job Description">

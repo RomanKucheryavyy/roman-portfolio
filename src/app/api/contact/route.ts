@@ -20,7 +20,7 @@ import { LINKS, SITE } from '@/lib/constants'
  *      own form notifications), posted to the static /__forms.html that makes
  *      build-time detection work on a Next site.
  *
- * If neither is configured the route says so plainly (502 + `no_channel`) and
+ * If neither delivers, the route returns a 502 rather than a false success, and
  * the client falls back to opening the visitor's mail app with the message
  * pre-filled. Nothing pretends to have succeeded.
  */
@@ -169,13 +169,14 @@ export async function POST(req: Request) {
   const delivered = [emailed && 'email', recorded && 'forms'].filter(Boolean) as string[]
 
   if (!delivered.length) {
-    const configured = Boolean(process.env.RESEND_API_KEY)
+    // The reason belongs in the logs, not the response: which channels exist is
+    // the site owner's business, and the visitor gets the same fallback either way.
     console.error(
-      configured
+      process.env.RESEND_API_KEY
         ? 'contact: every delivery channel failed'
         : 'contact: no delivery channel configured — set RESEND_API_KEY, or register the contact form in Netlify',
     )
-    return NextResponse.json({ error: configured ? 'delivery_failed' : 'no_channel' }, { status: 502 })
+    return NextResponse.json({ error: 'delivery_failed' }, { status: 502 })
   }
 
   return NextResponse.json({ ok: true, delivered })

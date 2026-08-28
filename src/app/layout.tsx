@@ -7,9 +7,12 @@ export const metadata: Metadata = {
   description: SITE.description,
   metadataBase: new URL(SITE.url),
   manifest: '/manifest.json',
+  alternates: { canonical: '/' },
   openGraph: {
     title: SITE.title,
     description: SITE.description,
+    url: SITE.url,
+    siteName: SITE.name,
     type: 'website',
     locale: 'en_US',
   },
@@ -24,8 +27,9 @@ export const metadata: Metadata = {
 export const viewport: Viewport = {
   width: 'device-width',
   initialScale: 1,
-  maximumScale: 1,
-  userScalable: false,
+  // No maximumScale / userScalable: false. Blocking pinch-zoom fails WCAG 1.4.4
+  // and is not the fix for iOS auto-zooming on focus — a 16px field is, which is
+  // why every input on the site is text-base below md.
   themeColor: '#000000',
 }
 

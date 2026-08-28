@@ -64,6 +64,7 @@ function DesktopDeck({ onCardClick }: { onCardClick: (index: number) => void }) 
   const [counter, setCounter] = useState(0)
   const [exitDirection, setExitDirection] = useState<'up' | 'down' | null>(null)
   const [hovered, setHovered] = useState(false)
+  const deckRef = useRef<HTMLDivElement>(null)
   const setCursorVariant = useStore((s) => s.setCursorVariant)
 
   const dragY = useMotionValue(0)
@@ -78,10 +79,39 @@ function DesktopDeck({ onCardClick }: { onCardClick: (index: number) => void }) 
     setCounter((c) => (c - 1 + PROJECTS.length) % PROJECTS.length)
   }, [])
 
+  // Arrow keys drive the deck, but this listener is on the window: it used to
+  // fire while someone was arrowing through the text they were typing into the
+  // contact form, silently shuffling a section they could not even see. Only
+  // act when the deck is actually on screen and the keypress is not going into
+  // a field.
   useEffect(() => {
+    const isTyping = (target: EventTarget | null) => {
+      const el = target as HTMLElement | null
+      if (!el?.tagName) return false
+      return (
+        el.tagName === 'INPUT' ||
+        el.tagName === 'TEXTAREA' ||
+        el.tagName === 'SELECT' ||
+        el.isContentEditable
+      )
+    }
+
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'ArrowUp' || e.key === 'ArrowLeft') prev()
-      if (e.key === 'ArrowDown' || e.key === 'ArrowRight') next()
+      if (isTyping(e.target)) return
+      if (e.metaKey || e.ctrlKey || e.altKey) return
+      const deck = deckRef.current
+      if (!deck) return
+      const { top, bottom } = deck.getBoundingClientRect()
+      if (bottom < 0 || top > window.innerHeight) return
+
+      if (e.key === 'ArrowUp' || e.key === 'ArrowLeft') {
+        e.preventDefault()
+        prev()
+      }
+      if (e.key === 'ArrowDown' || e.key === 'ArrowRight') {
+        e.preventDefault()
+        next()
+      }
     }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
@@ -113,7 +143,7 @@ function DesktopDeck({ onCardClick }: { onCardClick: (index: number) => void }) 
         <ChevronUp className="w-5 h-5 text-white/60" />
       </motion.button>
 
-      <div className="relative w-[85vw] sm:w-[75vw] md:w-[60vw] lg:w-[50vw] xl:w-[44vw] aspect-[16/10] overflow-visible">
+      <div ref={deckRef} className="relative w-[85vw] sm:w-[75vw] md:w-[60vw] lg:w-[50vw] xl:w-[44vw] aspect-[16/10] overflow-visible">
         <ul className="relative w-full h-full m-0 p-0">
           <AnimatePresence>
             {deck.slice(0, STACK_DEPTH).map((project, i) => {
