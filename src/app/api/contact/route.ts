@@ -105,6 +105,13 @@ async function sendViaResend({ name, email, message }: Payload): Promise<boolean
  * Records the submission in Netlify Forms. Posting to the published
  * /__forms.html is the documented way to use Netlify Forms from a Next app —
  * that static file is what build-time form detection actually reads.
+ *
+ * Confirmed against production: Netlify answers this with its "Thank you!"
+ * page and the submission appears under Forms > contact. Two prerequisites are
+ * easy to miss, and both look identical to a code bug from here — form
+ * detection has to be enabled for the site, and a deploy has to run after it
+ * is enabled, or the parser never sees __forms.html and this POST falls
+ * through to the Next handler as a 404.
  */
 async function recordInNetlifyForms({ name, email, message }: Payload): Promise<boolean> {
   // Netlify sets URL/DEPLOY_PRIME_URL; nothing else does. Without one of them we
