@@ -5,7 +5,8 @@ import { useStore } from '@/stores/useStore'
 import { useParallax } from '@/hooks/useParallax'
 import { useGyroParallax } from '@/hooks/useGyroParallax'
 import { useDeviceCapability } from '@/hooks/useDeviceCapability'
-import TerrainScene from '@/components/canvas/TerrainScene'
+import { useMediaQuery } from '@/hooks/useMediaQuery'
+import FftOcean from '@/components/ui/fft-ocean'
 import Starfield from '@/components/canvas/Starfield'
 import FloatingLetters from '@/components/effects/FloatingLetters'
 import MagneticButton from '@/components/ui/MagneticButton'
@@ -24,7 +25,8 @@ export default function Hero() {
   const lastNameRef = useParallax(12)
   const isLoaded = useStore((s) => s.isLoaded)
   const setCursorVariant = useStore((s) => s.setCursorVariant)
-  const { isMobile } = useDeviceCapability()
+  const { isMobile, isLowEnd } = useDeviceCapability()
+  const reduceMotion = useMediaQuery('(prefers-reduced-motion: reduce)')
   const gyroRef = useGyroParallax({ maxOffset: 12 })
 
   useEffect(() => {
@@ -58,9 +60,19 @@ export default function Hero() {
       id="hero"
       className="relative min-h-svh flex flex-col items-center justify-center px-6 overflow-hidden"
     >
-      {/* WebGL terrain waves */}
+      {/* FFT ocean. The simulation is ~16 render-target passes a frame before
+          the water is even drawn, so the weaker tier gets a quarter of the
+          spectrum and half the mesh. Keyed off isLowEnd rather than isMobile so
+          a four-year-old laptop is treated like the phone it performs like.
+          Reduced motion gets one still frame of the same sea. */}
       <div className="absolute inset-0 z-0">
-        <TerrainScene />
+        <FftOcean
+          size={isLowEnd ? 128 : 256}
+          segments={isLowEnd ? 128 : 288}
+          patchSize={isLowEnd ? 48 : 64}
+          maxPixelRatio={isLowEnd ? 1.5 : 1.75}
+          staticFrame={reduceMotion}
+        />
       </div>
 
       {/* CSS volumetric spotlight beams — one on phones, three on desktop */}
