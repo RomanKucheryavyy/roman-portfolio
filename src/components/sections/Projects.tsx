@@ -1,8 +1,9 @@
 'use client'
 import { useCallback, useEffect, useRef, useState, lazy, Suspense, type ComponentType } from 'react'
 import Image from 'next/image'
+import Link from 'next/link'
 import { AnimatePresence, motion, useMotionValue, useTransform } from 'framer-motion'
-import { ChevronUp, ChevronDown, Clock, ExternalLink, Smartphone } from 'lucide-react'
+import { ArrowUpRight, ChevronUp, ChevronDown, Clock, ExternalLink, Smartphone } from 'lucide-react'
 import { gsap } from '@/hooks/useGSAP'
 import { useStore } from '@/stores/useStore'
 import { useDeviceCapability } from '@/hooks/useDeviceCapability'
@@ -456,6 +457,14 @@ export default function Projects() {
           <p data-reveal className="text-white/40 max-w-lg">
             {isMobile ? 'Swipe through the setlist.' : 'Drag through the setlist. Click any piece to hear its story.'}
           </p>
+          <Link
+            data-reveal
+            href="/works"
+            className="mt-4 inline-flex items-center gap-2 font-mono text-[11px] tracking-wider text-white/35 transition-colors hover:text-white/70"
+          >
+            open the whole setlist
+            <ArrowUpRight size={12} />
+          </Link>
         </div>
         <div className="flex-1 flex items-center justify-center px-4 pt-8">
           {isMobile ? <MobileDeck /> : <DesktopDeck onCardClick={setProjectIndex} />}

@@ -28,6 +28,17 @@
   --radius-xl: 24px;
   --radius-2xl: 1rem;
   --radius-full: 9999px;
+
+  /* shadcn's semantic names, pointed at this site's palette rather than
+     shadcn's defaults. Components written for that ecosystem style themselves
+     against bg-background / text-foreground / bg-muted, which resolve to
+     nothing without these — a card would render as a transparent rectangle and
+     its type would inherit whatever sat behind it. This site is dark-only, so
+     there is one set of values, not a light pair and a dark override. */
+  --color-background: #000;
+  --color-foreground: #fff;
+  --color-muted: #0a0a0a;
+  --color-muted-foreground: #ffffff59;
 }
 
 /* ── Semantic design tokens ── */
