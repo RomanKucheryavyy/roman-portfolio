@@ -1,3 +1,6 @@
+import { CERTIFICATIONS } from '@/lib/constants'
+import { CURRENT_ROLE, EDUCATION, PREVIOUS_ROLES, resumeDates, roleTitle, type Role } from '@/lib/site-facts'
+
 export interface ResumeData {
   name: string
   location: string
@@ -14,6 +17,18 @@ export interface ResumeData {
   projects: { name: string; tech: string; bullets: string[] }[]
 }
 
+/**
+ * Titles, dates and certifications come from site-facts.ts and constants.ts,
+ * the same records the public pages read, so the résumé and the site cannot
+ * drift apart. Only the résumé's own prose (summary, bullets, skills,
+ * projects) and its private lines are typed here.
+ */
+const [GOV_CLOUD, MINDTREE] = PREVIOUS_ROLES
+const [UW_TACOMA, HIGHLINE] = EDUCATION
+
+/** The résumé names a contractor's client in brackets: "MindTree (supporting …)". */
+const employer = (role: Role) => (role.note ? `${role.company} (${role.note})` : role.company)
+
 export const RESUME_DATA: ResumeData = {
   name: 'Roman Kucheryavyy',
   location: 'Auburn, WA 98092',
@@ -26,10 +41,10 @@ export const RESUME_DATA: ResumeData = {
     'Senior Technical Support Engineer at Salesforce (Signature Success) supporting Fortune 500 and strategic enterprise customers — 1,200+ cases at a 4.9/5.0 CSAT. 8x Salesforce certified with a BS in Computer Science, and a builder of AI-powered products — multi-agent systems on the Claude API. Deep expertise in Apex, Sales Cloud, and the Agentforce agentic AI stack.',
   experience: [
     {
-      company: 'Salesforce',
+      company: employer(CURRENT_ROLE),
       location: 'Bellevue, WA',
-      title: 'Senior Technical Support Engineer — Signature Success',
-      dates: 'April 2026 – Present',
+      title: roleTitle(CURRENT_ROLE, ' — '),
+      dates: resumeDates(CURRENT_ROLE),
       bullets: [
         "Single point of technical accountability for Salesforce's most strategic Signature-tier enterprise customers — 1,214 cases closed since joining Salesforce at a 4.9/5.0 average CSAT, 0% SLA misses, and 119% of productivity target.",
         'Resolve complex multi-org Sales Cloud issues — Apex, SOQL, API integrations, governor limits — and lead root cause analysis on SEV-1 production incidents.',
@@ -38,10 +53,10 @@ export const RESUME_DATA: ResumeData = {
       ],
     },
     {
-      company: 'Salesforce',
+      company: employer(GOV_CLOUD),
       location: 'Bellevue, WA',
-      title: 'Premier Technical Support Engineer — Government Cloud',
-      dates: 'November 2023 – April 2026',
+      title: roleTitle(GOV_CLOUD, ' — '),
+      dates: resumeDates(GOV_CLOUD),
       bullets: [
         'Delivered premier-level support for Salesforce Government Cloud customers within strict public-sector SLAs, covering 9 product areas including Security, Data Cloud, CRM Analytics, Developer Support, and Sales Engagement.',
         'Escalated and remediated high-priority (SEV-1) incidents in partnership with engineering, security, and product teams.',
@@ -49,39 +64,30 @@ export const RESUME_DATA: ResumeData = {
       ],
     },
     {
-      company: 'MindTree (supporting Microsoft service partners)',
+      company: employer(MINDTREE),
       location: 'Bellevue, WA',
-      title: 'Technical Support Engineer',
-      dates: 'May 2021 – November 2023',
+      title: roleTitle(MINDTREE, ' — '),
+      dates: resumeDates(MINDTREE),
       bullets: [
         'Supported federal government agencies using Microsoft products, creating and resolving support tickets within defined SLAs.',
         'Partnered with internal Microsoft support and operations teams to identify and resolve systemic faults.',
       ],
     },
   ],
-  certifications: [
-    { name: 'Platform Developer I', date: 'Jul 2025' },
-    { name: 'Data Cloud Consultant', date: 'Mar 2025' },
-    { name: 'AI Specialist', date: 'Nov 2024' },
-    { name: 'Sales Cloud Consultant', date: 'Aug 2024' },
-    { name: 'Advanced Administrator', date: 'Apr 2024' },
-    { name: 'AI Associate', date: 'Apr 2024' },
-    { name: 'Platform App Builder', date: 'Jan 2024' },
-    { name: 'Administrator', date: 'Dec 2023' },
-  ],
+  certifications: CERTIFICATIONS.map(({ name, date }) => ({ name, date })),
   education: [
     {
       school: 'University of Washington',
       location: 'Tacoma, WA',
       degree: 'BS, Computer Science and Systems',
-      dates: '2018 – 2020',
+      dates: `${UW_TACOMA.start} – ${UW_TACOMA.end}`,
       gpa: '3.7',
     },
     {
       school: 'Highline College',
       location: 'Des Moines, WA',
       degree: 'AA, Computer Science',
-      dates: '2016 – 2018',
+      dates: `${HIGHLINE.start} – ${HIGHLINE.end}`,
       gpa: '3.58',
     },
   ],
