@@ -1,5 +1,14 @@
 import { clsx, type ClassValue } from 'clsx'
-import { twMerge } from 'tailwind-merge'
+import { extendTailwindMerge } from 'tailwind-merge'
+
+/**
+ * tailwind-merge only knows Tailwind's own font-size names. Without this it
+ * reads `text-label` as a colour, and `cn('text-label text-white/50')` would
+ * silently drop one of the two.
+ */
+const twMerge = extendTailwindMerge({
+  extend: { theme: { text: ['label', 'small', 'body', 'lead'] } },
+})
 
 /**
  * The shadcn class helper. Components from that ecosystem expect it at

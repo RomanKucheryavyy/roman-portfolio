@@ -8,6 +8,19 @@
 
   --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
 
+  /* The text scale: four named steps for everything that is read rather than
+     displayed. Display type (headings, card titles) keeps Tailwind's ramp
+     from text-2xl up. Nothing a visitor is meant to read goes below
+     text-label. */
+  --text-label: 0.75rem;
+  --text-label--line-height: 1rem;
+  --text-small: 0.875rem;
+  --text-small--line-height: 1.375rem;
+  --text-body: 1rem;
+  --text-body--line-height: 1.625rem;
+  --text-lead: 1.25rem;
+  --text-lead--line-height: 1.75rem;
+
   --color-pure-white: #fff;
   --color-spectrum-red: #ff2d55;
   --color-spectrum-orange: #ff6b35;
