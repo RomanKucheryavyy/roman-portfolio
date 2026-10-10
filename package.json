@@ -8,7 +8,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint .",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "test:e2e": "playwright test"
   },
   "keywords": [],
   "author": "",
@@ -42,9 +43,14 @@
     "zustand": "^5.0.12"
   },
   "devDependencies": {
+    "@axe-core/playwright": "4.13.0",
     "@netlify/plugin-nextjs": "^5.15.9",
+    "@playwright/test": "1.56.1",
     "@types/three": "^0.183.1",
     "eslint": "^9.39.4",
     "eslint-config-next": "^16.2.0"
+  },
+  "overrides": {
+    "playwright-core": "1.56.1"
   }
 }
