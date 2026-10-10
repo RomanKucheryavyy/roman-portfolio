@@ -1,6 +1,8 @@
 export const SITE = {
   name: 'Roman Kucheryavyy',
-  title: 'Roman Kucheryavyy — Orchestrating Logic & Art',
+  // His own hero words (Hero.tsx: "Salesforce engineer by day. Full-stack
+  // builder by nature."). needs Roman: confirm.
+  title: 'Roman Kucheryavyy — Salesforce engineer & full-stack builder',
   description:
     'Salesforce engineer, full-stack developer, and band conductor building at the intersection of precision and creativity.',
   url: 'https://romankucheryavyy.com',
