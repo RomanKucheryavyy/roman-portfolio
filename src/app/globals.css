@@ -233,10 +233,13 @@ canvas { touch-action: pan-y; }
 }
 
 /* ── Section label with trailing hairline ── */
+/* One line, always: three of the five kickers used to wrap onto a second line
+   at 390px. The hairline is the part that gives way — it shrinks first. */
 .section-label {
   display: flex;
   align-items: center;
   gap: 1rem;
+  white-space: nowrap;
 }
 .section-label::after {
   content: '';
