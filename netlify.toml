@@ -14,10 +14,12 @@
 [[plugins]]
   package = "@netlify/plugin-nextjs"
 
-# public/images/* filenames carry no content hash, so the default
-# max-age=0,must-revalidate made every visit re-ask for every screenshot the
-# /works wheel loads raw. A day fresh, a week stale-while-revalidate: a
-# re-captured screenshot still shows up within a day.
+# public/images/* filenames carry no content hash, so they are served
+# max-age=0,must-revalidate by default and every direct request for one is a
+# round trip. The pages reach them through /_next/image today, which caches
+# its own output; this covers the originals themselves, for anything that
+# asks for one directly or loads one raw later. A day fresh, a week
+# stale-while-revalidate: a re-captured screenshot still shows up within a day.
 [[headers]]
   for = "/images/*"
   [headers.values]
