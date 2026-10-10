@@ -1,3 +1,5 @@
+import { CERT_VERIFY } from '@/lib/site-facts'
+
 export const SITE = {
   name: 'Roman Kucheryavyy',
   // His own hero words (Hero.tsx: "Salesforce engineer by day. Full-stack
@@ -14,16 +16,31 @@ export const LINKS = {
   email: 'kucheryavyyroman@gmail.com',
 } as const
 
-export const CERTIFICATIONS = [
-  { id: 'pd1', name: 'Platform Developer I', short: 'PD1', date: 'Jul 2025', category: 'developer' },
-  { id: 'dcc', name: 'Data Cloud Consultant', short: 'DCC', date: 'Mar 2025', category: 'consultant' },
-  { id: 'ais', name: 'AI Specialist', short: 'AIS', date: 'Nov 2024', category: 'ai' },
-  { id: 'scc', name: 'Sales Cloud Consultant', short: 'SCC', date: 'Aug 2024', category: 'consultant' },
-  { id: 'scaa', name: 'Advanced Administrator', short: 'SCAA', date: 'Apr 2024', category: 'admin' },
-  { id: 'aia', name: 'AI Associate', short: 'AIA', date: 'Apr 2024', category: 'ai' },
-  { id: 'pab', name: 'Platform App Builder', short: 'PAB', date: 'Jan 2024', category: 'developer' },
-  { id: 'sca', name: 'Administrator', short: 'SCA', date: 'Dec 2023', category: 'admin' },
-] as const
+export interface Certification {
+  id: string
+  name: string
+  short: string
+  date: string
+  category: 'developer' | 'consultant' | 'ai' | 'admin'
+  /** A public page that proves it. Set from CERT_VERIFY in site-facts.ts, which
+   *  is empty until Roman supplies the links; a card links nothing without one.
+   *  needs Roman: confirm. */
+  verifyUrl?: string
+}
+
+/** The one list of Roman's certifications. The résumé and every count on the site read it. */
+export const CERTIFICATIONS: readonly Certification[] = (
+  [
+    { id: 'pd1', name: 'Platform Developer I', short: 'PD1', date: 'Jul 2025', category: 'developer' },
+    { id: 'dcc', name: 'Data Cloud Consultant', short: 'DCC', date: 'Mar 2025', category: 'consultant' },
+    { id: 'ais', name: 'AI Specialist', short: 'AIS', date: 'Nov 2024', category: 'ai' },
+    { id: 'scc', name: 'Sales Cloud Consultant', short: 'SCC', date: 'Aug 2024', category: 'consultant' },
+    { id: 'scaa', name: 'Advanced Administrator', short: 'SCAA', date: 'Apr 2024', category: 'admin' },
+    { id: 'aia', name: 'AI Associate', short: 'AIA', date: 'Apr 2024', category: 'ai' },
+    { id: 'pab', name: 'Platform App Builder', short: 'PAB', date: 'Jan 2024', category: 'developer' },
+    { id: 'sca', name: 'Administrator', short: 'SCA', date: 'Dec 2023', category: 'admin' },
+  ] as const
+).map((cert) => (CERT_VERIFY[cert.id] ? { ...cert, verifyUrl: CERT_VERIFY[cert.id] } : cert))
 
 /** Client work & shipped products — performed in The Symphony deck. */
 export const PROJECTS = [
