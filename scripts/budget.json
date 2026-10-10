@@ -1,0 +1,31 @@
+{
+  "note": "First-load JS per route, uncompressed bytes, from .next/diagnostics/route-bundle-stats.json. Each budget is the measured value +2%; ratchet down as work lands (W12). Routes without an entry get defaultRouteBudget. Checked by scripts/check-bundle-budget.mjs (npm run budget).",
+  "fontsSelfHosted": false,
+  "defaultRouteBudget": 541193,
+  "routes": {
+    "/": 1416062,
+    "/works": 541193,
+    "/resume": 496320,
+    "/_not-found": 466309
+  },
+  "measured": {
+    "date": "2026-10-10",
+    "next": "16.4.0",
+    "routes": {
+      "/": 1388296,
+      "/works": 530581,
+      "/resume": 486588,
+      "/_not-found": 457165
+    },
+    "before": {
+      "next": "16.2.0",
+      "commit": "abb0023",
+      "routes": {
+        "/": 1448843,
+        "/works": 589114,
+        "/resume": 544598,
+        "/_not-found": 513795
+      }
+    }
+  }
+}
