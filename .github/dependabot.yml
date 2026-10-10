@@ -11,6 +11,10 @@ updates:
       # Next and its lint config move together, in their own PR: a Next minor
       # can change Turbopack chunking and metadata merging, so it gets its own
       # review instead of riding along with routine bumps.
+      # eslint-config-next is pinned exactly at 16.3.8: 16.4 brings
+      # eslint-plugin-react-hooks 7.1, whose set-state-in-effect rule errors on
+      # resume/page.tsx and Compose.tsx. Its bump goes red on lint until those
+      # two effects are rewritten; merge it with that fix, not before.
       next:
         patterns:
           - next
