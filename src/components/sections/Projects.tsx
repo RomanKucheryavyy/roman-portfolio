@@ -384,7 +384,9 @@ export default function Projects() {
 
   useEffect(() => {
     if (!isMobile) {
-      import('@/components/sections/ProjectModal').then((m) => setModal(() => m.default))
+      import('@/components/sections/ProjectModal')
+        .then((m) => setModal(() => m.default))
+        .catch((e) => console.info('[detail] unavailable', e))
     }
   }, [isMobile])
 
