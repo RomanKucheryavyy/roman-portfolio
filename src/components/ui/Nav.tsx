@@ -160,7 +160,7 @@ export default function Nav() {
       animate={isLoaded ? { y: 0, opacity: 1 } : {}}
       transition={{ type: 'spring', stiffness: 200, damping: 30, delay: 0.3 }}
     >
-      <nav className="px-4 py-2 md:px-4 lg:px-5 md:py-2 lg:py-2.5 flex items-center justify-between rounded-2xl border border-white/[0.06] w-full bg-black/70 backdrop-blur-xl shadow-[inset_0_1px_0_rgba(255,255,255,0.06),0_8px_32px_rgba(0,0,0,0.4)]">
+      <nav className="px-4 py-2 md:px-4 lg:px-5 md:py-2 lg:py-2.5 flex items-center justify-between rounded-xl border border-white/[0.06] w-full bg-black/70 backdrop-blur-xl shadow-[inset_0_1px_0_rgba(255,255,255,0.06),0_8px_32px_rgba(0,0,0,0.4)]">
         <a
           href="#"
           className="font-display font-bold text-sm md:text-base tracking-tight text-white cursor-pointer relative z-20"

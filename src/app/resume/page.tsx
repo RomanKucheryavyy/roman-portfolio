@@ -44,7 +44,7 @@ function PinGate({ onUnlock }: { onUnlock: (pin: string) => void }) {
   return (
     <div className="min-h-screen bg-black flex items-center justify-center px-6">
       <div className="w-full max-w-sm text-center">
-        <div className="w-16 h-16 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center mx-auto mb-8">
+        <div className="w-16 h-16 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center mx-auto mb-8">
           <Lock size={24} className="text-white/40" />
         </div>
         <h1 className="font-display text-2xl font-bold text-white mb-2">Resume Builder</h1>

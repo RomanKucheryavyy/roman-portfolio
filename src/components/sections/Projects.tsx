@@ -157,7 +157,7 @@ function DesktopDeck({ onCardClick }: { onCardClick: (index: number) => void }) 
               return (
                 <motion.li
                   key={project.id}
-                  className="absolute w-full h-full list-none overflow-hidden rounded-2xl border border-white/10"
+                  className="absolute w-full h-full list-none overflow-hidden rounded-xl border border-white/10"
                   style={{
                     cursor: isFront ? 'grab' : 'auto',
                     touchAction: 'none',
@@ -185,7 +185,7 @@ function DesktopDeck({ onCardClick }: { onCardClick: (index: number) => void }) 
                   onClick={() => { if (isFront) onCardClick(originalIndex) }}
                 >
                   {/* un-transformed wrapper so rounded clipping survives the 3D rotateX */}
-                  <div className="absolute inset-0 overflow-hidden rounded-2xl">
+                  <div className="absolute inset-0 overflow-hidden rounded-xl">
                     <CardMedia project={project} isFront={isFront} isMobileDeck={false} />
                     {!isApp && (
                       <div
@@ -317,7 +317,7 @@ function MobileDeck() {
               return (
                 <motion.li
                   key={project.id}
-                  className="absolute w-full h-full list-none overflow-hidden rounded-2xl border border-white/10"
+                  className="absolute w-full h-full list-none overflow-hidden rounded-xl border border-white/10"
                   style={{
                     touchAction: 'pan-y',
                     boxShadow: isFront ? '0 20px 40px rgba(0,0,0,0.6)' : '0 10px 20px rgba(0,0,0,0.3)',
@@ -339,7 +339,7 @@ function MobileDeck() {
                   onDragEnd={handleDragEnd}
                   whileDrag={isFront ? { zIndex: STACK_DEPTH + 1, scale: 1.02 } : {}}
                 >
-                  <div className="absolute inset-0 overflow-hidden rounded-2xl">
+                  <div className="absolute inset-0 overflow-hidden rounded-xl">
                     <CardMedia project={project} isFront={isFront} isMobileDeck />
                     <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent pointer-events-none" />
                   </div>

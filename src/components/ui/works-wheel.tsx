@@ -340,7 +340,7 @@ export function WorksWheel({
                     marginTop: -metrics.cardH / 2,
                   }}
                 >
-                  <span className="bg-muted shadow-foreground/12 relative block size-full overflow-hidden rounded-lg shadow-[0_18px_40px_-18px_var(--tw-shadow-color)]">
+                  <span className="bg-muted shadow-foreground/12 relative block size-full overflow-hidden rounded-xl shadow-[0_18px_40px_-18px_var(--tw-shadow-color)]">
                     {/* eslint-disable-next-line @next/next/no-img-element -- the
                         card is sized from a measured stage and transformed every
                         frame; next/image's fill wrapper fights both. */}
