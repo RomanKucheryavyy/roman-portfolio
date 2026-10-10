@@ -115,7 +115,9 @@ export const RESUME_DATA: ResumeData = {
       name: 'FUBC Coffee iOS App',
       tech: 'Swift, SwiftUI, Firebase, Supabase',
       bullets: [
-        'Published a native ordering app with real-time orders, push notifications, and digital loyalty cards — 5.0-star App Store rating across 11 reviews.',
+        // App Store userRatingCount counts ratings, not written reviews. 5.0 from 11
+        // per iTunes Lookup id6760352447, checked 2026-10-10. needs Roman: confirm.
+        'Published a native ordering app with real-time orders, push notifications, and digital loyalty cards — 5.0 stars from 11 App Store ratings (as of Oct 2026).',
       ],
     },
     {
