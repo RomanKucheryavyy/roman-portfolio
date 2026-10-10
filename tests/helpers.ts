@@ -77,14 +77,30 @@ export function collectConsole(page: Page, allow: RegExp[] = []): ConsoleLog {
   }
 }
 
-/** Scrolls the whole page with wheel events so every lazy section mounts. */
+/** Scrolls the whole page with wheel events so every lazy section mounts,
+ *  then waits for Lenis's smoothing to come to rest. */
 export async function wheelThrough(page: Page, step = 700, pause = 250) {
   const height = await page.evaluate(() => document.documentElement.scrollHeight)
   for (let y = 0; y < height; y += step) {
     await page.mouse.wheel(0, step)
     await sleep(pause)
   }
-  await sleep(1000)
+  await waitForScrollIdle(page)
+}
+
+/** Resolves once scrollY has not moved for half a second (or after `timeout`). */
+export async function waitForScrollIdle(page: Page, timeout = 5000) {
+  const start = Date.now()
+  let last = await page.evaluate(() => window.scrollY)
+  let still = 0
+  while (still < 5 && Date.now() - start < timeout) {
+    await sleep(100)
+    const now = await page.evaluate(() => window.scrollY)
+    still = now === last ? still + 1 : 0
+    last = now
+  }
+  // ScrollTrigger scrubs trail the scroll by up to half a second.
+  await sleep(600)
 }
 
 type RGBA = [number, number, number, number]

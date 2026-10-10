@@ -1,4 +1,4 @@
-import { readFileSync, writeFileSync } from 'node:fs'
+import { mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
 import path from 'node:path'
 import AxeBuilder from '@axe-core/playwright'
 import { expect, test, type Page } from '@playwright/test'
@@ -11,15 +11,42 @@ import { gotoHome, wheelThrough } from './helpers'
  * be lowered in the same PR that earned it. The end state (W12) is an empty
  * baseline.
  *
- * To re-record: A11Y_RECORD=1 npx playwright test tests/a11y.spec.ts --workers=1
- * (one worker, because every test rewrites the same file).
+ * Counts on / jitter by a node or two between runs: axe scrolls each element
+ * into view to sample its background, and the fixed nav or a scrubbing
+ * SectionTransition caption sometimes covers it (axe then files it under
+ * "incomplete", not "violations"). So the baseline holds the highest count
+ * seen over several runs, not one sample.
+ *
+ * To re-record: A11Y_RECORD=1 npx playwright test tests/a11y.spec.ts
+ * (replaces each entry), then A11Y_RECORD=max with the same command two or
+ * three more times (keeps the highest count per rule).
  */
 
 type Counts = Record<string, number>
 type Baseline = Record<string, Record<string, Counts>>
 
 const BASELINE_FILE = path.join(process.cwd(), 'tests', 'a11y-baseline.json')
-const RECORD = process.env.A11Y_RECORD === '1'
+const RECORD = process.env.A11Y_RECORD
+
+/** Workers record in parallel; a directory is the cheapest atomic lock. */
+function withBaselineLock(fn: () => void) {
+  const lock = `${BASELINE_FILE}.lock`
+  const deadline = Date.now() + 10_000
+  for (;;) {
+    try {
+      mkdirSync(lock)
+      break
+    } catch {
+      if (Date.now() > deadline) throw new Error(`a11y baseline lock is stuck: remove ${lock}`)
+      Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, 20)
+    }
+  }
+  try {
+    fn()
+  } finally {
+    rmSync(lock, { recursive: true, force: true })
+  }
+}
 
 const ROUTES: { name: string; path: string; ready: (page: Page) => Promise<void> }[] = [
   {
@@ -41,7 +68,6 @@ const readBaseline = (): Baseline => JSON.parse(readFileSync(BASELINE_FILE, 'utf
 for (const route of ROUTES) {
   test(`axe: ${route.path} has no serious or critical violations above the baseline`, async ({ page }) => {
     const project = test.info().project.name
-    if (RECORD && test.info().config.workers > 1) throw new Error('Record the a11y baseline with --workers=1')
 
     await route.ready(page)
     const results = await new AxeBuilder({ page }).analyze()
@@ -52,9 +78,13 @@ for (const route of ROUTES) {
     }
 
     if (RECORD) {
-      const baseline = readBaseline()
-      baseline[project] = { ...baseline[project], [route.name]: observed }
-      writeFileSync(BASELINE_FILE, JSON.stringify(baseline, null, 2) + '\n')
+      withBaselineLock(() => {
+        const baseline = readBaseline()
+        const entry: Counts = RECORD === 'max' ? { ...baseline[project]?.[route.name] } : {}
+        for (const [id, n] of Object.entries(observed)) entry[id] = Math.max(entry[id] ?? 0, n)
+        baseline[project] = { ...baseline[project], [route.name]: entry }
+        writeFileSync(BASELINE_FILE, JSON.stringify(baseline, null, 2) + '\n')
+      })
       return
     }
 

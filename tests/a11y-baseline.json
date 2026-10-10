@@ -15,7 +15,7 @@
   },
   "mobile": {
     "home": {
-      "color-contrast": 25,
+      "color-contrast": 26,
       "link-name": 2,
       "scrollable-region-focusable": 1
     },
