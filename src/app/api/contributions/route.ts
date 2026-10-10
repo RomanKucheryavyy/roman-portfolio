@@ -67,6 +67,10 @@ export async function GET() {
 
     return NextResponse.json({ user: USER, total, approximate: !haveCounts, weeks: weekList })
   } catch (err) {
+    // At runtime a failed refresh must throw: Next then keeps serving the last
+    // good cached payload instead of caching an empty staff for six hours. Only
+    // the build, which has no previous payload, falls back to an empty one.
+    if (process.env.NEXT_PHASE !== 'phase-production-build') throw err
     console.error('contributions fetch failed:', err)
     return NextResponse.json({ user: USER, total: null, approximate: true, weeks: [] }, { status: 200 })
   }
