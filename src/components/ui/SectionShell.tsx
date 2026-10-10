@@ -110,7 +110,7 @@ export function SectionHeader({ movement, kicker, title, intro, children, classN
         )}
       </h2>
       {intro && (
-        <p data-reveal className="mt-4 max-w-lg text-body text-white/40">
+        <p data-reveal className="mt-4 max-w-lg text-body text-ink-meta">
           {intro}
         </p>
       )}
