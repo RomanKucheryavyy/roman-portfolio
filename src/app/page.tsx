@@ -5,6 +5,7 @@ import { gsap, ScrollTrigger } from '@/hooks/useGSAP'
 import { useMouseTracking } from '@/hooks/useMouseVelocity'
 import { useIsHydrated } from '@/hooks/useMediaQuery'
 import { useStore } from '@/stores/useStore'
+import { setLenis } from '@/lib/lenis'
 import DynamicFavicon from '@/components/effects/DynamicFavicon'
 import AmbientBackground from '@/components/effects/AmbientBackground'
 import ScrollProgress from '@/components/effects/ScrollProgress'
@@ -38,6 +39,7 @@ function AppContent() {
       easing: (t: number) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
       touchMultiplier: 2,
     })
+    setLenis(lenis)
     let smoothed = 0
     lenis.on('scroll', (e: { velocity: number; progress: number }) => {
       ScrollTrigger.update()
@@ -51,6 +53,7 @@ function AppContent() {
     gsap.ticker.lagSmoothing(0)
     return () => {
       gsap.ticker.remove(raf)
+      setLenis(null)
       lenis.destroy()
     }
   }, [setScrollVelocity, setScrollProgress])

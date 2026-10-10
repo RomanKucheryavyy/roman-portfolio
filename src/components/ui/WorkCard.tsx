@@ -44,7 +44,12 @@ const FRAME = 'group/card relative overflow-hidden rounded-xl border border-whit
 const COUNTER = 'font-mono text-label tracking-wider text-white/50'
 const TITLE = 'font-display font-black leading-[0.9] tracking-tighter text-white'
 const BODY = 'text-small leading-relaxed text-white/70'
-const SCRIM = 'pointer-events-none absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent'
+const SCRIM = {
+  overlay: 'pointer-events-none absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent',
+  // Ends in the card's own colour, so the screenshot melts into the details
+  // panel below it instead of stopping at a visible seam.
+  stacked: 'pointer-events-none absolute inset-0 bg-gradient-to-t from-[#0a0a0a] via-black/40 to-transparent',
+}
 
 const TITLE_SIZE: Record<WorkCardSize, string> = {
   sm: 'text-base',
@@ -72,9 +77,10 @@ function altOf(work: Work) {
  * The screenshot, its brand-colour wash and the scrim. Every source PNG is
  * 1280×800, so the frame is 16/10 everywhere and no surface crops one.
  */
-function Screenshot({ work, media, sizes, loading }: {
+function Screenshot({ work, media, sizes, loading, scrim }: {
   work: Work
   media?: ReactNode
+  scrim: keyof typeof SCRIM
   sizes: string
   loading?: 'eager' | 'lazy'
 }) {
@@ -98,7 +104,7 @@ function Screenshot({ work, media, sizes, loading }: {
           style={{ backgroundColor: work.color }}
         />
       )}
-      <div aria-hidden="true" className={SCRIM} />
+      <div aria-hidden="true" className={SCRIM[scrim]} />
     </>
   )
 }
@@ -140,7 +146,9 @@ export default function WorkCard({
 
   if (!work.image && !media) return <TextCard work={work} counter={counter} Title={Title} className={className} style={style} />
 
-  const screenshot = <Screenshot work={work} media={media} sizes={imageSizes} loading={imageLoading} />
+  const screenshot = (
+    <Screenshot work={work} media={media} sizes={imageSizes} loading={imageLoading} scrim={layout} />
+  )
 
   if (layout === 'overlay') {
     return (

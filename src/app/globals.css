@@ -135,6 +135,16 @@ canvas { touch-action: pan-y; }
 @keyframes blink { 0%,100% { opacity:1; } 50% { opacity:0; } }
 .animate-progress { animation: progress-bar 2s ease-in-out forwards; }
 
+/* ── Dialog (Radix sets data-state; it waits for the closing animation) ── */
+@keyframes dialog-fade-in { from { opacity: 0; } to { opacity: 1; } }
+@keyframes dialog-fade-out { from { opacity: 1; } to { opacity: 0; } }
+@keyframes dialog-rise { from { opacity: 0; transform: translateY(24px) scale(0.98); } to { opacity: 1; transform: none; } }
+@keyframes dialog-sink { from { opacity: 1; transform: none; } to { opacity: 0; transform: translateY(12px) scale(0.98); } }
+.dialog-overlay[data-state='open'] { animation: dialog-fade-in 0.3s ease-out; }
+.dialog-overlay[data-state='closed'] { animation: dialog-fade-out 0.25s ease-in; }
+.dialog-content[data-state='open'] { animation: dialog-rise 0.6s var(--ease-out-expo); }
+.dialog-content[data-state='closed'] { animation: dialog-sink 0.25s ease-in; }
+
 /* ── Magnetic Button ── */
 .magnetic-btn { transition: transform 0.3s var(--ease-out-expo); }
 
