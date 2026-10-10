@@ -1,7 +1,16 @@
 node_modules/
 .next/
-.env.local
 .DS_Store
+
+# Environment files hold real keys. Only the documented template is tracked.
+.env*
+!.env.local.example
+
+# Playwright output
+test-results/
+playwright-report/
+/blob-report/
+/playwright/.cache/
 
 # TypeScript incremental build cache
 tsconfig.tsbuildinfo
