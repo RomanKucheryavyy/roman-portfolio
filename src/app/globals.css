@@ -115,6 +115,15 @@ body {
 
 ::selection { background: #fff; color: #000; }
 
+/* One focus ring for every control that doesn't draw its own: a keyboard
+   visitor always sees where they are, a mouse click never leaves a ring
+   behind. In the base layer, so a component's own focus-visible: utilities
+   (WorkLink's fill, the dialog's close button) still win. */
+@layer base {
+  :focus-visible { outline: 2px solid rgb(255 255 255 / 0.8); outline-offset: 3px; }
+  :focus:not(:focus-visible) { outline: none; }
+}
+
 ::-webkit-scrollbar { width: 0; height: 0; }
 
 html {
@@ -199,6 +208,10 @@ canvas { touch-action: pan-y; }
   .flip-card:hover .flip-card-inner { transform: none; }
   .flip-card.flipped .flip-card-inner { transform: rotateY(180deg); }
 }
+/* A keyboard visitor gets the back face by focusing the card, the way a
+   pointer gets it by hovering. After the hover: none block so it holds on
+   touch screens with a keyboard too. */
+.flip-card:focus-visible .flip-card-inner { transform: rotateY(180deg); }
 
 /* ── HUD corner brackets (techy card accent) ── */
 .hud-corners { position: relative; }
