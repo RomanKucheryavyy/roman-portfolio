@@ -86,7 +86,7 @@ export function SectionHeader({ movement, kicker, title, intro, children, classN
   const text = `${title.lead} ${title.accent}`
   return (
     <header className={cn('mb-10 md:mb-16', className)}>
-      <p data-reveal className="section-label font-mono text-label tracking-[0.3em] uppercase text-white/30 mb-3">
+      <p data-reveal className="section-label font-mono text-label tracking-[0.3em] uppercase text-ink-meta mb-3">
         {label}
       </p>
       <h2 className="font-display text-4xl md:text-6xl font-bold tracking-tight text-white">
