@@ -42,6 +42,8 @@ jobs:
       - run: npm ci
       - run: npm run typecheck
       - run: npm run lint
+      - name: Protected files (hero, ocean, deck physics, wheel geometry)
+        run: npm run check:protected
       - run: npm run build
       - name: Bundle budget
         run: npm run budget
