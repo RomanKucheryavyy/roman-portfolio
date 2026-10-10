@@ -1,5 +1,7 @@
 [build]
-  command = "npm run build"
+  # next build type-checks but no longer lints, and main deploys on push, so
+  # this is the only lint gate production itself goes through.
+  command = "npm run lint && npm run build"
   publish = ".next"
 
 [build.environment]
@@ -11,3 +13,12 @@
 
 [[plugins]]
   package = "@netlify/plugin-nextjs"
+
+# public/images/* filenames carry no content hash, so the default
+# max-age=0,must-revalidate made every visit re-ask for every screenshot the
+# /works wheel loads raw. A day fresh, a week stale-while-revalidate: a
+# re-captured screenshot still shows up within a day.
+[[headers]]
+  for = "/images/*"
+  [headers.values]
+    Cache-Control = "public, max-age=86400, stale-while-revalidate=604800"
