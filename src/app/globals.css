@@ -41,47 +41,11 @@
   --color-muted-foreground: #ffffff59;
 }
 
-/* ── Semantic design tokens ── */
+/* The brand gradient is the only custom property consumed outside @theme
+   (by .text-gradient). The 39-token "semantic" layer that used to sit here had
+   no consumers at all, so it was deleted rather than revived. */
 :root {
-  --color-bg-void: var(--color-black);
-  --color-bg-surface: #0a0a0a;
-  --color-bg-elevated: #111;
-  --color-bg-overlay: #000c;
-  --color-text-primary: #fff;
-  --color-text-secondary: #ffffffb3;
-  --color-text-tertiary: #ffffff80;
-  --color-text-muted: #ffffff4d;
-  --color-text-ghost: #ffffff26;
-  --color-text-invisible: #ffffff0f;
-  --color-border-subtle: #ffffff0d;
-  --color-border-default: #ffffff1a;
-  --color-border-strong: #fff3;
-  --color-border-hover: #fff6;
   --gradient-brand: linear-gradient(135deg, var(--color-spectrum-red), var(--color-spectrum-orange), var(--color-spectrum-amber), var(--color-spectrum-green), var(--color-spectrum-teal), var(--color-spectrum-blue), var(--color-spectrum-purple), var(--color-spectrum-red));
-  --gradient-brand-horizontal: linear-gradient(90deg, var(--color-spectrum-red), var(--color-spectrum-orange), var(--color-spectrum-amber), var(--color-spectrum-green), var(--color-spectrum-blue), var(--color-spectrum-purple));
-  --nav-bg: #0009;
-  --nav-border: var(--color-border-subtle);
-  --nav-text: var(--color-text-muted);
-  --nav-text-active: var(--color-text-primary);
-  --card-bg: var(--color-bg-surface);
-  --card-border: var(--color-border-subtle);
-  --card-border-hover: var(--color-border-strong);
-  --hero-subtitle: var(--color-text-tertiary);
-  --section-label: var(--color-text-muted);
-  --section-description: var(--color-text-tertiary);
-  --btn-primary-bg: var(--color-pure-white);
-  --btn-primary-text: var(--color-black);
-  --btn-ghost-border: var(--color-border-strong);
-  --btn-ghost-text: var(--color-text-tertiary);
-  --terminal-bg: var(--color-bg-surface);
-  --terminal-border: var(--color-border-subtle);
-  --terminal-dot-red: #ff5f57;
-  --terminal-dot-yellow: #febc2e;
-  --terminal-dot-green: #28c840;
-  --cert-accent-developer: var(--color-pure-white);
-  --cert-accent-consultant: var(--color-gray-400);
-  --cert-accent-ai: var(--color-spectrum-purple);
-  --cert-accent-admin: var(--color-spectrum-green);
 }
 
 /* ── Base ── */
@@ -149,33 +113,9 @@ canvas { touch-action: pan-y; }
 }
 
 /* ── Loader ── */
-@keyframes fade-in { from { opacity:0; filter:blur(8px); transform:translateY(20px); } to { opacity:1; filter:blur(0); transform:translateY(0); } }
-@keyframes fade-in-delayed { 0%,40% { opacity:0; } 100% { opacity:1; } }
 @keyframes progress-bar { from { transform:scaleX(0); } to { transform:scaleX(1); } }
 @keyframes blink { 0%,100% { opacity:1; } 50% { opacity:0; } }
-.animate-fade-in { animation: fade-in 0.8s ease-out forwards; }
-.animate-fade-in-delayed { animation: fade-in-delayed 2s ease-out forwards; }
 .animate-progress { animation: progress-bar 2s ease-in-out forwards; }
-
-/* ── Typewriter ── */
-@keyframes typewriter { from { width:0; } to { width:100%; } }
-.typewriter {
-  overflow: hidden; white-space: nowrap; border-right: 2px solid rgba(255,255,255,0.5);
-  animation: typewriter 2s steps(26) 1s forwards, blink 0.8s step-end infinite;
-  width: 0;
-}
-
-/* ── Scroll Progress ── */
-.scroll-progress {
-  position: fixed; top: 0; left: 0;
-  width: 100%;
-  height: 3px;
-  z-index: 150;
-  background: var(--gradient-brand-horizontal);
-  background-size: 200% 100%;
-  transform-origin: left; transform: scaleX(0);
-  animation: gradient-shift 6s ease infinite;
-}
 
 /* ── Magnetic Button ── */
 .magnetic-btn { transition: transform 0.3s var(--ease-out-expo); }
@@ -257,5 +197,4 @@ canvas { touch-action: pan-y; }
 /* ── Reduced Motion ── */
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
-  .typewriter { width: 100%; border-right: none; }
 }
