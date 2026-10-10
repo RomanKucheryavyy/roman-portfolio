@@ -147,7 +147,9 @@ export const COMPOSITIONS = [
     id: 'sembly',
     title: 'Sembly',
     tagline: 'Scheduling for worship teams',
-    status: 'Live at sembly.app',
+    // The card's link pill already reads "sembly.app"; the status no longer repeats it.
+    // needs Roman: confirm.
+    status: 'Live',
     url: 'https://sembly.app',
     description:
       'The answer to "am I playing this Sunday?" — on the phone that gets asked. Volunteers see the dates they serve, their position, the running order with every song key, and the sheet music; leaders plan a whole month from the same screen. Row-level security in Postgres is the actual boundary, so a volunteer only ever sees the services they are on.',
