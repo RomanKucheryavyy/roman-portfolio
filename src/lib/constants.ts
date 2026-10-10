@@ -52,6 +52,9 @@ export const PROJECTS = [
     description:
       'Brewed from scratch — a full-stack e-commerce experience that turns first-time visitors into repeat customers. Custom design system, responsive to the last pixel.',
     tags: ['Web Design', 'E-commerce', 'Branding'],
+    // source: resume-data.ts:135 at 05a1a6c^ (his résumé before the July 2026 rewrite).
+    // needs Roman: confirm it is still the stack.
+    stack: ['React', 'Next.js', 'Tailwind', 'Netlify'],
     color: '#C4A265',
   },
   {
@@ -72,6 +75,9 @@ export const PROJECTS = [
     description:
       'Where the music lives online. Event listings, media galleries, and a live performance showcase for the band I conduct — built with the same rhythm we play.',
     tags: ['Web Design', 'Music', 'CMS'],
+    // source: resume-data.ts:142 at 05a1a6c^ (his résumé before the July 2026 rewrite).
+    // needs Roman: confirm it is still the stack.
+    stack: ['React', 'Vite', 'Supabase', 'Netlify'],
     color: '#FF6B4A',
   },
   {
@@ -134,6 +140,8 @@ export const PROJECTS = [
     description:
       "Native Swift from the ground up. Push notifications, real-time ordering, and Apple Pay — because good coffee shouldn't require a complicated checkout.",
     tags: ['iOS', 'Swift', 'Mobile App'],
+    stack: ['Swift', 'SwiftUI', 'Firebase', 'Supabase'], // source: resume-data.ts:110 at abb0023
+    year: 2026, // source: App Store releaseDate 2026-03-12 (iTunes Lookup id6760352447, checked 2026-10-10)
     color: '#A855F7',
     isApp: true,
   },
