@@ -87,7 +87,10 @@ Also standing:
 
 `scripts/check-protected.mjs` enforces the protected files and lines in CI. The
 only way past it is a commit whose message carries `[owner-approved:<item>]`,
-and that tag needs Roman's written OK first.
+and that tag needs Roman's written OK first. Merges count: a merge is checked
+for whatever it adds beyond git's own re-merge of its parents, so a protected
+line edited while resolving a conflict fails the same way, and only the
+merge's own message can carry its approval.
 
 ## The Phase 0 system, and the rule for each piece
 

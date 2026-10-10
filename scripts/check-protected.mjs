@@ -15,16 +15,28 @@
  * Every commit after PROTECTED_SINCE (default abb0023, where these rules
  * start) that touches one of them fails unless its message carries
  * `[owner-approved:<item>]`. Uncommitted changes to them fail too, since an
- * approval can only live in a commit message. Merge commits are skipped.
+ * approval can only live in a commit message.
  *
- * Needs full history (CI checks out with fetch-depth: 0).
+ * Merge commits are checked for what the merge itself introduced: the diff
+ * from git's own re-merge of the parents to the commit (`git show
+ * --remerge-diff`). A clean merge has none. An edit slipped into a merge, or
+ * into a conflict resolution, needs the tag in the merge's message, like any
+ * other commit. One allowance: in a file that conflicted, a resolution whose
+ * protected lines are exactly one parent's (the conflict was settled by taking
+ * one side's protected lines as they were) passes, because each side's own
+ * commits are checked anyway. An octopus merge (3+ parents) cannot be
+ * re-merged, so it fails for any watched file whose protected lines match no
+ * parent's.
+ *
+ * Needs full history (CI checks out with fetch-depth: 0) and git 2.38+
+ * (remerge-diff and merge-tree --write-tree).
  * Env: PROTECTED_SINCE=<rev> moves the floor; PROTECTED_BASE=<rev> narrows the
  * range to <base>..HEAD (both floors apply).
  */
 import { execFileSync } from 'node:child_process'
 import { existsSync, readFileSync } from 'node:fs'
 
-const SINCE = process.env.PROTECTED_SINCE ?? 'abb0023'
+const SINCE = process.env.PROTECTED_SINCE ?? 'abb0023e9e6634e783bbb39cd4a9f784f8e16973'
 const BASE = process.env.PROTECTED_BASE
 const APPROVED = /\[owner-approved:[^\]\s][^\]]*\]/
 
@@ -42,8 +54,13 @@ const DECK_LINE = /(drag=|dragConstraints|dragElastic|SPRING|STACK_DEPTH|touchAc
 
 const WHEEL = 'src/components/ui/works-wheel.tsx'
 const WHEEL_CONST = /^\s*(export\s+)?const\s+(STEP|DRUM|LENS|BOW|CARD_[A-Z0-9_]+)\b\s*=/
-const LOOP_START = /const draw = \(\) => \{/
-const LOOP_END = /cancelAnimationFrame\(frame\)/
+/** Multi-line blocks of works-wheel.tsx where every line is protected. The end
+ *  pattern is matched from the start line on. */
+const WHEEL_BLOCKS = [
+  { name: 'draw-loop', start: /const draw = \(\) => \{/, end: /cancelAnimationFrame\(frame\)/ },
+]
+
+const WATCHED = [...WHOLE_FILES, ...WHOLE_DIRS, DECK, WHEEL]
 
 const run = (args, quiet) =>
   execFileSync('git', args, {
@@ -61,17 +78,37 @@ const tryGit = (...args) => {
     return null
   }
 }
+const lines = (out) => out.split('\n').filter(Boolean)
 
 const isWhole = (file) => WHOLE_FILES.includes(file) || WHOLE_DIRS.some((dir) => file.startsWith(dir))
 
-/** [first, last] line numbers (1-based) of the wheel's draw loop, or null. */
-function loopRegion(source) {
-  if (source === null) return null
-  const lines = source.split('\n')
-  const start = lines.findIndex((l) => LOOP_START.test(l))
-  if (start < 0) return null
-  const end = lines.findIndex((l, i) => i > start && LOOP_END.test(l))
-  return end < 0 ? null : [start + 1, end + 1]
+/** {name, first, last} (1-based, inclusive) for each wheel block found in `source`. */
+function wheelBlocks(source) {
+  if (source === null) return []
+  const src = source.split('\n')
+  const found = []
+  for (const { name, start, end } of WHEEL_BLOCKS) {
+    const first = src.findIndex((l) => start.test(l))
+    if (first < 0) continue
+    const last = src.findIndex((l, i) => i >= first && end.test(l))
+    if (last >= 0) found.push({ name, first: first + 1, last: last + 1 })
+  }
+  return found
+}
+
+/** A file's protected content and nothing else: equal signatures mean no
+ *  protected difference between two versions of the file. */
+function signature(file, source) {
+  if (source === null) return '\0absent'
+  if (isWhole(file)) return source
+  const src = source.split('\n')
+  if (file === DECK) return src.filter((l) => DECK_LINE.test(l)).join('\n')
+  if (file === WHEEL) {
+    const consts = src.filter((l) => WHEEL_CONST.test(l))
+    const blocks = wheelBlocks(source).map((b) => `${b.name}\n${src.slice(b.first - 1, b.last).join('\n')}`)
+    return [...consts, ...blocks].join('\n')
+  }
+  return ''
 }
 
 /** Parses a -U0 patch into per-file lists of {sign, line, text}. */
@@ -102,39 +139,85 @@ function parsePatch(patch) {
 }
 
 /**
- * Returns the protected things a change set touches.
- * `oldSource(path)` / `newSource(path)` give the file before and after.
+ * Returns the protected things a change set touches, as {file, text}.
+ * `oldSource(path)` / `newSource(path)` give the file before and after; the
+ * patch's line numbers must refer to those two.
  */
 function violationsIn(patch, oldSource, newSource) {
   const found = []
+  const add = (file, text) => found.push({ file, text: `${file}${text}` })
   for (const { from, to, changes } of parsePatch(patch).values()) {
     for (const name of new Set([from, to].filter(Boolean))) {
-      if (isWhole(name)) {
-        found.push(`${name}: protected file changed`)
-      }
+      if (isWhole(name)) add(name, ': protected file changed')
     }
     if (from === DECK || to === DECK) {
       for (const c of changes) {
-        if (DECK_LINE.test(c.text)) found.push(`${DECK}:${c.line} deck-physics line ${c.sign === '-' ? 'removed' : 'added'}: ${c.text.trim()}`)
+        if (DECK_LINE.test(c.text)) add(DECK, `:${c.line} deck-physics line ${c.sign === '-' ? 'removed' : 'added'}: ${c.text.trim()}`)
       }
     }
     if (from === WHEEL || to === WHEEL) {
-      const before = loopRegion(oldSource(WHEEL))
-      const after = loopRegion(newSource(WHEEL))
-      if (newSource(WHEEL) !== null && after === null) found.push(`${WHEEL}: the draw loop can no longer be found; review it by hand`)
-      for (const c of changes) {
-        if (WHEEL_CONST.test(c.text)) found.push(`${WHEEL}:${c.line} wheel geometry constant ${c.sign === '-' ? 'removed' : 'added'}: ${c.text.trim()}`)
-        const region = c.sign === '-' ? before : after
-        if (region && c.line >= region[0] && c.line <= region[1]) {
-          found.push(`${WHEEL}:${c.line} draw-loop line ${c.sign === '-' ? 'removed' : 'added'}: ${c.text.trim()}`)
+      const before = wheelBlocks(oldSource(WHEEL))
+      const now = newSource(WHEEL)
+      const after = wheelBlocks(now)
+      if (now !== null) {
+        for (const { name } of WHEEL_BLOCKS) {
+          if (!after.some((b) => b.name === name)) add(WHEEL, `: ${name} can no longer be found; review it by hand`)
         }
+      }
+      for (const c of changes) {
+        const verb = c.sign === '-' ? 'removed' : 'added'
+        if (WHEEL_CONST.test(c.text)) add(WHEEL, `:${c.line} wheel geometry constant ${verb}: ${c.text.trim()}`)
+        const block = (c.sign === '-' ? before : after).find((b) => c.line >= b.first && c.line <= b.last)
+        if (block) add(WHEEL, `:${c.line} ${block.name} line ${verb}: ${c.text.trim()}`)
       }
     }
   }
   return found
 }
 
-const WATCHED = [...WHOLE_FILES, ...WHOLE_DIRS, DECK, WHEEL]
+/** The tree git's own merge of p1 and p2 produces (conflict markers and all),
+ *  and the files that conflicted. Its line numbers are the ones remerge-diff's
+ *  old side uses, so both run with the same conflict style. merge-tree exits 1
+ *  when the merge conflicts; that is still an answer. */
+function remerge(p1, p2) {
+  try {
+    return run(['-c', 'merge.conflictStyle=merge', 'merge-tree', '--write-tree', '--name-only', '--no-messages', p1, p2], true)
+  } catch (err) {
+    if (err.status === 1 && typeof err.stdout === 'string' && err.stdout) return err.stdout
+    return null
+  }
+}
+
+/** What a merge commit introduced in the watched files, beyond git's own merge. */
+function mergeViolations(sha, parents) {
+  const show = (rev) => (p) => tryGit('show', `${rev}:${p}`)
+  if (parents.length > 2) {
+    const changed = lines(git('diff', '--name-only', '--no-renames', parents[0], sha, '--', ...WATCHED))
+    return changed
+      .filter((f) => !parents.some((p) => signature(f, show(p)(f)) === signature(f, show(sha)(f))))
+      .map((f) => ({ file: f, text: `${f}: octopus merge leaves protected lines that match no parent's; review by hand` }))
+  }
+  let patch
+  try {
+    patch = run(['-c', 'merge.conflictStyle=merge', 'show', '--remerge-diff', '--format=', '-U0', '--no-color', '--no-ext-diff', sha, '--', ...WATCHED], true)
+  } catch {
+    console.error(`check-protected: \`git show --remerge-diff ${sha.slice(0, 7)}\` failed. This check needs git 2.38 or newer.`)
+    process.exit(2)
+  }
+  if (!patch.trim()) return []
+  const out = remerge(parents[0], parents[1])
+  if (out === null) {
+    console.error(`check-protected: \`git merge-tree --write-tree\` failed for ${sha.slice(0, 7)}. This check needs git 2.38 or newer.`)
+    process.exit(2)
+  }
+  const [tree, ...conflicted] = lines(out)
+  const found = violationsIn(patch, show(tree), show(sha))
+  return found.filter(({ file }) => {
+    if (!conflicted.includes(file)) return true
+    const merged = signature(file, show(sha)(file))
+    return !parents.some((p) => signature(file, show(p)(file)) === merged)
+  })
+}
 
 if (tryGit('cat-file', '-e', `${SINCE}^{commit}`) === null) {
   console.error(`check-protected: ${SINCE} is not in this clone's history. Fetch the full history (fetch-depth: 0) or set PROTECTED_SINCE.`)
@@ -142,17 +225,33 @@ if (tryGit('cat-file', '-e', `${SINCE}^{commit}`) === null) {
 }
 
 const range = ['HEAD', `^${SINCE}`, ...(BASE ? [`^${BASE}`] : [])]
-const commits = git('rev-list', '--no-merges', '--reverse', ...range, '--', ...WATCHED).split('\n').filter(Boolean)
+// Every commit in range, oldest first, with its parents; every merge is
+// re-merged. The non-merge commits that touch a watched file come from a
+// path-limited walk, --full-history so that a side branch whose changes a
+// merge threw away is still walked.
+const all = lines(git('rev-list', '--reverse', '--parents', ...range)).map((l) => l.split(' '))
+const touching = new Set(lines(git('rev-list', '--no-merges', '--full-history', ...range, '--', ...WATCHED)))
 const failures = []
+let checked = 0
+let merges = 0
 let approved = 0
 
-for (const sha of commits) {
-  const patch = git('show', '--format=', '-U0', '--no-color', '--no-ext-diff', '-M', sha, '--', ...WATCHED)
-  const found = violationsIn(
-    patch,
-    (p) => tryGit('show', `${sha}^:${p}`),
-    (p) => tryGit('show', `${sha}:${p}`),
-  )
+for (const [sha, ...parents] of all) {
+  const isMerge = parents.length > 1
+  let found
+  if (isMerge) {
+    merges++
+    found = mergeViolations(sha, parents)
+  } else {
+    if (!touching.has(sha)) continue
+    checked++
+    const patch = git('show', '--format=', '-U0', '--no-color', '--no-ext-diff', '-M', sha, '--', ...WATCHED)
+    found = violationsIn(
+      patch,
+      (p) => tryGit('show', `${sha}^:${p}`),
+      (p) => tryGit('show', `${sha}:${p}`),
+    )
+  }
   if (!found.length) continue
   const message = git('log', '-1', '--format=%B', sha)
   const subject = message.split('\n')[0]
@@ -161,23 +260,23 @@ for (const sha of commits) {
     console.log(`approved  ${sha.slice(0, 7)} ${subject} (${message.match(APPROVED)[0]})`)
     continue
   }
-  failures.push({ where: `${sha.slice(0, 7)} ${subject}`, found })
+  failures.push({ where: `${sha.slice(0, 7)} ${subject}${isMerge ? ' (merge: changes beyond what git merged on its own)' : ''}`, found: found.map((f) => f.text) })
 }
 
 // Uncommitted edits (staged or not), plus new untracked files under a protected directory.
 const working = git('diff', 'HEAD', '-U0', '--no-color', '--no-ext-diff', '--', ...WATCHED)
-const untracked = git('ls-files', '--others', '--exclude-standard', '--', ...WATCHED).split('\n').filter(Boolean)
+const untracked = lines(git('ls-files', '--others', '--exclude-standard', '--', ...WATCHED))
 const workingFound = [
   ...violationsIn(
     working,
     (p) => tryGit('show', `HEAD:${p}`),
     (p) => (existsSync(p) ? readFileSync(p, 'utf8') : null),
-  ),
+  ).map((f) => f.text),
   ...untracked.filter(isWhole).map((f) => `${f}: new file in a protected place`),
 ]
 if (workingFound.length) failures.push({ where: 'uncommitted changes (an approval can only be given in a commit message)', found: workingFound })
 
-console.log(`check-protected: ${commits.length} commit(s) since ${SINCE} touch a watched file; ${approved} carry [owner-approved:…]`)
+console.log(`check-protected: since ${SINCE.slice(0, 7)}, ${checked} commit(s) touch a watched file and ${merges} merge(s) were re-merged; ${approved} carry [owner-approved:…]`)
 if (failures.length) {
   console.error('\nProtected changes without [owner-approved:<item>]:')
   for (const { where, found } of failures) {
