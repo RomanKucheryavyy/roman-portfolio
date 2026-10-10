@@ -1,4 +1,3 @@
-import { NextResponse } from 'next/server'
 import { getAppStoreFacts, siteAppStoreId } from '@/lib/app-store'
 
 export const revalidate = 21600 // 6h, as APP_STORE_REVALIDATE; Next needs the literal here
@@ -9,5 +8,5 @@ export const revalidate = 21600 // 6h, as APP_STORE_REVALIDATE; Next needs the l
  * is null and the UI renders nothing.
  */
 export async function GET() {
-  return NextResponse.json(await getAppStoreFacts(siteAppStoreId()))
+  return Response.json(await getAppStoreFacts(siteAppStoreId()))
 }
