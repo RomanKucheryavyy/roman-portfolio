@@ -1,10 +1,8 @@
 'use client'
-import { useEffect, useRef, useState } from 'react'
-import { gsap } from '@/hooks/useGSAP'
+import { useRef, useState } from 'react'
 import { useStore } from '@/stores/useStore'
-import ScatterText from '@/components/effects/ScatterText'
-import RevealMask from '@/components/effects/RevealMask'
-import MobileReveal from '@/components/effects/MobileReveal'
+import { useRevealOnScroll } from '@/hooks/useRevealOnScroll'
+import { SectionHeader, SectionShell } from '@/components/ui/SectionShell'
 import DNAHelix from '@/components/canvas/DNAHelix'
 import { CERTIFICATIONS } from '@/lib/constants'
 
@@ -32,7 +30,8 @@ function CertCard({ cert }: { cert: (typeof CERTIFICATIONS)[number] }) {
 
   return (
     <div
-      className={`flip-card cert-card h-44 ${flipped ? 'flipped' : ''}`}
+      data-reveal
+      className={`flip-card h-44 ${flipped ? 'flipped' : ''}`}
       onClick={() => setFlipped((f) => !f)}
       onMouseMove={handleMouseMove}
       onMouseEnter={() => setCursorVariant('hover')}
@@ -66,81 +65,32 @@ function CertCard({ cert }: { cert: (typeof CERTIFICATIONS)[number] }) {
 
 export default function Measures() {
   const sectionRef = useRef<HTMLElement>(null)
-
-  useEffect(() => {
-    const section = sectionRef.current
-    if (!section) return
-
-    const cards = section.querySelectorAll('.cert-card')
-    cards.forEach((card, i) => {
-      gsap.fromTo(
-        card,
-        { opacity: 0, x: i % 2 === 0 ? -80 : 80 },
-        {
-          opacity: 1, x: 0, duration: 0.8, ease: 'expo.out',
-          scrollTrigger: { trigger: card, start: 'top 88%', once: true },
-        }
-      )
-    })
-
-    gsap.fromTo(
-      section.querySelectorAll('[data-reveal]'),
-      { opacity: 0, y: 40 },
-      {
-        opacity: 1, y: 0, duration: 1, ease: 'expo.out', stagger: 0.1,
-        scrollTrigger: { trigger: section, start: 'top 80%', once: true },
-      }
-    )
-  }, [])
+  useRevealOnScroll(sectionRef)
 
   return (
-    <section ref={sectionRef} id="measures" className="py-14 md:py-24 px-6 md:px-16 relative z-10">
-      <div className="max-w-6xl mx-auto relative">
-        <DNAHelix />
-        <p data-reveal className="section-label font-mono text-xs tracking-[0.3em] uppercase text-white/30 mb-3">
-          {'// 01. Certifications'}
-        </p>
-        <h2 data-section-heading className="font-display text-4xl md:text-6xl font-bold tracking-tight text-white mb-4">
-          <ScatterText
-            className="font-display font-bold"
-            scatterRadius={500}
-            duration={2}
-            stagger={0.05}
-            onAssembled={() => {
-              const el = document.querySelector('#measures [data-section-heading]')
-              if (el) el.innerHTML = 'The <span class="text-gradient">Measures</span>'
-            }}
-          >
-            The Measures
-          </ScatterText>
-        </h2>
-        <p data-reveal className="text-white/40 max-w-lg mb-10 md:mb-16">
-          Eight certifications, one CS degree, and a relentless habit of learning. Each credential here was
-          earned in the field — not a checklist, but a growing repertoire.
-        </p>
+    <SectionShell ref={sectionRef} id="measures">
+      <DNAHelix />
+      <SectionHeader
+        kicker="// 01. Certifications"
+        title={{ lead: 'The', accent: 'Measures' }}
+        intro="Eight certifications, one CS degree, and a relentless habit of learning. Each credential here was earned in the field — not a checklist, but a growing repertoire."
+      />
 
-        <RevealMask direction="bottom" duration={1}>
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 lg:gap-8">
-            {CERTIFICATIONS.map((cert, i) => (
-              <MobileReveal key={cert.id} delay={80 * i}>
-                <CertCard cert={cert} />
-              </MobileReveal>
-            ))}
-          </div>
-        </RevealMask>
-
-        <MobileReveal>
-          <div data-reveal className="mt-12 p-6 rounded-xl border border-white/5 bg-[#0a0a0a] flex items-center gap-4">
-            <div className="w-12 h-12 rounded-lg bg-white/5 flex items-center justify-center text-white font-display font-bold text-lg">
-              UW
-            </div>
-            <div>
-              <h3 className="font-display font-semibold text-white">University of Washington</h3>
-              <p className="text-sm text-white/40">BS, Computer Science &amp; Systems</p>
-            </div>
-          </div>
-        </MobileReveal>
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 lg:gap-8">
+        {CERTIFICATIONS.map((cert) => (
+          <CertCard key={cert.id} cert={cert} />
+        ))}
       </div>
-    </section>
+
+      <div data-reveal className="mt-12 p-6 rounded-xl border border-white/5 bg-[#0a0a0a] flex items-center gap-4">
+        <div className="w-12 h-12 rounded-lg bg-white/5 flex items-center justify-center text-white font-display font-bold text-lg">
+          UW
+        </div>
+        <div>
+          <h3 className="font-display font-semibold text-white">University of Washington</h3>
+          <p className="text-sm text-white/40">BS, Computer Science &amp; Systems</p>
+        </div>
+      </div>
+    </SectionShell>
   )
 }

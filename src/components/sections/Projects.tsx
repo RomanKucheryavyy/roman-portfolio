@@ -3,10 +3,10 @@ import { useCallback, useEffect, useRef, useState, lazy, Suspense, type Componen
 import Link from 'next/link'
 import { AnimatePresence, motion, useMotionValue, useTransform } from 'framer-motion'
 import { ArrowUpRight, ChevronUp, ChevronDown } from 'lucide-react'
-import { gsap } from '@/hooks/useGSAP'
 import { useStore } from '@/stores/useStore'
 import { useDeviceCapability } from '@/hooks/useDeviceCapability'
-import ScatterText from '@/components/effects/ScatterText'
+import { useRevealOnScroll } from '@/hooks/useRevealOnScroll'
+import { SectionHeader, SectionShell } from '@/components/ui/SectionShell'
 import WorkCard from '@/components/ui/WorkCard'
 import { CLIENT_WORK, counterOf, type Work } from '@/lib/work'
 
@@ -290,7 +290,7 @@ function MobileDeck() {
         role="region"
         aria-roledescription="deck"
         aria-label="Client work"
-        className="relative w-[88vw] max-w-lg"
+        className="relative w-full max-w-lg"
         style={{ overflow: 'clip visible' }}
       >
         <DeckStatus work={deck[0]} />
@@ -368,19 +368,7 @@ export default function Projects() {
   const { isMobile } = useDeviceCapability()
   const [projectIndex, setProjectIndex] = useState<number | null>(null)
   const [Modal, setModal] = useState<ComponentType<{ index: number | null; onClose: () => void }> | null>(null)
-
-  useEffect(() => {
-    if (!sectionRef.current) return
-    const els = sectionRef.current.querySelectorAll('[data-reveal]')
-    gsap.fromTo(
-      els,
-      { opacity: 0, y: 40 },
-      {
-        opacity: 1, y: 0, duration: 1, ease: 'expo.out', stagger: 0.1,
-        scrollTrigger: { trigger: sectionRef.current, start: 'top 80%', once: true },
-      }
-    )
-  }, [])
+  useRevealOnScroll(sectionRef)
 
   useEffect(() => {
     if (!isMobile) {
@@ -390,45 +378,30 @@ export default function Projects() {
 
   return (
     <>
-      <section ref={sectionRef} id="symphony" className="relative py-16 sm:py-24 min-h-svh flex flex-col overflow-hidden">
-        <div className="relative z-10 px-6 md:px-16 mb-6 md:mb-12">
-          <p data-reveal className="section-label font-mono text-xs tracking-[0.3em] uppercase text-white/30 mb-3">
-            {'// 02. Projects & Work'}
-          </p>
-          <h2
-            data-reveal
-            data-section-heading
-            className="font-display text-4xl md:text-6xl font-bold tracking-tight text-white mb-4"
-          >
-            <ScatterText
-              className="font-display font-bold"
-              scatterRadius={500}
-              duration={2}
-              stagger={0.05}
-              onAssembled={() => {
-                const el = document.querySelector('#symphony [data-section-heading]')
-                if (el) el.innerHTML = 'The <span class="text-gradient">Symphony</span>'
-              }}
-            >
-              The Symphony
-            </ScatterText>
-          </h2>
-          <p data-reveal className="text-white/40 max-w-lg">
-            {isMobile ? 'Swipe through the setlist.' : 'Drag through the setlist. Click any piece to hear its story.'}
-          </p>
+      <SectionShell
+        ref={sectionRef}
+        id="symphony"
+        className="min-h-svh flex flex-col overflow-hidden"
+        innerClassName="flex flex-1 flex-col"
+      >
+        <SectionHeader
+          kicker="// 02. Projects & Work"
+          title={{ lead: 'The', accent: 'Symphony' }}
+          intro={isMobile ? 'Swipe through the setlist.' : 'Drag through the setlist. Click any piece to hear its story.'}
+        >
           <Link
             data-reveal
             href="/works"
-            className="mt-4 inline-flex items-center gap-2 font-mono text-[11px] tracking-wider text-white/35 transition-colors hover:text-white/70"
+            className="mt-4 inline-flex items-center gap-2 font-mono text-label tracking-wider text-white/50 transition-colors hover:text-white"
           >
             open the whole setlist
-            <ArrowUpRight size={12} />
+            <ArrowUpRight size={12} aria-hidden="true" />
           </Link>
-        </div>
-        <div className="flex-1 flex items-center justify-center px-4 pt-8">
+        </SectionHeader>
+        <div className="flex-1 flex items-center justify-center pt-8">
           {isMobile ? <MobileDeck /> : <DesktopDeck onOpen={setProjectIndex} />}
         </div>
-      </section>
+      </SectionShell>
       {!isMobile && Modal && <Modal index={projectIndex} onClose={() => setProjectIndex(null)} />}
     </>
   )

@@ -91,8 +91,8 @@ html {
   scrollbar-width: none;
   -ms-overflow-style: none;
   overscroll-behavior: none;
-  /* GSAP entrances park cards at translateX(±80) before they reveal;
-     clip keeps that pre-reveal overflow from making the page pannable. */
+  /* Anything parked off to the side before it animates in must not make the
+     page pannable sideways. */
   overflow-x: clip;
 }
 

@@ -10,7 +10,6 @@ import DynamicFavicon from '@/components/effects/DynamicFavicon'
 import AmbientBackground from '@/components/effects/AmbientBackground'
 import ScrollProgress from '@/components/effects/ScrollProgress'
 import SectionTransition from '@/components/effects/SectionTransition'
-import SectionFade from '@/components/effects/SectionFade'
 import CodePeek from '@/components/effects/CodePeek'
 import ConsoleSignature from '@/components/effects/ConsoleSignature'
 import Loader from '@/components/ui/Loader'
@@ -87,29 +86,17 @@ function AppContent() {
       <main className="relative z-[1]">
         <Hero />
         <SectionTransition commentText="// loading credentials..." />
-        <SectionFade transition="slide-right">
-          <Measures />
-        </SectionFade>
+        <Measures />
         <SectionTransition commentText="/* compiling the work */" />
-        <SectionFade transition="stack-up">
-          <Projects />
-        </SectionFade>
+        <Projects />
         <SectionTransition commentText="// premiering original works..." />
-        <SectionFade transition="fade-center">
-          <Compositions />
-        </SectionFade>
+        <Compositions />
         <SectionTransition commentText="/* decoding signal */" />
-        <SectionFade transition="slide-right">
-          <Manifesto />
-        </SectionFade>
+        <Manifesto />
         <SectionTransition commentText="// the conductor speaks..." />
-        <SectionFade transition="fade-center">
-          <Conductor />
-        </SectionFade>
+        <Conductor />
         <SectionTransition commentText="/* opening a channel */" />
-        <SectionFade transition="slide-up">
-          <Compose />
-        </SectionFade>
+        <Compose />
       </main>
     </>
   )

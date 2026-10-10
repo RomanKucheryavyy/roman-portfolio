@@ -1,8 +1,8 @@
 'use client'
-import { useEffect, useRef } from 'react'
-import { gsap } from '@/hooks/useGSAP'
+import { useRef } from 'react'
 import { useDeviceCapability } from '@/hooks/useDeviceCapability'
-import MobileReveal from '@/components/effects/MobileReveal'
+import { useRevealOnScroll } from '@/hooks/useRevealOnScroll'
+import { SectionShell } from '@/components/ui/SectionShell'
 import GlitchText from '@/components/ui/glitch-text-animation'
 
 const LINE =
@@ -18,40 +18,30 @@ const HIGHLIGHTS = ['PRECISION', 'ART', 'TRUMPET', 'RACE', 'CONDITION', 'SHIP']
 export default function Manifesto() {
   const sectionRef = useRef<HTMLElement>(null)
   const { isMobile } = useDeviceCapability()
+  useRevealOnScroll(sectionRef)
 
-  useEffect(() => {
-    if (!sectionRef.current) return
-    gsap.fromTo(
-      sectionRef.current.querySelectorAll('[data-reveal]'),
-      { opacity: 0, y: 40 },
-      {
-        opacity: 1, y: 0, duration: 1, ease: 'expo.out', stagger: 0.1,
-        scrollTrigger: { trigger: sectionRef.current, start: 'top 80%', once: true },
-      }
-    )
-  }, [])
-
+  // No SectionHeader: this is the one section without a heading, so its label
+  // does the heading's job and keeps the extra gap below it. The narrow measure
+  // belongs to the prose, not the section, so it sits on the text wrapper, at
+  // the readout's own max-w-3xl: any wider and the HUD bracket's second corner
+  // floated in empty space off the end of the box.
   return (
-    <section ref={sectionRef} id="interlude" className="py-14 md:py-24 px-6 md:px-16 relative z-10">
-      <div className="max-w-4xl mx-auto">
-        <p data-reveal className="section-label font-mono text-xs tracking-[0.3em] uppercase text-white/30 mb-6">
-          {'// interlude'}
-        </p>
+    <SectionShell ref={sectionRef} id="interlude">
+      <p data-reveal className="section-label font-mono text-label tracking-[0.3em] uppercase text-white/30 mb-6">
+        {'// interlude'}
+      </p>
 
-        <MobileReveal>
-          <div data-reveal className="hud-corners">
-            <GlitchText
-              text={LINE}
-              highlightWords={HIGHLIGHTS}
-              className="text-base sm:text-lg md:text-xl"
-            />
-          </div>
-        </MobileReveal>
-
-        <p data-reveal className="mt-5 font-mono text-[10px] tracking-wider text-white/25">
-          {isMobile ? '> tap any word to decode' : '> hover any word to decode'}
-        </p>
+      <div data-reveal className="hud-corners max-w-3xl">
+        <GlitchText
+          text={LINE}
+          highlightWords={HIGHLIGHTS}
+          className="text-base sm:text-lg md:text-xl"
+        />
       </div>
-    </section>
+
+      <p data-reveal className="mt-5 font-mono text-label tracking-wider text-white/35">
+        {isMobile ? '> tap any word to decode' : '> hover any word to decode'}
+      </p>
+    </SectionShell>
   )
 }
