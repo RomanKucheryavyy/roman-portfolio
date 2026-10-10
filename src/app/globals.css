@@ -163,6 +163,19 @@ canvas { touch-action: pan-y; }
   100% { background-position: 0% 50%; }
 }
 
+/* ── Movement key text ── */
+/* A section heading's accent word, in its movement's key running into the
+   next movement's (score.ts sets --key-from / --key-to). Static on purpose:
+   the animated .text-gradient slides the whole spectrum past on a 6-second
+   loop, so a heading's colour depended on the moment you looked at it.
+   .text-gradient stays for the hero, the nav logo and the résumé header. */
+.text-key {
+  background: linear-gradient(90deg, var(--key-from), var(--key-to));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
 /* ── Noise Overlay ── */
 .noise-overlay {
   position: fixed; inset: 0; z-index: 9999; pointer-events: none; opacity: 0.035;

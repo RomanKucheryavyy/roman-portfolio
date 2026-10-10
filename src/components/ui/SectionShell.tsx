@@ -1,7 +1,7 @@
 'use client'
-import { useState, type ComponentPropsWithoutRef, type ReactNode, type Ref } from 'react'
+import { useState, type ComponentPropsWithoutRef, type CSSProperties, type ReactNode, type Ref } from 'react'
 import ScatterText from '@/components/effects/ScatterText'
-import { kickerOf, type MovementId } from '@/lib/score'
+import { keyColor, keyOf, kickerOf, nextKeyOf, type MovementId } from '@/lib/score'
 import { cn } from '@/lib/utils'
 
 interface SectionShellProps extends ComponentPropsWithoutRef<'section'> {
@@ -56,7 +56,11 @@ type SectionHeaderKicker =
     }
 
 type SectionHeaderProps = SectionHeaderKicker & {
-  /** The heading is `{lead} {accent}`, with the accent word in the brand gradient. */
+  /**
+   * The heading is `{lead} {accent}`. With a movement, the accent word is drawn
+   * in that movement's key running into the next one's; without, in the brand
+   * gradient.
+   */
   title: { lead: string; accent: string }
   /** The paragraph under the heading. */
   intro?: ReactNode
@@ -76,6 +80,9 @@ type SectionHeaderProps = SectionHeaderKicker & {
 export function SectionHeader({ movement, kicker, title, intro, children, className }: SectionHeaderProps) {
   const [assembled, setAssembled] = useState(false)
   const label = kicker ?? (movement ? kickerOf(movement) : '')
+  const keyStyle = movement
+    ? ({ '--key-from': keyColor(keyOf(movement)), '--key-to': keyColor(nextKeyOf(movement)) } as CSSProperties)
+    : undefined
   const text = `${title.lead} ${title.accent}`
   return (
     <header className={cn('mb-10 md:mb-16', className)}>
@@ -85,7 +92,10 @@ export function SectionHeader({ movement, kicker, title, intro, children, classN
       <h2 className="font-display text-4xl md:text-6xl font-bold tracking-tight text-white">
         {assembled ? (
           <>
-            {title.lead} <span className="text-gradient">{title.accent}</span>
+            {title.lead}{' '}
+            <span className={movement ? 'text-key' : 'text-gradient'} style={keyStyle}>
+              {title.accent}
+            </span>
           </>
         ) : (
           <ScatterText
