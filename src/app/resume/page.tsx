@@ -2,7 +2,9 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
 import { Lock, Mail, FileText, WandSparkles, Download, ArrowLeft, LoaderCircle } from 'lucide-react'
-import { RESUME_DATA, type ResumeData } from '@/lib/resume-data'
+// Type only: the data itself carries the phone number and the case metrics,
+// so it comes from /api/resume/data after the PIN, never from this bundle.
+import type { ResumeData } from '@/lib/resume-data'
 
 type TabId = 'resume' | 'tailor' | 'cover-letter'
 
@@ -73,6 +75,36 @@ function PinGate({ onUnlock }: { onUnlock: (pin: string) => void }) {
             {verifying ? 'Verifying...' : 'Unlock'}
           </button>
         </form>
+        <Link href="/" className="inline-block mt-6 text-white/20 text-xs font-mono hover:text-white/40 transition-colors">
+          ← Back to portfolio
+        </Link>
+      </div>
+    </div>
+  )
+}
+
+/** Between the PIN and the editor, while the résumé itself is fetched. */
+function ResumeLoading({ error, onRetry }: { error: string | null; onRetry: () => void }) {
+  return (
+    <div className="min-h-screen bg-black flex items-center justify-center px-6">
+      <div className="w-full max-w-sm text-center">
+        {error ? (
+          <>
+            <p role="alert" className="text-red-400 text-xs font-mono">{error}</p>
+            <button
+              type="button"
+              onClick={onRetry}
+              className="mt-8 w-full py-3 rounded-full bg-white text-black font-mono text-sm font-semibold tracking-wider uppercase hover:opacity-80 transition-all duration-300"
+            >
+              Try again
+            </button>
+          </>
+        ) : (
+          <p role="status" className="flex items-center justify-center gap-2 text-white/40 text-sm font-mono">
+            <LoaderCircle size={16} className="animate-spin" aria-hidden="true" />
+            Loading your resume…
+          </p>
+        )}
         <Link href="/" className="inline-block mt-6 text-white/20 text-xs font-mono hover:text-white/40 transition-colors">
           ← Back to portfolio
         </Link>
@@ -181,7 +213,9 @@ const downloadBlob = (blob: Blob, filename: string) => {
 export default function ResumeBuilder() {
   const [pin, setPin] = useState<string | null>(null)
   const [activeTab, setActiveTab] = useState<TabId>('resume')
-  const [resume, setResume] = useState<ResumeData>(RESUME_DATA)
+  const [resume, setResume] = useState<ResumeData | null>(null)
+  const [loadError, setLoadError] = useState<string | null>(null)
+  const [loadAttempt, setLoadAttempt] = useState(0)
   const [jobDescription, setJobDescription] = useState('')
   const [companyName, setCompanyName] = useState('')
   const [tailoredResume, setTailoredResume] = useState<ResumeData | null>(null)
@@ -195,8 +229,36 @@ export default function ResumeBuilder() {
     if (stored) setPin(stored)
   }, [])
 
+  // Once there is a PIN (just entered, or remembered), fetch the résumé. A 401
+  // means a remembered PIN has gone stale: forget it and ask again.
+  useEffect(() => {
+    if (!pin || resume) return
+    let cancelled = false
+    fetch('/api/resume/data', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ pin }),
+    })
+      .then(async (res) => {
+        if (cancelled) return
+        if (res.status === 401) {
+          localStorage.removeItem('resume_pin')
+          setPin(null)
+          return
+        }
+        if (!res.ok) {
+          setLoadError(`Couldn't load your resume (${res.status}).`)
+          return
+        }
+        const data: ResumeData = await res.json()
+        if (!cancelled) setResume(data)
+      })
+      .catch(() => { if (!cancelled) setLoadError("Couldn't load your resume.") })
+    return () => { cancelled = true }
+  }, [pin, resume, loadAttempt])
+
   const handleTailor = useCallback(async () => {
-    if (!jobDescription.trim() || !pin) return
+    if (!jobDescription.trim() || !pin || !resume) return
     setAiLoading(true)
     setError('')
     try {
@@ -216,7 +278,7 @@ export default function ResumeBuilder() {
   }, [jobDescription, pin, resume])
 
   const handleCoverLetter = useCallback(async () => {
-    if (!jobDescription.trim() || !pin) return
+    if (!jobDescription.trim() || !pin || !resume) return
     setAiLoading(true)
     setError('')
     try {
@@ -256,7 +318,7 @@ export default function ResumeBuilder() {
   }, [resume, tailoredResume])
 
   const handleDownloadCoverLetter = useCallback(async () => {
-    if (!coverLetter) return
+    if (!coverLetter || !resume) return
     setPdfBuilding(true)
     setError('')
     try {
@@ -278,6 +340,14 @@ export default function ResumeBuilder() {
   }, [coverLetter, resume, companyName])
 
   if (!pin) return <PinGate onUnlock={setPin} />
+  if (!resume) {
+    return (
+      <ResumeLoading
+        error={loadError}
+        onRetry={() => { setLoadError(null); setLoadAttempt((n) => n + 1) }}
+      />
+    )
+  }
 
   const tabs: { id: TabId; label: string; icon: React.ReactNode }[] = [
     { id: 'resume', label: 'My Resume', icon: <FileText size={16} /> },
@@ -354,6 +424,7 @@ export default function ResumeBuilder() {
                       rows={2}
                       onChange={(e) => {
                         setResume((prev) => {
+                          if (!prev) return prev
                           const next = structuredClone(prev)
                           next.experience[i].bullets[j] = e.target.value
                           return next
