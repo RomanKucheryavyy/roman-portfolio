@@ -22,6 +22,23 @@
   --text-lead: 1.25rem;
   --text-lead--line-height: 1.75rem;
 
+  /* Ink: the three roles for white type on black, replacing the dozen
+     text-white/NN opacities that used to be picked by eye. Primary type stays
+     text-white. Anything a visitor must read is ink-meta or stronger (5.28:1
+     on #000); ink-faint (about 3:1) is only for aria-hidden or redundant
+     decoration — prompt glyphs, line numbers, separators. They already carry
+     their alpha, so never add an opacity modifier (text-ink-meta/50 would
+     apply it twice). prefers-contrast: more raises all three, below. */
+  --color-ink-body: rgb(255 255 255 / 0.7);
+  --color-ink-meta: rgb(255 255 255 / 0.5);
+  --color-ink-faint: rgb(255 255 255 / 0.35);
+
+  /* Paper: the résumé preview and anything else printed black on white. */
+  --color-paper-ink: #111;
+  --color-paper-body: #333;
+  --color-paper-muted: #555;
+  --color-paper-rule: #bbb;
+
   --color-pure-white: #fff;
   --color-spectrum-red: #ff2d55;
   --color-spectrum-orange: #ff6b35;
@@ -57,14 +74,26 @@
   --color-background: #000;
   --color-foreground: #fff;
   --color-muted: #0a0a0a;
-  --color-muted-foreground: #ffffff59;
+  /* ink-meta's value: muted text is still text someone reads. */
+  --color-muted-foreground: #ffffff80;
 }
 
-/* The brand gradient is the only custom property consumed outside @theme
-   (by .text-gradient). The 39-token "semantic" layer that used to sit here had
-   no consumers at all, so it was deleted rather than revived. */
+@media (prefers-contrast: more) {
+  :root {
+    --color-ink-body: #fff;
+    --color-ink-meta: rgb(255 255 255 / 0.8);
+    --color-ink-faint: rgb(255 255 255 / 0.6);
+  }
+}
+
+/* The brand gradients are the only custom properties defined outside @theme.
+   --gradient-brand fills .text-gradient; --gradient-brand-line is the same
+   seven keys laid flat, for hairlines and rules. The 39-token "semantic" layer
+   that used to sit here had no consumers at all, so it was deleted rather than
+   revived. */
 :root {
   --gradient-brand: linear-gradient(135deg, var(--color-spectrum-red), var(--color-spectrum-orange), var(--color-spectrum-amber), var(--color-spectrum-green), var(--color-spectrum-teal), var(--color-spectrum-blue), var(--color-spectrum-purple), var(--color-spectrum-red));
+  --gradient-brand-line: linear-gradient(90deg, var(--color-spectrum-red), var(--color-spectrum-orange), var(--color-spectrum-amber), var(--color-spectrum-green), var(--color-spectrum-teal), var(--color-spectrum-blue), var(--color-spectrum-purple));
 }
 
 /* ── Base ── */
