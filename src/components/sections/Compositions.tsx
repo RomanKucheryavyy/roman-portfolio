@@ -1,78 +1,12 @@
 'use client'
-import { useEffect, useRef, useState } from 'react'
-import { ExternalLink } from 'lucide-react'
+import { useEffect, useRef } from 'react'
 import { gsap } from '@/hooks/useGSAP'
 import { useStore } from '@/stores/useStore'
 import ScatterText from '@/components/effects/ScatterText'
 import RevealMask from '@/components/effects/RevealMask'
 import MobileReveal from '@/components/effects/MobileReveal'
-import { COMPOSITIONS } from '@/lib/constants'
-
-function CompositionCard({ work, index }: { work: (typeof COMPOSITIONS)[number]; index: number }) {
-  const setCursorVariant = useStore((s) => s.setCursorVariant)
-  const [expanded, setExpanded] = useState(false)
-  // Only the public works carry a url, so the card has to ask before it links.
-  const liveUrl = 'url' in work ? work.url : null
-
-  return (
-    <article
-      className="hud-corners composition-card group relative h-full rounded-xl border border-white/5 max-md:border-white/10 bg-[#0a0a0a] transition-all duration-500 hover:border-white/15 hover:-translate-y-1"
-      style={{ borderLeft: `2px solid ${work.color}` }}
-      onMouseEnter={() => setCursorVariant('text')}
-      onMouseLeave={() => setCursorVariant('default')}
-    >
-      {/* faint color wash — resting visibility on mobile, hover-gated on desktop */}
-      <div
-        className="absolute inset-0 rounded-xl opacity-0 max-md:opacity-60 group-hover:opacity-100 transition-opacity duration-700 pointer-events-none"
-        style={{ background: `radial-gradient(ellipse 80% 50% at 50% 0%, ${work.color}14, transparent 70%)` }}
-      />
-      <div className="relative p-5 md:p-7 flex flex-col h-full">
-        <div className="flex items-center justify-between mb-4 md:mb-5">
-          <span className="font-mono text-[10px] text-white/25 tracking-wider">
-            op. {String(index + 1).padStart(2, '0')}
-          </span>
-          <span className="flex items-center gap-2 font-mono text-[9px] uppercase tracking-wider text-white/40">
-            <span className="w-1.5 h-1.5 rounded-full animate-pulse" style={{ backgroundColor: work.color }} />
-            {work.status}
-          </span>
-        </div>
-        <h3 className="font-display text-2xl md:text-3xl font-black tracking-tighter text-white leading-[0.95]">
-          {work.title}
-        </h3>
-        <p className="font-mono text-[10px] text-white/30 uppercase tracking-wider mt-2 mb-4">{work.tagline}</p>
-        <p className={`text-white/45 text-sm leading-relaxed mb-2 md:mb-6 ${expanded ? '' : 'max-md:line-clamp-4'}`}>
-          {work.description}
-        </p>
-        <button
-          onClick={() => setExpanded((e) => !e)}
-          className="md:hidden self-start font-mono text-[10px] text-white/40 mb-4 py-1"
-        >
-          {expanded ? '$ cat --less' : '$ cat --more'}
-        </button>
-        <div className="mt-auto flex flex-wrap gap-2">
-          {work.stack.map((item) => (
-            <span key={item} className="px-3 py-1 rounded-full text-[10px] font-mono border border-white/10 text-white/35">
-              {item}
-            </span>
-          ))}
-        </div>
-        {liveUrl && (
-          <a
-            href={liveUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="mt-5 inline-flex items-center gap-2 self-start font-mono text-[11px] text-white/55 border border-white/15 rounded-full px-4 py-2 transition-colors duration-300 hover:text-white hover:border-white/40"
-            onMouseEnter={() => setCursorVariant('hover')}
-            onMouseLeave={() => setCursorVariant('text')}
-          >
-            <ExternalLink size={12} />
-            {liveUrl.replace(/^https?:\/\//, '')}
-          </a>
-        )}
-      </div>
-    </article>
-  )
-}
+import WorkCard from '@/components/ui/WorkCard'
+import { PRODUCTS } from '@/lib/work'
 
 /**
  * Original works — the products Roman composes and operates himself.
@@ -81,6 +15,7 @@ function CompositionCard({ work, index }: { work: (typeof COMPOSITIONS)[number];
  */
 export default function Compositions() {
   const sectionRef = useRef<HTMLElement>(null)
+  const setCursorVariant = useStore((s) => s.setCursorVariant)
 
   useEffect(() => {
     const section = sectionRef.current
@@ -134,9 +69,15 @@ export default function Compositions() {
 
         <RevealMask direction="bottom" duration={1.2}>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {COMPOSITIONS.map((work, i) => (
+            {PRODUCTS.map((work, i) => (
               <MobileReveal key={work.id} delay={100 * i}>
-                <CompositionCard work={work} index={i} />
+                <div
+                  className="composition-card h-full"
+                  onMouseEnter={() => setCursorVariant('text')}
+                  onMouseLeave={() => setCursorVariant('default')}
+                >
+                  <WorkCard work={work} index={i} total={PRODUCTS.length} />
+                </div>
               </MobileReveal>
             ))}
           </div>
