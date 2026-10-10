@@ -43,6 +43,14 @@ export default function ProjectModal({ index, onClose }: ProjectModalProps) {
       {shown && (
         <DialogContent
           aria-describedby={undefined}
+          // Radix hands focus back to its <DialogTrigger>, and there is none:
+          // the deck opens this itself. Return it to the card that opened it.
+          onCloseAutoFocus={(event) => {
+            event.preventDefault()
+            document
+              .querySelector<HTMLElement>(`[data-work="${shown.work.id}"] [data-open]`)
+              ?.focus({ preventScroll: true })
+          }}
           onCloseHover={(hovering) => setCursorVariant(hovering ? 'hover' : 'default')}
           className="max-h-[90svh] overflow-y-auto rounded-xl shadow-[0_40px_80px_rgba(0,0,0,0.7)]"
           // Wide enough for the screenshot, never so tall the details fall off

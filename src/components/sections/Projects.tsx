@@ -83,7 +83,9 @@ function DesktopDeck({ onOpen }: { onOpen: (index: number) => void }) {
   useEffect(() => {
     if (!refocus.current) return
     refocus.current = false
-    deckRef.current?.querySelector<HTMLElement>('[data-front="true"] [data-open]')?.focus()
+    // By id, not [data-front]: the card that just left is still in the DOM,
+    // still marked front, for the length of its exit animation.
+    deckRef.current?.querySelector<HTMLElement>(`[data-work="${deck[0].id}"] [data-open]`)?.focus()
   }, [deck])
 
   // Arrow keys drive the deck, but this listener is on the window: it used to
@@ -105,6 +107,8 @@ function DesktopDeck({ onOpen }: { onOpen: (index: number) => void }) {
 
     const onKey = (e: KeyboardEvent) => {
       if (isTyping(e.target)) return
+      // Nor while the detail view is open over the deck.
+      if ((e.target as HTMLElement | null)?.closest?.('[role="dialog"]')) return
       if (e.metaKey || e.ctrlKey || e.altKey) return
       const deck = deckRef.current
       if (!deck) return
@@ -168,6 +172,7 @@ function DesktopDeck({ onOpen }: { onOpen: (index: number) => void }) {
               return (
                 <motion.li
                   key={work.id}
+                  data-work={work.id}
                   data-front={isFront}
                   inert={!isFront}
                   className="absolute w-full h-full list-none overflow-hidden rounded-xl"
