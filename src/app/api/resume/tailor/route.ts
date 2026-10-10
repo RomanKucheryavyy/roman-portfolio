@@ -1,9 +1,14 @@
 import { NextResponse } from 'next/server'
+import { clientIp, rateLimited, LIMITS } from '@/lib/rate-limit'
 import Anthropic from '@anthropic-ai/sdk'
 
 export const maxDuration = 60
 
 export async function POST(req: Request) {
+  if (rateLimited(clientIp(req), LIMITS.ai)) {
+    return NextResponse.json({ error: 'rate_limited' }, { status: 429 })
+  }
+
   let body: { resumeData?: unknown; jobDescription?: string; pin?: string }
   try {
     body = await req.json()

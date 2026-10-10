@@ -8,7 +8,7 @@ export default function robots(): MetadataRoute.Robots {
       allow: '/',
       // Nothing here is worth a crawl budget: /api is JSON endpoints and
       // /__forms.html is the Netlify form stub, not a page.
-      disallow: ['/api/', '/__forms.html'],
+      disallow: ['/api/', '/__forms.html', '/resume'],
     },
     sitemap: `${SITE.url}/sitemap.xml`,
   }

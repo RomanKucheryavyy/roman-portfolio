@@ -83,27 +83,27 @@ function AppContent() {
       <CodePeek />
       <main className="relative z-[1]">
         <Hero />
-        <SectionTransition commentText="// end of hero" />
+        <SectionTransition commentText="// loading credentials..." />
         <SectionFade transition="slide-right">
           <Measures />
         </SectionFade>
-        <SectionTransition commentText="/* loading arsenal */" />
+        <SectionTransition commentText="/* compiling the work */" />
         <SectionFade transition="stack-up">
           <Projects />
         </SectionFade>
-        <SectionTransition commentText="// compiling projects..." />
+        <SectionTransition commentText="// premiering original works..." />
         <SectionFade transition="fade-center">
           <Compositions />
         </SectionFade>
-        <SectionTransition commentText="/* premiering original works */" />
+        <SectionTransition commentText="/* decoding signal */" />
         <SectionFade transition="slide-right">
           <Manifesto />
         </SectionFade>
-        <SectionTransition commentText="// decoding signal..." />
+        <SectionTransition commentText="// the conductor speaks..." />
         <SectionFade transition="fade-center">
           <Conductor />
         </SectionFade>
-        <SectionTransition commentText="/* the conductor speaks */" />
+        <SectionTransition commentText="/* opening a channel */" />
         <SectionFade transition="slide-up">
           <Compose />
         </SectionFade>

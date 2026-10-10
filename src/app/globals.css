@@ -85,8 +85,11 @@
 }
 
 /* ── Base ── */
+/* The native pointer is hidden only where the custom one is actually mounted.
+   This rule used to be unconditional, so /works and /resume — which never
+   render <Cursor> — left the visitor with no pointer at all. */
 @media (pointer: fine) {
-  * { cursor: none; }
+  body[data-custom-cursor] * { cursor: none; }
 }
 
 html { background: #000; color: #fff; }

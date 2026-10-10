@@ -21,6 +21,14 @@ export default function Cursor() {
   const trailRefs = useRef<(HTMLDivElement | null)[]>([])
   const cursorVariant = useStore((s) => s.cursorVariant)
 
+  // Tells globals.css it is safe to hide the native pointer. Without this the
+  // rule applied site-wide, including on routes that never mount this.
+  useEffect(() => {
+    if (isTouch) return
+    document.body.setAttribute('data-custom-cursor', '')
+    return () => document.body.removeAttribute('data-custom-cursor')
+  }, [isTouch])
+
   useEffect(() => {
     if (isTouch) return
     let mouseX = -100
