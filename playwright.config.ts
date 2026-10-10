@@ -35,6 +35,10 @@ export default defineConfig({
     timeout: 120_000,
     stdout: 'ignore',
     stderr: 'pipe',
+    // The contact spec posts a valid message and expects it to go nowhere.
+    // An existing process.env value beats .env.local in Next's loader, so these
+    // blanks keep a developer's real Resend key or Netlify URL out of the run.
+    env: { RESEND_API_KEY: '', URL: '', DEPLOY_PRIME_URL: '' },
   },
   projects: [
     {
