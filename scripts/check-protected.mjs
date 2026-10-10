@@ -9,8 +9,9 @@
  *     drag=, dragConstraints, dragElastic, SPRING, STACK_DEPTH or touchAction.
  *     (The phone deck's horizontal drag with touchAction 'pan-y' is the fix
  *     for a page that could not be scrolled; it is not to be "unified".)
- *   - The /works wheel in works-wheel.tsx: the STEP, DRUM, LENS, BOW and
- *     CARD_* declarations, and the per-frame draw loop.
+ *   - The /works wheel in works-wheel.tsx: the STEP, DRUM, LENS, BOW, RING_R,
+ *     CULL, EASE and CARD_* declarations, the transform math (bowAt() and
+ *     place()), and the per-frame draw loop.
  *
  * Every commit after PROTECTED_SINCE (default abb0023, where these rules
  * start) that touches one of them fails unless its message carries
@@ -53,11 +54,13 @@ const DECK = 'src/components/sections/Projects.tsx'
 const DECK_LINE = /(drag=|dragConstraints|dragElastic|SPRING|STACK_DEPTH|touchAction)/
 
 const WHEEL = 'src/components/ui/works-wheel.tsx'
-const WHEEL_CONST = /^\s*(export\s+)?const\s+(STEP|DRUM|LENS|BOW|CARD_[A-Z0-9_]+)\b\s*=/
+const WHEEL_CONST = /^\s*(export\s+)?const\s+(STEP|DRUM|LENS|BOW|RING_R|CULL|EASE|CARD_[A-Z0-9_]+)\b\s*=/
 /** Multi-line blocks of works-wheel.tsx where every line is protected. The end
  *  pattern is matched from the start line on. */
 const WHEEL_BLOCKS = [
   { name: 'draw-loop', start: /const draw = \(\) => \{/, end: /cancelAnimationFrame\(frame\)/ },
+  { name: 'place()', start: /^(export\s+)?function place\(/, end: /^\}/ },
+  { name: 'bowAt()', start: /^(export\s+)?const bowAt\s*=/, end: /;\s*$/ },
 ]
 
 const WATCHED = [...WHOLE_FILES, ...WHOLE_DIRS, DECK, WHEEL]

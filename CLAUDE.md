@@ -81,7 +81,8 @@ Also standing:
 - **Deck physics and wheel geometry are frozen.** In `Projects.tsx`, no line
   with `drag=`, `dragConstraints`, `dragElastic`, `SPRING`, `STACK_DEPTH` or
   `touchAction` changes. In `works-wheel.tsx`, `STEP`, `DRUM`, `LENS`, `BOW`,
-  the `CARD_*` constants and the per-frame `draw` loop stay as they are.
+  `RING_R`, `CULL`, `EASE`, the `CARD_*` constants, the transform math
+  (`bowAt()`, `place()`) and the per-frame `draw` loop stay as they are.
 - **Owner-fixed copy:** the FUBC Coffee iOS description keeps "Apple Pay", and
   the Nelectric description stays word for word.
 
