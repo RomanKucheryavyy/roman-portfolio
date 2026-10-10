@@ -1,0 +1,35 @@
+# Dependency PRs. Every one runs CI (typecheck, lint, the protected-files
+# check, build, the bundle budget and the e2e suite) before anyone merges it.
+version: 2
+updates:
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 5
+    groups:
+      # Next and its lint config move together, in their own PR: a Next minor
+      # can change Turbopack chunking and metadata merging, so it gets its own
+      # review instead of riding along with routine bumps.
+      next:
+        patterns:
+          - next
+          - eslint-config-next
+      minor-and-patch:
+        update-types:
+          - minor
+          - patch
+        exclude-patterns:
+          - next
+          - eslint-config-next
+    ignore:
+      # Pinned to the browsers provisioned for local runs (chromium-1194);
+      # bump it deliberately, together with those browsers.
+      - dependency-name: '@playwright/test'
+      - dependency-name: playwright-core
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: monthly
+    open-pull-requests-limit: 5
