@@ -1,9 +1,9 @@
 import type { Metadata } from 'next'
-import Image from 'next/image'
 import Link from 'next/link'
-import { ArrowUpRight } from 'lucide-react'
-import { WorksWheel, type WorksWheelItem } from '@/components/ui/works-wheel'
-import { PROJECTS, SITE } from '@/lib/constants'
+import { WorksWheel } from '@/components/ui/works-wheel'
+import WorkCard from '@/components/ui/WorkCard'
+import { SITE } from '@/lib/constants'
+import { CLIENT_WORK } from '@/lib/work'
 
 export const metadata: Metadata = {
   title: `The Setlist — ${SITE.name}`,
@@ -16,14 +16,6 @@ export const metadata: Metadata = {
     type: 'website',
   },
 }
-
-/** Not every piece is public — an unlaunched client site has no link to give,
- *  and the wheel renders those as a plain card with no "Visit" affordance. */
-const WORKS: WorksWheelItem[] = PROJECTS.map((project) => ({
-  title: project.title,
-  image: project.image,
-  ...('url' in project ? { href: project.url } : {}),
-}))
 
 /**
  * The works index, on its own route rather than inside the one-page scroll.
@@ -45,67 +37,43 @@ export default function WorksPage() {
     <main className="relative min-h-svh w-full bg-black md:h-svh md:overflow-hidden">
       <Link
         href="/"
-        className="absolute top-6 left-6 z-20 font-mono text-[11px] tracking-wider text-white/30 transition-colors hover:text-white/70 md:top-[7.5%] md:left-[2.5%]"
+        className="absolute top-6 left-6 z-20 font-mono text-label tracking-wider text-white/50 transition-colors hover:text-white md:top-[7.5%] md:left-[2.5%]"
       >
         ← Back to portfolio
       </Link>
 
       {/* ── the wheel, from md up ─────────────────────────────────────────── */}
       <div className="hidden h-full md:block">
-        <WorksWheel items={WORKS} label="The Setlist" action="Visit" />
-        <p className="pointer-events-none absolute bottom-[5%] left-1/2 z-10 -translate-x-1/2 text-center font-mono text-[10px] tracking-wider text-white/20">
+        <WorksWheel items={CLIENT_WORK} label="The Setlist" />
+        <p className="pointer-events-none absolute bottom-[5%] left-1/2 z-10 -translate-x-1/2 text-center font-mono text-label tracking-wider text-white/35">
           scroll, drag or use ↑ ↓ to turn
         </p>
       </div>
 
-      {/* ── the same setlist, as a list, on phones ────────────────────────── */}
+      {/* ── the same setlist, as a list, on phones ──────────────────────────
+          The same card the phone deck uses on the home page. The card body
+          goes nowhere; its link pill is the only way off the site, as on
+          every other surface. */}
       <div className="px-6 pt-20 pb-16 md:hidden">
         <h1 className="font-display text-4xl font-bold tracking-tight text-white">The Setlist</h1>
-        <p className="mt-2 mb-8 font-mono text-[11px] tracking-wider text-white/30">
-          {PROJECTS.length} pieces
+        <p className="mt-2 mb-8 font-mono text-label tracking-wider text-white/50">
+          {CLIENT_WORK.length} pieces
         </p>
 
         <ul className="space-y-4">
-          {PROJECTS.map((project) => {
-            const href = 'url' in project ? project.url : null
-            const status = 'status' in project ? project.status : null
-            const card = (
-              <>
-                <span className="relative block aspect-[16/10] overflow-hidden rounded-xl border border-white/10 bg-[#0a0a0a]">
-                  <Image
-                    src={project.image}
-                    alt={project.title}
-                    fill
-                    sizes="88vw"
-                    className="object-cover"
-                  />
-                  <span className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/85 via-black/25 to-transparent" />
-                  <span className="absolute right-0 bottom-0 left-0 flex items-end justify-between gap-3 p-4">
-                    <span className="font-display text-xl font-black tracking-tight text-white">
-                      {project.title}
-                    </span>
-                    {href ? (
-                      <ArrowUpRight size={16} className="shrink-0 text-white/60" />
-                    ) : (
-                      <span className="shrink-0 font-mono text-[10px] text-white/45">{status}</span>
-                    )}
-                  </span>
-                </span>
-              </>
-            )
-
-            return (
-              <li key={project.id}>
-                {href ? (
-                  <a href={href} target="_blank" rel="noopener noreferrer" className="block">
-                    {card}
-                  </a>
-                ) : (
-                  card
-                )}
-              </li>
-            )
-          })}
+          {CLIENT_WORK.map((work, i) => (
+            <li key={work.id}>
+              <WorkCard
+                work={work}
+                index={i}
+                total={CLIENT_WORK.length}
+                size="md"
+                layout="stacked"
+                titleAs="h2"
+                imageSizes="(max-width: 768px) 92vw, 1px"
+              />
+            </li>
+          ))}
         </ul>
       </div>
     </main>

@@ -11,28 +11,23 @@
 // The whole thing is one number - `turn` - read by a single rAF pass that writes
 // transforms straight to the DOM. 0 is the ring, 1 is the drum with item 0 at
 // the front, and every whole number after that is one more item turned past.
+//
+// Each card is this site's <WorkCard> at its smallest size, so the wheel shows
+// the same frame, wash, counter and link as every other surface. The wheel
+// owns only the drum: the sized, transformed element each card sits in.
 import * as React from "react";
 
+import WorkCard from "@/components/ui/WorkCard";
 import { cn } from "@/lib/utils";
-
-export interface WorksWheelItem {
-  /** Project name. Shown beside the front card and in the index. */
-  title: string;
-  /** Cover art. Any src an <img> takes. */
-  image: string;
-  /** Where the card links to. Omit for a wheel that only browses. */
-  href?: string;
-}
+import type { Work } from "@/lib/work";
 
 export interface WorksWheelProps extends Omit<
   React.ComponentPropsWithoutRef<"section">,
   "children"
 > {
-  items: WorksWheelItem[];
+  items: readonly Work[];
   /** Sits in the middle of the ring. @default undefined */
   label?: string;
-  /** Label on the card's hover affordance. Omit to drop it. @default undefined */
-  action?: string;
   /** Fires when the wheel settles on a new piece, so a host can narrate it. */
   onActiveChange?: (index: number) => void;
 }
@@ -45,7 +40,7 @@ export interface WorksWheelProps extends Omit<
    decides whether they land inside the frame or run off it. */
 const CARD_H = 0.38; // front card height, of the stage
 const CARD_MAX_W = 0.34; // ... but never wider than this much of the stage
-const CARD_RATIO = 1.45; // card width / height
+const CARD_RATIO = 1.6; // card width / height: the screenshots' own 16/10, uncropped
 const STEP = 40; // degrees between cards on the drum
 const DRUM = 2.22; // drum radius, in card heights - and everything below likewise
 const LENS = 2.7; // perspective distance
@@ -58,6 +53,8 @@ const RING_R = 1.14; // ring radius
 const BOW = 1.82;
 const TITLE = 0.124; // ring label and front-card title
 const INDEX = 0.04; // the index down the right-hand side
+/** Nothing a visitor reads lands under the site's text-label size. */
+const MIN_TYPE = 12;
 /** Items either side of the front still worth drawing. Past this a card is
     edge-on, and further round it would stack up on the vanishing point. */
 const CULL = 1.6;
@@ -105,7 +102,6 @@ function place(
 export function WorksWheel({
   items,
   label = "Works '26",
-  action = "View",
   onActiveChange,
   className,
   ...props
@@ -178,8 +174,8 @@ export function WorksWheel({
       drumR,
       bow: cardH * BOW,
       depth: cardH * LENS,
-      title: cardH * TITLE,
-      index: cardH * INDEX,
+      title: Math.max(cardH * TITLE, MIN_TYPE),
+      index: Math.max(cardH * INDEX, MIN_TYPE),
     };
   }, [stage, count]);
 
@@ -288,9 +284,9 @@ export function WorksWheel({
       <div
         ref={stageRef}
         tabIndex={0}
-        role="listbox"
-        aria-label={label}
-        aria-activedescendant={`works-wheel-${active}`}
+        role="group"
+        aria-roledescription="wheel"
+        aria-label={`${label}: use the up and down arrow keys to turn`}
         className="focus-visible:outline-foreground absolute inset-0 cursor-grab touch-pan-x outline-none focus-visible:outline-2 focus-visible:-outline-offset-4 active:cursor-grabbing"
         style={{ perspective: `${metrics.depth}px` }}
         onPointerDown={(event) => {
@@ -318,62 +314,35 @@ export function WorksWheel({
           ref={wheelRef}
           className="absolute top-1/2 left-1/2 [transform-style:preserve-3d]"
         >
-          {items.map((item, i) => {
-            const Tag = (item.href ? "a" : "div") as "a";
-            return (
-              <React.Fragment key={item.title}>
-                <Tag
-                  id={`works-wheel-${i}`}
-                  role="option"
-                  aria-selected={i === active}
-                  href={item.href}
-                  target={item.href?.startsWith("http") ? "_blank" : undefined}
-                  rel={item.href?.startsWith("http") ? "noopener noreferrer" : undefined}
-                  ref={(node: HTMLElement | null) => {
-                    cardRefs.current[i] = node;
-                  }}
-                  className="group absolute [backface-visibility:hidden]"
-                  style={{
-                    width: metrics.cardW,
-                    height: metrics.cardH,
-                    marginLeft: -metrics.cardW / 2,
-                    marginTop: -metrics.cardH / 2,
-                  }}
-                >
-                  <span className="bg-muted shadow-foreground/12 relative block size-full overflow-hidden rounded-xl shadow-[0_18px_40px_-18px_var(--tw-shadow-color)]">
-                    {/* eslint-disable-next-line @next/next/no-img-element -- the
-                        card is sized from a measured stage and transformed every
-                        frame; next/image's fill wrapper fights both. */}
-                    <img
-                      src={item.image}
-                      alt={item.title}
-                      draggable={false}
-                      className="size-full object-cover"
-                    />
-                    {action && item.href ? (
-                      <span className="bg-background/80 text-foreground pointer-events-none absolute right-3 bottom-3 flex translate-y-1 items-center gap-1 rounded-full px-2.5 py-1 text-[0.7rem] opacity-0 backdrop-blur-sm transition group-hover:translate-y-0 group-hover:opacity-100">
-                        <svg
-                          viewBox="0 0 12 12"
-                          className="size-2.5"
-                          aria-hidden="true"
-                        >
-                          <path
-                            d="M3 9 9 3M4 3h5v5"
-                            fill="none"
-                            stroke="currentColor"
-                            strokeWidth="1.4"
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                          />
-                        </svg>
-                        {action}
-                      </span>
-                    ) : null}
-                  </span>
-                </Tag>
-              </React.Fragment>
-            );
-          })}
+          {items.map((item, i) => (
+            // Only the piece at the front is interactive; the rest are turned
+            // away or edge-on, and their links would be invisible tab stops.
+            <div
+              key={item.id}
+              inert={i !== active}
+              ref={(node) => {
+                cardRefs.current[i] = node;
+              }}
+              className="absolute [backface-visibility:hidden]"
+              style={{
+                width: metrics.cardW,
+                height: metrics.cardH,
+                marginLeft: -metrics.cardW / 2,
+                marginTop: -metrics.cardH / 2,
+              }}
+            >
+              {/* The first child takes the ring-to-drum scale every frame. */}
+              <WorkCard
+                work={item}
+                index={i}
+                total={count}
+                size="sm"
+                layout="overlay"
+                imageSizes="(min-width: 768px) 34vw, 1px"
+                className="size-full shadow-[0_18px_40px_-18px_rgba(255,255,255,0.12)]"
+              />
+            </div>
+          ))}
         </div>
       </div>
 
@@ -382,25 +351,26 @@ export function WorksWheel({
           proportions inside a card as well as at full bleed. */}
       <div
         ref={labelRef}
-        className="pointer-events-none absolute inset-0 grid place-items-center tracking-tight"
+        className="font-display pointer-events-none absolute inset-0 grid place-items-center font-black tracking-tighter"
         style={{ fontSize: metrics.title }}
       >
         {label}
       </div>
       <div
         ref={titleRef}
-        className="pointer-events-none absolute top-1/2 left-[8%] -translate-y-1/2 tracking-tight opacity-0"
+        aria-live="polite"
+        className="font-display pointer-events-none absolute top-1/2 left-[8%] max-w-[22%] -translate-y-1/2 leading-[0.9] font-black tracking-tighter opacity-0"
         style={{ fontSize: metrics.title }}
       >
         {items[active]?.title}
       </div>
 
       <ol
-        className="text-muted-foreground absolute top-[7.5%] right-[2.5%] text-right leading-[1.75]"
+        className="text-muted-foreground absolute top-[7.5%] right-[2.5%] text-right font-mono leading-[1.75]"
         style={{ fontSize: metrics.index }}
       >
         {items.map((item, i) => (
-          <li key={item.title}>
+          <li key={item.id}>
             <button
               type="button"
               onClick={() => to(i + 1)}
