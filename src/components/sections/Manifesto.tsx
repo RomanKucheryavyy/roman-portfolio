@@ -27,7 +27,7 @@ export default function Manifesto() {
   // floated in empty space off the end of the box.
   return (
     <SectionShell ref={sectionRef} id="interlude">
-      <p data-reveal className="section-label font-mono text-label tracking-[0.3em] uppercase text-white/30 mb-6">
+      <p data-reveal className="section-label font-mono text-label tracking-[0.3em] uppercase text-ink-meta mb-6">
         {'// interlude'}
       </p>
 
