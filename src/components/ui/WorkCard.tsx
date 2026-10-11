@@ -150,7 +150,7 @@ function OpenButton({ work, onOpen }: { work: Work; onOpen: () => void }) {
       data-open
       onClick={onOpen}
       aria-label={`Open ${work.title}`}
-      className="absolute inset-0 z-[1] cursor-[inherit] rounded-xl outline-none focus-visible:outline-2 focus-visible:-outline-offset-4 focus-visible:outline-white/70"
+      className="absolute inset-0 z-[1] cursor-[inherit] rounded-xl focus-visible:outline-2 focus-visible:-outline-offset-4 focus-visible:outline-white/70"
     />
   )
 }
