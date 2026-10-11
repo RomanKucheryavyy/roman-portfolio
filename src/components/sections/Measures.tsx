@@ -1,13 +1,18 @@
 'use client'
 import { useEffect, useRef, useState } from 'react'
+import { ArrowUpRight } from 'lucide-react'
 import { useStore } from '@/stores/useStore'
 import { useRevealOnScroll } from '@/hooks/useRevealOnScroll'
 import { SectionHeader, SectionShell } from '@/components/ui/SectionShell'
 import { FactList, type Fact } from '@/components/ui/FactList'
+import { PANEL } from '@/components/ui/Panel'
+import { PILL_OUTLINE } from '@/components/ui/pill'
 import DNAHelix from '@/components/canvas/DNAHelix'
-import { CERTIFICATIONS } from '@/lib/constants'
+import { CERTIFICATIONS, type Certification } from '@/lib/constants'
 import { CURRENT_ROLE, EDUCATION, PREVIOUS_ROLES, monthYear, roleTitle, shortTitle, yearRange } from '@/lib/site-facts'
 import { LIVE_CLIENT_WORK } from '@/lib/work'
+import { keyColor, type SpectrumKey } from '@/lib/score'
+import { cn } from '@/lib/utils'
 import type { AppStoreFacts } from '@/lib/app-store'
 
 /** "eight", for a count that opens a sentence. Past twenty it stays a numeral. */
@@ -114,18 +119,36 @@ function RecordRow() {
   )
 }
 
-const CERT_ACCENTS: Record<string, string> = {
-  developer: '#ffffff',
-  consultant: '#888888',
-  ai: '#af52de',
-  admin: '#30d158',
+/** Each category's edge, in a spectrum key rather than its own hex. */
+const CERT_ACCENTS: Record<Certification['category'], SpectrumKey> = {
+  developer: 'blue',
+  consultant: 'amber',
+  ai: 'purple',
+  admin: 'green',
 }
 
-function CertCard({ cert }: { cert: (typeof CERTIFICATIONS)[number] }) {
+/**
+ * Keyboard focus shows the back, the way hovering does. globals.css does this
+ * for a focused .flip-card; here the focus lands on the card's toggle inside
+ * it, so the same turn is keyed off :has().
+ */
+const FLIP_ON_FOCUS = '[&:has(:focus-visible)_.flip-card-inner]:[transform:rotateY(180deg)]'
+
+/**
+ * One certification. The front leads with its full name, the one heading per
+ * cert; the back says who certified it and when, and links a verification
+ * page once there is one.
+ *
+ * The toggle is a real button over the whole card, not the card itself: a
+ * heading and a link can't live inside a <button> (its content is phrasing
+ * only, and assistive tech flattens a button's children), so the faces sit
+ * beside it and let clicks fall through to it.
+ */
+function CertCard({ cert }: { cert: Certification }) {
   const [flipped, setFlipped] = useState(false)
   const spotlightRef = useRef<HTMLDivElement>(null)
   const setCursorVariant = useStore((s) => s.setCursorVariant)
-  const accent = CERT_ACCENTS[cert.category] ?? '#ffffff'
+  const edge = { borderLeftColor: keyColor(CERT_ACCENTS[cert.category]) }
 
   const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
     const rect = e.currentTarget.getBoundingClientRect()
@@ -139,32 +162,54 @@ function CertCard({ cert }: { cert: (typeof CERTIFICATIONS)[number] }) {
   return (
     <div
       data-reveal
-      className={`flip-card h-44 ${flipped ? 'flipped' : ''}`}
-      onClick={() => setFlipped((f) => !f)}
+      className={cn('flip-card relative h-44', FLIP_ON_FOCUS, flipped && 'flipped')}
       onMouseMove={handleMouseMove}
       onMouseEnter={() => setCursorVariant('hover')}
       onMouseLeave={() => setCursorVariant('default')}
     >
-      <div className="flip-card-inner relative w-full h-full">
+      <button
+        type="button"
+        aria-pressed={flipped}
+        aria-label={`Flip the ${cert.name} card`}
+        className="absolute inset-0 rounded-xl"
+        onClick={() => setFlipped((f) => !f)}
+      />
+      <div className="flip-card-inner pointer-events-none relative z-10 h-full w-full">
         <div
-          className="flip-card-front absolute inset-0 rounded-xl border border-white/5 bg-[#0a0a0a] p-6 flex flex-col justify-between"
-          style={{ borderLeft: `2px solid ${accent}` }}
+          className={cn(PANEL, 'flip-card-front absolute inset-0 flex flex-col justify-between border-l-2 p-4 sm:p-6')}
+          style={edge}
         >
-          <div ref={spotlightRef} className="absolute inset-0 rounded-xl pointer-events-none" />
-          <span className="font-mono text-[10px] text-white/35 uppercase tracking-wider">{cert.category}</span>
-          <h3 className="font-display text-lg font-bold text-white mt-2">{cert.short}</h3>
-          <div className="relative z-10 flex items-center justify-between">
-            <p className="font-mono text-[10px] text-white/30">{cert.date}</p>
-            <span className="md:hidden font-mono text-[10px] text-white/40">tap ↻</span>
+          <div ref={spotlightRef} className="absolute inset-0 rounded-xl" />
+          <p className="font-mono text-label uppercase tracking-wider text-ink-meta">
+            {cert.short} · {cert.category}
+          </p>
+          <h3 className="font-display text-body font-bold text-white sm:text-lead">{cert.name}</h3>
+          <div className="flex items-center justify-between">
+            <p className="font-mono text-label text-ink-meta">{cert.date}</p>
+            <span aria-hidden="true" className="font-mono text-label text-ink-meta md:hidden">
+              tap ↻
+            </span>
           </div>
         </div>
         <div
-          className="flip-card-back absolute inset-0 rounded-xl border border-white/10 bg-[#111] p-4 sm:p-6 flex flex-col justify-center"
-          style={{ borderLeft: `2px solid ${accent}` }}
+          className={cn(PANEL, 'flip-card-back absolute inset-0 flex flex-col justify-center gap-2 border-l-2 p-4 sm:p-6')}
+          style={edge}
         >
-          <h3 className="font-display text-sm sm:text-base font-bold text-white mb-2">{cert.name}</h3>
-          <p className="font-mono text-[11px] sm:text-xs text-white/40">Salesforce Certified</p>
-          <p className="font-mono text-[11px] sm:text-xs text-white/30 mt-2">{cert.date}</p>
+          <p className="font-mono text-small text-ink-body">Salesforce Certified</p>
+          <p className="font-mono text-label text-ink-meta">{cert.date}</p>
+          {cert.verifyUrl ? (
+            <a
+              href={cert.verifyUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label={`Verify ${cert.name} (opens in a new tab)`}
+              className={cn(PILL_OUTLINE, 'pointer-events-auto mt-2 self-start')}
+              onClick={(e) => e.stopPropagation()}
+            >
+              Verify
+              <ArrowUpRight size={12} aria-hidden="true" />
+            </a>
+          ) : null}
         </div>
       </div>
     </div>
