@@ -1,5 +1,6 @@
 'use client'
 import { useCallback, useEffect, useState } from 'react'
+import { usePathname } from 'next/navigation'
 import { AnimatePresence, motion } from 'framer-motion'
 import { Award, Music, User, Mail, Lock, AudioLines, X } from 'lucide-react'
 import { NAV_ITEMS, LINKS } from '@/lib/constants'
@@ -137,7 +138,11 @@ function NavItem({
 }
 
 export default function Nav() {
+  const pathname = usePathname()
   const isLoaded = useStore((s) => s.isLoaded)
+  // Only the home page has a boot to wait for; every other route shows the
+  // nav at once.
+  const shown = isLoaded || pathname !== '/'
   const activeSection = useStore((s) => s.activeSection)
   const setCursorVariant = useStore((s) => s.setCursorVariant)
   const [menuOpen, setMenuOpen] = useState(false)
@@ -157,7 +162,7 @@ export default function Nav() {
     <motion.div
       className="fixed top-0 left-0 right-0 z-[100] px-4 pt-4 md:px-4"
       initial={{ y: -80, opacity: 0 }}
-      animate={isLoaded ? { y: 0, opacity: 1 } : {}}
+      animate={shown ? { y: 0, opacity: 1 } : {}}
       transition={{ type: 'spring', stiffness: 200, damping: 30, delay: 0.3 }}
     >
       <nav className="px-4 py-2 md:px-4 lg:px-5 md:py-2 lg:py-2.5 flex items-center justify-between rounded-xl border border-white/[0.06] w-full bg-black/70 backdrop-blur-xl shadow-[inset_0_1px_0_rgba(255,255,255,0.06),0_8px_32px_rgba(0,0,0,0.4)]">

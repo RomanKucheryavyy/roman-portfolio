@@ -1,5 +1,6 @@
 'use client'
 import { useEffect } from 'react'
+import { MotionConfig } from 'framer-motion'
 import Lenis from 'lenis'
 import { gsap, ScrollTrigger } from '@/hooks/useGSAP'
 import { useMouseTracking } from '@/hooks/useMouseVelocity'
@@ -13,8 +14,6 @@ import SectionTransition from '@/components/effects/SectionTransition'
 import CodePeek from '@/components/effects/CodePeek'
 import ConsoleSignature from '@/components/effects/ConsoleSignature'
 import Loader from '@/components/ui/Loader'
-import Cursor from '@/components/ui/Cursor'
-import Nav from '@/components/ui/Nav'
 import Hero from '@/components/sections/Hero'
 import Measures from '@/components/sections/Measures'
 import Projects from '@/components/sections/Projects'
@@ -72,16 +71,14 @@ function AppContent() {
     return () => observers.forEach((io) => io?.disconnect())
   }, [setActiveSection])
 
+  // The nav, the cursor and the grain are the layout's (SiteChrome), on every route.
   return (
-    <>
+    <MotionConfig reducedMotion="user">
       <ConsoleSignature />
       <DynamicFavicon />
       <AmbientBackground />
       <ScrollProgress />
-      <div className="noise-overlay" aria-hidden="true" />
       <Loader />
-      <Cursor />
-      <Nav />
       <CodePeek />
       <main className="relative z-[1]">
         <Hero />
@@ -98,7 +95,7 @@ function AppContent() {
         <SectionTransition commentText="/* opening a channel */" />
         <Compose />
       </main>
-    </>
+    </MotionConfig>
   )
 }
 
