@@ -39,7 +39,7 @@ export default function Manifesto() {
         />
       </div>
 
-      <p data-reveal className="mt-5 font-mono text-label tracking-wider text-ink-faint">
+      <p data-reveal className="mt-5 font-mono text-label tracking-wider text-ink-meta">
         {isMobile ? '> tap any word to decode' : '> hover any word to decode'}
       </p>
     </SectionShell>

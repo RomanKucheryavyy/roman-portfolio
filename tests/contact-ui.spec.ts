@@ -167,8 +167,9 @@ test.describe('type and ink', () => {
     expect(nodes.length).toBeGreaterThan(10)
     for (const n of nodes) {
       expect(n.size, `"${n.text}" font size`).toBeGreaterThanOrEqual(12)
-      // The dynamics mark is decoration (it mirrors the message length), held to 3:1.
-      expect(contrast(n.fg, n.bg), `"${n.text}" contrast (${n.fg} on ${n.bg})`).toBeGreaterThanOrEqual(n.decoration ? 3 : 4.5)
+      // The dynamics mark too: it mirrors the message length, but it is text a
+      // visitor reads, so since W12 it is held to 4.5:1 like the rest.
+      expect(contrast(n.fg, n.bg), `"${n.text}" contrast (${n.fg} on ${n.bg})`).toBeGreaterThanOrEqual(4.5)
     }
     const mark = nodes.find((n) => n.decoration)
     expect(mark?.text, 'the dynamics mark was measured').toBe('tacet')

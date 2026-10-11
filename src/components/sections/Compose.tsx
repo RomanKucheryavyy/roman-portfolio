@@ -321,7 +321,7 @@ export default function Compose() {
                     animate={{ opacity: 1, scale: 1 }}
                     exit={{ opacity: 0 }}
                     transition={{ duration: 0.25 }}
-                    className="absolute bottom-3 right-3 font-serif italic text-lg text-ink-faint pointer-events-none"
+                    className="absolute bottom-3 right-3 font-serif italic text-lg text-ink-meta pointer-events-none"
                     title={dynamics.word}
                   >
                     {dynamics.mark}
