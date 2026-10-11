@@ -1,8 +1,13 @@
 'use client'
 import Image from 'next/image'
-import { useState, type CSSProperties, type ElementType, type ReactNode } from 'react'
+import Link from 'next/link'
+import { ArrowRight } from 'lucide-react'
+import { type CSSProperties, type ElementType, type ReactNode } from 'react'
+import { useMediaQuery } from '@/hooks/useMediaQuery'
 import { cn } from '@/lib/utils'
 import { counterOf, type Work } from '@/lib/work'
+import ExpandableText from './ExpandableText'
+import { PANEL } from './Panel'
 import { TagList } from './TagPill'
 import WorkLink from './WorkLink'
 
@@ -31,6 +36,9 @@ interface WorkCardProps {
   media?: ReactNode
   /** Makes the card body a button that opens the piece's detail view. */
   onOpen?: () => void
+  /** The piece's program notes (/works/<id>), only when a study is published.
+   *  Drawn with the details, so never on the sm card. */
+  notesHref?: string
   /** The title's element. A dialog passes its own title so it is labelled by it. */
   titleAs?: ElementType
   imageSizes?: string
@@ -40,12 +48,21 @@ interface WorkCardProps {
 }
 
 /** Fixed parts of the contract. Change them here and every surface follows. */
-const FRAME = 'group/card relative overflow-hidden rounded-xl border border-white/10 bg-[#0a0a0a]'
-const COUNTER = 'font-mono text-label tracking-wider text-white/50'
+const FRAME = cn('group/card relative overflow-hidden', PANEL)
+const COUNTER = 'font-mono text-label tracking-wider text-ink-meta'
 const TITLE = 'font-display font-black leading-[0.9] tracking-tighter text-white'
-const BODY = 'text-small leading-relaxed text-white/70'
+// The description's type. The phone clamp around it wears the same, so the
+// lines it counts are this text's lines.
+const BODY_TYPE = 'text-small leading-relaxed'
+const BODY = `${BODY_TYPE} text-ink-body`
 const SCRIM = {
   overlay: 'pointer-events-none absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent',
+  // The deck's big card puts four lines of description, the tags and the link
+  // over the screenshot, where a bright one (Alongside's cream) left the copy
+  // unreadable. Its lower band holds at 90% black up to 15rem, the height of
+  // the details block, whatever the card's size, then fades out.
+  overlayLg:
+    'pointer-events-none absolute inset-0 bg-[linear-gradient(to_top,rgb(0_0_0/0.95)_0,rgb(0_0_0/0.9)_15rem,transparent)]',
   // Ends in the card's own colour, so the screenshot melts into the details
   // panel below it instead of stopping at a visible seam.
   stacked: 'pointer-events-none absolute inset-0 bg-gradient-to-t from-[#0a0a0a] via-black/40 to-transparent',
@@ -69,7 +86,8 @@ const DETAILS: Record<NonNullable<WorkCardProps['details']>, string> = {
   hidden: 'translate-y-2.5 opacity-0',
 }
 
-function altOf(work: Work) {
+/** The screenshot's alt text, shared with the deck's Spline poster. */
+export function altOf(work: Work) {
   return `${work.title}: ${work.isApp ? 'app' : 'homepage'} screenshot`
 }
 
@@ -109,6 +127,22 @@ function Screenshot({ work, media, sizes, loading, scrim }: {
   )
 }
 
+/** The link to a piece's program notes. Stops the pointer so a press on it
+ *  never starts a deck drag. */
+function NotesLink({ href }: { href: string }) {
+  return (
+    <Link
+      href={href}
+      onPointerDown={(e) => e.stopPropagation()}
+      onClick={(e) => e.stopPropagation()}
+      className="pointer-events-auto inline-flex items-center gap-1.5 font-mono text-label text-ink-meta transition-colors hover:text-white"
+    >
+      Program notes
+      <ArrowRight size={12} aria-hidden="true" />
+    </Link>
+  )
+}
+
 function OpenButton({ work, onOpen }: { work: Work; onOpen: () => void }) {
   return (
     <button
@@ -136,6 +170,7 @@ export default function WorkCard({
   details = 'shown',
   media,
   onOpen,
+  notesHref,
   titleAs: Title = 'h3',
   imageSizes = '(max-width: 768px) 92vw, 50vw',
   imageLoading,
@@ -144,10 +179,15 @@ export default function WorkCard({
 }: WorkCardProps) {
   const counter = <p className={COUNTER}>{counterOf(index, total)}</p>
 
-  if (!work.image && !media) return <TextCard work={work} counter={counter} Title={Title} className={className} style={style} />
+  const notes = notesHref && size !== 'sm' ? <NotesLink href={notesHref} /> : null
 
+  if (!work.image && !media) {
+    return <TextCard work={work} counter={counter} notes={notes} Title={Title} className={className} style={style} />
+  }
+
+  const scrim = layout === 'overlay' && size === 'lg' ? 'overlayLg' : layout
   const screenshot = (
-    <Screenshot work={work} media={media} sizes={imageSizes} loading={imageLoading} scrim={layout} />
+    <Screenshot work={work} media={media} sizes={imageSizes} loading={imageLoading} scrim={scrim} />
   )
 
   if (layout === 'overlay') {
@@ -169,9 +209,12 @@ export default function WorkCard({
               <div className="mb-2">{counter}</div>
               <Title className={cn(TITLE, TITLE_SIZE[size], 'mb-3')}>{work.title}</Title>
               <div className={cn('transition-[opacity,transform] duration-200', DETAILS[details])}>
-                <p className={cn(BODY, 'mb-4 max-w-lg')}>{work.description}</p>
+                <p data-card-description className={cn(BODY, 'mb-4 max-w-lg')}>{work.description}</p>
                 <TagList tags={work.tags} className="mb-4" />
-                <WorkLink work={work} />
+                <div className="flex flex-wrap items-center gap-x-5 gap-y-3">
+                  <WorkLink work={work} />
+                  {notes}
+                </div>
               </div>
             </>
           )}
@@ -191,10 +234,11 @@ export default function WorkCard({
       </div>
       {onOpen && <OpenButton work={work} onOpen={onOpen} />}
       <div className={cn('relative z-[2] flex flex-1 flex-col pt-2', PAD_X[size], PAD_B[size])}>
-        <p className={BODY}>{work.description}</p>
+        <p data-card-description className={BODY}>{work.description}</p>
         <div className="mt-auto flex flex-col items-start gap-4 pt-5">
           <TagList tags={work.tags} />
           <WorkLink work={work} />
+          {notes}
         </div>
       </div>
     </article>
@@ -207,14 +251,16 @@ export default function WorkCard({
  * title, pills and link carry them text-first, with the brand colour as an
  * edge and a wash instead of a tint over an image.
  */
-function TextCard({ work, counter, Title, className, style }: {
+function TextCard({ work, counter, notes, Title, className, style }: {
   work: Work
   counter: ReactNode
+  notes: ReactNode
   Title: ElementType
   className?: string
   style?: CSSProperties
 }) {
-  const [expanded, setExpanded] = useState(false)
+  // Phones clamp the description to four lines; from md up it shows whole.
+  const isNarrow = useMediaQuery('(max-width: 767px)')
   return (
     <article
       className={cn(FRAME, 'flex h-full flex-col transition-colors duration-500 hover:border-white/20', className)}
@@ -230,10 +276,10 @@ function TextCard({ work, counter, Title, className, style }: {
         <div className="mb-4 flex items-center justify-between gap-3 md:mb-5">
           {counter}
           {work.status && (
-            <p className="flex items-center gap-2 text-right font-mono text-label uppercase tracking-wider text-white/50">
+            <p className="flex items-center gap-2 text-right font-mono text-label uppercase tracking-wider text-ink-meta">
               <span
                 aria-hidden="true"
-                className="h-1.5 w-1.5 shrink-0 animate-pulse rounded-full"
+                className="h-1.5 w-1.5 shrink-0 rounded-full"
                 style={{ backgroundColor: work.color }}
               />
               {work.status}
@@ -242,20 +288,21 @@ function TextCard({ work, counter, Title, className, style }: {
         </div>
         <Title className={cn(TITLE, 'text-2xl md:text-3xl')}>{work.title}</Title>
         {work.tagline && (
-          <p className="mt-2 mb-4 font-mono text-label uppercase tracking-wider text-white/50">{work.tagline}</p>
+          <p className="mt-2 mb-4 font-mono text-label uppercase tracking-wider text-ink-meta">{work.tagline}</p>
         )}
-        <p className={cn(BODY, !expanded && 'max-md:line-clamp-4')}>{work.description}</p>
-        <button
-          type="button"
-          onClick={() => setExpanded((e) => !e)}
-          aria-expanded={expanded}
-          className="mt-2 self-start py-1 font-mono text-label text-white/50 md:hidden"
+        <ExpandableText
+          lines={4}
+          enabled={isNarrow}
+          moreLabel="$ cat --more"
+          lessLabel="$ cat --less"
+          className={BODY_TYPE}
         >
-          {expanded ? '$ cat --less' : '$ cat --more'}
-        </button>
+          <p data-card-description className={BODY}>{work.description}</p>
+        </ExpandableText>
         <div className="mt-auto flex flex-col items-start gap-4 pt-6">
           <TagList tags={work.tags} />
           <WorkLink work={work} />
+          {notes}
         </div>
       </div>
     </article>

@@ -21,7 +21,8 @@ export default function Compositions() {
       <SectionHeader
         movement="compositions"
         title={{ lead: 'The', accent: 'Compositions' }}
-        intro="Personal projects, composed entirely on my own time. AI-heavy pieces I design, build, and run after hours — each one solving a problem I actually have."
+        // "Most": Sembly, the first card, is live and links out.
+        intro="Products I design, build and run myself — most are private builds, so they're described rather than shown."
       />
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">

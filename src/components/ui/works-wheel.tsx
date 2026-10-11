@@ -304,8 +304,13 @@ export function WorksWheel({
           if (target.current > 1) to(Math.round(target.current));
         }}
         onKeyDown={(event) => {
-          if (event.key === "ArrowDown") to(Math.round(target.current) + 1);
-          else if (event.key === "ArrowUp") to(Math.round(target.current) - 1);
+          // Turn 1 is the drum with the first piece at the front, last + 1
+          // the drum with the last piece there.
+          const at = Math.round(target.current);
+          if (event.key === "ArrowDown" || event.key === "PageDown") to(at + 1);
+          else if (event.key === "ArrowUp" || event.key === "PageUp") to(at - 1);
+          else if (event.key === "Home") to(1);
+          else if (event.key === "End") to(last + 1);
           else return;
           event.preventDefault();
         }}
@@ -356,23 +361,39 @@ export function WorksWheel({
       >
         {label}
       </div>
+      {/* The side panel: the front piece's title, then where it stands and what
+          it is, so the drum reads as a setlist rather than a slideshow. Only
+          the title is announced on a turn; the rest is there to read. */}
       <div
         ref={titleRef}
-        aria-live="polite"
-        className="font-display pointer-events-none absolute top-1/2 left-[8%] max-w-[22%] -translate-y-1/2 leading-[0.9] font-black tracking-tighter opacity-0"
-        style={{ fontSize: metrics.title }}
+        className="pointer-events-none absolute top-1/2 left-[8%] max-w-[22%] -translate-y-1/2 opacity-0"
       >
-        {items[active]?.title}
+        <p
+          aria-live="polite"
+          className="font-display leading-[0.9] font-black tracking-tighter"
+          style={{ fontSize: metrics.title }}
+        >
+          {items[active]?.title}
+        </p>
+        {items[active]?.status && (
+          <p className="text-ink-meta mt-5 font-mono text-label tracking-wider uppercase">
+            {items[active].status}
+          </p>
+        )}
+        <p data-description className="text-ink-body mt-4 line-clamp-5 text-small">
+          {items[active]?.description}
+        </p>
       </div>
 
       <ol
-        className="text-muted-foreground absolute top-[7.5%] right-[2.5%] text-right font-mono leading-[1.75]"
+        className="text-muted-foreground absolute top-[max(7.5%,6rem)] right-[2.5%] text-right font-mono leading-[1.75]"
         style={{ fontSize: metrics.index }}
       >
         {items.map((item, i) => (
           <li key={item.id}>
             <button
               type="button"
+              aria-current={i === active ? "true" : undefined}
               onClick={() => to(i + 1)}
               className={cn(
                 "focus-visible:outline-foreground cursor-pointer transition-colors outline-none focus-visible:outline-1",
