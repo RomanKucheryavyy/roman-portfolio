@@ -124,6 +124,12 @@ const COPY_LABELS: Record<CopyState, string> = { idle: 'Copy to clipboard', copi
 const COPY_STATES = Object.keys(COPY_LABELS) as CopyState[]
 
 /**
+ * The site's focus ring is white, which vanishes on the white sheet, so the
+ * controls that sit on the paper draw it in the paper's ink instead.
+ */
+const PAPER_FOCUS = 'focus-visible:outline-paper-ink'
+
+/**
  * The cover letter's copy control, on the paper. It used to call
  * navigator.clipboard.writeText bare: no word on whether it worked, and an
  * unhandled rejection wherever the clipboard is refused. The shared hook
@@ -139,7 +145,10 @@ function CopyLetter({ text }: { text: string }) {
         onClick={() => {
           void copy(text)
         }}
-        className="mt-6 inline-grid cursor-pointer text-left font-mono text-label text-paper-muted transition-colors hover:text-paper-ink"
+        className={cn(
+          'mt-6 inline-grid cursor-pointer text-left font-mono text-label text-paper-muted transition-colors hover:text-paper-ink',
+          PAPER_FOCUS
+        )}
       >
         {COPY_STATES.map((s) => (
           <span key={s} className={cn('col-start-1 row-start-1', s !== state && 'invisible')}>
@@ -290,7 +299,7 @@ export default function Builder({ pin, resume, setResume, onLock }: BuilderProps
         Building…
       </>
     ),
-    className: 'absolute top-3 right-3 z-10 shadow-lg',
+    className: cn('absolute top-3 right-3 z-10 shadow-lg', PAPER_FOCUS),
   } as const
   const downloadFace = (
     <>

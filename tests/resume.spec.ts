@@ -204,6 +204,35 @@ test.describe('builder', () => {
     expect(pdf).not.toMatch(/'#[0-9a-f]{3,6}'/i)
   })
 
+  test('the controls on the paper draw their focus ring in paper ink, not the white that vanishes on it', async ({ page }) => {
+    await unlock(page)
+    const ring = () =>
+      page.evaluate(() => {
+        const el = document.activeElement as HTMLElement
+        return { focusVisible: el.matches(':focus-visible'), color: getComputedStyle(el).outlineColor }
+      })
+    const ink = parseColor(PAPER.ink).slice(0, 3)
+
+    // Keyboard from the last field to Download PDF, the next stop.
+    await page.getByLabel('Skills').focus()
+    await page.keyboard.press('Tab')
+    await expect(page.getByRole('button', { name: 'Download PDF' })).toBeFocused()
+    expect((await ring()).focusVisible).toBe(true)
+    // Polled: on a transition-colors control the outline colour eases in too.
+    await expect.poll(async () => parseColor((await ring()).color).slice(0, 3)).toEqual(ink)
+
+    await page.getByRole('tab', { name: 'Cover Letter' }).click()
+    await page.getByLabel('Paste Job Description').fill('A fixture job description.')
+    await page.getByRole('button', { name: 'Generate Cover Letter' }).click()
+    // Download PDF, then the sheet, then the copy control inside it.
+    await page.getByRole('button', { name: 'Download PDF' }).focus()
+    await page.keyboard.press('Tab')
+    await page.keyboard.press('Tab')
+    await expect(page.getByRole('button', { name: 'Copy to clipboard' })).toBeFocused()
+    expect((await ring()).focusVisible).toBe(true)
+    await expect.poll(async () => parseColor((await ring()).color).slice(0, 3)).toEqual(ink)
+  })
+
   test('the résumé downloads as a PDF', async ({ page }) => {
     const log = collectConsole(page)
     await unlock(page)
