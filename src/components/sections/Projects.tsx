@@ -8,6 +8,7 @@ import { useDeviceCapability } from '@/hooks/useDeviceCapability'
 import { useRevealOnScroll } from '@/hooks/useRevealOnScroll'
 import { SectionHeader, SectionShell } from '@/components/ui/SectionShell'
 import WorkCard from '@/components/ui/WorkCard'
+import WebGLBoundary, { useCanWebGL } from '@/components/ui/WebGLBoundary'
 import { CLIENT_WORK, counterOf, type Work } from '@/lib/work'
 
 const Spline = lazy(() => import('@splinetool/react-spline'))
@@ -67,6 +68,12 @@ function DesktopDeck({ onOpen }: { onOpen: (index: number) => void }) {
   // back, where it is inert; focus follows the new front card instead of
   // falling to the page.
   const refocus = useRef(false)
+  // Spline needs WebGL, and its failures used to unmount the whole page. Off
+  // until the probe passes, so a machine without WebGL never downloads it, and
+  // off for good once it throws: the iOS card then shows its screenshot.
+  const webgl = useCanWebGL()
+  const [splineFailed, setSplineFailed] = useState(false)
+  const splineOk = webgl && !splineFailed
 
   const dragY = useMotionValue(0)
   const rotateX = useTransform(dragY, [-200, 0, 200], [15, 0, -15])
@@ -211,7 +218,7 @@ function DesktopDeck({ onOpen }: { onOpen: (index: number) => void }) {
                     size="lg"
                     layout="overlay"
                     details={isFront ? 'dimmed' : 'hidden'}
-                    media={work.isApp ? <SplineIphone isFront={isFront} /> : undefined}
+                    media={work.isApp && splineOk ? <WebGLBoundary fallback={null} onError={() => setSplineFailed(true)}><SplineIphone isFront={isFront} /></WebGLBoundary> : undefined}
                     onOpen={isFront ? () => { if (!dragged.current) onOpen(originalIndex) } : undefined}
                     imageSizes="(max-width: 768px) 85vw, 50vw"
                     className="h-full"
@@ -377,7 +384,9 @@ export default function Projects() {
 
   useEffect(() => {
     if (!isMobile) {
-      import('@/components/sections/ProjectModal').then((m) => setModal(() => m.default))
+      import('@/components/sections/ProjectModal')
+        .then((m) => setModal(() => m.default))
+        .catch((e) => console.info('[detail] unavailable', e))
     }
   }, [isMobile])
 
