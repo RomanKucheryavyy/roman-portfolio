@@ -11,6 +11,7 @@ import { useDeckKeys } from '@/hooks/useDeckKeys'
 import { SectionHeader, SectionShell } from '@/components/ui/SectionShell'
 import WorkCard, { altOf } from '@/components/ui/WorkCard'
 import WebGLBoundary, { useCanWebGL } from '@/components/ui/WebGLBoundary'
+import { notesHrefOf } from '@/lib/case-studies'
 import { CLIENT_WORK, counterOf, type Work } from '@/lib/work'
 
 const Spline = lazy(() => import('@splinetool/react-spline'))
@@ -188,6 +189,7 @@ function DesktopDeck({ onOpen }: { onOpen: (index: number) => void }) {
                     details={isFront ? 'dimmed' : 'hidden'}
                     media={work.isApp && splineOk ? <WebGLBoundary fallback={null} onError={() => setSplineFailed(true)}><SplineIphone work={work} isFront={isFront} /></WebGLBoundary> : undefined}
                     onOpen={isFront ? () => { if (!dragged.current) onOpen(originalIndex) } : undefined}
+                    notesHref={isFront ? notesHrefOf(work.id) : undefined}
                     imageSizes="(max-width: 768px) 85vw, 50vw"
                     className="h-full"
                   />
@@ -327,6 +329,7 @@ function MobileDeck() {
                     total={TOTAL}
                     size="md"
                     layout="stacked"
+                    notesHref={isFront ? notesHrefOf(work.id) : undefined}
                     imageSizes="(max-width: 580px) 88vw, 512px"
                     className="h-full"
                   />

@@ -3,6 +3,7 @@ import Link from 'next/link'
 import { WorksWheel } from '@/components/ui/works-wheel'
 import WorkCard from '@/components/ui/WorkCard'
 import { SITE } from '@/lib/constants'
+import { notesHrefOf } from '@/lib/case-studies'
 import { CLIENT_WORK } from '@/lib/work'
 
 export const metadata: Metadata = {
@@ -70,6 +71,7 @@ export default function WorksPage() {
                 size="md"
                 layout="stacked"
                 titleAs="h2"
+                notesHref={notesHrefOf(work.id)}
                 imageSizes="(max-width: 768px) 92vw, 1px"
               />
             </li>
