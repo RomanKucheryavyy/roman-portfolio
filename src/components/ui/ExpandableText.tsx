@@ -59,7 +59,7 @@ export default function ExpandableText({
   const open = !enabled || expanded || (heights !== null && !overflows)
 
   return (
-    <div className={className}>
+    <div data-expandable className={className}>
       <div
         id={id}
         className={cn(

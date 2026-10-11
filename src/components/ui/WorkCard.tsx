@@ -206,7 +206,7 @@ export default function WorkCard({
               <div className="mb-2">{counter}</div>
               <Title className={cn(TITLE, TITLE_SIZE[size], 'mb-3')}>{work.title}</Title>
               <div className={cn('transition-[opacity,transform] duration-200', DETAILS[details])}>
-                <p className={cn(BODY, 'mb-4 max-w-lg')}>{work.description}</p>
+                <p data-card-description className={cn(BODY, 'mb-4 max-w-lg')}>{work.description}</p>
                 <TagList tags={work.tags} className="mb-4" />
                 <div className="flex flex-wrap items-center gap-x-5 gap-y-3">
                   <WorkLink work={work} />
@@ -231,7 +231,7 @@ export default function WorkCard({
       </div>
       {onOpen && <OpenButton work={work} onOpen={onOpen} />}
       <div className={cn('relative z-[2] flex flex-1 flex-col pt-2', PAD_X[size], PAD_B[size])}>
-        <p className={BODY}>{work.description}</p>
+        <p data-card-description className={BODY}>{work.description}</p>
         <div className="mt-auto flex flex-col items-start gap-4 pt-5">
           <TagList tags={work.tags} />
           <WorkLink work={work} />
@@ -288,7 +288,7 @@ function TextCard({ work, counter, notes, Title, className, style }: {
           <p className="mt-2 mb-4 font-mono text-label uppercase tracking-wider text-ink-meta">{work.tagline}</p>
         )}
         <ExpandableText lines={4} enabled={isNarrow} moreLabel="$ cat --more" lessLabel="$ cat --less">
-          <p className={BODY}>{work.description}</p>
+          <p data-card-description className={BODY}>{work.description}</p>
         </ExpandableText>
         <div className="mt-auto flex flex-col items-start gap-4 pt-6">
           <TagList tags={work.tags} />

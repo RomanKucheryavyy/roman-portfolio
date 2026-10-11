@@ -283,7 +283,7 @@ function MobileDeck() {
         // Focus lands here when a key turns the deck and the new front card
         // has nothing focusable of its own (an unlaunched piece).
         tabIndex={-1}
-        className="relative w-full max-w-lg outline-none"
+        className="relative w-full max-w-lg"
         style={{ overflow: 'clip visible' }}
       >
         <DeckStatus work={deck[0]} />
