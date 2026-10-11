@@ -14,7 +14,8 @@ interface FactListProps {
   /**
    * `rows`: term beside value from sm up, stacked on phones.
    * `grid`: a record row of cells sharing hairlines, two across on phones and
-   * five from md (sized for the five-cell record row).
+   * five from lg (sized for the five-cell record row: at md a fifth of the
+   * column is about 90px, narrower than "certifications" set in text-lead).
    */
   layout?: 'rows' | 'grid'
   /** Rows only: a rounded-xl hairline box with a rule between rows. */
@@ -39,7 +40,7 @@ export function FactList({ items, layout = 'rows', bordered = false, className }
     return (
       <dl
         className={cn(
-          'grid grid-cols-2 overflow-hidden rounded-xl border border-white/10 md:grid-cols-5',
+          'grid grid-cols-2 overflow-hidden rounded-xl border border-white/10 lg:grid-cols-5',
           className,
         )}
       >
@@ -47,7 +48,7 @@ export function FactList({ items, layout = 'rows', bordered = false, className }
           <div
             key={i}
             // An odd cell left alone on the last phone row spans both columns.
-            className="-m-px flex min-w-0 flex-col gap-2 border-t border-l border-white/10 p-5 odd:last:col-span-2 md:p-6 md:odd:last:col-span-1"
+            className="-m-px flex min-w-0 flex-col gap-2 border-t border-l border-white/10 p-5 odd:last:col-span-2 md:p-6 lg:odd:last:col-span-1"
           >
             <dt className="font-mono text-label uppercase tracking-wider text-ink-meta">{item.term}</dt>
             <dd className="min-w-0">

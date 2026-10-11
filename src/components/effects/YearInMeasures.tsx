@@ -1,6 +1,8 @@
 'use client'
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState, type CSSProperties } from 'react'
 import { gsap } from '@/hooks/useGSAP'
+import { Panel } from '@/components/ui/Panel'
+import { keyColor, keyOf, nextKeyOf } from '@/lib/score'
 
 interface Week {
   start: string
@@ -27,6 +29,12 @@ const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', '
 const X0 = 34
 const STEP = 15.5
 
+/** The accent word in the Conductor's key, the same gradient as the section's H2. */
+const CONDUCTOR_KEY = {
+  '--key-from': keyColor(keyOf('conductor')),
+  '--key-to': keyColor(nextKeyOf('conductor')),
+} as CSSProperties
+
 /**
  * "A Year in Measures" — the past year of GitHub commits rendered as sheet
  * music. Each week is a note: busier weeks sit higher on the staff and
@@ -34,7 +42,7 @@ const STEP = 15.5
  */
 export default function YearInMeasures() {
   const [data, setData] = useState<ContributionData | null>(null)
-  const wrapRef = useRef<HTMLDivElement>(null)
+  const wrapRef = useRef<HTMLElement>(null)
 
   useEffect(() => {
     fetch('/api/contributions')
@@ -51,8 +59,14 @@ export default function YearInMeasures() {
   useEffect(() => {
     const wrap = wrapRef.current
     if (!wrap || !data) return
-    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return
-    const notes = wrap.querySelectorAll('[data-week-note]')
+    const notes = wrap.querySelectorAll<SVGGElement>('[data-week-note]')
+    // Reduced motion: every note in place at once, rather than none of them.
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      notes.forEach((note) => {
+        note.style.opacity = '1'
+      })
+      return
+    }
     const tween = gsap.fromTo(
       notes,
       { opacity: 0, scale: 0.3, transformOrigin: 'center' },
@@ -75,20 +89,23 @@ export default function YearInMeasures() {
 
 
   return (
-    <div ref={wrapRef} className="hud-corners mt-8 rounded-xl border border-white/5 bg-[#0a0a0a]">
+    <Panel ref={wrapRef} hud className="mt-8">
       <div className="flex items-center justify-between px-5 pt-4">
-        <p className="font-mono text-[10px] text-white/25 uppercase tracking-wider">
+        <p className="font-mono text-label uppercase tracking-wider text-ink-meta">
           {'// git log --since="1 year ago"'}
         </p>
         {total !== null && (
-          <p className="font-mono text-[10px] text-white/30">
-            <span className="md:hidden text-white/40 mr-2">← swipe</span>
+          <p className="font-mono text-label text-ink-body">
+            <span className="mr-2 text-ink-meta md:hidden">← swipe</span>
             {total.toLocaleString()} contributions
           </p>
         )}
       </div>
-      <h3 className="px-5 pt-1 font-display text-lg font-bold text-white">
-        A Year in <span className="text-gradient">Measures</span>
+      <h3 className="px-5 pt-1 font-display text-lead font-bold text-white">
+        A Year in{' '}
+        <span className="text-key" style={CONDUCTOR_KEY}>
+          Measures
+        </span>
       </h3>
       <div className="relative">
         <div className="md:hidden pointer-events-none absolute inset-y-0 right-0 w-10 bg-gradient-to-l from-[#0a0a0a] z-10" />
@@ -122,6 +139,7 @@ export default function YearInMeasures() {
               elements.push(
                 <g key={`bar-${week.start}`}>
                   <line x1={x - STEP / 2} y1="12" x2={x - STEP / 2} y2="44" stroke="rgba(255,255,255,0.12)" strokeWidth="0.5" />
+                  {/* An axis tick: 8 user units on purpose (constraint 7, not a type step). */}
                   <text x={x - STEP / 2} y="58" fontSize="8" fill="rgba(255,255,255,0.3)" fontFamily="monospace" textAnchor="middle">
                     {MONTHS[month]}
                   </text>
@@ -156,9 +174,9 @@ export default function YearInMeasures() {
         </svg>
       </div>
       </div>
-      <p className="px-5 pb-4 font-mono text-[10px] text-white/40">
+      <p className="px-5 pb-4 font-mono text-label text-ink-meta">
         Every week of GitHub activity is a note — busier weeks play higher and faster. Rests are real rests.
       </p>
-    </div>
+    </Panel>
   )
 }

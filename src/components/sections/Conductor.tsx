@@ -1,21 +1,34 @@
 'use client'
 import { useEffect, useRef } from 'react'
 import Image from 'next/image'
-import { Code, Music, Heart, Cloud } from 'lucide-react'
 import { gsap } from '@/hooks/useGSAP'
 import { useGyroParallax } from '@/hooks/useGyroParallax'
+import { useMediaQuery } from '@/hooks/useMediaQuery'
 import { useRevealOnScroll } from '@/hooks/useRevealOnScroll'
 import { SectionHeader, SectionShell } from '@/components/ui/SectionShell'
+import { FactList, type Fact } from '@/components/ui/FactList'
+import { Panel } from '@/components/ui/Panel'
+import { TerminalBar } from '@/components/ui/TerminalBar'
 import YearInMeasures from '@/components/effects/YearInMeasures'
+import { CERTIFICATIONS } from '@/lib/constants'
+import { CURRENT_ROLE, PREVIOUS_ROLES, TIMELINE, monthYear, roleTitle, shortRole } from '@/lib/site-facts'
+import { cn } from '@/lib/utils'
+
+/**
+ * The plain account of who Roman is, before the photo on every width. The
+ * role and team are read from site-facts, so a team change can't leave this
+ * section a step behind again (it named his old team months after he moved).
+ */
+const INTRO = `${CURRENT_ROLE.title} at ${CURRENT_ROLE.company}, on ${CURRENT_ROLE.team}; before that, Premier support for ${PREVIOUS_ROLES[0].team}. I build in React, Next.js, Swift and Apex, and I conduct the FUBC Band.`
 
 const CODE_LINES = [
   '// Roman Kucheryavyy',
   '// Orchestrating Logic & Art',
   '',
   'const roman = {',
-  '  role: "Sr. TSE, Salesforce Gov Cloud",',
+  `  role: "${shortRole(CURRENT_ROLE)}",`,
   '  craft: ["React", "Next.js", "Swift", "Apex"],',
-  '  certs: 8,',
+  `  certs: ${CERTIFICATIONS.length},`,
   '  band: "FUBC — conductor, trumpet",',
   '  priority: "family.first()",',
   '};',
@@ -25,84 +38,133 @@ const CODE_LINES = [
   '}',
 ]
 
+/** One ink per kind of line, so the card reads as code without a highlighter. */
+function inkOf(line: string): string {
+  if (line.startsWith('//')) return 'text-ink-meta'
+  if (/\b(const|while)\b/.test(line)) return 'text-white'
+  if (line.includes('"')) return 'text-ink-body'
+  return 'text-ink-meta'
+}
+
+/** The terminal card's facts. "Now" reads the same as the Credentials record row. */
+const WORK_FACTS: Fact[] = [
+  {
+    term: 'Now',
+    value: roleTitle(CURRENT_ROLE),
+    note: `${CURRENT_ROLE.company} · since ${monthYear(CURRENT_ROLE.start)}`,
+  },
+  { term: 'Builds', value: 'React, Next.js, Swift, Java — concept to deploy' },
+]
+
+const LIFE_FACTS: Fact[] = [
+  { term: 'Music', value: 'FUBC Band — trumpet, arranger, director' },
+  { term: 'Home', value: 'Husband and father' },
+]
+
+/**
+ * In a three-across card a 10rem term column leaves the value a sliver, so
+ * from lg each fact stacks, the way FactList already lays it out on phones.
+ */
+const STACK_IN_CARD = 'lg:[&>div]:grid-cols-1 lg:[&>div]:gap-1'
+
 const NOTES = [
   { x: 60, y: 30 }, { x: 130, y: 50 }, { x: 200, y: 25 },
   { x: 270, y: 55 }, { x: 340, y: 35 }, { x: 410, y: 45 },
 ]
 
-const TIMELINE = [
-  { year: '2016', label: 'CS @ Highline' },
-  { year: '2018', label: 'UW Tacoma' },
-  { year: '2021', label: 'Microsoft' },
-  { year: '2023', label: 'Salesforce' },
-  { year: 'Now', label: '8 Certs' },
-]
+const FIRST_YEAR = Math.min(...TIMELINE.map((t) => t.year))
+const LAST_YEAR = Math.max(...TIMELINE.map((t) => t.year))
+
+/** Where an entry's dot sits on the rail: its year's share of the whole span. */
+const railAt = (year: number) => ((year - FIRST_YEAR) / (LAST_YEAR - FIRST_YEAR || 1)) * 100
+
+/**
+ * On the rail the first and last entries hug its ends, so their labels never
+ * hang off the column; the ones between centre on their dot.
+ */
+function railPlace(i: number): { shift: string; align: string } {
+  if (i === 0) return { shift: '', align: 'sm:items-start sm:text-left' }
+  if (i === TIMELINE.length - 1) return { shift: 'sm:-translate-x-full', align: 'sm:items-end sm:text-right' }
+  return { shift: 'sm:-translate-x-1/2', align: 'sm:items-center sm:text-center' }
+}
 
 export default function Conductor() {
   const sectionRef = useRef<HTMLElement>(null)
   const photoRef = useRef<HTMLDivElement>(null)
-  const tiltRef = useGyroParallax({ maxOffset: 10 })
+  const reduced = useMediaQuery('(prefers-reduced-motion: reduce)')
+  // The phone tilt is motion too: off when the visitor asks for less.
+  const tiltRef = useGyroParallax({ maxOffset: 10, enabled: !reduced })
   useRevealOnScroll(sectionRef)
 
   useEffect(() => {
     const section = sectionRef.current
     if (!section) return
+    const photo = photoRef.current
+    const timeline = section.querySelector<HTMLElement>('[data-timeline]')
+    const line = section.querySelector<HTMLElement>('[data-timeline-line]')
+    const dots = section.querySelectorAll<HTMLElement>('[data-timeline-dot]')
+
+    // Reduced motion: everything in its final place, nothing tweened.
     if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
-      if (photoRef.current) photoRef.current.style.opacity = '1'
+      if (photo) photo.style.opacity = '1'
+      if (line) line.style.transform = 'none'
+      dots.forEach((dot) => {
+        dot.style.opacity = '1'
+      })
       return
     }
 
-    if (photoRef.current) {
-      gsap.fromTo(
-        photoRef.current,
-        { filter: 'grayscale(100%) brightness(0.7)', scale: 1.05, opacity: 0 },
-        {
-          filter: 'grayscale(0%) brightness(1)', scale: 1, opacity: 1, duration: 1.5, ease: 'power2.out',
-          scrollTrigger: { trigger: photoRef.current, start: 'top 80%', end: 'top 30%', scrub: 1 },
-        }
-      )
-    }
-    const timelineLine = section.querySelector('[data-timeline-line]')
-    if (timelineLine) {
-      gsap.fromTo(
-        timelineLine,
-        { scaleX: 0 },
-        {
-          scaleX: 1, duration: 1.5, ease: 'power2.inOut',
-          scrollTrigger: { trigger: timelineLine, start: 'top 85%', once: true },
-        }
-      )
-      gsap.fromTo(
-        section.querySelectorAll('[data-timeline-dot]'),
-        { scale: 0, opacity: 0 },
-        {
-          scale: 1, opacity: 1, duration: 0.5, ease: 'elastic.out(1,0.5)', stagger: 0.15, delay: 0.5,
-          scrollTrigger: { trigger: timelineLine, start: 'top 85%', once: true },
-        }
-      )
-    }
+    // One context, reverted on unmount, so leaving for /works and coming
+    // back doesn't stack a second set of ScrollTriggers on the first.
+    const ctx = gsap.context(() => {
+      if (photo) {
+        gsap.fromTo(
+          photo,
+          { filter: 'grayscale(100%) brightness(0.7)', scale: 1.05, opacity: 0 },
+          {
+            filter: 'grayscale(0%) brightness(1)', scale: 1, opacity: 1, duration: 1.5, ease: 'power2.out',
+            scrollTrigger: { trigger: photo, start: 'top 80%', end: 'top 30%', scrub: 1 },
+          }
+        )
+      }
+      if (!timeline || !line) return
+      // The rule draws and the dots land only on the horizontal rail (sm up),
+      // as before; the phone list has always stood still.
+      gsap.matchMedia().add('(min-width: 640px)', () => {
+        gsap.fromTo(
+          line,
+          { scaleX: 0 },
+          {
+            scaleX: 1, duration: 1.5, ease: 'power2.inOut',
+            scrollTrigger: { trigger: timeline, start: 'top 85%', once: true },
+          }
+        )
+        gsap.fromTo(
+          dots,
+          { scale: 0, opacity: 0 },
+          {
+            scale: 1, opacity: 1, duration: 0.5, ease: 'elastic.out(1,0.5)', stagger: 0.15, delay: 0.5,
+            scrollTrigger: { trigger: timeline, start: 'top 85%', once: true },
+          }
+        )
+      })
+    }, section)
+    return () => ctx.revert()
   }, [])
 
   return (
     <SectionShell ref={sectionRef} id="conductor">
-      <svg className="absolute w-0 h-0" aria-hidden="true">
-        <defs>
-          <filter id="halftone">
-            <feComponentTransfer>
-              <feFuncR type="discrete" tableValues="0 0.2 0.4 0.6 0.8 1" />
-              <feFuncG type="discrete" tableValues="0 0.2 0.4 0.6 0.8 1" />
-              <feFuncB type="discrete" tableValues="0 0.2 0.4 0.6 0.8 1" />
-            </feComponentTransfer>
-          </filter>
-        </defs>
-      </svg>
-
-      <SectionHeader movement="conductor" title={{ lead: 'The', accent: 'Conductor' }} />
+      <SectionHeader movement="conductor" title={{ lead: 'The', accent: 'Conductor' }} intro={INTRO} />
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        {/* Photo */}
+        {/* Photo: 3:4 on its own; three across it fills the row, so its
+            foot lines up with the two cards beside it. */}
         <div ref={tiltRef}>
-          <div ref={photoRef} className="relative rounded-xl overflow-hidden aspect-[3/4] group" style={{ opacity: 0 }}>
+          <div
+            ref={photoRef}
+            className="relative rounded-xl overflow-hidden aspect-[3/4] lg:aspect-auto lg:h-full group"
+            style={{ opacity: 0 }}
+          >
             <Image
               src="/images/roman.jpg"
               alt="Roman Kucheryavyy"
@@ -119,59 +181,51 @@ export default function Conductor() {
             />
             <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
             <div className="absolute bottom-0 left-0 right-0 p-5">
-              <p className="font-display text-lg font-bold text-white">Roman Kucheryavyy</p>
-              <p className="font-mono text-[10px] text-white/50 tracking-wider">Orchestrating Logic &amp; Art</p>
+              <p className="font-display text-lead font-bold text-white">Roman Kucheryavyy</p>
+              <p className="font-mono text-label tracking-wider text-ink-meta">Orchestrating Logic &amp; Art</p>
             </div>
           </div>
         </div>
 
         {/* Terminal */}
-        <div data-reveal className="rounded-xl border border-white/5 bg-[#0a0a0a] overflow-hidden">
-          <div className="flex items-center gap-2 px-4 py-3 border-b border-white/5">
-            <div className="w-2.5 h-2.5 rounded-full bg-[#ff5f57]" />
-            <div className="w-2.5 h-2.5 rounded-full bg-[#febc2e]" />
-            <div className="w-2.5 h-2.5 rounded-full bg-[#28c840]" />
-            <span className="ml-3 font-mono text-[10px] text-white/20">roman@portfolio ~</span>
-          </div>
-          <div className="p-5 font-mono text-[11px] sm:text-xs leading-relaxed overflow-x-auto mobile-scroll-hide">
+        <Panel data-reveal className="overflow-hidden">
+          <TerminalBar title="roman@portfolio ~" />
+          <div
+            role="region"
+            aria-label="roman.ts"
+            tabIndex={0}
+            // The Panel clips anything outside it, so the ring is drawn inside.
+            className="mobile-scroll-hide overflow-x-auto p-5 font-mono text-label leading-relaxed focus-visible:-outline-offset-4"
+          >
             <div className="w-max min-w-full">
-            {CODE_LINES.map((line, i) => (
-              <div key={i} className="flex whitespace-pre">
-                <span className="text-white/15 select-none w-5 text-right mr-3 flex-shrink-0">{i + 1}</span>
-                <span
-                  className={
-                    line.startsWith('//') ? 'text-white/25'
-                    : line.includes('const') || line.includes('async') || line.includes('function') ? 'text-white/80'
-                    : line.includes('"') ? 'text-white/50'
-                    : 'text-white/35'
-                  }
-                >
-                  {line || ' '}
+              {CODE_LINES.map((line, i) => (
+                <div key={i} className="flex whitespace-pre">
+                  <span aria-hidden="true" className="mr-3 w-5 flex-shrink-0 select-none text-right text-ink-faint">
+                    {i + 1}
+                  </span>
+                  <span className={inkOf(line)}>{line || ' '}</span>
+                </div>
+              ))}
+              <div className="mt-1 flex">
+                <span aria-hidden="true" className="mr-3 w-5 select-none text-right text-ink-faint">
+                  {CODE_LINES.length + 1}
                 </span>
+                <span
+                  aria-hidden="true"
+                  className="inline-block h-3.5 w-1.5 animate-[blink_1s_step-end_infinite] bg-white/50 motion-reduce:[animation:none]"
+                />
               </div>
-            ))}
-            <div className="flex mt-1">
-              <span className="text-white/15 select-none w-5 text-right mr-3">{CODE_LINES.length + 1}</span>
-              <span className="w-1.5 h-3.5 bg-white/50 inline-block" style={{ animation: 'blink 1s step-end infinite' }} />
-            </div>
             </div>
           </div>
-          <div className="px-5 pb-5 space-y-3 border-t border-white/5 pt-4">
-            <div className="flex items-center gap-3">
-              <Cloud size={14} className="text-white/50" />
-              <span className="text-[11px] text-white/40">Salesforce Gov Cloud — Premier Support</span>
-            </div>
-            <div className="flex items-center gap-3">
-              <Code size={14} className="text-white/50" />
-              <span className="text-[11px] text-white/40">React, Next.js, Swift, Java — concept to deploy</span>
-            </div>
+          <div className="border-t border-white/10 px-5 py-3">
+            <FactList items={WORK_FACTS} className={STACK_IN_CARD} />
           </div>
-        </div>
+        </Panel>
 
         {/* Music */}
-        <div data-reveal className="rounded-xl border border-white/5 bg-[#0a0a0a] overflow-hidden">
+        <Panel data-reveal className="overflow-hidden">
           <div className="p-5">
-            <svg viewBox="0 0 480 80" className="w-full h-auto mb-4" fill="none">
+            <svg viewBox="0 0 480 80" className="mb-4 h-auto w-full" fill="none" aria-hidden="true">
               {[15, 25, 35, 45, 55].map((y) => (
                 <line key={y} x1="0" y1={y} x2="480" y2={y} stroke="rgba(255,255,255,0.06)" strokeWidth="0.5" />
               ))}
@@ -182,58 +236,78 @@ export default function Conductor() {
                 </g>
               ))}
             </svg>
-            <p className="text-white/40 text-sm leading-relaxed mb-4">
+            <p className="mb-4 text-small text-ink-body">
               Music and code run on the same engine — structure, rhythm, and knowing exactly when to
               improvise. As head conductor of the FUBC Band, I shape sound the way I shape software: with
               intention and a little audacity.
             </p>
-            <p className="text-white/40 text-sm leading-relaxed mb-6">
+            <p className="mb-4 text-small text-ink-body">
               Off the clock, my wife and daughter remind me why any of this matters. The best things I
               build serve people I love.
             </p>
-            <div className="space-y-3">
-              <div className="flex items-center gap-3">
-                <Music size={14} className="text-white/50" />
-                <span className="text-[11px] text-white/40">FUBC Band — trumpet, arranger, director</span>
-              </div>
-              <div className="flex items-center gap-3">
-                <Heart size={14} className="text-white/50" />
-                <span className="text-[11px] text-white/40">Husband and father — the most important role</span>
-              </div>
-            </div>
+            <FactList items={LIFE_FACTS} className={STACK_IN_CARD} />
           </div>
-        </div>
+        </Panel>
       </div>
 
       <YearInMeasures />
 
-      {/* Timeline — vertical "git log" on phones, horizontal staff on larger screens */}
-      <div className="mt-10 sm:hidden relative pl-1">
-        <div className="absolute left-[4px] top-2 bottom-2 w-px bg-white/20" />
-        {TIMELINE.map((item) => (
-          <div key={item.year} className="flex items-center gap-4 py-2.5">
-            <div className="w-2.5 h-2.5 rounded-full bg-white border border-white/50 relative z-10 shrink-0 -ml-[1px]" />
-            <span className="font-mono text-xs text-white/70 w-10 shrink-0">{item.year}</span>
-            <span className="font-mono text-[11px] text-white/50">{item.label}</span>
-          </div>
-        ))}
-      </div>
-      <div className="mt-16 relative pt-4 pb-2 hidden sm:block">
-        <div
-          data-timeline-line
-          className="absolute left-0 w-full h-px bg-white/20 origin-left"
-          style={{ top: '16px', transform: 'scaleX(0)' }}
-        />
-        <div className="flex justify-between relative">
-          {TIMELINE.map((item) => (
-            <div key={item.year} data-timeline-dot className="flex flex-col items-center gap-1.5">
-              <div className="w-2.5 h-2.5 rounded-full bg-white border border-white/50 relative z-10" />
-              <span className="font-mono text-[10px] text-white/60 mt-1">{item.year}</span>
-              <span className="font-mono text-[8px] sm:text-[9px] text-white/25 text-center leading-tight max-w-[60px] sm:max-w-none">
-                {item.label}
-              </span>
-            </div>
-          ))}
+      {/*
+        Timeline: one list from site-facts. On phones it reads top to bottom
+        down a rail (the structure of 21st.dev 28384, Milestone Timeline, not
+        installed); from sm the same items sit along a horizontal rule at their
+        real years, with a fermata held over the current one.
+      */}
+      <div className="relative mt-10 sm:mt-16 sm:pt-8">
+        <div className="relative">
+          <div
+            data-timeline-line
+            aria-hidden="true"
+            className="absolute inset-x-0 top-1 hidden h-px origin-left bg-white/20 sm:block"
+            style={{ transform: 'scaleX(0)' }}
+          />
+          <ol data-timeline aria-label="Timeline" className="relative sm:h-24">
+            {TIMELINE.map((item, i) => {
+              const last = i === TIMELINE.length - 1
+              const { shift, align } = railPlace(i)
+              return (
+                <li
+                  key={item.label}
+                  className={cn('sm:absolute sm:top-0', shift)}
+                  style={{ left: `${railAt(item.year)}%` }}
+                >
+                  <div data-timeline-dot className={cn('flex gap-4 sm:flex-col sm:gap-2', align)}>
+                    <div className="relative flex flex-col items-center">
+                      {item.current ? (
+                        <span
+                          aria-hidden="true"
+                          className="absolute bottom-full left-1/2 mb-1 hidden -translate-x-1/2 text-lead leading-none text-ink-body sm:block"
+                        >
+                          {'\u{1D110}'}
+                        </span>
+                      ) : null}
+                      <span className="mt-1 size-2.5 shrink-0 rounded-full border border-white/50 bg-white sm:mt-0" />
+                      {last ? null : <span aria-hidden="true" className="w-px flex-1 bg-white/20 sm:hidden" />}
+                    </div>
+                    <div className={cn('flex flex-wrap items-baseline gap-x-4 font-mono text-label sm:block', !last && 'pb-5 sm:pb-0')}>
+                      <span className="w-10 shrink-0 text-ink-body sm:block sm:w-auto">{item.year}</span>
+                      <span className="text-ink-meta sm:mt-1 sm:block sm:max-w-24 lg:max-w-40">
+                        {item.label}
+                        {item.current ? (
+                          <>
+                            <span aria-hidden="true" className="-my-1 ml-2 inline-block align-middle text-lead leading-none sm:hidden">
+                              {'\u{1D110}'}
+                            </span>
+                            <span className="sr-only">, current</span>
+                          </>
+                        ) : null}
+                      </span>
+                    </div>
+                  </div>
+                </li>
+              )
+            })}
+          </ol>
         </div>
       </div>
     </SectionShell>

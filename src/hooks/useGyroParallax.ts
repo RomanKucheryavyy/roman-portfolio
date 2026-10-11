@@ -4,6 +4,8 @@ import { useEffect, useRef } from 'react'
 interface GyroParallaxOptions {
   maxOffset?: number
   smoothing?: number
+  /** False attaches nothing at all (no listeners, no rAF). Defaults to true. */
+  enabled?: boolean
 }
 
 /**
@@ -11,10 +13,11 @@ interface GyroParallaxOptions {
  * iOS requires a user gesture before deviceorientation fires — we request
  * permission on the first touchstart.
  */
-export function useGyroParallax({ maxOffset = 15, smoothing = 0.08 }: GyroParallaxOptions = {}) {
+export function useGyroParallax({ maxOffset = 15, smoothing = 0.08, enabled = true }: GyroParallaxOptions = {}) {
   const ref = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
+    if (!enabled) return
     const el = ref.current
     if (!el) return
     const isTouch = 'ontouchstart' in window || navigator.maxTouchPoints > 0
@@ -67,7 +70,7 @@ export function useGyroParallax({ maxOffset = 15, smoothing = 0.08 }: GyroParall
       window.removeEventListener('deviceorientation', onOrientation)
       cancelAnimationFrame(raf)
     }
-  }, [maxOffset, smoothing])
+  }, [maxOffset, smoothing, enabled])
 
   return ref
 }

@@ -1,23 +1,163 @@
 'use client'
-import { useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
+import { ArrowUpRight } from 'lucide-react'
 import { useStore } from '@/stores/useStore'
 import { useRevealOnScroll } from '@/hooks/useRevealOnScroll'
 import { SectionHeader, SectionShell } from '@/components/ui/SectionShell'
+import { FactList, type Fact } from '@/components/ui/FactList'
+import { PANEL } from '@/components/ui/Panel'
+import { PILL_OUTLINE } from '@/components/ui/pill'
 import DNAHelix from '@/components/canvas/DNAHelix'
-import { CERTIFICATIONS } from '@/lib/constants'
+import { CERTIFICATIONS, type Certification } from '@/lib/constants'
+import { CURRENT_ROLE, EDUCATION, PREVIOUS_ROLES, monthYear, roleTitle, shortTitle, yearRange } from '@/lib/site-facts'
+import { LIVE_CLIENT_WORK } from '@/lib/work'
+import { keyColor, type SpectrumKey } from '@/lib/score'
+import { cn } from '@/lib/utils'
+import type { AppStoreFacts } from '@/lib/app-store'
 
-const CERT_ACCENTS: Record<string, string> = {
-  developer: '#ffffff',
-  consultant: '#888888',
-  ai: '#af52de',
-  admin: '#30d158',
+/** "eight", for a count that opens a sentence. Past twenty it stays a numeral. */
+const NUMBER_WORDS = [
+  'zero', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine', 'ten',
+  'eleven', 'twelve', 'thirteen', 'fourteen', 'fifteen', 'sixteen', 'seventeen', 'eighteen', 'nineteen', 'twenty',
+] as const
+
+function toWords(n: number): string {
+  return NUMBER_WORDS[n] ?? String(n)
 }
 
-function CertCard({ cert }: { cert: (typeof CERTIFICATIONS)[number] }) {
+const capitalize = (s: string) => s.charAt(0).toUpperCase() + s.slice(1)
+
+// The count is CERTIFICATIONS.length: the intro said "Eight" by hand.
+const CERT_COUNT = CERTIFICATIONS.length
+const INTRO = `${capitalize(toWords(CERT_COUNT))} certification${CERT_COUNT === 1 ? '' : 's'}, one CS degree, and a relentless habit of learning. Each credential here was earned in the field — not a checklist, but a growing repertoire.`
+
+const MONTH_ABBR = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+
+/** "Jul 2025" → a sortable month number. */
+const monthIndex = (date: string) => {
+  const [month, year] = date.split(' ')
+  return Number(year) * 12 + MONTH_ABBR.indexOf(month)
+}
+
+/** "Dec 2023 – Jul 2025": the oldest certification to the newest. */
+function certSpan(): string {
+  const dates = CERTIFICATIONS.map((c) => c.date).sort((a, b) => monthIndex(a) - monthIndex(b))
+  const first = dates[0]
+  const last = dates[dates.length - 1]
+  return first === last ? first : `${first} – ${last}`
+}
+
+const LAST_ROLE = PREVIOUS_ROLES[0]
+const DEGREE = EDUCATION[0]
+const APPS_LIVE = LIVE_CLIENT_WORK.filter((w) => w.isApp).length
+
+/** "Oct 10, 2026", in UTC so the server's answer reads the same everywhere. */
+const checkedOn = (iso: string) =>
+  new Date(iso).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric', timeZone: 'UTC' })
+
+/**
+ * The live App Store line, or nothing. It renders only when Apple answered
+ * with a rating, a count and the time it answered: a stale or invented rating
+ * is worse than none.
+ */
+function ratingNote(facts: AppStoreFacts | null): string | null {
+  if (!facts) return null
+  const { rating, count, checkedAt } = facts
+  if (typeof rating !== 'number' || typeof count !== 'number' || !checkedAt) return null
+  return `${rating.toFixed(1)} · ${count} rating${count === 1 ? '' : 's'} · checked ${checkedOn(checkedAt)}`
+}
+
+/**
+ * The record row: who Roman is, in five derived facts. Every value is read
+ * from site-facts, CERTIFICATIONS and the work list, and the rating is
+ * fetched live, so nothing here is typed twice.
+ */
+function RecordRow() {
+  const [appStore, setAppStore] = useState<AppStoreFacts | null>(null)
+
+  useEffect(() => {
+    const controller = new AbortController()
+    fetch('/api/app-store', { signal: controller.signal })
+      .then((r) => (r.ok ? (r.json() as Promise<AppStoreFacts>) : null))
+      .then((facts) => setAppStore(facts))
+      .catch(() => {})
+    return () => controller.abort()
+  }, [])
+
+  const items: Fact[] = [
+    {
+      term: 'Now',
+      value: roleTitle(CURRENT_ROLE),
+      note: `${CURRENT_ROLE.company} · since ${monthYear(CURRENT_ROLE.start)}`,
+    },
+    {
+      term: 'Before',
+      value: [shortTitle(LAST_ROLE), LAST_ROLE.team].filter(Boolean).join(', '),
+      note: yearRange(LAST_ROLE),
+    },
+    {
+      term: 'Certified',
+      value: `${CERT_COUNT} Salesforce certifications`,
+      note: certSpan(),
+    },
+    {
+      term: 'Degree',
+      value: DEGREE.degree,
+      note: `${DEGREE.short} · ${yearRange(DEGREE)}`,
+    },
+    {
+      term: 'Shipped',
+      // A comma, not a dot: at 1440 the line wraps, and a dot left at its end reads as a stray.
+      value: `${LIVE_CLIENT_WORK.length} live sites & apps, ${APPS_LIVE} on the App Store`,
+      note: ratingNote(appStore),
+    },
+  ]
+
+  return (
+    <div data-reveal className="mb-8 md:mb-12">
+      <FactList layout="grid" items={items} />
+    </div>
+  )
+}
+
+/** Each category's edge, in a spectrum key rather than its own hex. */
+const CERT_ACCENTS: Record<Certification['category'], SpectrumKey> = {
+  developer: 'blue',
+  consultant: 'amber',
+  ai: 'purple',
+  admin: 'green',
+}
+
+/**
+ * Keyboard focus shows the back, the way hovering does. globals.css does this
+ * for a focused .flip-card; here the focus lands on the card's toggle inside
+ * it, so the same turn is keyed off :has().
+ */
+const FLIP_ON_FOCUS = '[&:has(:focus-visible)_.flip-card-inner]:[transform:rotateY(180deg)]'
+
+/**
+ * A pressed card stays turned on every screen. globals.css turns a .flipped
+ * card only under (hover: none), so on a desktop Enter, Space or a click set
+ * aria-pressed while the card went back to its front as soon as focus or the
+ * mouse left it.
+ */
+const FLIP_WHEN_PRESSED = '[&.flipped_.flip-card-inner]:[transform:rotateY(180deg)]'
+
+/**
+ * One certification. The front leads with its full name, the one heading per
+ * cert; the back says who certified it and when, and links a verification
+ * page once there is one.
+ *
+ * The toggle is a real button over the whole card, not the card itself: a
+ * heading and a link can't live inside a <button> (its content is phrasing
+ * only, and assistive tech flattens a button's children), so the faces sit
+ * beside it and let clicks fall through to it.
+ */
+function CertCard({ cert }: { cert: Certification }) {
   const [flipped, setFlipped] = useState(false)
   const spotlightRef = useRef<HTMLDivElement>(null)
   const setCursorVariant = useStore((s) => s.setCursorVariant)
-  const accent = CERT_ACCENTS[cert.category] ?? '#ffffff'
+  const edge = { borderLeftColor: keyColor(CERT_ACCENTS[cert.category]) }
 
   const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
     const rect = e.currentTarget.getBoundingClientRect()
@@ -31,32 +171,54 @@ function CertCard({ cert }: { cert: (typeof CERTIFICATIONS)[number] }) {
   return (
     <div
       data-reveal
-      className={`flip-card h-44 ${flipped ? 'flipped' : ''}`}
-      onClick={() => setFlipped((f) => !f)}
+      className={cn('flip-card relative h-44', FLIP_ON_FOCUS, FLIP_WHEN_PRESSED, flipped && 'flipped')}
       onMouseMove={handleMouseMove}
       onMouseEnter={() => setCursorVariant('hover')}
       onMouseLeave={() => setCursorVariant('default')}
     >
-      <div className="flip-card-inner relative w-full h-full">
+      <button
+        type="button"
+        aria-pressed={flipped}
+        aria-label={`Flip the ${cert.name} card`}
+        className="absolute inset-0 rounded-xl"
+        onClick={() => setFlipped((f) => !f)}
+      />
+      <div className="flip-card-inner pointer-events-none relative z-10 h-full w-full">
         <div
-          className="flip-card-front absolute inset-0 rounded-xl border border-white/5 bg-[#0a0a0a] p-6 flex flex-col justify-between"
-          style={{ borderLeft: `2px solid ${accent}` }}
+          className={cn(PANEL, 'flip-card-front absolute inset-0 flex flex-col justify-between border-l-2 p-4 sm:p-6')}
+          style={edge}
         >
-          <div ref={spotlightRef} className="absolute inset-0 rounded-xl pointer-events-none" />
-          <span className="font-mono text-[10px] text-white/35 uppercase tracking-wider">{cert.category}</span>
-          <h3 className="font-display text-lg font-bold text-white mt-2">{cert.short}</h3>
-          <div className="relative z-10 flex items-center justify-between">
-            <p className="font-mono text-[10px] text-white/30">{cert.date}</p>
-            <span className="md:hidden font-mono text-[10px] text-white/40">tap ↻</span>
+          <div ref={spotlightRef} className="absolute inset-0 rounded-xl" />
+          <p className="font-mono text-label uppercase tracking-wider text-ink-meta">
+            {cert.short} · {cert.category}
+          </p>
+          <h3 className="font-display text-body font-bold text-white sm:text-lead">{cert.name}</h3>
+          <div className="flex items-center justify-between">
+            <p className="font-mono text-label text-ink-meta">{cert.date}</p>
+            <span aria-hidden="true" className="font-mono text-label text-ink-meta md:hidden">
+              tap ↻
+            </span>
           </div>
         </div>
         <div
-          className="flip-card-back absolute inset-0 rounded-xl border border-white/10 bg-[#111] p-4 sm:p-6 flex flex-col justify-center"
-          style={{ borderLeft: `2px solid ${accent}` }}
+          className={cn(PANEL, 'flip-card-back absolute inset-0 flex flex-col justify-center gap-2 border-l-2 p-4 sm:p-6')}
+          style={edge}
         >
-          <h3 className="font-display text-sm sm:text-base font-bold text-white mb-2">{cert.name}</h3>
-          <p className="font-mono text-[11px] sm:text-xs text-white/40">Salesforce Certified</p>
-          <p className="font-mono text-[11px] sm:text-xs text-white/30 mt-2">{cert.date}</p>
+          <p className="font-mono text-small text-ink-body">Salesforce Certified</p>
+          <p className="font-mono text-label text-ink-meta">{cert.date}</p>
+          {cert.verifyUrl ? (
+            <a
+              href={cert.verifyUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label={`Verify ${cert.name} (opens in a new tab)`}
+              className={cn(PILL_OUTLINE, 'pointer-events-auto mt-2 self-start')}
+              onClick={(e) => e.stopPropagation()}
+            >
+              Verify
+              <ArrowUpRight size={12} aria-hidden="true" />
+            </a>
+          ) : null}
         </div>
       </div>
     </div>
@@ -73,23 +235,15 @@ export default function Measures() {
       <SectionHeader
         movement="measures"
         title={{ lead: 'The', accent: 'Measures' }}
-        intro="Eight certifications, one CS degree, and a relentless habit of learning. Each credential here was earned in the field — not a checklist, but a growing repertoire."
+        intro={INTRO}
       />
+
+      <RecordRow />
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 lg:gap-8">
         {CERTIFICATIONS.map((cert) => (
           <CertCard key={cert.id} cert={cert} />
         ))}
-      </div>
-
-      <div data-reveal className="mt-12 p-6 rounded-xl border border-white/5 bg-[#0a0a0a] flex items-center gap-4">
-        <div className="w-12 h-12 rounded-lg bg-white/5 flex items-center justify-center text-white font-display font-bold text-lg">
-          UW
-        </div>
-        <div>
-          <h3 className="font-display font-semibold text-white">University of Washington</h3>
-          <p className="text-sm text-white/40">BS, Computer Science &amp; Systems</p>
-        </div>
       </div>
     </SectionShell>
   )
