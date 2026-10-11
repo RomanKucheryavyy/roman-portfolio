@@ -1,6 +1,5 @@
 import Link from 'next/link'
-import { CopyButton } from '@/components/ui/CopyButton'
-import { BootInert } from '@/components/ui/SiteChrome'
+import { BootInert, FooterCopyButton } from '@/components/ui/SiteChrome'
 import { BUILD_TIME, REPO_URL, commitUrl, sha7 } from '@/lib/build-info'
 import { LINKS, SITE } from '@/lib/constants'
 import { RESUME_HREF, ROUTES } from '@/lib/routes'
@@ -77,7 +76,7 @@ export default function SiteFooter() {
               </a>
             </li>
             <li>
-              <CopyButton text={LINKS.email} />
+              <FooterCopyButton text={LINKS.email} />
             </li>
           </ul>
         </div>

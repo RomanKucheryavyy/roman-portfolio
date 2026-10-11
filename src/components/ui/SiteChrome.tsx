@@ -1,8 +1,10 @@
 'use client'
 import type { ReactNode } from 'react'
+import dynamic from 'next/dynamic'
 import { usePathname } from 'next/navigation'
 import Cursor from '@/components/ui/Cursor'
 import Nav from '@/components/ui/Nav'
+import { PILL_OUTLINE } from '@/components/ui/pill'
 import { useIsHydrated } from '@/hooks/useMediaQuery'
 import { useStore } from '@/stores/useStore'
 
@@ -45,3 +47,19 @@ export function BootInert({ children }: { children: ReactNode }) {
   return <div inert={booting}>{children}</div>
 }
 
+/**
+ * The footer's copy-email control, fetched after hydration. A copy button
+ * does nothing without scripts, and CopyButton brings tailwind-merge (about
+ * 28 KB) with it, which routes like the 404 and /resume would otherwise load
+ * for this one pill. Until it arrives an invisible pill of the same size
+ * holds its place, so nothing moves.
+ */
+export const FooterCopyButton = dynamic(() => import('@/components/ui/CopyButton'), {
+  ssr: false,
+  loading: () => (
+    <span className={`${PILL_OUTLINE} invisible`} aria-hidden="true">
+      <span className="h-3.5 w-3.5" />
+      Copy email
+    </span>
+  ),
+})
