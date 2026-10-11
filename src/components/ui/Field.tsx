@@ -10,7 +10,7 @@ import { cn } from '@/lib/utils'
  * field under 16px; and `aria-invalid` paints the edge. The skin is this
  * site's (white/5 on black, a white/10 edge that brightens to white/60 on
  * focus, rounded-lg) instead of shadcn's input/ring/destructive tokens and
- * dark: variants, none of which exist here.
+ * dark-mode variants, none of which exist here.
  *
  * `Field` wraps one control with a real <label>: it mints an id with useId
  * and hands it to the Input or Textarea inside through context, so a field
