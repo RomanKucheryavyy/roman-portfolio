@@ -287,7 +287,9 @@ export default function Compose() {
                 </span>
               </div>
 
-              <div className="relative rounded-md focus-within:ring-1 focus-within:ring-white/40">
+              {/* The ring sits 8px outside the text (-mx-2 px-2 pb-2), so it clears the
+                  first line and the dynamics mark; the text keeps its column. */}
+              <div className="relative -mx-2 rounded-md px-2 pb-2 focus-within:ring-1 focus-within:ring-white/40">
                 <label htmlFor="compose-message" className="sr-only">
                   Message
                 </label>
@@ -311,7 +313,7 @@ export default function Compose() {
                     animate={{ opacity: 1, scale: 1 }}
                     exit={{ opacity: 0 }}
                     transition={{ duration: 0.25 }}
-                    className="absolute bottom-1 right-1 font-serif italic text-lg text-ink-faint pointer-events-none"
+                    className="absolute bottom-3 right-3 font-serif italic text-lg text-ink-faint pointer-events-none"
                     title={dynamics.word}
                   >
                     {dynamics.mark}
