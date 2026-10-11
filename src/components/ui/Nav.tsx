@@ -328,11 +328,15 @@ export default function Nav({ inFlow = false }: NavProps) {
   return (
     <>
       <div
-        className={`${inFlow ? 'sticky' : 'fixed'} top-0 left-0 right-0 z-[100] px-4 pt-4 md:px-4`}
+        // The delay is a class, so reduced motion can drop it: the global
+        // reset there zeroes durations but not delays.
+        className={`${inFlow ? 'sticky' : 'fixed'} top-0 left-0 right-0 z-[100] px-4 pt-4 md:px-4 delay-300 motion-reduce:delay-0`}
         style={{
           transform: shown ? 'none' : 'translateY(-80px)',
           opacity: shown ? 1 : 0,
-          transition: `transform 693ms ${SPRING_ENTER} 300ms, opacity 693ms ${SPRING_ENTER} 300ms`,
+          transitionProperty: 'transform, opacity',
+          transitionDuration: '693ms',
+          transitionTimingFunction: SPRING_ENTER,
         }}
         inert={!shown}
       >
