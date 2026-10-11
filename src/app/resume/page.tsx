@@ -1,23 +1,39 @@
 'use client'
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useId, useRef, useState } from 'react'
 import Link from 'next/link'
-import { Lock, Mail, FileText, WandSparkles, Download, ArrowLeft, LoaderCircle } from 'lucide-react'
+import { Lock, Mail, FileText, WandSparkles, Download, ArrowLeft, LoaderCircle, CircleAlert } from 'lucide-react'
 // Type only: the data itself carries the phone number and the case metrics,
 // so it comes from /api/resume/data after the PIN, never from this bundle.
 import type { ResumeData } from '@/lib/resume-data'
 import { Button } from '@/components/ui/Button'
 import { Field, FIELD_LABEL, Input, Textarea } from '@/components/ui/Field'
+import { Panel } from '@/components/ui/Panel'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { useCopyToClipboard, type CopyState } from '@/hooks/useCopyToClipboard'
 import { cn } from '@/lib/utils'
 
 type TabId = 'resume' | 'tailor' | 'cover-letter'
 
+/** The quiet way home from every state of the page. */
+const BACK_LINK = 'inline-block mt-6 font-mono text-label text-ink-meta transition-colors hover:text-white'
+
+/** An error line: a red mark, readable ink. Red text on black reads as decoration, not a message. */
+function ErrorLine({ id, children }: { id?: string; children: React.ReactNode }) {
+  return (
+    <p id={id} role="alert" className="inline-flex items-center gap-1.5 font-mono text-label text-ink-body">
+      <CircleAlert size={14} className="shrink-0 text-spectrum-red" aria-hidden="true" />
+      {children}
+    </p>
+  )
+}
+
 function PinGate({ onUnlock }: { onUnlock: (pin: string) => void }) {
   const [pin, setPin] = useState('')
   const [error, setError] = useState(false)
   const [verifying, setVerifying] = useState(false)
   const inputRef = useRef<HTMLInputElement>(null)
+  const inputId = useId()
+  const errorId = useId()
 
   useEffect(() => { inputRef.current?.focus() }, [])
 
@@ -49,29 +65,39 @@ function PinGate({ onUnlock }: { onUnlock: (pin: string) => void }) {
   }
 
   return (
-    <div className="min-h-screen bg-black flex items-center justify-center px-6">
+    <main id="main" tabIndex={-1} className="min-h-svh bg-black flex items-center justify-center px-6 outline-none">
       <div className="w-full max-w-sm text-center">
         <div className="w-16 h-16 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center mx-auto mb-8">
-          <Lock size={24} className="text-white/40" />
+          <Lock size={24} className="text-ink-meta" aria-hidden="true" />
         </div>
         <h1 className="font-display text-2xl font-bold text-white mb-2">Resume Builder</h1>
-        <p className="text-white/40 text-sm mb-8">Enter your PIN to access</p>
+        <p className="text-ink-meta text-small mb-8">Enter your PIN to access</p>
         <form onSubmit={handleSubmit}>
+          <label htmlFor={inputId} className="sr-only">
+            PIN
+          </label>
           <input
             ref={inputRef}
+            id={inputId}
             type="password"
             inputMode="numeric"
             pattern="[0-9]*"
             value={pin}
             onChange={(e) => { setPin(e.target.value); setError(false) }}
             placeholder="••••••"
+            aria-invalid={error || undefined}
+            aria-describedby={error ? errorId : undefined}
             className={`w-full text-center text-2xl tracking-[0.5em] bg-transparent border-b-2 ${
-              error ? 'border-red-500' : 'border-white/20 focus:border-white/50'
-            } pb-3 text-white font-mono placeholder:text-white/15 focus:outline-none transition-colors duration-300`}
+              error ? 'border-spectrum-red' : 'border-white/20 focus:border-white/50'
+            } pb-3 text-white font-mono placeholder:text-ink-faint outline-none transition-colors duration-300`}
             maxLength={8}
             autoComplete="off"
           />
-          {error && <p className="text-red-400 text-xs mt-3 font-mono">Incorrect PIN</p>}
+          {error && (
+            <div className="mt-3">
+              <ErrorLine id={errorId}>Incorrect PIN</ErrorLine>
+            </div>
+          )}
           <Button
             type="submit"
             disabled={pin.length < 4}
@@ -82,37 +108,37 @@ function PinGate({ onUnlock }: { onUnlock: (pin: string) => void }) {
             Unlock
           </Button>
         </form>
-        <Link href="/" className="inline-block mt-6 text-white/20 text-xs font-mono hover:text-white/40 transition-colors">
+        <Link href="/" className={BACK_LINK}>
           ← Back to portfolio
         </Link>
       </div>
-    </div>
+    </main>
   )
 }
 
 /** Between the PIN and the editor, while the résumé itself is fetched. */
 function ResumeLoading({ error, onRetry }: { error: string | null; onRetry: () => void }) {
   return (
-    <div className="min-h-screen bg-black flex items-center justify-center px-6">
+    <main id="main" tabIndex={-1} className="min-h-svh bg-black flex items-center justify-center px-6 outline-none">
       <div className="w-full max-w-sm text-center">
         {error ? (
           <>
-            <p role="alert" className="text-red-400 text-xs font-mono">{error}</p>
+            <ErrorLine>{error}</ErrorLine>
             <Button onClick={onRetry} className="mt-8 w-full">
               Try again
             </Button>
           </>
         ) : (
-          <p role="status" className="flex items-center justify-center gap-2 text-white/40 text-sm font-mono">
+          <p role="status" className="flex items-center justify-center gap-2 text-ink-meta text-small font-mono">
             <LoaderCircle size={16} className="animate-spin" aria-hidden="true" />
             Loading your resume…
           </p>
         )}
-        <Link href="/" className="inline-block mt-6 text-white/20 text-xs font-mono hover:text-white/40 transition-colors">
+        <Link href="/" className={BACK_LINK}>
           ← Back to portfolio
         </Link>
       </div>
-    </div>
+    </main>
   )
 }
 
@@ -413,189 +439,201 @@ export default function ResumeBuilder() {
   )
 
   return (
-    <div className="min-h-screen bg-black">
-      <header className="border-b border-white/5 px-6 py-4 flex items-center justify-between">
+    <div className="min-h-svh bg-black">
+      <header className="border-b border-white/10 px-6 py-4 flex items-center justify-between">
         <div className="flex items-center gap-4">
-          <Link href="/" className="text-white/30 hover:text-white transition-colors">
-            <ArrowLeft size={18} />
+          <Link
+            href="/"
+            aria-label="Back to portfolio"
+            className="-m-3 p-3 text-ink-meta transition-colors hover:text-white"
+          >
+            <ArrowLeft size={18} aria-hidden="true" />
           </Link>
           <h1 className="font-display text-lg font-bold text-white">
             Resume <span className="text-gradient">Builder</span>
           </h1>
         </div>
         <button
+          type="button"
           onClick={() => { localStorage.removeItem('resume_pin'); setPin(null) }}
-          className="text-white/20 hover:text-white/50 text-xs font-mono transition-colors"
+          className="cursor-pointer font-mono text-label text-ink-meta transition-colors hover:text-white"
         >
           Lock
         </button>
       </header>
 
-      <Tabs defaultValue="resume">
-        <TabsList className="px-6">
-          {tabs.map((t) => (
-            <TabsTrigger key={t.id} value={t.id}>
-              {t.icon}
-              {t.label}
-            </TabsTrigger>
-          ))}
-        </TabsList>
+      <main id="main" tabIndex={-1} className="outline-none">
+        <Tabs defaultValue="resume">
+          <TabsList className="px-6">
+            {tabs.map((t) => (
+              <TabsTrigger key={t.id} value={t.id}>
+                {t.icon}
+                {t.label}
+              </TabsTrigger>
+            ))}
+          </TabsList>
 
-        <div className="max-w-6xl mx-auto px-6 py-8">
-          {error && (
-            <div className="mb-6 p-4 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400 text-sm font-mono">
-              {error}
-            </div>
-          )}
+          <div className="max-w-6xl mx-auto px-6 py-8">
+            {error && (
+              <Panel
+                role="alert"
+                accent="var(--color-spectrum-red)"
+                className="mb-6 flex items-start gap-2 p-4 font-mono text-small text-ink-body"
+              >
+                <CircleAlert size={16} className="mt-0.5 shrink-0 text-spectrum-red" aria-hidden="true" />
+                {error}
+              </Panel>
+            )}
 
-          <TabsContent value="resume" className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-            <div className="space-y-6">
-              <Field label="Summary">
-                <Textarea
-                  value={resume.summary}
-                  rows={4}
-                  onChange={(e) => setResume({ ...resume, summary: e.target.value })}
-                />
-              </Field>
-              {resume.experience.map((exp, i) => (
-                <Section key={i} title={`${exp.company} — ${exp.title}`}>
-                  <p className="mb-2 font-mono text-label text-ink-meta">{exp.dates}</p>
-                  {exp.bullets.map((bullet, j) => (
-                    <Field key={j} label={`${exp.company} — ${exp.title}: bullet ${j + 1}`} hideLabel className="mb-2">
-                      <Textarea
-                        value={bullet}
-                        rows={2}
-                        onChange={(e) => {
-                          setResume((prev) => {
-                            if (!prev) return prev
-                            const next = structuredClone(prev)
-                            next.experience[i].bullets[j] = e.target.value
-                            return next
-                          })
-                        }}
-                      />
-                    </Field>
-                  ))}
-                </Section>
-              ))}
-              <Field label="Skills">
-                <Input
-                  value={resume.skills.join(', ')}
-                  onChange={(e) =>
-                    setResume({ ...resume, skills: e.target.value.split(',').map((s) => s.trim()).filter(Boolean) })
+            <TabsContent value="resume" className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+              <div className="space-y-6">
+                <Field label="Summary">
+                  <Textarea
+                    value={resume.summary}
+                    rows={4}
+                    onChange={(e) => setResume({ ...resume, summary: e.target.value })}
+                  />
+                </Field>
+                {resume.experience.map((exp, i) => (
+                  <Section key={i} title={`${exp.company} — ${exp.title}`}>
+                    <p className="mb-2 font-mono text-label text-ink-meta">{exp.dates}</p>
+                    {exp.bullets.map((bullet, j) => (
+                      <Field key={j} label={`${exp.company} — ${exp.title}: bullet ${j + 1}`} hideLabel className="mb-2">
+                        <Textarea
+                          value={bullet}
+                          rows={2}
+                          onChange={(e) => {
+                            setResume((prev) => {
+                              if (!prev) return prev
+                              const next = structuredClone(prev)
+                              next.experience[i].bullets[j] = e.target.value
+                              return next
+                            })
+                          }}
+                        />
+                      </Field>
+                    ))}
+                  </Section>
+                ))}
+                <Field label="Skills">
+                  <Input
+                    value={resume.skills.join(', ')}
+                    onChange={(e) =>
+                      setResume({ ...resume, skills: e.target.value.split(',').map((s) => s.trim()).filter(Boolean) })
+                    }
+                  />
+                </Field>
+              </div>
+              <div className="relative">
+                <Button {...download} onClick={() => handleDownloadResume('base')} title="Download as PDF">
+                  {downloadFace}
+                </Button>
+                <div className="bg-white rounded-xl p-8 text-black overflow-auto max-h-[80vh]">
+                  <ResumePreview resume={resume} />
+                </div>
+              </div>
+            </TabsContent>
+
+            <TabsContent value="tailor" className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+              <div className="space-y-6">
+                <Field label="Paste Job Description">
+                  <Textarea
+                    value={jobDescription}
+                    rows={12}
+                    onChange={(e) => setJobDescription(e.target.value)}
+                    placeholder="Paste the full job description here..."
+                    className="min-h-72"
+                  />
+                </Field>
+                <Button
+                  onClick={handleTailor}
+                  disabled={!jobDescription.trim() || aiLoading === 'cover-letter'}
+                  pending={aiLoading === 'tailor'}
+                  pendingLabel={
+                    <>
+                      <LoaderCircle size={16} className="animate-spin" aria-hidden="true" />
+                      Tailoring...
+                    </>
                   }
-                />
-              </Field>
-            </div>
-            <div className="relative">
-              <Button {...download} onClick={() => handleDownloadResume('base')} title="Download as PDF">
-                {downloadFace}
-              </Button>
-              <div className="bg-white rounded-xl p-8 text-black overflow-auto max-h-[80vh]">
-                <ResumePreview resume={resume} />
-              </div>
-            </div>
-          </TabsContent>
-
-          <TabsContent value="tailor" className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-            <div className="space-y-6">
-              <Field label="Paste Job Description">
-                <Textarea
-                  value={jobDescription}
-                  rows={12}
-                  onChange={(e) => setJobDescription(e.target.value)}
-                  placeholder="Paste the full job description here..."
-                  className="min-h-72"
-                />
-              </Field>
-              <Button
-                onClick={handleTailor}
-                disabled={!jobDescription.trim() || aiLoading === 'cover-letter'}
-                pending={aiLoading === 'tailor'}
-                pendingLabel={
-                  <>
-                    <LoaderCircle size={16} className="animate-spin" aria-hidden="true" />
-                    Tailoring...
-                  </>
-                }
-              >
-                <WandSparkles size={16} aria-hidden="true" />
-                Tailor Resume
-              </Button>
-            </div>
-            <div className="relative">
-              {tailoredResume && (
-                <Button {...download} onClick={() => handleDownloadResume('tailored')} title="Download tailored resume as PDF">
-                  {downloadFace}
+                >
+                  <WandSparkles size={16} aria-hidden="true" />
+                  Tailor Resume
                 </Button>
-              )}
-              <div className="bg-white rounded-xl p-8 text-black overflow-auto max-h-[80vh]">
-                {tailoredResume ? (
-                  <ResumePreview resume={tailoredResume} />
-                ) : (
-                  <div className="h-full flex items-center justify-center text-gray-400 text-sm">
-                    Paste a job description and click Tailor to see the result
-                  </div>
-                )}
               </div>
-            </div>
-          </TabsContent>
+              <div className="relative">
+                {tailoredResume && (
+                  <Button {...download} onClick={() => handleDownloadResume('tailored')} title="Download tailored resume as PDF">
+                    {downloadFace}
+                  </Button>
+                )}
+                <div className="bg-white rounded-xl p-8 text-black overflow-auto max-h-[80vh]">
+                  {tailoredResume ? (
+                    <ResumePreview resume={tailoredResume} />
+                  ) : (
+                    <div className="h-full flex items-center justify-center text-gray-400 text-sm">
+                      Paste a job description and click Tailor to see the result
+                    </div>
+                  )}
+                </div>
+              </div>
+            </TabsContent>
 
-          <TabsContent value="cover-letter" className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-            <div className="space-y-6">
-              <Field label="Company Name (optional)">
-                <Input
-                  value={companyName}
-                  onChange={(e) => setCompanyName(e.target.value)}
-                  placeholder="e.g. Google, Amazon..."
-                />
-              </Field>
-              <Field label="Paste Job Description">
-                <Textarea
-                  value={jobDescription}
-                  rows={10}
-                  onChange={(e) => setJobDescription(e.target.value)}
-                  placeholder="Paste the full job description here..."
-                  className="min-h-60"
-                />
-              </Field>
-              <Button
-                onClick={handleCoverLetter}
-                disabled={!jobDescription.trim() || aiLoading === 'tailor'}
-                pending={aiLoading === 'cover-letter'}
-                pendingLabel={
-                  <>
-                    <LoaderCircle size={16} className="animate-spin" aria-hidden="true" />
-                    Generating...
-                  </>
-                }
-              >
-                <Mail size={16} aria-hidden="true" />
-                Generate Cover Letter
-              </Button>
-            </div>
-            <div className="relative">
-              {coverLetter && (
-                <Button {...download} onClick={handleDownloadCoverLetter} title="Download cover letter as PDF">
-                  {downloadFace}
+            <TabsContent value="cover-letter" className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+              <div className="space-y-6">
+                <Field label="Company Name (optional)">
+                  <Input
+                    value={companyName}
+                    onChange={(e) => setCompanyName(e.target.value)}
+                    placeholder="e.g. Google, Amazon..."
+                  />
+                </Field>
+                <Field label="Paste Job Description">
+                  <Textarea
+                    value={jobDescription}
+                    rows={10}
+                    onChange={(e) => setJobDescription(e.target.value)}
+                    placeholder="Paste the full job description here..."
+                    className="min-h-60"
+                  />
+                </Field>
+                <Button
+                  onClick={handleCoverLetter}
+                  disabled={!jobDescription.trim() || aiLoading === 'tailor'}
+                  pending={aiLoading === 'cover-letter'}
+                  pendingLabel={
+                    <>
+                      <LoaderCircle size={16} className="animate-spin" aria-hidden="true" />
+                      Generating...
+                    </>
+                  }
+                >
+                  <Mail size={16} aria-hidden="true" />
+                  Generate Cover Letter
                 </Button>
-              )}
-              <div className="bg-white rounded-xl p-8 text-black overflow-auto max-h-[80vh]">
-                {coverLetter ? (
-                  <div className="prose prose-sm max-w-none">
-                    <div className="whitespace-pre-wrap font-body text-sm leading-relaxed">{coverLetter}</div>
-                    <CopyLetter text={coverLetter} />
-                  </div>
-                ) : (
-                  <div className="h-full flex items-center justify-center text-gray-400 text-sm">
-                    Paste a job description and click Generate to see the result
-                  </div>
-                )}
               </div>
-            </div>
-          </TabsContent>
-        </div>
-      </Tabs>
+              <div className="relative">
+                {coverLetter && (
+                  <Button {...download} onClick={handleDownloadCoverLetter} title="Download cover letter as PDF">
+                    {downloadFace}
+                  </Button>
+                )}
+                <div className="bg-white rounded-xl p-8 text-black overflow-auto max-h-[80vh]">
+                  {coverLetter ? (
+                    <div className="prose prose-sm max-w-none">
+                      <div className="whitespace-pre-wrap font-body text-sm leading-relaxed">{coverLetter}</div>
+                      <CopyLetter text={coverLetter} />
+                    </div>
+                  ) : (
+                    <div className="h-full flex items-center justify-center text-gray-400 text-sm">
+                      Paste a job description and click Generate to see the result
+                    </div>
+                  )}
+                </div>
+              </div>
+            </TabsContent>
+          </div>
+        </Tabs>
+      </main>
     </div>
   )
 }
