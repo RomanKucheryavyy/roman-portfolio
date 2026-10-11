@@ -7,6 +7,9 @@ import { useStore } from '@/stores/useStore'
 import { useRevealOnScroll } from '@/hooks/useRevealOnScroll'
 import { SectionHeader, SectionShell } from '@/components/ui/SectionShell'
 import { Button } from '@/components/ui/Button'
+import { CopyButton } from '@/components/ui/CopyButton'
+import { Panel } from '@/components/ui/Panel'
+import { TerminalBar } from '@/components/ui/TerminalBar'
 import { LINKS } from '@/lib/constants'
 import { modKeyGlyph } from '@/lib/platform'
 import { RESUME_PDF_HREF, RESUME_REQUEST } from '@/lib/routes'
@@ -150,6 +153,8 @@ export default function Compose() {
 
     const rect = win.getBoundingClientRect()
     const hostRect = host.getBoundingClientRect()
+    // What's left once the body goes: the title bar and the window's own border.
+    const collapsed = rect.height - body.offsetHeight
     const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches
 
     if (reduced) {
@@ -160,7 +165,7 @@ export default function Compose() {
     win.style.height = `${rect.height}px`
     gsap.to(body, { opacity: 0, duration: 0.2 })
     gsap.to(win, {
-      height: 45,
+      height: collapsed,
       duration: 0.4,
       delay: 0.15,
       ease: 'expo.inOut',
@@ -171,8 +176,8 @@ export default function Compose() {
         const corners: [number, number][] = [
           [rect.left - hostRect.left, rect.top - hostRect.top],
           [rect.right - hostRect.left, rect.top - hostRect.top],
-          [rect.left - hostRect.left, rect.top - hostRect.top + 45],
-          [rect.right - hostRect.left, rect.top - hostRect.top + 45],
+          [rect.left - hostRect.left, rect.top - hostRect.top + collapsed],
+          [rect.right - hostRect.left, rect.top - hostRect.top + collapsed],
         ]
         corners.forEach(([x, y]) => burstFrom(x, y, host))
       },
@@ -204,22 +209,12 @@ export default function Compose() {
 
       <div ref={burstHostRef} data-reveal className="relative">
         {/* The email window IS the form */}
-        <div
-          ref={windowRef}
-          className="hud-corners rounded-xl border border-white/5 bg-[#0a0a0a] overflow-hidden max-w-2xl mx-auto"
-        >
-          {/* title bar */}
-          <div className="flex items-center gap-2 px-4 py-3 border-b border-white/5">
-            <div className="w-2.5 h-2.5 rounded-full bg-[#ff5f57]" />
-            <div className="w-2.5 h-2.5 rounded-full bg-[#febc2e]" />
-            <motion.div
-              className="w-2.5 h-2.5 rounded-full bg-[#28c840]"
-              animate={status === 'sent' ? { scale: [1, 1.6, 1, 1.6, 1] } : {}}
-              transition={{ duration: 0.8 }}
-            />
-            <span className="ml-3 font-mono text-label text-ink-meta" aria-live="polite">
-              {status === 'sent' ? 'message sent — 250 OK' : status === 'sending' ? 'sending…' : 'New Message'}
-            </span>
+        <Panel ref={windowRef} hud className="mx-auto max-w-2xl overflow-hidden">
+          <TerminalBar
+            title={status === 'sent' ? 'message sent — 250 OK' : status === 'sending' ? 'sending…' : 'New Message'}
+            live
+            pulse={status === 'sent'}
+          >
             <AnimatePresence>
               {savedAt && status === 'idle' && (
                 <motion.span
@@ -233,7 +228,7 @@ export default function Compose() {
                 </motion.span>
               )}
             </AnimatePresence>
-          </div>
+          </TerminalBar>
 
           {/* the email body — every field is part of the letter */}
           {/* inert as soon as the message is sent: the form leaves the tab
@@ -285,7 +280,7 @@ export default function Compose() {
                 />
                 <span aria-hidden="true" className="font-mono text-small text-ink-faint">&gt;</span>
               </div>
-              <div className="flex items-center gap-3 pb-3 border-b border-white/5">
+              <div className="flex items-center gap-3 pb-3 border-b border-white/10">
                 <span className="font-mono text-label text-ink-meta w-10 shrink-0">Subj:</span>
                 <span className="font-mono text-small text-ink-body">
                   {form.name ? `Message from ${form.name}` : 'New message'}
@@ -324,7 +319,7 @@ export default function Compose() {
                 </AnimatePresence>
               </div>
 
-              <div className="pt-2 border-t border-white/5">
+              <div className="pt-2 border-t border-white/10">
                 <p className="font-mono text-label text-ink-meta">{form.name ? `— ${form.name}` : '— Your Name'}</p>
               </div>
 
@@ -385,7 +380,7 @@ export default function Compose() {
               )}
             </form>
           </div>
-        </div>
+        </Panel>
 
         {/* post-send toast */}
         <AnimatePresence>
@@ -438,6 +433,7 @@ export default function Compose() {
         >
           <Mail size={12} /> email
         </a>
+        <CopyButton text={LINKS.email} />
       </div>
 
       <div className="mt-16 md:mt-24 pt-8 border-t border-white/5 flex flex-col sm:flex-row items-center justify-between gap-4">
