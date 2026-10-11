@@ -71,7 +71,7 @@ export default function Measures() {
     <SectionShell ref={sectionRef} id="measures">
       <DNAHelix />
       <SectionHeader
-        kicker="// 01. Certifications"
+        movement="measures"
         title={{ lead: 'The', accent: 'Measures' }}
         intro="Eight certifications, one CS degree, and a relentless habit of learning. Each credential here was earned in the field — not a checklist, but a growing repertoire."
       />

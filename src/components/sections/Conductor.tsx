@@ -97,7 +97,7 @@ export default function Conductor() {
         </defs>
       </svg>
 
-      <SectionHeader kicker="// 04. About" title={{ lead: 'The', accent: 'Conductor' }} />
+      <SectionHeader movement="conductor" title={{ lead: 'The', accent: 'Conductor' }} />
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Photo */}

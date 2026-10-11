@@ -34,6 +34,12 @@ interface ScatterTextProps {
  * Section-heading entrance: letters fly in from random scatter positions and
  * assemble on scroll. Reduced motion shows text instantly; mobile gets gentler
  * offsets, no blur, and a faster tween.
+ *
+ * The letters are one inline-block span each, so the heading's accessible
+ * name used to come out spelled ("T h e M e a s u r e s"). The real text is
+ * in an sr-only span ahead of them and the letters are aria-hidden. The
+ * wrapper is a span, not a div, because it sits inside an <h2>, which only
+ * takes phrasing content.
  */
 export default function ScatterText({
   children,
@@ -45,7 +51,7 @@ export default function ScatterText({
   as: Tag = 'span',
   onAssembled,
 }: ScatterTextProps) {
-  const wrapRef = useRef<HTMLDivElement>(null)
+  const wrapRef = useRef<HTMLSpanElement>(null)
   const assembledRef = useRef(onAssembled)
 
   // Keeps the callback current without writing to a ref during render.
@@ -121,8 +127,9 @@ export default function ScatterText({
   }, [chars, duration, stagger, triggerStart])
 
   return (
-    <div ref={wrapRef} className={`inline-block ${className}`} style={{ overflow: 'visible' }}>
-      <Tag className={className} style={{ display: 'inline' }}>
+    <span ref={wrapRef} className={`inline-block ${className}`} style={{ overflow: 'visible' }}>
+      <span className="sr-only">{children}</span>
+      <Tag aria-hidden="true" className={className} style={{ display: 'inline' }}>
         {chars.map(({ char }, i) => (
           <span
             key={i}
@@ -134,6 +141,6 @@ export default function ScatterText({
           </span>
         ))}
       </Tag>
-    </div>
+    </span>
   )
 }

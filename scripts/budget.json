@@ -1,6 +1,6 @@
 {
   "note": "First-load JS per route, uncompressed bytes, from .next/diagnostics/route-bundle-stats.json. Each budget is the plan's: the route at abb0023 (Next 16.2.0, measured.before) +2%. The Next 16.4 upgrade freed about 60 KB per route (measured.routes), and that is Phase 2's headroom. Routes without an entry get defaultRouteBudget. A budget moves only in a commit that says why: a stream that goes over reports it in its PR instead of raising its own line, and W12 ratchets every route down (its target for / is below 1,448,816). fontsSelfHosted is W2's switch. Checked by scripts/check-bundle-budget.mjs (npm run budget).",
-  "fontsSelfHosted": false,
+  "fontsSelfHosted": true,
   "defaultRouteBudget": 600896,
   "routes": {
     "/": 1477820,

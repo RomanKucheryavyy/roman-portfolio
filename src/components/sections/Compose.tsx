@@ -173,7 +173,7 @@ export default function Compose() {
   return (
     <SectionShell ref={sectionRef} id="compose">
       <SectionHeader
-        kicker="// 05. Contact"
+        movement="compose"
         title={{ lead: 'Let’s', accent: 'Compose' }}
         intro={<>Got a project, an idea, or just want to talk shop? You&apos;re already writing the email.</>}
       />

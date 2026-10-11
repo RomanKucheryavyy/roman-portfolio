@@ -10,7 +10,12 @@ const SCRAMBLE_TICKS = 12 // shuffle ticks before the word resolves
 interface GlitchTextProps {
   text?: string
   highlightWords?: string[]
-  /** Applied to the row of words, so type scale and spacing stay the caller's call. */
+  /**
+   * Applied to the row of words, so type scale and spacing stay the caller's
+   * call. It replaces the default size (text-lg sm:text-xl) rather than adding
+   * to it: two text-* sizes on one element resolve by stylesheet order, not by
+   * which was written last, so the caller's size used to lose.
+   */
   className?: string
   /** The scanline-and-border card. Off when the text should sit bare in a section. */
   framed?: boolean
@@ -178,7 +183,7 @@ const GlitchWord = ({
 export default function GlitchText({
   text = 'ENGINEERED WITH REACT, FRAMER MOTION, AND TAILWIND CSS FOR ULTRA SMOOTH PERFORMANCE.',
   highlightWords = ['REACT', 'FRAMER', 'TAILWIND', 'PERFORMANCE'],
-  className = '',
+  className = 'text-lg sm:text-xl',
   framed = true,
   fullScreen = false,
 }: GlitchTextProps) {
@@ -197,7 +202,7 @@ export default function GlitchText({
       </p>
       <div
         aria-hidden="true"
-        className={`relative z-10 flex flex-wrap gap-x-3 gap-y-2 leading-relaxed text-lg sm:text-xl ${className}`}
+        className={`relative z-10 flex flex-wrap gap-x-3 gap-y-2 leading-relaxed ${className}`}
       >
         {words.map((word, idx) => {
           const isHighlightable = highlightWords.some((hw) => clean(hw) === clean(word))
