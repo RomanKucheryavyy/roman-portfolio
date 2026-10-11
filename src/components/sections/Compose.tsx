@@ -9,6 +9,7 @@ import { SectionHeader, SectionShell } from '@/components/ui/SectionShell'
 import { Button } from '@/components/ui/Button'
 import { LINKS } from '@/lib/constants'
 import { modKeyGlyph } from '@/lib/platform'
+import { RESUME_PDF_HREF, RESUME_REQUEST } from '@/lib/routes'
 
 /** Musician's dynamics for how loudly the message is being written. */
 const dynamicsFor = (length: number): { mark: string; word: string } => {
@@ -328,14 +329,28 @@ export default function Compose() {
               </div>
 
               <div className="flex items-center justify-between pt-2">
-                <a
-                  href="/resume"
-                  className="font-mono text-label text-ink-meta hover:text-white transition-colors"
-                  onMouseEnter={() => setCursorVariant('hover')}
-                  onMouseLeave={() => setCursorVariant('default')}
-                >
-                  [ attach: resume.pdf ]
-                </a>
+                {/* /resume is Roman's PIN-gated builder: a visitor who clicked "attach"
+                    got a lock screen. Until the résumé is public, they ask for it. */}
+                {RESUME_PDF_HREF ? (
+                  <a
+                    href={RESUME_PDF_HREF}
+                    download
+                    className="font-mono text-label text-ink-meta hover:text-white transition-colors"
+                    onMouseEnter={() => setCursorVariant('hover')}
+                    onMouseLeave={() => setCursorVariant('default')}
+                  >
+                    [ attach: resume.pdf ]
+                  </a>
+                ) : (
+                  <a
+                    href={RESUME_REQUEST}
+                    className="font-mono text-label text-ink-meta hover:text-white transition-colors"
+                    onMouseEnter={() => setCursorVariant('hover')}
+                    onMouseLeave={() => setCursorVariant('default')}
+                  >
+                    [ request: resume.pdf ]
+                  </a>
+                )}
                 <Button
                   variant="solid"
                   type="submit"
