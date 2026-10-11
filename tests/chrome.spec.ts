@@ -116,7 +116,7 @@ test.describe('nav links', () => {
     await gotoHome(page)
     const nav = page.getByRole('navigation')
     // The logo, then the items. Names come from the accessibility tree, so
-    // the aria-hidden back faces and the invisible width reservations drop out.
+    // the aria-hidden back faces drop out.
     const expected = ['RK.', ...FRONTS, 'All work', ...(RESUME_HREF ? ['Résumé'] : [])]
     await expect(nav.getByRole('link')).toHaveCount(expected.length)
     for (const [i, name] of expected.entries()) {
@@ -482,7 +482,86 @@ test.describe('nav fit', () => {
       expect(fit.overflow).toBeLessThanOrEqual(0)
       expect(fit.rows).toBe(1)
       expect(fit.rightmost).toBeLessThanOrEqual(fit.right)
+
+      // At rest every item is spaced alike: the same gap from icon to label,
+      // and the same gap from one item's last mark to the next one's first.
+      const rest = await page.locator('nav').first().evaluate(navRhythm)
+      expect(rest.items.map((i) => i.label)).toEqual([...FRONTS, 'All work', ...(RESUME_HREF ? ['Résumé'] : [])])
+      const spread = (xs: number[]) => Math.max(...xs) - Math.min(...xs)
+      const iconGaps = rest.items.flatMap((i) => (i.iconGap === null ? [] : [i.iconGap]))
+      if (width >= 1024) expect(iconGaps).toHaveLength(rest.items.length)
+      if (iconGaps.length) expect(spread(iconGaps)).toBeLessThanOrEqual(0.5)
+      expect(spread(rest.gaps)).toBeLessThanOrEqual(1)
       await capture(page, `nav-${width}`)
+    })
+
+    test(`a hovered musical name clears the labels beside it at ${width}px`, async ({ page }) => {
+      only('desktop')
+      // On /works: the same bar, without the ocean making every hover wait on
+      // a frame. Reduced motion, so the flip lands at once.
+      await page.setViewportSize({ width, height: 900 })
+      await page.emulateMedia({ reducedMotion: 'reduce' })
+      await page.goto('/works')
+      // A musical name is centred over its label at its own width; where it
+      // is the longer word it overhangs into the padding and the gap.
+      for (const { id, score } of NUMBERED) {
+        const href = `/#${id}`
+        await page.locator(`nav a[href="${href}"]`).hover()
+        await expect(page.locator(`nav a[href="${href}"] [data-face="back"]`)).toHaveCSS('opacity', '1')
+        const clear = await page.locator('nav').first().evaluate(hoverClearance, href)
+        expect.soft(clear, `${score} at ${width}px`).toBeGreaterThanOrEqual(10)
+      }
     })
   }
 })
+
+/** Each front face's icon-to-label gap, and the gaps between items. In the page. */
+function navRhythm(nav: Element) {
+  // Helpers are inlined: evaluate() sends this function alone to the page.
+  // A face's visible parts, left to right: icon, label, arrow.
+  const parts = (face: Element) =>
+    [...face.childNodes]
+      .filter((n) => n.nodeType === Node.ELEMENT_NODE || n.textContent?.trim())
+      .map((n) => {
+        if (n.nodeType === Node.ELEMENT_NODE) return { text: false, box: (n as Element).getBoundingClientRect() }
+        const r = document.createRange()
+        r.selectNodeContents(n)
+        return { text: true, box: r.getBoundingClientRect() }
+      })
+      .filter((p) => p.box.width > 0)
+  const items = [...nav.querySelectorAll('[data-face="front"]')].map((face) => {
+    const ps = parts(face)
+    const at = ps.findIndex((p) => p.text)
+    const label = ps[at].box
+    const icon = at > 0 ? ps[at - 1].box : null
+    return {
+      label: face.textContent?.trim() ?? '',
+      iconGap: icon ? label.left - icon.right : null,
+      left: ps[0].box.left,
+      right: ps[ps.length - 1].box.right,
+    }
+  })
+  return { items, gaps: items.slice(1).map((item, i) => item.left - items[i].right) }
+}
+
+/** How far a hovered item's back face stays from its neighbours' labels. In the page. */
+function hoverClearance(nav: Element, href: string) {
+  const extent = (face: Element) => {
+    const boxes = [...face.childNodes]
+      .filter((n) => n.nodeType === Node.ELEMENT_NODE || n.textContent?.trim())
+      .map((n) => {
+        if (n.nodeType === Node.ELEMENT_NODE) return (n as Element).getBoundingClientRect()
+        const r = document.createRange()
+        r.selectNodeContents(n)
+        return r.getBoundingClientRect()
+      })
+      .filter((b) => b.width > 0)
+    return { left: Math.min(...boxes.map((b) => b.left)), right: Math.max(...boxes.map((b) => b.right)) }
+  }
+  const links = [...nav.querySelectorAll('a')].filter((a) => a.querySelector('[data-face="front"]'))
+  const k = links.findIndex((a) => a.getAttribute('href') === href)
+  const back = extent(links[k].querySelector('[data-face="back"]')!)
+  const prev = links[k - 1] ? extent(links[k - 1].querySelector('[data-face="front"]')!).right : -Infinity
+  const next = links[k + 1] ? extent(links[k + 1].querySelector('[data-face="front"]')!).left : Infinity
+  return Math.min(back.left - prev, next - back.right)
+}

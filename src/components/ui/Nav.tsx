@@ -114,9 +114,16 @@ interface NavItemProps {
  * it, so a click lands on the link whichever face is showing: the faces used
  * to be two buttons, and mid-flip the pointer could fall between them. The
  * back face is decoration (aria-hidden, no pointer events); the link's name is
- * always the front label. The front reserves the back face's width, so a
- * longer musical name never spills onto its neighbours. The flip is on hover
- * only (Tailwind's hover variants apply only where the device can hover).
+ * always the front label. The flip is on hover only (Tailwind's hover
+ * variants apply only where the device can hover).
+ *
+ * The box is the front face's own size, so every item at rest has the same
+ * padding, icon gap and gap to the next item. The back face is centred over
+ * it at its own width: a longer musical name ("Symphony" over "Work")
+ * overhangs into the padding and the gap on both sides, and stops short of
+ * the neighbouring labels (chrome.spec measures both). Reserving the longer
+ * name's width instead left short labels floating in wide boxes, 8px from
+ * one icon and 23px from the next.
  */
 function NavItem({ href, label, back, icon, trailing, config, current, route = false, onClick }: NavItemProps) {
   const active = current !== undefined
@@ -129,25 +136,19 @@ function NavItem({ href, label, back, icon, trailing, config, current, route = f
   const faces = (
     <>
       <span
+        data-face="front"
         className={`${FACE} relative ${ink} ${back ? 'group-hover:[transform:rotateX(-90deg)] group-hover:opacity-0' : ''}`}
         style={{ ...FLIP, transformOrigin: 'center bottom' }}
       >
         {tint}
-        <span className="inline-grid justify-items-center">
-          <span className="col-start-1 row-start-1">{label}</span>
-          {back && (
-            <span className="invisible col-start-1 row-start-1" aria-hidden="true">
-              {back}
-            </span>
-          )}
-        </span>
+        {label}
         {trailing}
       </span>
       {back && (
         <span
           data-face="back"
           aria-hidden="true"
-          className={`${FACE} ${ink} pointer-events-none absolute inset-0 justify-center opacity-0 [transform:rotateX(90deg)] group-hover:opacity-100 group-hover:[transform:rotateX(0deg)]`}
+          className={`${FACE} ${ink} pointer-events-none absolute inset-y-0 left-1/2 w-max -translate-x-1/2 justify-center opacity-0 [transform:rotateX(90deg)] group-hover:opacity-100 group-hover:[transform:rotateX(0deg)]`}
           style={{ ...FLIP, transformOrigin: 'center top' }}
         >
           {tint}
@@ -344,8 +345,11 @@ export default function Nav() {
             RK<span className="text-gradient">.</span>
           </Link>
 
-          {/* Desktop */}
-          <div className="hidden md:flex items-center gap-0.5 lg:gap-1">
+          {/* Desktop. The gap is wider below lg, where the items' padding is
+              narrower, so the space between two labels is the same 28px at
+              every width, and a musical name's overhang clears the labels
+              beside it by the same margin. */}
+          <div className="hidden md:flex items-center gap-3 lg:gap-1">
             {NUMBERED.map(({ id, score, key }) => (
               <NavItem
                 key={id}
