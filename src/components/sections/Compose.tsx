@@ -168,7 +168,7 @@ export default function Compose() {
 
   const dynamics = dynamicsFor(form.message.length)
   const inlineInput =
-    'inline-block bg-transparent font-mono text-base md:text-[13px] text-white/80 placeholder:text-white/20 focus:outline-none border-b border-transparent focus:border-white/20 min-w-0'
+    'inline-block bg-transparent font-mono text-base md:text-small text-ink-body placeholder:text-ink-faint focus:outline-none border-b border-transparent focus:border-white/20 min-w-0'
 
   return (
     <SectionShell ref={sectionRef} id="compose">
@@ -196,7 +196,7 @@ export default function Compose() {
               animate={status === 'sent' ? { scale: [1, 1.6, 1, 1.6, 1] } : {}}
               transition={{ duration: 0.8 }}
             />
-            <span className="ml-3 font-mono text-[10px] text-white/30" aria-live="polite">
+            <span className="ml-3 font-mono text-label text-ink-meta" aria-live="polite">
               {status === 'sent' ? 'message sent — 250 OK' : 'New Message'}
             </span>
             <AnimatePresence>
@@ -204,9 +204,9 @@ export default function Compose() {
                 <motion.span
                   key={savedAt}
                   initial={{ opacity: 0 }}
-                  animate={{ opacity: [0.2, 0.5] }}
+                  animate={{ opacity: 1 }}
                   exit={{ opacity: 0 }}
-                  className="ml-auto font-mono text-[9px] text-white/25"
+                  className="ml-auto font-mono text-label text-ink-meta"
                 >
                   draft · saved {savedAt}
                 </motion.span>
@@ -231,11 +231,11 @@ export default function Compose() {
               </div>
 
               <div className="flex items-center gap-3">
-                <span className="font-mono text-[10px] text-white/25 w-10 shrink-0">To:</span>
-                <span className="font-mono text-[13px] text-white/50">{LINKS.email}</span>
+                <span className="font-mono text-label text-ink-meta w-10 shrink-0">To:</span>
+                <span className="font-mono text-small text-ink-body">{LINKS.email}</span>
               </div>
               <div className="flex items-center gap-3">
-                <label htmlFor="compose-name" className="font-mono text-[10px] text-white/25 w-10 shrink-0">
+                <label htmlFor="compose-name" className="font-mono text-label text-ink-meta w-10 shrink-0">
                   From:
                 </label>
                 <input
@@ -250,7 +250,7 @@ export default function Compose() {
                   onFocus={() => setCursorVariant('hidden')}
                   onBlur={() => setCursorVariant('default')}
                 />
-                <span className="font-mono text-[13px] text-white/25">&lt;</span>
+                <span aria-hidden="true" className="font-mono text-small text-ink-faint">&lt;</span>
                 <input
                   id="compose-email"
                   type="email"
@@ -264,11 +264,11 @@ export default function Compose() {
                   onFocus={() => setCursorVariant('hidden')}
                   onBlur={() => setCursorVariant('default')}
                 />
-                <span className="font-mono text-[13px] text-white/25">&gt;</span>
+                <span aria-hidden="true" className="font-mono text-small text-ink-faint">&gt;</span>
               </div>
               <div className="flex items-center gap-3 pb-3 border-b border-white/5">
-                <span className="font-mono text-[10px] text-white/25 w-10 shrink-0">Subj:</span>
-                <span className="font-mono text-[13px] text-white/50">
+                <span className="font-mono text-label text-ink-meta w-10 shrink-0">Subj:</span>
+                <span className="font-mono text-small text-ink-body">
                   {form.name ? `Message from ${form.name}` : 'New message'}
                 </span>
               </div>
@@ -284,7 +284,7 @@ export default function Compose() {
                   value={form.message}
                   onChange={(e) => setForm((f) => ({ ...f, message: e.target.value }))}
                   placeholder="Dear Roman, …"
-                  className="w-full bg-transparent font-body text-base md:text-sm text-white/70 leading-relaxed placeholder:text-white/20 focus:outline-none resize-none pt-2 max-h-[40vh]"
+                  className="w-full bg-transparent font-body text-base md:text-small text-ink-body leading-relaxed placeholder:text-ink-faint focus:outline-none resize-none pt-2 max-h-[40vh]"
                   onFocus={() => setCursorVariant('hidden')}
                   onBlur={() => setCursorVariant('default')}
                   onKeyDown={(e) => {
@@ -296,10 +296,10 @@ export default function Compose() {
                   <motion.span
                     key={dynamics.mark}
                     initial={{ opacity: 0, scale: 1.3 }}
-                    animate={{ opacity: 0.5, scale: 1 }}
+                    animate={{ opacity: 1, scale: 1 }}
                     exit={{ opacity: 0 }}
                     transition={{ duration: 0.25 }}
-                    className="absolute bottom-1 right-1 font-serif italic text-lg text-white/50 pointer-events-none"
+                    className="absolute bottom-1 right-1 font-serif italic text-lg text-ink-faint pointer-events-none"
                     title={dynamics.word}
                   >
                     {dynamics.mark}
@@ -308,13 +308,13 @@ export default function Compose() {
               </div>
 
               <div className="pt-2 border-t border-white/5">
-                <p className="font-mono text-[9px] text-white/35">{form.name ? `— ${form.name}` : '— Your Name'}</p>
+                <p className="font-mono text-label text-ink-meta">{form.name ? `— ${form.name}` : '— Your Name'}</p>
               </div>
 
               <div className="flex items-center justify-between pt-2">
                 <a
                   href="/resume"
-                  className="font-mono text-[10px] text-white/30 hover:text-white/60 transition-colors"
+                  className="font-mono text-label text-ink-meta hover:text-white transition-colors"
                   onMouseEnter={() => setCursorVariant('hover')}
                   onMouseLeave={() => setCursorVariant('default')}
                 >
@@ -329,7 +329,7 @@ export default function Compose() {
                 </button>
               </div>
               {status === 'error' && (
-                <p role="alert" className="font-mono text-[11px] leading-relaxed text-white/45">
+                <p role="alert" className="font-mono text-small text-ink-body">
                   {errorKind === 'rate_limited' ? (
                     <>That&apos;s a few messages in a row — give it ten minutes, or reach me at{' '}</>
                   ) : (
@@ -357,7 +357,7 @@ export default function Compose() {
               initial={{ opacity: 0, y: 8 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.6 }}
-              className="text-center font-mono text-[11px] text-white/45 mt-6"
+              className="text-center font-mono text-small text-ink-body mt-6"
             >
               {'𝄐 received — roman usually replies the same day.'}
             </motion.p>
@@ -366,14 +366,14 @@ export default function Compose() {
       </div>
 
       {/* email-signature footer strip: connect + location in one line */}
-      <div data-reveal className="mt-8 flex flex-wrap items-center justify-center gap-x-5 gap-y-2 font-mono text-[11px] text-white/35">
-        <span className="text-white/50">— R.K.</span>
+      <div data-reveal className="mt-8 flex flex-wrap items-center justify-center gap-x-5 gap-y-2 font-mono text-label text-ink-meta">
+        <span className="text-ink-body">— R.K.</span>
         <span>Auburn, WA (PT)</span>
         <a
           href={LINKS.github}
           target="_blank"
           rel="noopener noreferrer"
-          className="flex items-center gap-1.5 hover:text-white/70 transition-colors py-2"
+          className="flex items-center gap-1.5 hover:text-white transition-colors py-2"
           onMouseEnter={() => setCursorVariant('hover')}
           onMouseLeave={() => setCursorVariant('default')}
         >
@@ -383,7 +383,7 @@ export default function Compose() {
           href={LINKS.linkedin}
           target="_blank"
           rel="noopener noreferrer"
-          className="flex items-center gap-1.5 hover:text-white/70 transition-colors py-2"
+          className="flex items-center gap-1.5 hover:text-white transition-colors py-2"
           onMouseEnter={() => setCursorVariant('hover')}
           onMouseLeave={() => setCursorVariant('default')}
         >
@@ -391,7 +391,7 @@ export default function Compose() {
         </a>
         <a
           href={`mailto:${LINKS.email}`}
-          className="flex items-center gap-1.5 hover:text-white/70 transition-colors py-2"
+          className="flex items-center gap-1.5 hover:text-white transition-colors py-2"
           onMouseEnter={() => setCursorVariant('hover')}
           onMouseLeave={() => setCursorVariant('default')}
         >
