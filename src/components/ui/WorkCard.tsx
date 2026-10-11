@@ -69,7 +69,8 @@ const DETAILS: Record<NonNullable<WorkCardProps['details']>, string> = {
   hidden: 'translate-y-2.5 opacity-0',
 }
 
-function altOf(work: Work) {
+/** The screenshot's alt text, shared with the deck's Spline poster. */
+export function altOf(work: Work) {
   return `${work.title}: ${work.isApp ? 'app' : 'homepage'} screenshot`
 }
 

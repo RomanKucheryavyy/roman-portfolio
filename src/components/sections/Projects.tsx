@@ -1,5 +1,6 @@
 'use client'
 import { useCallback, useEffect, useRef, useState, lazy, Suspense, type ComponentType } from 'react'
+import Image from 'next/image'
 import Link from 'next/link'
 import { AnimatePresence, motion, useMotionValue, useTransform } from 'framer-motion'
 import { ArrowRight, ChevronDown, ChevronLeft, ChevronRight, ChevronUp } from 'lucide-react'
@@ -8,7 +9,7 @@ import { useDeviceCapability } from '@/hooks/useDeviceCapability'
 import { useRevealOnScroll } from '@/hooks/useRevealOnScroll'
 import { useDeckKeys } from '@/hooks/useDeckKeys'
 import { SectionHeader, SectionShell } from '@/components/ui/SectionShell'
-import WorkCard from '@/components/ui/WorkCard'
+import WorkCard, { altOf } from '@/components/ui/WorkCard'
 import WebGLBoundary, { useCanWebGL } from '@/components/ui/WebGLBoundary'
 import { CLIENT_WORK, counterOf, type Work } from '@/lib/work'
 
@@ -27,19 +28,32 @@ const TOTAL = CLIENT_WORK.length
 const STACK_DEPTH = 5
 
 /** Spline's 3D iPhone is a multi-MB desktop flourish, so it only replaces the
- *  screenshot on the desktop deck, and only on the front card. */
-function SplineIphone({ isFront }: { isFront: boolean }) {
+ *  screenshot on the desktop deck, and only on the front card. The app's own
+ *  screenshot sits under the canvas as its poster: it is what the card shows
+ *  while the scene loads, and behind the front, where the card used to be a
+ *  black rectangle. The scene paints its own background over it once drawn. */
+function SplineIphone({ work, isFront }: { work: Work; isFront: boolean }) {
   return (
     <div className="absolute inset-0 bg-black">
+      <Image
+        src="/images/projects/fubc-coffee-ios.png"
+        alt={altOf(work)}
+        fill
+        sizes="(max-width: 768px) 85vw, 50vw"
+        draggable={false}
+        className="pointer-events-none select-none object-cover"
+      />
       {isFront && (
         <Suspense
           fallback={
-            <div className="w-full h-full flex items-center justify-center bg-black">
+            <div className="absolute inset-0 flex items-center justify-center">
               <div className="w-6 h-6 border border-white/20 border-t-white/60 rounded-full animate-spin" />
             </div>
           }
         >
-          <Spline scene={SPLINE_IPHONE_URL} style={{ width: '100%', height: '100%' }} />
+          <div className="absolute inset-0">
+            <Spline scene={SPLINE_IPHONE_URL} style={{ width: '100%', height: '100%' }} />
+          </div>
         </Suspense>
       )}
     </div>
@@ -172,7 +186,7 @@ function DesktopDeck({ onOpen }: { onOpen: (index: number) => void }) {
                     size="lg"
                     layout="overlay"
                     details={isFront ? 'dimmed' : 'hidden'}
-                    media={work.isApp && splineOk ? <WebGLBoundary fallback={null} onError={() => setSplineFailed(true)}><SplineIphone isFront={isFront} /></WebGLBoundary> : undefined}
+                    media={work.isApp && splineOk ? <WebGLBoundary fallback={null} onError={() => setSplineFailed(true)}><SplineIphone work={work} isFront={isFront} /></WebGLBoundary> : undefined}
                     onOpen={isFront ? () => { if (!dragged.current) onOpen(originalIndex) } : undefined}
                     imageSizes="(max-width: 768px) 85vw, 50vw"
                     className="h-full"
