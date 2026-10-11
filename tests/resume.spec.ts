@@ -250,6 +250,8 @@ test.describe('builder', () => {
     const log = collectConsole(page)
     await unlock(page, { delayMs: 800 })
     await page.getByRole('tab', { name: 'Tailor' }).click()
+    // The empty sheet holds only a hint, so it is not a tab stop yet.
+    await expect(page.getByRole('region', { name: 'Preview' })).toHaveCount(0)
     await page.getByLabel('Paste Job Description').fill('A fixture job description.')
 
     const button = page.getByRole('button', { name: 'Tailor Resume' })
@@ -262,6 +264,7 @@ test.describe('builder', () => {
     expect(Math.abs(pending - idle)).toBeLessThanOrEqual(0.5)
 
     await expect(page.getByText('Tailored fixture summary.')).toBeVisible()
+    await expect(page.getByRole('region', { name: 'Preview' })).toHaveAttribute('tabindex', '0')
     const [download] = await Promise.all([
       page.waitForEvent('download'),
       page.getByRole('button', { name: 'Download PDF' }).click(),
