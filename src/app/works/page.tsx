@@ -75,7 +75,9 @@ export default function WorksPage() {
           data-stage: a full-bleed stage, so the site footer stands aside. */}
       <div data-stage className="hidden h-full md:block">
         <WorksWheel items={CLIENT_WORK} label="The Setlist" />
-        <p className="pointer-events-none absolute bottom-[5%] left-1/2 z-10 -translate-x-1/2 text-center font-mono text-label tracking-wider text-ink-meta">
+        {/* The pill's box (py-2, a 1px border) on the same bottom line, so this
+            hint and the "Products" pill beside it share one baseline. */}
+        <p className="pointer-events-none absolute bottom-[5%] left-1/2 z-10 -translate-x-1/2 border border-transparent py-2 text-center font-mono text-label tracking-wider text-ink-meta">
           scroll, drag or use <span aria-hidden="true">↑ ↓</span> to turn
         </p>
       </div>
