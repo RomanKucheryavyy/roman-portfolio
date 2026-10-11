@@ -1,0 +1,42 @@
+{
+  "desktop": {
+    "home": {
+      "color-contrast": 79,
+      "link-name": 2,
+      "scrollable-region-focusable": 2
+    },
+    "works": {
+      "color-contrast": 9
+    },
+    "resume": {
+      "color-contrast": 2
+    },
+    "not-found": {}
+  },
+  "mobile": {
+    "home": {
+      "color-contrast": 26,
+      "link-name": 2,
+      "scrollable-region-focusable": 1
+    },
+    "works": {},
+    "resume": {
+      "color-contrast": 2
+    },
+    "not-found": {}
+  },
+  "no-webgl": {
+    "home": {
+      "color-contrast": 79,
+      "link-name": 2,
+      "scrollable-region-focusable": 2
+    },
+    "works": {
+      "color-contrast": 9
+    },
+    "resume": {
+      "color-contrast": 2
+    },
+    "not-found": {}
+  }
+}
