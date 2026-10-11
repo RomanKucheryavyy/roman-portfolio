@@ -300,6 +300,46 @@ test.describe('link pills', () => {
       expect(hits, `pill ${i}`).toEqual({ above: true, below: true })
     }
   })
+
+  // The phone slop is a ::after; from md up there must be none, or it is one
+  // more flex item and one more gap on the pill's right.
+  for (const { label, project, viewport } of [
+    { label: '390', project: 'mobile' as const, viewport: null },
+    { label: '1440', project: 'desktop' as const, viewport: { width: 1440, height: 900 } },
+  ]) {
+    test(`${label}: every WorkLink pill has as much room after its text as before its icon`, async ({ page }) => {
+      only(project)
+      if (viewport) await page.setViewportSize(viewport)
+      // Only the live card's pill: the deck's back cards and the wheel's turned
+      // cards are inert, and scaled or turned in 3D, so their boxes are skewed.
+      const check = async (where: string, scope: string) => {
+        const links = page
+          .locator(`${scope} a[target="_blank"][aria-label$="(opens in a new tab)"]:not([inert] *)`)
+          .filter({ visible: true })
+        await expect(links.first()).toBeVisible()
+        const pills = await links.evaluateAll((els) =>
+          els.map((el) => {
+            const box = el.getBoundingClientRect()
+            const icon = el.querySelector('svg')!.getBoundingClientRect()
+            const range = document.createRange()
+            range.selectNodeContents([...el.childNodes].find((n) => n.nodeType === 3 && n.textContent?.trim())!)
+            const text = range.getBoundingClientRect()
+            return { label: el.textContent?.trim(), before: icon.left - box.left, after: box.right - text.right }
+          }),
+        )
+        for (const pill of pills) {
+          expect(Math.abs(pill.after - pill.before), `${where} ${pill.label}: ${pill.before} vs ${pill.after}`).toBeLessThan(1.5)
+        }
+      }
+      await gotoHome(page)
+      await centre(page, DECK)
+      await check('deck', '#symphony')
+      await centre(page, '#compositions')
+      await check('products', '#compositions')
+      await page.goto('/works')
+      await check('/works', 'main')
+    })
+  }
 })
 
 // ── the desktop deck's scrim ────────────────────────────────────────────────

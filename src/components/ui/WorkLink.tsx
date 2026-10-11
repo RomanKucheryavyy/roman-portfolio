@@ -44,13 +44,15 @@ export default function WorkLink({
         aria-label={`${action.label}: ${work.title} (opens in a new tab)`}
         // The site's outline pill. On phones its hit area reaches 8px above
         // and below the visible edge (the ::after), so a thumb that lands just
-        // off it still follows the link.
+        // off it still follows the link. The ::after exists only there: from
+        // md up an empty static one would be one more flex item, and one more
+        // gap, on the pill's right.
         className={cn(
           PILL_OUTLINE,
           shape,
           SIZE[size],
           'pointer-events-auto relative duration-300 focus-visible:outline-none',
-          "max-md:after:absolute max-md:after:-inset-y-2 max-md:after:inset-x-0 after:content-['']",
+          "max-md:after:absolute max-md:after:-inset-y-2 max-md:after:inset-x-0 max-md:after:content-['']",
           className,
         )}
         onClick={(e) => e.stopPropagation()}
