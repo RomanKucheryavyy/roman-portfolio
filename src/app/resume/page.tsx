@@ -5,6 +5,7 @@ import { Lock, Mail, FileText, WandSparkles, Download, ArrowLeft, LoaderCircle }
 // Type only: the data itself carries the phone number and the case metrics,
 // so it comes from /api/resume/data after the PIN, never from this bundle.
 import type { ResumeData } from '@/lib/resume-data'
+import { Button } from '@/components/ui/Button'
 import { Field, FIELD_LABEL, Input, Textarea } from '@/components/ui/Field'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 
@@ -20,7 +21,7 @@ function PinGate({ onUnlock }: { onUnlock: (pin: string) => void }) {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (pin.length < 4) return
+    if (pin.length < 4 || verifying) return
     setVerifying(true)
     setError(false)
     try {
@@ -69,13 +70,15 @@ function PinGate({ onUnlock }: { onUnlock: (pin: string) => void }) {
             autoComplete="off"
           />
           {error && <p className="text-red-400 text-xs mt-3 font-mono">Incorrect PIN</p>}
-          <button
+          <Button
             type="submit"
-            disabled={pin.length < 4 || verifying}
-            className="mt-8 w-full py-3 rounded-full bg-white text-black font-mono text-sm font-semibold tracking-wider uppercase hover:opacity-80 transition-all duration-300 disabled:opacity-30"
+            disabled={pin.length < 4}
+            pending={verifying}
+            pendingLabel="Verifying..."
+            className="mt-8 w-full"
           >
-            {verifying ? 'Verifying...' : 'Unlock'}
-          </button>
+            Unlock
+          </Button>
         </form>
         <Link href="/" className="inline-block mt-6 text-white/20 text-xs font-mono hover:text-white/40 transition-colors">
           ← Back to portfolio
@@ -93,13 +96,9 @@ function ResumeLoading({ error, onRetry }: { error: string | null; onRetry: () =
         {error ? (
           <>
             <p role="alert" className="text-red-400 text-xs font-mono">{error}</p>
-            <button
-              type="button"
-              onClick={onRetry}
-              className="mt-8 w-full py-3 rounded-full bg-white text-black font-mono text-sm font-semibold tracking-wider uppercase hover:opacity-80 transition-all duration-300"
-            >
+            <Button onClick={onRetry} className="mt-8 w-full">
               Try again
-            </button>
+            </Button>
           </>
         ) : (
           <p role="status" className="flex items-center justify-center gap-2 text-white/40 text-sm font-mono">
@@ -222,7 +221,8 @@ export default function ResumeBuilder() {
   const [companyName, setCompanyName] = useState('')
   const [tailoredResume, setTailoredResume] = useState<ResumeData | null>(null)
   const [coverLetter, setCoverLetter] = useState('')
-  const [aiLoading, setAiLoading] = useState(false)
+  /** Which AI tool is waiting on Claude, so only its own button shows the wait. */
+  const [aiLoading, setAiLoading] = useState<'tailor' | 'cover-letter' | null>(null)
   const [error, setError] = useState('')
   const [pdfBuilding, setPdfBuilding] = useState(false)
 
@@ -261,7 +261,7 @@ export default function ResumeBuilder() {
 
   const handleTailor = useCallback(async () => {
     if (!jobDescription.trim() || !pin || !resume) return
-    setAiLoading(true)
+    setAiLoading('tailor')
     setError('')
     try {
       const res = await fetch('/api/resume/tailor', {
@@ -275,13 +275,13 @@ export default function ResumeBuilder() {
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Failed to tailor resume.')
     } finally {
-      setAiLoading(false)
+      setAiLoading(null)
     }
   }, [jobDescription, pin, resume])
 
   const handleCoverLetter = useCallback(async () => {
     if (!jobDescription.trim() || !pin || !resume) return
-    setAiLoading(true)
+    setAiLoading('cover-letter')
     setError('')
     try {
       const res = await fetch('/api/resume/cover-letter', {
@@ -295,7 +295,7 @@ export default function ResumeBuilder() {
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Failed to generate cover letter.')
     } finally {
-      setAiLoading(false)
+      setAiLoading(null)
     }
   }, [jobDescription, companyName, pin, resume])
 
@@ -357,10 +357,24 @@ export default function ResumeBuilder() {
     { id: 'cover-letter', label: 'Cover Letter', icon: <Mail size={16} className="hidden sm:block" /> },
   ]
 
-  const downloadBtnClass =
-    'absolute top-3 right-3 z-10 flex items-center gap-2 px-4 py-2 rounded-full bg-black text-white text-xs font-mono uppercase tracking-wider hover:bg-gray-800 transition-all duration-200 disabled:opacity-40 shadow-lg'
-  const aiBtnClass =
-    'flex items-center gap-2 px-6 py-3 rounded-full bg-white text-black font-mono text-sm font-semibold tracking-wider uppercase hover:opacity-80 transition-all duration-300 disabled:opacity-30'
+  // The paper's download button: Button's paper variant, pinned to the sheet's corner.
+  const download = {
+    variant: 'paper',
+    pending: pdfBuilding,
+    pendingLabel: (
+      <>
+        <LoaderCircle size={14} className="animate-spin" aria-hidden="true" />
+        Building…
+      </>
+    ),
+    className: 'absolute top-3 right-3 z-10 shadow-lg',
+  } as const
+  const downloadFace = (
+    <>
+      <Download size={14} aria-hidden="true" />
+      Download PDF
+    </>
+  )
 
   return (
     <div className="min-h-screen bg-black">
@@ -438,15 +452,9 @@ export default function ResumeBuilder() {
               </Field>
             </div>
             <div className="relative">
-              <button
-                onClick={() => handleDownloadResume('base')}
-                disabled={pdfBuilding}
-                title="Download as PDF"
-                className={downloadBtnClass}
-              >
-                {pdfBuilding ? <LoaderCircle size={14} className="animate-spin" /> : <Download size={14} />}
-                {pdfBuilding ? 'Building…' : 'Download PDF'}
-              </button>
+              <Button {...download} onClick={() => handleDownloadResume('base')} title="Download as PDF">
+                {downloadFace}
+              </Button>
               <div className="bg-white rounded-xl p-8 text-black overflow-auto max-h-[80vh]">
                 <ResumePreview resume={resume} />
               </div>
@@ -464,22 +472,26 @@ export default function ResumeBuilder() {
                   className="min-h-72"
                 />
               </Field>
-              <button onClick={handleTailor} disabled={aiLoading || !jobDescription.trim()} className={aiBtnClass}>
-                {aiLoading ? <LoaderCircle size={16} className="animate-spin" /> : <WandSparkles size={16} />}
-                {aiLoading ? 'Tailoring...' : 'Tailor Resume'}
-              </button>
+              <Button
+                onClick={handleTailor}
+                disabled={!jobDescription.trim() || aiLoading === 'cover-letter'}
+                pending={aiLoading === 'tailor'}
+                pendingLabel={
+                  <>
+                    <LoaderCircle size={16} className="animate-spin" aria-hidden="true" />
+                    Tailoring...
+                  </>
+                }
+              >
+                <WandSparkles size={16} aria-hidden="true" />
+                Tailor Resume
+              </Button>
             </div>
             <div className="relative">
               {tailoredResume && (
-                <button
-                  onClick={() => handleDownloadResume('tailored')}
-                  disabled={pdfBuilding}
-                  title="Download tailored resume as PDF"
-                  className={downloadBtnClass}
-                >
-                  {pdfBuilding ? <LoaderCircle size={14} className="animate-spin" /> : <Download size={14} />}
-                  {pdfBuilding ? 'Building…' : 'Download PDF'}
-                </button>
+                <Button {...download} onClick={() => handleDownloadResume('tailored')} title="Download tailored resume as PDF">
+                  {downloadFace}
+                </Button>
               )}
               <div className="bg-white rounded-xl p-8 text-black overflow-auto max-h-[80vh]">
                 {tailoredResume ? (
@@ -511,22 +523,26 @@ export default function ResumeBuilder() {
                   className="min-h-60"
                 />
               </Field>
-              <button onClick={handleCoverLetter} disabled={aiLoading || !jobDescription.trim()} className={aiBtnClass}>
-                {aiLoading ? <LoaderCircle size={16} className="animate-spin" /> : <Mail size={16} />}
-                {aiLoading ? 'Generating...' : 'Generate Cover Letter'}
-              </button>
+              <Button
+                onClick={handleCoverLetter}
+                disabled={!jobDescription.trim() || aiLoading === 'tailor'}
+                pending={aiLoading === 'cover-letter'}
+                pendingLabel={
+                  <>
+                    <LoaderCircle size={16} className="animate-spin" aria-hidden="true" />
+                    Generating...
+                  </>
+                }
+              >
+                <Mail size={16} aria-hidden="true" />
+                Generate Cover Letter
+              </Button>
             </div>
             <div className="relative">
               {coverLetter && (
-                <button
-                  onClick={handleDownloadCoverLetter}
-                  disabled={pdfBuilding}
-                  title="Download cover letter as PDF"
-                  className={downloadBtnClass}
-                >
-                  {pdfBuilding ? <LoaderCircle size={14} className="animate-spin" /> : <Download size={14} />}
-                  {pdfBuilding ? 'Building…' : 'Download PDF'}
-                </button>
+                <Button {...download} onClick={handleDownloadCoverLetter} title="Download cover letter as PDF">
+                  {downloadFace}
+                </Button>
               )}
               <div className="bg-white rounded-xl p-8 text-black overflow-auto max-h-[80vh]">
                 {coverLetter ? (
