@@ -8,7 +8,7 @@ export function TagPill({ children, className }: { children: React.ReactNode; cl
   return (
     <span
       className={cn(
-        'inline-flex items-center rounded-full border border-white/15 px-2.5 py-1 font-mono text-label text-white/50',
+        'inline-flex items-center rounded-full border border-white/15 px-2.5 py-1 font-mono text-label text-ink-meta',
         className,
       )}
     >

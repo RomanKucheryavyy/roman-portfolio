@@ -4,6 +4,7 @@ import { useRef } from 'react'
 import { useStore } from '@/stores/useStore'
 import { actionOf, type Work } from '@/lib/work'
 import { cn } from '@/lib/utils'
+import { PILL_OUTLINE } from './pill'
 
 const SIZE = {
   sm: 'gap-1.5 px-2.5 py-1 text-label',
@@ -31,11 +32,7 @@ export default function WorkLink({
   const setCursorVariant = useStore((s) => s.setCursorVariant)
   // Restore whatever the card had asked for, rather than assuming 'default'.
   const cursorBefore = useRef<ReturnType<typeof useStore.getState>['cursorVariant']>('default')
-  const base = cn(
-    'inline-flex shrink-0 items-center whitespace-nowrap rounded-full border font-mono',
-    SIZE[size],
-    className,
-  )
+  const shape = 'shrink-0 whitespace-nowrap'
 
   if (action.kind === 'site' || action.kind === 'app') {
     const Icon = action.kind === 'app' ? Smartphone : ArrowUpRight
@@ -45,9 +42,16 @@ export default function WorkLink({
         target="_blank"
         rel="noopener noreferrer"
         aria-label={`${action.label}: ${work.title} (opens in a new tab)`}
+        // The site's outline pill. On phones its hit area reaches 8px above
+        // and below the visible edge (the ::after), so a thumb that lands just
+        // off it still follows the link.
         className={cn(
-          base,
-          'pointer-events-auto border-white/25 text-white transition-colors duration-300 hover:bg-white hover:text-black focus-visible:bg-white focus-visible:text-black focus-visible:outline-none',
+          PILL_OUTLINE,
+          shape,
+          SIZE[size],
+          'pointer-events-auto relative duration-300 focus-visible:outline-none',
+          "max-md:after:absolute max-md:after:-inset-y-2 max-md:after:inset-x-0 after:content-['']",
+          className,
         )}
         onClick={(e) => e.stopPropagation()}
         onPointerDown={(e) => e.stopPropagation()}
@@ -65,7 +69,14 @@ export default function WorkLink({
 
   const Icon = action.kind === 'pending' ? Clock : Lock
   return (
-    <span className={cn(base, 'border-dashed border-white/20 text-white/50')}>
+    <span
+      className={cn(
+        'inline-flex items-center rounded-full border border-dashed border-white/20 font-mono text-ink-meta',
+        shape,
+        SIZE[size],
+        className,
+      )}
+    >
       <Icon size={ICON[size]} aria-hidden="true" />
       {action.label}
     </span>
