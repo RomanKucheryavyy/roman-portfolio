@@ -48,12 +48,6 @@
   --color-spectrum-blue: #5ac8fa;
   --color-spectrum-purple: #af52de;
 
-  --color-gray-300: #aaa;
-  --color-gray-400: #888;
-  --color-gray-500: #666;
-  --color-gray-700: #222;
-  --color-gray-800: #1a1a1a;
-
   /* Monotonic, so the next step up is always rounder. rounded-xl is the card
      radius — every card on the site, from the wheel's to the deck's, uses it.
      (2xl used to be 1rem, smaller than xl's 24px, so cards split between the
