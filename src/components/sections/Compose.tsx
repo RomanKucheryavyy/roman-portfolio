@@ -53,6 +53,8 @@ const burstFrom = (x: number, y: number, host: HTMLElement) => {
 /** The platform never changes under a page, so there is nothing to subscribe to. */
 const noSubscribe = () => () => {}
 
+const [EMAIL_USER, EMAIL_DOMAIN] = LINKS.email.split('@')
+
 const DRAFT_KEY = 'compose:draft'
 const EMPTY = { name: '', email: '', message: '' }
 
@@ -250,7 +252,12 @@ export default function Compose() {
 
               <div className="flex items-center gap-3">
                 <span className="font-mono text-label text-ink-meta w-10 shrink-0">To:</span>
-                <span className="font-mono text-small text-ink-body">{LINKS.email}</span>
+                {/* On a 320px phone the address doesn't fit beside "To:": it breaks
+                    after the @ instead of being clipped by the window. */}
+                <span className="min-w-0 font-mono text-small text-ink-body wrap-anywhere">
+                  {EMAIL_USER}@<wbr />
+                  {EMAIL_DOMAIN}
+                </span>
               </div>
               <div className="flex items-center gap-3">
                 <label htmlFor="compose-name" className="font-mono text-label text-ink-meta w-10 shrink-0">
@@ -325,14 +332,14 @@ export default function Compose() {
                 <p className="font-mono text-label text-ink-meta">{form.name ? `— ${form.name}` : '— Your Name'}</p>
               </div>
 
-              <div className="flex items-center justify-between pt-2">
+              <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-3 pt-2">
                 {/* /resume is Roman's PIN-gated builder: a visitor who clicked "attach"
                     got a lock screen. Until the résumé is public, they ask for it. */}
                 {RESUME_PDF_HREF ? (
                   <a
                     href={RESUME_PDF_HREF}
                     download
-                    className="font-mono text-label text-ink-meta hover:text-white transition-colors"
+                    className="whitespace-nowrap font-mono text-label text-ink-meta hover:text-white transition-colors"
                     onMouseEnter={() => setCursorVariant('hover')}
                     onMouseLeave={() => setCursorVariant('default')}
                   >
@@ -341,7 +348,7 @@ export default function Compose() {
                 ) : (
                   <a
                     href={RESUME_REQUEST}
-                    className="font-mono text-label text-ink-meta hover:text-white transition-colors"
+                    className="whitespace-nowrap font-mono text-label text-ink-meta hover:text-white transition-colors"
                     onMouseEnter={() => setCursorVariant('hover')}
                     onMouseLeave={() => setCursorVariant('default')}
                   >
@@ -355,6 +362,7 @@ export default function Compose() {
                   pendingLabel="Sending…"
                   disabled={status === 'sent'}
                   aria-label="Send message"
+                  className="ml-auto"
                 >
                   <span aria-hidden="true">{modKey}↩</span> Send
                 </Button>
