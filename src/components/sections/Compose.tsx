@@ -1,7 +1,7 @@
 'use client'
 import { useEffect, useRef, useState, useSyncExternalStore } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
-import { Github, Linkedin, Mail } from 'lucide-react'
+import { CircleAlert, Github, Linkedin, Mail } from 'lucide-react'
 import { gsap } from '@/hooks/useGSAP'
 import { useStore } from '@/stores/useStore'
 import { useRevealOnScroll } from '@/hooks/useRevealOnScroll'
@@ -348,21 +348,24 @@ export default function Compose() {
                 </Button>
               </div>
               {status === 'error' && (
-                <p role="alert" className="font-mono text-small text-ink-body">
-                  {errorKind === 'rate_limited' ? (
-                    <>That&apos;s a few messages in a row — give it ten minutes, or reach me at{' '}</>
-                  ) : (
-                    <>
-                      Your draft is safe and still here.{' '}
-                      <a href={mailtoFallback} className="text-white/70 underline underline-offset-4">
-                        Open it in your mail app
-                      </a>{' '}
-                      — or write to{' '}
-                    </>
-                  )}
-                  <a href={`mailto:${LINKS.email}`} className="text-white/70 underline underline-offset-4">
-                    {LINKS.email}
-                  </a>
+                <p role="alert" className="flex gap-2 border-l border-spectrum-red pl-3 font-mono text-small text-ink-body">
+                  <CircleAlert aria-hidden="true" size={14} className="mt-1 shrink-0 text-spectrum-red" />
+                  <span>
+                    {errorKind === 'rate_limited' ? (
+                      <>That&apos;s a few messages in a row — give it ten minutes, or reach me at{' '}</>
+                    ) : (
+                      <>
+                        Your draft is safe and still here.{' '}
+                        <a href={mailtoFallback} className="text-white underline underline-offset-4">
+                          Open it in your mail app
+                        </a>{' '}
+                        — or write to{' '}
+                      </>
+                    )}
+                    <a href={`mailto:${LINKS.email}`} className="text-white underline underline-offset-4">
+                      {LINKS.email}
+                    </a>
+                  </span>
                 </p>
               )}
             </form>
