@@ -51,7 +51,10 @@ interface WorkCardProps {
 const FRAME = cn('group/card relative overflow-hidden', PANEL)
 const COUNTER = 'font-mono text-label tracking-wider text-ink-meta'
 const TITLE = 'font-display font-black leading-[0.9] tracking-tighter text-white'
-const BODY = 'text-small leading-relaxed text-ink-body'
+// The description's type. The phone clamp around it wears the same, so the
+// lines it counts are this text's lines.
+const BODY_TYPE = 'text-small leading-relaxed'
+const BODY = `${BODY_TYPE} text-ink-body`
 const SCRIM = {
   overlay: 'pointer-events-none absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent',
   // The deck's big card puts four lines of description, the tags and the link
@@ -287,7 +290,13 @@ function TextCard({ work, counter, notes, Title, className, style }: {
         {work.tagline && (
           <p className="mt-2 mb-4 font-mono text-label uppercase tracking-wider text-ink-meta">{work.tagline}</p>
         )}
-        <ExpandableText lines={4} enabled={isNarrow} moreLabel="$ cat --more" lessLabel="$ cat --less">
+        <ExpandableText
+          lines={4}
+          enabled={isNarrow}
+          moreLabel="$ cat --more"
+          lessLabel="$ cat --less"
+          className={BODY_TYPE}
+        >
           <p data-card-description className={BODY}>{work.description}</p>
         </ExpandableText>
         <div className="mt-auto flex flex-col items-start gap-4 pt-6">

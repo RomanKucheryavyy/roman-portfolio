@@ -222,17 +222,22 @@ test.describe('copy and products', () => {
 // ── Expandable Text ─────────────────────────────────────────────────────────
 
 /** Per product card: does it have a toggle, does its text overflow four lines,
- *  and does the toggle's aria-controls name an element that exists. */
+ *  does the toggle's aria-controls name an element that exists, and how many
+ *  of the text's own lines the visible box holds. */
 async function expandables(page: Page) {
   return page.evaluate(() =>
     [...document.querySelectorAll<HTMLElement>('#compositions [data-expandable]')].map((root) => {
-      const content = root.firstElementChild!.firstElementChild as HTMLElement
-      const lineHeight = parseFloat(getComputedStyle(content).lineHeight)
+      const box = root.firstElementChild as HTMLElement
+      const content = box.firstElementChild as HTMLElement
+      // The paragraph's line, not the wrappers' (they would inherit the body's).
+      const text = root.querySelector<HTMLElement>('[data-card-description]')!
+      const lineHeight = parseFloat(getComputedStyle(text).lineHeight)
       const toggle = root.querySelector<HTMLButtonElement>('button[aria-controls]')
       return {
         overflows: content.scrollHeight > lineHeight * 4 + 1,
         toggle: toggle?.textContent ?? null,
         controlsExists: toggle ? document.getElementById(toggle.getAttribute('aria-controls')!) !== null : null,
+        visibleLines: box.getBoundingClientRect().height / lineHeight,
       }
     }),
   )
@@ -251,6 +256,8 @@ test.describe('product descriptions', () => {
       if (card.toggle) {
         expect(card.toggle).toBe('$ cat --more')
         expect(card.controlsExists).toBe(true)
+        // Exactly four whole lines: no slice of a fifth under the fade.
+        expect(card.visibleLines).toBeCloseTo(4, 1)
       }
     }
     const toggle = page.locator('#compositions button[aria-controls]').first()

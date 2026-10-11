@@ -9,6 +9,8 @@ interface ExpandableTextProps {
   enabled?: boolean
   moreLabel?: string
   lessLabel?: string
+  /** Give it the text's own type classes, so the CSS clamp (`Nlh`) counts the
+   *  text's lines and not the body's. */
   className?: string
   children: ReactNode
 }
@@ -42,7 +44,8 @@ export default function ExpandableText({
     const node = content.current
     if (!enabled || !node) return
     const measure = () => {
-      const style = getComputedStyle(node)
+      // The text's own line, not this wrapper's (which may inherit the body's).
+      const style = getComputedStyle(node.firstElementChild ?? node)
       const lineHeight = parseFloat(style.lineHeight) || parseFloat(style.fontSize) * 1.5
       setHeights({ collapsed: Math.round(lineHeight * lines), full: node.scrollHeight })
     }
@@ -64,7 +67,10 @@ export default function ExpandableText({
         id={id}
         className={cn(
           'overflow-hidden transition-[height] duration-300 ease-out motion-reduce:transition-none',
-          !open && '[mask-image:linear-gradient(to_bottom,black_55%,transparent)]',
+          // Collapsed, the last line fades out towards its end, the way an
+          // ellipsis would trail off: the lines above it stay whole.
+          !open &&
+            '[mask-image:linear-gradient(black,black),linear-gradient(to_right,black_60%,transparent)] [mask-position:top,bottom] [mask-repeat:no-repeat] [mask-size:100%_calc(100%_-_1lh),100%_1lh]',
         )}
         style={
           !enabled
