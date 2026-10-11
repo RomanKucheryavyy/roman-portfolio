@@ -3,6 +3,7 @@ import { Archivo, JetBrains_Mono, Space_Grotesk } from 'next/font/google'
 import { SITE } from '@/lib/constants'
 import { TITLE_TEMPLATE } from '@/lib/seo'
 import SiteChrome from '@/components/ui/SiteChrome'
+import SiteFooter from '@/components/ui/SiteFooter'
 import './globals.css'
 
 // Self-hosted at build time, on each family's full variable weight axis (no
@@ -67,6 +68,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         </a>
         <SiteChrome />
         {children}
+        <SiteFooter />
       </body>
     </html>
   )

@@ -1,8 +1,11 @@
 'use client'
+import type { ReactNode } from 'react'
 import { MotionConfig } from 'framer-motion'
 import { usePathname } from 'next/navigation'
 import Cursor from '@/components/ui/Cursor'
 import Nav from '@/components/ui/Nav'
+import { useIsHydrated } from '@/hooks/useMediaQuery'
+import { useStore } from '@/stores/useStore'
 
 /**
  * What every route wears: the nav, the custom cursor and the film grain.
@@ -26,4 +29,18 @@ export default function SiteChrome() {
       <Nav />
     </MotionConfig>
   )
+}
+
+/**
+ * Holds the layout's own content (the footer) out of the tab order while the
+ * home page's boot covers it, as the nav and main are: without it, Tab went
+ * from the skip link straight to links the Loader was hiding. Only after
+ * hydration, so the footer still works with scripts off.
+ */
+export function BootInert({ children }: { children: ReactNode }) {
+  const pathname = usePathname()
+  const hydrated = useIsHydrated()
+  const isLoaded = useStore((s) => s.isLoaded)
+  const booting = hydrated && !isLoaded && pathname === '/'
+  return <div inert={booting}>{children}</div>
 }
