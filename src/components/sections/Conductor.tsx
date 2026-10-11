@@ -7,15 +7,24 @@ import { useGyroParallax } from '@/hooks/useGyroParallax'
 import { useRevealOnScroll } from '@/hooks/useRevealOnScroll'
 import { SectionHeader, SectionShell } from '@/components/ui/SectionShell'
 import YearInMeasures from '@/components/effects/YearInMeasures'
+import { CERTIFICATIONS } from '@/lib/constants'
+import { CURRENT_ROLE, PREVIOUS_ROLES, shortRole } from '@/lib/site-facts'
+
+/**
+ * The plain account of who Roman is, before the photo on every width. The
+ * role and team are read from site-facts, so a team change can't leave this
+ * section a step behind again (it named his old team months after he moved).
+ */
+const INTRO = `${CURRENT_ROLE.title} at ${CURRENT_ROLE.company}, on ${CURRENT_ROLE.team}; before that, Premier support for ${PREVIOUS_ROLES[0].team}. I build in React, Next.js, Swift and Apex, and I conduct the FUBC Band.`
 
 const CODE_LINES = [
   '// Roman Kucheryavyy',
   '// Orchestrating Logic & Art',
   '',
   'const roman = {',
-  '  role: "Sr. TSE, Salesforce Gov Cloud",',
+  `  role: "${shortRole(CURRENT_ROLE)}",`,
   '  craft: ["React", "Next.js", "Swift", "Apex"],',
-  '  certs: 8,',
+  `  certs: ${CERTIFICATIONS.length},`,
   '  band: "FUBC — conductor, trumpet",',
   '  priority: "family.first()",',
   '};',
@@ -97,7 +106,7 @@ export default function Conductor() {
         </defs>
       </svg>
 
-      <SectionHeader movement="conductor" title={{ lead: 'The', accent: 'Conductor' }} />
+      <SectionHeader movement="conductor" title={{ lead: 'The', accent: 'Conductor' }} intro={INTRO} />
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Photo */}
