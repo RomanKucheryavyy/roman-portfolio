@@ -57,7 +57,14 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       className={`${archivo.variable} ${spaceGrotesk.variable} ${jetbrainsMono.variable} bg-black`}
       suppressHydrationWarning
     >
-      <body className="bg-black text-white antialiased" suppressHydrationWarning>
+      {/* Inline as well as in classes: Next's built-in 404 injects an
+          unlayered body{background:#fff;color:#000}, which beats any
+          Tailwind utility, and left the nav and footer on white. */}
+      <body
+        className="bg-black text-white antialiased"
+        style={{ background: '#000', color: '#fff' }}
+        suppressHydrationWarning
+      >
         {/* First in the tab order on every route. Every page renders
             <main id="main" tabIndex={-1}>, so following it moves focus, not
             just the scroll position. Above the boot loader (z-200). */}
