@@ -154,6 +154,11 @@ test.describe('404', () => {
     const robots = head.match(/<meta name="robots" content="[^"]*"/g) ?? []
     expect(robots).toEqual(['<meta name="robots" content="noindex"'])
     expect(head).not.toContain('rel="canonical"')
+    // Its own share text, not the home page's, and no og:url calling it the home page.
+    expect(head).toContain('<meta property="og:title" content="Not found — Roman Kucheryavyy"/>')
+    expect(head).toContain('<meta name="twitter:title" content="Not found — Roman Kucheryavyy"/>')
+    expect(head).toMatch(/<meta name="description" content="Nothing is written for this address\./)
+    expect(head).not.toContain('property="og:url"')
   })
 
   test('black even under a light colour scheme, with a heading, an alert and three ways out', async ({ browser, request }) => {
