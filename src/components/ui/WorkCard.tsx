@@ -2,9 +2,11 @@
 import Image from 'next/image'
 import Link from 'next/link'
 import { ArrowRight } from 'lucide-react'
-import { useState, type CSSProperties, type ElementType, type ReactNode } from 'react'
+import { type CSSProperties, type ElementType, type ReactNode } from 'react'
+import { useMediaQuery } from '@/hooks/useMediaQuery'
 import { cn } from '@/lib/utils'
 import { counterOf, type Work } from '@/lib/work'
+import ExpandableText from './ExpandableText'
 import { PANEL } from './Panel'
 import { TagList } from './TagPill'
 import WorkLink from './WorkLink'
@@ -254,7 +256,8 @@ function TextCard({ work, counter, notes, Title, className, style }: {
   className?: string
   style?: CSSProperties
 }) {
-  const [expanded, setExpanded] = useState(false)
+  // Phones clamp the description to four lines; from md up it shows whole.
+  const isNarrow = useMediaQuery('(max-width: 767px)')
   return (
     <article
       className={cn(FRAME, 'flex h-full flex-col transition-colors duration-500 hover:border-white/20', className)}
@@ -284,15 +287,9 @@ function TextCard({ work, counter, notes, Title, className, style }: {
         {work.tagline && (
           <p className="mt-2 mb-4 font-mono text-label uppercase tracking-wider text-ink-meta">{work.tagline}</p>
         )}
-        <p className={cn(BODY, !expanded && 'max-md:line-clamp-4')}>{work.description}</p>
-        <button
-          type="button"
-          onClick={() => setExpanded((e) => !e)}
-          aria-expanded={expanded}
-          className="mt-2 self-start py-1 font-mono text-label text-white/50 md:hidden"
-        >
-          {expanded ? '$ cat --less' : '$ cat --more'}
-        </button>
+        <ExpandableText lines={4} enabled={isNarrow} moreLabel="$ cat --more" lessLabel="$ cat --less">
+          <p className={BODY}>{work.description}</p>
+        </ExpandableText>
         <div className="mt-auto flex flex-col items-start gap-4 pt-6">
           <TagList tags={work.tags} />
           <WorkLink work={work} />
