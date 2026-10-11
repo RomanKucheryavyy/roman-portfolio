@@ -287,14 +287,18 @@ test.describe('skip link', () => {
       if (route === '/') await gotoHome(page)
       else await page.goto(route)
       await settle(800)
-      // The contract is that every page renders <main id="main" tabIndex={-1}>.
-      // /works, /resume and the 404 are other streams' pages (W6, W9, W8);
-      // until they land, there is nothing here to check.
-      test.skip((await page.locator('main#main').count()) === 0, `${route} has no main#main yet (its own stream adds it)`)
+      // The contract: every page renders <main id="main" tabIndex={-1}>, and
+      // no page takes focus on arrival (the PIN gate included).
+      await expect(page.locator('main#main')).toHaveCount(1)
       await page.keyboard.press('Tab')
       await expect(page.getByRole('link', { name: 'Skip to content' })).toBeFocused()
       await page.keyboard.press('Enter')
       await expect(page.locator('main#main')).toBeFocused()
+      if (route === '/resume') {
+        // From main, the gate's own field is the next stop.
+        await page.keyboard.press('Tab')
+        await expect(page.getByLabel('PIN')).toBeFocused()
+      }
     })
   }
 })

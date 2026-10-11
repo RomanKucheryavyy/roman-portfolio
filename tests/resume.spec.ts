@@ -94,7 +94,10 @@ test.describe('PIN gate', () => {
     await page.route('**/api/resume/verify-pin', (route) => route.fulfill({ status: 401, json: { error: 'Unauthorized' } }))
     await page.goto('/resume')
     const pin = page.getByLabel('PIN')
-    await expect(pin).toBeFocused()
+    await expect(pin).toBeVisible()
+    // The gate does not take focus on arrival: the first Tab is the skip
+    // link, as on every route (chrome.spec walks Skip, main, then this field).
+    await expect(pin).not.toBeFocused()
     expect(await pin.evaluate((el) => parseFloat(getComputedStyle(el).fontSize))).toBeGreaterThanOrEqual(16)
     await expect(page.locator('main#main')).toHaveCount(1)
     await expect(page.getByRole('link', { name: '← Back to portfolio' })).toBeVisible()
@@ -104,6 +107,7 @@ test.describe('PIN gate', () => {
     // (Next's route announcer is the page's other role=alert.)
     await expect(page.getByRole('alert').filter({ hasText: 'Incorrect PIN' })).toHaveCount(1)
     await expect(pin).toHaveAttribute('aria-invalid', 'true')
+    await expect(pin).toBeFocused() // after a wrong PIN, ready for the next try
     log.expectClean()
   })
 })

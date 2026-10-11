@@ -69,7 +69,12 @@ function PinGate({ onUnlock }: { onUnlock: (pin: string) => void }) {
   const inputId = useId()
   const errorId = useId()
 
-  useEffect(() => { inputRef.current?.focus() }, [])
+  // No focus on arrival. Taking it on mount put a keyboard user past the
+  // skip link and the nav (Tab went from the field to "Back to portfolio"),
+  // and started a screen reader at the field, past the heading and the
+  // instruction that say what it is for. The page starts at its top like
+  // every other route: Tab, "Skip to content", then Tab reaches the field.
+  // Focus moves only in answer to the visitor: after a wrong PIN, back here.
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
