@@ -262,9 +262,11 @@ test.describe('colophon', () => {
     expect(res?.status()).toBe(200)
     await expect(page.getByRole('heading', { level: 1 })).toHaveText('Liner notes')
 
-    /** The value beside a FactList term. */
+    /** The value beside a FactList term. The term is escaped: a route like /works/[slug] is not a pattern. */
     const valueOf = (term: string) =>
-      page.locator('dt', { hasText: new RegExp(`^${term}$`) }).locator('xpath=following-sibling::dd[1]')
+      page
+        .locator('dt', { hasText: new RegExp(`^${term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`) })
+        .locator('xpath=following-sibling::dd[1]')
 
     // next.config.ts copies Netlify's COMMIT_REF into the build; anywhere else it is unset.
     const sha = process.env.COMMIT_REF ?? ''
