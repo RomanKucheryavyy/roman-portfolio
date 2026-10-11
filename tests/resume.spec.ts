@@ -172,6 +172,19 @@ test.describe('builder', () => {
     expect(pdf).not.toMatch(/'#[0-9a-f]{3,6}'/i)
   })
 
+  test('the résumé downloads as a PDF', async ({ page }) => {
+    const log = collectConsole(page)
+    await unlock(page)
+    const [download] = await Promise.all([
+      page.waitForEvent('download'),
+      page.getByRole('button', { name: 'Download PDF' }).click(),
+    ])
+    expect(download.suggestedFilename()).toBe('Roman_Kucheryavyy_Resume.pdf')
+    const file = await download.path()
+    expect(readFileSync(file).subarray(0, 5).toString()).toBe('%PDF-')
+    log.expectClean()
+  })
+
   test('tailor runs, its button keeps its width while pending, and the tailored PDF downloads', async ({ page }) => {
     const log = collectConsole(page)
     await unlock(page, { delayMs: 800 })
