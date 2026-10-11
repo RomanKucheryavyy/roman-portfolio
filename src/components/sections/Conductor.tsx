@@ -10,7 +10,8 @@ import { Panel } from '@/components/ui/Panel'
 import { TerminalBar } from '@/components/ui/TerminalBar'
 import YearInMeasures from '@/components/effects/YearInMeasures'
 import { CERTIFICATIONS } from '@/lib/constants'
-import { CURRENT_ROLE, PREVIOUS_ROLES, monthYear, roleTitle, shortRole } from '@/lib/site-facts'
+import { CURRENT_ROLE, PREVIOUS_ROLES, TIMELINE, monthYear, roleTitle, shortRole } from '@/lib/site-facts'
+import { cn } from '@/lib/utils'
 
 /**
  * The plain account of who Roman is, before the photo on every width. The
@@ -70,13 +71,21 @@ const NOTES = [
   { x: 270, y: 55 }, { x: 340, y: 35 }, { x: 410, y: 45 },
 ]
 
-const TIMELINE = [
-  { year: '2016', label: 'CS @ Highline' },
-  { year: '2018', label: 'UW Tacoma' },
-  { year: '2021', label: 'Microsoft' },
-  { year: '2023', label: 'Salesforce' },
-  { year: 'Now', label: '8 Certs' },
-]
+const FIRST_YEAR = Math.min(...TIMELINE.map((t) => t.year))
+const LAST_YEAR = Math.max(...TIMELINE.map((t) => t.year))
+
+/** Where an entry's dot sits on the rail: its year's share of the whole span. */
+const railAt = (year: number) => ((year - FIRST_YEAR) / (LAST_YEAR - FIRST_YEAR || 1)) * 100
+
+/**
+ * On the rail the first and last entries hug its ends, so their labels never
+ * hang off the column; the ones between centre on their dot.
+ */
+function railPlace(i: number): { shift: string; align: string } {
+  if (i === 0) return { shift: '', align: 'sm:items-start sm:text-left' }
+  if (i === TIMELINE.length - 1) return { shift: 'sm:-translate-x-full', align: 'sm:items-end sm:text-right' }
+  return { shift: 'sm:-translate-x-1/2', align: 'sm:items-center sm:text-center' }
+}
 
 export default function Conductor() {
   const sectionRef = useRef<HTMLElement>(null)
@@ -103,13 +112,14 @@ export default function Conductor() {
       )
     }
     const timelineLine = section.querySelector('[data-timeline-line]')
-    if (timelineLine) {
+    const timeline = section.querySelector('[data-timeline]')
+    if (timelineLine && timeline) {
       gsap.fromTo(
         timelineLine,
         { scaleX: 0 },
         {
           scaleX: 1, duration: 1.5, ease: 'power2.inOut',
-          scrollTrigger: { trigger: timelineLine, start: 'top 85%', once: true },
+          scrollTrigger: { trigger: timeline, start: 'top 85%', once: true },
         }
       )
       gsap.fromTo(
@@ -117,7 +127,7 @@ export default function Conductor() {
         { scale: 0, opacity: 0 },
         {
           scale: 1, opacity: 1, duration: 0.5, ease: 'elastic.out(1,0.5)', stagger: 0.15, delay: 0.5,
-          scrollTrigger: { trigger: timelineLine, start: 'top 85%', once: true },
+          scrollTrigger: { trigger: timeline, start: 'top 85%', once: true },
         }
       )
     }
@@ -229,33 +239,62 @@ export default function Conductor() {
 
       <YearInMeasures />
 
-      {/* Timeline — vertical "git log" on phones, horizontal staff on larger screens */}
-      <div className="mt-10 sm:hidden relative pl-1">
-        <div className="absolute left-[4px] top-2 bottom-2 w-px bg-white/20" />
-        {TIMELINE.map((item) => (
-          <div key={item.year} className="flex items-center gap-4 py-2.5">
-            <div className="w-2.5 h-2.5 rounded-full bg-white border border-white/50 relative z-10 shrink-0 -ml-[1px]" />
-            <span className="font-mono text-xs text-white/70 w-10 shrink-0">{item.year}</span>
-            <span className="font-mono text-[11px] text-white/50">{item.label}</span>
-          </div>
-        ))}
-      </div>
-      <div className="mt-16 relative pt-4 pb-2 hidden sm:block">
-        <div
-          data-timeline-line
-          className="absolute left-0 w-full h-px bg-white/20 origin-left"
-          style={{ top: '16px', transform: 'scaleX(0)' }}
-        />
-        <div className="flex justify-between relative">
-          {TIMELINE.map((item) => (
-            <div key={item.year} data-timeline-dot className="flex flex-col items-center gap-1.5">
-              <div className="w-2.5 h-2.5 rounded-full bg-white border border-white/50 relative z-10" />
-              <span className="font-mono text-[10px] text-white/60 mt-1">{item.year}</span>
-              <span className="font-mono text-[8px] sm:text-[9px] text-white/25 text-center leading-tight max-w-[60px] sm:max-w-none">
-                {item.label}
-              </span>
-            </div>
-          ))}
+      {/*
+        Timeline: one list from site-facts. On phones it reads top to bottom
+        down a rail (the structure of 21st.dev 28384, Milestone Timeline, not
+        installed); from sm the same items sit along a horizontal rule at their
+        real years, with a fermata held over the current one.
+      */}
+      <div className="relative mt-10 sm:mt-16 sm:pt-8">
+        <div className="relative">
+          <div
+            data-timeline-line
+            aria-hidden="true"
+            className="absolute inset-x-0 top-1 hidden h-px origin-left bg-white/20 sm:block"
+            style={{ transform: 'scaleX(0)' }}
+          />
+          <ol data-timeline aria-label="Timeline" className="relative sm:h-24">
+            {TIMELINE.map((item, i) => {
+              const last = i === TIMELINE.length - 1
+              const { shift, align } = railPlace(i)
+              return (
+                <li
+                  key={item.label}
+                  className={cn('sm:absolute sm:top-0', shift)}
+                  style={{ left: `${railAt(item.year)}%` }}
+                >
+                  <div data-timeline-dot className={cn('flex gap-4 sm:flex-col sm:gap-2', align)}>
+                    <div className="relative flex flex-col items-center">
+                      {item.current ? (
+                        <span
+                          aria-hidden="true"
+                          className="absolute bottom-full left-1/2 mb-1 hidden -translate-x-1/2 text-lead leading-none text-ink-body sm:block"
+                        >
+                          {'\u{1D110}'}
+                        </span>
+                      ) : null}
+                      <span className="mt-1 size-2.5 shrink-0 rounded-full border border-white/50 bg-white sm:mt-0" />
+                      {last ? null : <span aria-hidden="true" className="w-px flex-1 bg-white/20 sm:hidden" />}
+                    </div>
+                    <div className={cn('flex flex-wrap items-baseline gap-x-4 font-mono text-label sm:block', !last && 'pb-5 sm:pb-0')}>
+                      <span className="w-10 shrink-0 text-ink-body sm:block sm:w-auto">{item.year}</span>
+                      <span className="text-ink-meta sm:mt-1 sm:block sm:max-w-24 lg:max-w-40">
+                        {item.label}
+                        {item.current ? (
+                          <>
+                            <span aria-hidden="true" className="ml-2 text-lead leading-none sm:hidden">
+                              {'\u{1D110}'}
+                            </span>
+                            <span className="sr-only">, current</span>
+                          </>
+                        ) : null}
+                      </span>
+                    </div>
+                  </div>
+                </li>
+              )
+            })}
+          </ol>
         </div>
       </div>
     </SectionShell>
