@@ -10,6 +10,22 @@ const LOCK_TIMES = [500, 900, 1300]
 const BURST_AT = 2200
 const HANDOFF_AFTER = 600
 
+/** Storage can throw (Safari private mode, blocked cookies); the boot must not. */
+function booted(): boolean {
+  try {
+    return sessionStorage.getItem('booted') !== null
+  } catch {
+    return false
+  }
+}
+function markBooted() {
+  try {
+    sessionStorage.setItem('booted', '1')
+  } catch {
+    // Without storage the boot just plays again next time.
+  }
+}
+
 /** Boot loader: three glyphs scramble through symbols, lock into "R K .",
  *  then burst into particles and hand off to the page. */
 export default function Loader() {
@@ -23,9 +39,17 @@ export default function Loader() {
     const particleContainer = particleRef.current
     if (!container || !particleContainer) return
 
+    // Reduced motion skips the boot outright, and with no fade: the
+    // scramble, the burst and the fade are all motion.
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      setLoaded(true)
+      container.style.display = 'none'
+      return
+    }
+
     // Repeat visits within a session skip the boot — a flourish once,
     // a delay twice.
-    if (sessionStorage.getItem('booted')) {
+    if (booted()) {
       setLoaded(true)
       gsap.to(container, {
         opacity: 0,
@@ -102,7 +126,7 @@ export default function Loader() {
       })
 
       timeouts.push(setTimeout(() => {
-        sessionStorage.setItem('booted', '1')
+        markBooted()
         setLoaded(true)
         gsap.to(container, {
           opacity: 0,
@@ -120,9 +144,12 @@ export default function Loader() {
   }, [setLoaded])
 
   return (
+    // aria-hidden: three scrambling glyphs are not content, and while it
+    // covers the page the page itself is inert.
     <div
       ref={containerRef}
       className="fixed inset-0 z-[200] bg-black flex items-center justify-center select-none overflow-hidden"
+      aria-hidden="true"
     >
       <div className="relative flex items-baseline gap-[0.3vw]">
         {TARGETS.map((_, i) => (
