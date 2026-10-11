@@ -150,6 +150,7 @@ export default function Loader() {
       ref={containerRef}
       className="fixed inset-0 z-[200] bg-black flex items-center justify-center select-none overflow-hidden"
       aria-hidden="true"
+      data-loader
     >
       <div className="relative flex items-baseline gap-[0.3vw]">
         {TARGETS.map((_, i) => (

@@ -14,7 +14,7 @@ export default function SectionTransition({ movement }: { movement: MovementId }
   const i = MOVEMENTS.findIndex((m) => m.id === movement)
   const from = MOVEMENTS[Math.max(0, i - 1)].key
   return (
-    <div className="relative w-full overflow-hidden" style={{ height: '60px' }} aria-hidden="true">
+    <div className="relative w-full overflow-hidden" style={{ height: '60px' }} aria-hidden="true" data-transition={movement}>
       <span className="absolute inset-x-0 bottom-1/2 mb-2 text-center font-mono text-label tracking-wider text-ink-faint">
         {caption}
       </span>
