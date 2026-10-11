@@ -3,6 +3,7 @@ import { useEffect, useRef } from 'react'
 import Image from 'next/image'
 import { gsap } from '@/hooks/useGSAP'
 import { useGyroParallax } from '@/hooks/useGyroParallax'
+import { useMediaQuery } from '@/hooks/useMediaQuery'
 import { useRevealOnScroll } from '@/hooks/useRevealOnScroll'
 import { SectionHeader, SectionShell } from '@/components/ui/SectionShell'
 import { FactList, type Fact } from '@/components/ui/FactList'
@@ -90,63 +91,69 @@ function railPlace(i: number): { shift: string; align: string } {
 export default function Conductor() {
   const sectionRef = useRef<HTMLElement>(null)
   const photoRef = useRef<HTMLDivElement>(null)
-  const tiltRef = useGyroParallax({ maxOffset: 10 })
+  const reduced = useMediaQuery('(prefers-reduced-motion: reduce)')
+  // The phone tilt is motion too: off when the visitor asks for less.
+  const tiltRef = useGyroParallax({ maxOffset: 10, enabled: !reduced })
   useRevealOnScroll(sectionRef)
 
   useEffect(() => {
     const section = sectionRef.current
     if (!section) return
+    const photo = photoRef.current
+    const timeline = section.querySelector<HTMLElement>('[data-timeline]')
+    const line = section.querySelector<HTMLElement>('[data-timeline-line]')
+    const dots = section.querySelectorAll<HTMLElement>('[data-timeline-dot]')
+
+    // Reduced motion: everything in its final place, nothing tweened.
     if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
-      if (photoRef.current) photoRef.current.style.opacity = '1'
+      if (photo) photo.style.opacity = '1'
+      if (line) line.style.transform = 'none'
+      dots.forEach((dot) => {
+        dot.style.opacity = '1'
+      })
       return
     }
 
-    if (photoRef.current) {
-      gsap.fromTo(
-        photoRef.current,
-        { filter: 'grayscale(100%) brightness(0.7)', scale: 1.05, opacity: 0 },
-        {
-          filter: 'grayscale(0%) brightness(1)', scale: 1, opacity: 1, duration: 1.5, ease: 'power2.out',
-          scrollTrigger: { trigger: photoRef.current, start: 'top 80%', end: 'top 30%', scrub: 1 },
-        }
-      )
-    }
-    const timelineLine = section.querySelector('[data-timeline-line]')
-    const timeline = section.querySelector('[data-timeline]')
-    if (timelineLine && timeline) {
-      gsap.fromTo(
-        timelineLine,
-        { scaleX: 0 },
-        {
-          scaleX: 1, duration: 1.5, ease: 'power2.inOut',
-          scrollTrigger: { trigger: timeline, start: 'top 85%', once: true },
-        }
-      )
-      gsap.fromTo(
-        section.querySelectorAll('[data-timeline-dot]'),
-        { scale: 0, opacity: 0 },
-        {
-          scale: 1, opacity: 1, duration: 0.5, ease: 'elastic.out(1,0.5)', stagger: 0.15, delay: 0.5,
-          scrollTrigger: { trigger: timeline, start: 'top 85%', once: true },
-        }
-      )
-    }
+    // One context, reverted on unmount, so leaving for /works and coming
+    // back doesn't stack a second set of ScrollTriggers on the first.
+    const ctx = gsap.context(() => {
+      if (photo) {
+        gsap.fromTo(
+          photo,
+          { filter: 'grayscale(100%) brightness(0.7)', scale: 1.05, opacity: 0 },
+          {
+            filter: 'grayscale(0%) brightness(1)', scale: 1, opacity: 1, duration: 1.5, ease: 'power2.out',
+            scrollTrigger: { trigger: photo, start: 'top 80%', end: 'top 30%', scrub: 1 },
+          }
+        )
+      }
+      if (!timeline || !line) return
+      // The rule draws and the dots land only on the horizontal rail (sm up),
+      // as before; the phone list has always stood still.
+      gsap.matchMedia().add('(min-width: 640px)', () => {
+        gsap.fromTo(
+          line,
+          { scaleX: 0 },
+          {
+            scaleX: 1, duration: 1.5, ease: 'power2.inOut',
+            scrollTrigger: { trigger: timeline, start: 'top 85%', once: true },
+          }
+        )
+        gsap.fromTo(
+          dots,
+          { scale: 0, opacity: 0 },
+          {
+            scale: 1, opacity: 1, duration: 0.5, ease: 'elastic.out(1,0.5)', stagger: 0.15, delay: 0.5,
+            scrollTrigger: { trigger: timeline, start: 'top 85%', once: true },
+          }
+        )
+      })
+    }, section)
+    return () => ctx.revert()
   }, [])
 
   return (
     <SectionShell ref={sectionRef} id="conductor">
-      <svg className="absolute w-0 h-0" aria-hidden="true">
-        <defs>
-          <filter id="halftone">
-            <feComponentTransfer>
-              <feFuncR type="discrete" tableValues="0 0.2 0.4 0.6 0.8 1" />
-              <feFuncG type="discrete" tableValues="0 0.2 0.4 0.6 0.8 1" />
-              <feFuncB type="discrete" tableValues="0 0.2 0.4 0.6 0.8 1" />
-            </feComponentTransfer>
-          </filter>
-        </defs>
-      </svg>
-
       <SectionHeader movement="conductor" title={{ lead: 'The', accent: 'Conductor' }} intro={INTRO} />
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
