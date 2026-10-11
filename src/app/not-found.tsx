@@ -1,7 +1,7 @@
 import type { Metadata } from 'next'
 import { PageHeader } from '@/app/_components/PageHeader'
-import { Button } from '@/components/ui/Button'
-import { SectionShell } from '@/components/ui/SectionShell'
+import { PageShell } from '@/app/_components/PageShell'
+import { PILL_OUTLINE } from '@/components/ui/pill'
 import { ROUTES } from '@/lib/routes'
 import { keyOf, nextKeyOf } from '@/lib/score'
 import { fullTitle } from '@/lib/seo'
@@ -12,8 +12,13 @@ import { fullTitle } from '@/lib/seo'
  *
  * Structure from Not Found 404 (21st.dev 21523, mohammadshehadeh): a mono
  * eyebrow, a display headline, one sentence, a row of ways out. Built here on
- * SectionShell, the page header and Button's outline pill, with none of its
- * own type or palette. role="alert" is borrowed from 36194.
+ * the page shell, the page header and the outline pill, with none of its own
+ * type or palette. role="alert" is borrowed from 36194.
+ *
+ * Every route's tree carries the root 404, so nothing here may pull client
+ * JavaScript into every page: PageShell rather than SectionShell (GSAP), and
+ * PILL_OUTLINE on plain links rather than Button (tailwind-merge and a
+ * second copy of next/link's client code, about 29 KB on every route).
  */
 export const metadata: Metadata = {
   // Absolute, so the tab reads the same with or without the layout's template.
@@ -28,7 +33,7 @@ export const metadata: Metadata = {
 export default function NotFound() {
   return (
     <main id="main" tabIndex={-1} className="relative w-full bg-black outline-none">
-      <SectionShell className="flex min-h-svh items-center">
+      <PageShell className="flex min-h-svh items-center">
         <PageHeader
           kicker="// 404. Not found"
           accent="Tacet."
@@ -38,18 +43,19 @@ export default function NotFound() {
             Nothing is written for this address. The page moved, or the link has a typo.
           </p>
           <div className="mt-8 flex flex-wrap gap-3">
-            <Button variant="outline" href={ROUTES.home}>
+            {/* Plain links, not next/link: see above. */}
+            <a href={ROUTES.home} className={PILL_OUTLINE}>
               <span aria-hidden="true">←</span> Back to the top
-            </Button>
-            <Button variant="outline" href={ROUTES.works}>
+            </a>
+            <a href={ROUTES.works} className={PILL_OUTLINE}>
               The setlist
-            </Button>
-            <Button variant="outline" href={`${ROUTES.home}#compose`}>
+            </a>
+            <a href={`${ROUTES.home}#compose`} className={PILL_OUTLINE}>
               Let’s compose
-            </Button>
+            </a>
           </div>
         </PageHeader>
-      </SectionShell>
+      </PageShell>
     </main>
   )
 }

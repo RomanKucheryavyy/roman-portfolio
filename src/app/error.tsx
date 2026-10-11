@@ -1,9 +1,8 @@
 'use client'
 
 import { PageHeader } from '@/app/_components/PageHeader'
-import { Button } from '@/components/ui/Button'
-import { SectionShell } from '@/components/ui/SectionShell'
-import { ROUTES } from '@/lib/routes'
+import { PageShell } from '@/app/_components/PageShell'
+import { PILL_OUTLINE } from '@/components/ui/pill'
 import { keyOf, nextKeyOf } from '@/lib/score'
 
 /**
@@ -12,6 +11,11 @@ import { keyOf, nextKeyOf } from '@/lib/score'
  * layout (nav, footer) stays; global-error.tsx covers a throw in the layout.
  *
  * React already reports the error to the console, so nothing is logged here.
+ * This boundary loads on every route, so it uses PageShell and PILL_OUTLINE
+ * directly (SectionShell would bring GSAP, Button tailwind-merge and
+ * next/link), and its way home is a plain "/" rather than ROUTES.home:
+ * routes.ts imports constants.ts, which would carry every card's copy into
+ * every route. A full load is also the surest way out of a broken page.
  */
 export default function ErrorPage({
   retry,
@@ -25,21 +29,22 @@ export default function ErrorPage({
 }) {
   return (
     <main id="main" tabIndex={-1} className="relative w-full bg-black outline-none">
-      <SectionShell className="flex min-h-svh items-center">
+      <PageShell className="flex min-h-svh items-center">
         <PageHeader kicker="// error" lead="Something" accent="broke." keys={[keyOf('compose'), nextKeyOf('compose')]}>
           <p role="alert" className="mt-4 max-w-lg text-body text-ink-meta">
             This part of the page failed to load. Try it again, or head back to the top.
           </p>
           <div className="mt-8 flex flex-wrap gap-3">
-            <Button variant="outline" onClick={() => (retry ?? reset)()}>
+            <button type="button" onClick={() => (retry ?? reset)()} className={`${PILL_OUTLINE} cursor-pointer`}>
               Try again
-            </Button>
-            <Button variant="outline" href={ROUTES.home}>
+            </button>
+            {/* eslint-disable-next-line @next/next/no-html-link-for-pages -- a full load on purpose, see above */}
+            <a href="/" className={PILL_OUTLINE}>
               <span aria-hidden="true">←</span> Back to the top
-            </Button>
+            </a>
           </div>
         </PageHeader>
-      </SectionShell>
+      </PageShell>
     </main>
   )
 }
