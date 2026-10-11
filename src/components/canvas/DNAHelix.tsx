@@ -15,6 +15,8 @@ export default function DNAHelix() {
     if (isMobile) return
     const inner = innerRef.current
     if (!inner) return
+    // Reduced motion gets the helix standing still, drawn once.
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return
 
     let rotation = 0
     let raf = 0
