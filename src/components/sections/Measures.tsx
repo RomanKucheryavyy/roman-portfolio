@@ -72,7 +72,6 @@ export default function Measures() {
       <DNAHelix />
       <SectionHeader
         movement="measures"
-        kicker="// 01. Certifications"
         title={{ lead: 'The', accent: 'Measures' }}
         intro="Eight certifications, one CS degree, and a relentless habit of learning. Each credential here was earned in the field — not a checklist, but a growing repertoire."
       />

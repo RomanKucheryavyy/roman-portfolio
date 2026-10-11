@@ -20,7 +20,6 @@ export default function Compositions() {
     <SectionShell ref={sectionRef} id="compositions">
       <SectionHeader
         movement="compositions"
-        kicker="// 03. Original Works"
         title={{ lead: 'The', accent: 'Compositions' }}
         intro="Personal projects, composed entirely on my own time. AI-heavy pieces I design, build, and run after hours — each one solving a problem I actually have."
       />
