@@ -364,11 +364,11 @@ export default function Nav({ inFlow = false }: NavProps) {
               every width, and a musical name's overhang clears the labels
               beside it by the same margin. */}
           <div className="hidden md:flex items-center gap-3 lg:gap-1">
-            {NUMBERED.map(({ id, score, key }) => (
+            {NUMBERED.map(({ id, label, score, key }) => (
               <NavItem
                 key={id}
                 href={sectionHref(id, pathname)}
-                label={score}
+                label={label}
                 back={score}
                 icon={ICONS[id]}
                 config={configOf(key)}

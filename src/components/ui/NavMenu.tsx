@@ -96,7 +96,7 @@ export default function NavMenu({ open, onOpenChange, pathname, current, rects, 
             </motion.div>
 
             <ul className="flex flex-col gap-1">
-              {NUMBERED.map(({ id, key }, i) => {
+              {NUMBERED.map(({ id, key, label, score }, i) => {
                 const config = configOf(key)
                 const isActive = current === id
                 return (
@@ -123,17 +123,25 @@ export default function NavMenu({ open, onOpenChange, pathname, current, rects, 
                         >
                           {ICONS[id]}
                         </span>
-                        <span
-                          className={`${PATH} ${isActive ? 'text-white' : 'text-ink-meta'}`}
-                          style={{ textShadow: isActive ? '0 0 20px rgba(255,255,255,0.3)' : 'none' }}
-                        >
-                          /{id}
-                        </span>
-                        {isActive && (
-                          <span className="ml-3 font-mono text-label text-spectrum-green/50 animate-pulse motion-reduce:animate-none" aria-hidden="true">
-                            ● current
+                        {/* The path is the plain name, and a real URL: /credentials
+                            redirects to /#measures. The musical name follows as a
+                            comment, decoration as on the desktop's flip face. */}
+                        <span className="flex flex-wrap items-baseline gap-x-3">
+                          <span
+                            className={`${PATH} ${isActive ? 'text-white' : 'text-ink-meta'}`}
+                            style={{ textShadow: isActive ? '0 0 20px rgba(255,255,255,0.3)' : 'none' }}
+                          >
+                            /{label.toLowerCase()}
                           </span>
-                        )}
+                          <span className="font-mono text-label text-ink-faint" aria-hidden="true">
+                            # {score.toLowerCase()}
+                          </span>
+                          {isActive && (
+                            <span className="font-mono text-label text-spectrum-green/50 animate-pulse motion-reduce:animate-none" aria-hidden="true">
+                              ● current
+                            </span>
+                          )}
+                        </span>
                       </span>
                     </a>
                   </motion.li>

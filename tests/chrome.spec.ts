@@ -31,7 +31,7 @@ function only(project: 'desktop' | 'mobile') {
  * What a nav item's front face says (the back face always shows the
  * musical name): the one line to change when that wording changes.
  */
-const front = (m: NumberedMovement) => m.score
+const front = (m: NumberedMovement) => m.label
 const frontOf = (id: MovementId) => front(NUMBERED.find((m) => m.id === id)!)
 const FRONTS = NUMBERED.map(front)
 
