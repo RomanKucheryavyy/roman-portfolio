@@ -132,6 +132,38 @@ test.describe('builder', () => {
     log.expectClean()
   })
 
+  test('the tab row scrolls sideways on a narrow phone and never vertically; the underline keeps 2px', async ({ page }) => {
+    await unlock(page)
+    const row = () =>
+      page.getByRole('tablist').evaluate((list) => {
+        const active = list.querySelector('[aria-selected="true"]')!
+        const cs = getComputedStyle(list)
+        return {
+          overflowY: cs.overflowY,
+          scrollHeight: list.scrollHeight,
+          clientHeight: list.clientHeight,
+          scrollWidth: list.scrollWidth,
+          clientWidth: list.clientWidth,
+          // The underline is drawn whole when the active tab ends where the list does.
+          activeBottom: active.getBoundingClientRect().bottom,
+          listBottom: list.getBoundingClientRect().bottom,
+          underline: getComputedStyle(active).borderBottomWidth,
+        }
+      })
+    const wide = await row()
+    // A row that can scroll vertically, even by 1px, latches a swipe or a wheel
+    // that starts on it, and the page does not move.
+    expect(wide.overflowY).toBe('hidden')
+    expect(wide.scrollHeight).toBe(wide.clientHeight)
+    expect(wide.activeBottom).toBe(wide.listBottom)
+    expect(wide.underline).toBe('2px')
+
+    await page.setViewportSize({ width: 320, height: 640 })
+    const narrow = await row()
+    expect(narrow.scrollWidth).toBeGreaterThan(narrow.clientWidth)
+    expect(narrow.scrollHeight).toBe(narrow.clientHeight)
+  })
+
   test('every field has a name and is at least 16px on a phone (14px from md up)', async ({ page }) => {
     await unlock(page)
     const floor = (page.viewportSize()?.width ?? 1440) < 768 ? 16 : 14
