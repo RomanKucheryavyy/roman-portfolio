@@ -401,41 +401,43 @@ export default function Compose() {
             </motion.p>
           )}
         </AnimatePresence>
-      </div>
 
-      {/* email-signature footer strip: connect + location in one line */}
-      <div data-reveal className="mt-8 flex flex-wrap items-center justify-center gap-x-5 gap-y-2 font-mono text-label text-ink-meta">
-        <span className="text-ink-body">— R.K.</span>
-        <span>Auburn, WA (PT)</span>
-        <a
-          href={LINKS.github}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="flex items-center gap-1.5 hover:text-white transition-colors py-2"
-          onMouseEnter={() => setCursorVariant('hover')}
-          onMouseLeave={() => setCursorVariant('default')}
-        >
-          <Github size={12} /> github
-        </a>
-        <a
-          href={LINKS.linkedin}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="flex items-center gap-1.5 hover:text-white transition-colors py-2"
-          onMouseEnter={() => setCursorVariant('hover')}
-          onMouseLeave={() => setCursorVariant('default')}
-        >
-          <Linkedin size={12} /> linkedin
-        </a>
-        <a
-          href={`mailto:${LINKS.email}`}
-          className="flex items-center gap-1.5 hover:text-white transition-colors py-2"
-          onMouseEnter={() => setCursorVariant('hover')}
-          onMouseLeave={() => setCursorVariant('default')}
-        >
-          <Mail size={12} /> email
-        </a>
-        <CopyButton text={LINKS.email} />
+        {/* email-signature footer strip: connect + location in one line. It
+            reveals with the window: on its own it sat below the reveal line
+            even at the very bottom of the page, so it never appeared. */}
+        <div className="mt-8 flex flex-wrap items-center justify-center gap-x-5 gap-y-2 font-mono text-label text-ink-meta">
+          <span className="text-ink-body">— R.K.</span>
+          <span>Auburn, WA (PT)</span>
+          <a
+            href={LINKS.github}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center gap-1.5 hover:text-white transition-colors py-2"
+            onMouseEnter={() => setCursorVariant('hover')}
+            onMouseLeave={() => setCursorVariant('default')}
+          >
+            <Github size={12} /> github
+          </a>
+          <a
+            href={LINKS.linkedin}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center gap-1.5 hover:text-white transition-colors py-2"
+            onMouseEnter={() => setCursorVariant('hover')}
+            onMouseLeave={() => setCursorVariant('default')}
+          >
+            <Linkedin size={12} /> linkedin
+          </a>
+          <a
+            href={`mailto:${LINKS.email}`}
+            className="flex items-center gap-1.5 hover:text-white transition-colors py-2"
+            onMouseEnter={() => setCursorVariant('hover')}
+            onMouseLeave={() => setCursorVariant('default')}
+          >
+            <Mail size={12} /> email
+          </a>
+          <CopyButton text={LINKS.email} />
+        </div>
       </div>
     </SectionShell>
   )
