@@ -1,21 +1,43 @@
-import type { Metadata } from 'next'
 import Link from 'next/link'
+import { ArrowRight } from 'lucide-react'
 import { WorksWheel } from '@/components/ui/works-wheel'
 import WorkCard from '@/components/ui/WorkCard'
+import { PILL_OUTLINE } from '@/components/ui/pill'
 import { SITE } from '@/lib/constants'
 import { notesHrefOf } from '@/lib/case-studies'
-import { CLIENT_WORK } from '@/lib/work'
+import { pageMetadata } from '@/lib/seo'
+import { cn } from '@/lib/utils'
+import { CLIENT_WORK, LIVE_CLIENT_WORK, type Work } from '@/lib/work'
 
-export const metadata: Metadata = {
-  title: `The Setlist — ${SITE.name}`,
-  description: 'Every shipped piece, on a wheel you turn.',
-  alternates: { canonical: '/works' },
-  openGraph: {
-    title: `The Setlist — ${SITE.name}`,
-    description: 'Every shipped piece, on a wheel you turn.',
-    url: `${SITE.url}/works`,
-    type: 'website',
-  },
+const TOTAL = CLIENT_WORK.length
+const LIVE = LIVE_CLIENT_WORK.length
+
+export const metadata = pageMetadata({
+  path: '/works',
+  title: 'The setlist',
+  description: `${TOTAL} sites and apps · ${LIVE} live, ${TOTAL - LIVE} launching soon. Designed and built by ${SITE.name}.`,
+})
+
+/** One entry of the setlist for search engines: what each piece is and where
+ *  it lives. A site is a WebSite, the app a MobileApplication; a piece with no
+ *  address yet says where it stands instead. No ratings, by rule. */
+function itemOf(work: Work) {
+  const base = { name: work.title, description: work.description }
+  if (work.isApp) {
+    return { '@type': 'MobileApplication', ...base, operatingSystem: 'iOS', ...(work.url ? { url: work.url } : {}) }
+  }
+  return work.url
+    ? { '@type': 'WebSite', ...base, url: work.url }
+    : { '@type': 'WebSite', ...base, ...(work.status ? { creativeWorkStatus: work.status } : {}) }
+}
+
+const SETLIST_LD = {
+  '@context': 'https://schema.org',
+  '@type': 'ItemList',
+  name: 'The Setlist',
+  url: `${SITE.url}/works`,
+  numberOfItems: TOTAL,
+  itemListElement: CLIENT_WORK.map((work, i) => ({ '@type': 'ListItem', position: i + 1, item: itemOf(work) })),
 }
 
 /**
@@ -32,22 +54,29 @@ export const metadata: Metadata = {
  * bug to tune out. Hiding the wheel rather than rendering it small also parks
  * it for free: with `display:none` its stage measures zero, and the animation
  * loop returns before it starts.
+ *
+ * The way back is the site nav, which every route mounts; the page no longer
+ * draws its own back link.
  */
 export default function WorksPage() {
   return (
-    <main className="relative min-h-svh w-full bg-black md:h-svh md:overflow-hidden">
-      <Link
-        href="/"
-        className="absolute top-6 left-6 z-20 font-mono text-label tracking-wider text-white/50 transition-colors hover:text-white md:top-[7.5%] md:left-[2.5%]"
-      >
-        ← Back to portfolio
-      </Link>
+    <main id="main" tabIndex={-1} className="relative min-h-svh w-full bg-black outline-none md:h-svh md:overflow-hidden">
+      <script
+        type="application/ld+json"
+        // `<` escaped so no description can close the script element.
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(SETLIST_LD).replace(/</g, '\\u003c') }}
+      />
 
-      {/* ── the wheel, from md up ─────────────────────────────────────────── */}
-      <div className="hidden h-full md:block">
+      {/* One h1 for the page: the phone list's visible heading, and from md up
+          a screen-reader name for the wheel, whose own title is not a heading. */}
+      <h1 className="px-6 pt-20 font-display text-4xl font-bold tracking-tight text-white md:sr-only">The Setlist</h1>
+
+      {/* ── the wheel, from md up ───────────────────────────────────────────
+          data-stage: a full-bleed stage, so the site footer stands aside. */}
+      <div data-stage className="hidden h-full md:block">
         <WorksWheel items={CLIENT_WORK} label="The Setlist" />
-        <p className="pointer-events-none absolute bottom-[5%] left-1/2 z-10 -translate-x-1/2 text-center font-mono text-label tracking-wider text-white/35">
-          scroll, drag or use ↑ ↓ to turn
+        <p className="pointer-events-none absolute bottom-[5%] left-1/2 z-10 -translate-x-1/2 text-center font-mono text-label tracking-wider text-ink-meta">
+          scroll, drag or use <span aria-hidden="true">↑ ↓</span> to turn
         </p>
       </div>
 
@@ -55,10 +84,9 @@ export default function WorksPage() {
           The same card the phone deck uses on the home page. The card body
           goes nowhere; its link pill is the only way off the site, as on
           every other surface. */}
-      <div className="px-6 pt-20 pb-16 md:hidden">
-        <h1 className="font-display text-4xl font-bold tracking-tight text-white">The Setlist</h1>
-        <p className="mt-2 mb-8 font-mono text-label tracking-wider text-white/50">
-          {CLIENT_WORK.length} pieces
+      <div className="px-6 pb-8 md:hidden">
+        <p className="mt-2 mb-8 font-mono text-label tracking-wider text-ink-meta">
+          {`${TOTAL} pieces · ${LIVE} live, ${TOTAL - LIVE} launching soon`}
         </p>
 
         <ul className="space-y-4">
@@ -67,7 +95,7 @@ export default function WorksPage() {
               <WorkCard
                 work={work}
                 index={i}
-                total={CLIENT_WORK.length}
+                total={TOTAL}
                 size="md"
                 layout="stacked"
                 titleAs="h2"
@@ -78,6 +106,16 @@ export default function WorksPage() {
           ))}
         </ul>
       </div>
+
+      {/* The products are the other half of the work, and they live on the home
+          page: after the list on phones, bottom-left of the stage from md up. */}
+      <Link
+        href="/#compositions"
+        className={cn(PILL_OUTLINE, 'mx-6 mb-16 md:absolute md:bottom-[5%] md:left-[2.5%] md:z-10 md:m-0')}
+      >
+        Products I build &amp; run
+        <ArrowRight size={12} aria-hidden="true" />
+      </Link>
     </main>
   )
 }
