@@ -154,6 +154,12 @@ function CopyLetter({ text }: { text: string }) {
   )
 }
 
+/** A sheet of paper: the preview of what the PDF will print. */
+const SHEET = 'bg-white rounded-xl p-8 text-paper-ink overflow-auto max-h-[80vh]'
+/** Room at the top for the Download PDF button pinned over the sheet's corner,
+ *  so it no longer sits on the centred name. */
+const SHEET_UNDER_BUTTON = 'pt-16'
+
 const downloadBlob = (blob: Blob, filename: string) => {
   const url = URL.createObjectURL(blob)
   const a = document.createElement('a')
@@ -380,7 +386,7 @@ export default function Builder({ pin, resume, setResume, onLock }: BuilderProps
                 <Button {...download} onClick={() => handleDownloadResume('base')} title="Download as PDF">
                   {downloadFace}
                 </Button>
-                <div className="bg-white rounded-xl p-8 text-paper-ink overflow-auto max-h-[80vh]">
+                <div className={cn(SHEET, SHEET_UNDER_BUTTON)}>
                   <ResumePreview resume={resume} />
                 </div>
               </div>
@@ -418,7 +424,7 @@ export default function Builder({ pin, resume, setResume, onLock }: BuilderProps
                     {downloadFace}
                   </Button>
                 )}
-                <div className="bg-white rounded-xl p-8 text-paper-ink overflow-auto max-h-[80vh]">
+                <div className={cn(SHEET, tailoredResume && SHEET_UNDER_BUTTON)}>
                   {tailoredResume ? (
                     <ResumePreview resume={tailoredResume} />
                   ) : (
@@ -469,7 +475,7 @@ export default function Builder({ pin, resume, setResume, onLock }: BuilderProps
                     {downloadFace}
                   </Button>
                 )}
-                <div className="bg-white rounded-xl p-8 text-paper-ink overflow-auto max-h-[80vh]">
+                <div className={cn(SHEET, coverLetter && SHEET_UNDER_BUTTON)}>
                   {coverLetter ? (
                     <div>
                       <div className="whitespace-pre-wrap font-body text-sm leading-relaxed">{coverLetter}</div>
