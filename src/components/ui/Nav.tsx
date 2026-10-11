@@ -1,59 +1,57 @@
 'use client'
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useState, type MouseEvent, type ReactNode } from 'react'
+import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { AnimatePresence, motion } from 'framer-motion'
-import { Award, Music, User, Mail, Lock, AudioLines, X } from 'lucide-react'
-import { NAV_ITEMS, LINKS } from '@/lib/constants'
-import { useStore } from '@/stores/useStore'
+import { ArrowRight, Award, AudioLines, Lock, Mail, Music, User, X } from 'lucide-react'
+import { LINKS } from '@/lib/constants'
+import { scrollToTarget } from '@/lib/lenis'
+import { RESUME_HREF, ROUTES, sectionHref } from '@/lib/routes'
+import { NUMBERED, keyColor, movementOf, type MovementId, type SpectrumKey } from '@/lib/score'
 import { useScrollSpy } from '@/hooks/useScrollSpy'
-import { movementOf, type MovementId } from '@/lib/score'
+import { useStore } from '@/stores/useStore'
 
 const labelOf = (id: MovementId) => movementOf(id).label ?? movementOf(id).id
 
+const ICON = 'h-4 w-4'
+const ICONS: Record<string, ReactNode> = {
+  measures: <Award className={ICON} />,
+  symphony: <Music className={ICON} />,
+  compositions: <AudioLines className={ICON} />,
+  conductor: <User className={ICON} />,
+  compose: <Mail className={ICON} />,
+}
+
+/** Literal, so Tailwind sees every class: a key's hover tint for an icon. */
+const HOVER_TEXT: Record<SpectrumKey, string> = {
+  red: 'group-hover:text-spectrum-red',
+  orange: 'group-hover:text-spectrum-orange',
+  amber: 'group-hover:text-spectrum-amber',
+  green: 'group-hover:text-spectrum-green',
+  teal: 'group-hover:text-spectrum-teal',
+  blue: 'group-hover:text-spectrum-blue',
+  purple: 'group-hover:text-spectrum-purple',
+}
+
 interface ItemConfig {
-  icon: React.ReactNode
   gradient: string
   iconColor: string
-  activeGlow?: string
+  activeGlow: string
 }
 
-const ITEM_CONFIG: Record<string, ItemConfig> = {
-  measures: {
-    icon: <Award className="h-4 w-4" />,
-    gradient: 'radial-gradient(circle, rgba(59,130,246,0.15) 0%, rgba(37,99,235,0.06) 50%, transparent 100%)',
-    iconColor: 'group-hover:text-blue-400',
-    activeGlow: 'rgba(59,130,246,0.12)',
-  },
-  symphony: {
-    icon: <Music className="h-4 w-4" />,
-    gradient: 'radial-gradient(circle, rgba(147,51,234,0.15) 0%, rgba(126,34,206,0.06) 50%, transparent 100%)',
-    iconColor: 'group-hover:text-purple-400',
-    activeGlow: 'rgba(147,51,234,0.12)',
-  },
-  compositions: {
-    icon: <AudioLines className="h-4 w-4" />,
-    gradient: 'radial-gradient(circle, rgba(34,197,94,0.15) 0%, rgba(22,163,74,0.06) 50%, transparent 100%)',
-    iconColor: 'group-hover:text-green-400',
-    activeGlow: 'rgba(34,197,94,0.12)',
-  },
-  conductor: {
-    icon: <User className="h-4 w-4" />,
-    gradient: 'radial-gradient(circle, rgba(20,184,166,0.15) 0%, rgba(13,148,136,0.06) 50%, transparent 100%)',
-    iconColor: 'group-hover:text-teal-400',
-    activeGlow: 'rgba(20,184,166,0.12)',
-  },
-  compose: {
-    icon: <Mail className="h-4 w-4" />,
-    gradient: 'radial-gradient(circle, rgba(249,115,22,0.15) 0%, rgba(234,88,12,0.06) 50%, transparent 100%)',
-    iconColor: 'group-hover:text-orange-400',
-    activeGlow: 'rgba(249,115,22,0.12)',
-  },
-}
-
-const RESUME_CONFIG: ItemConfig = {
-  icon: <Lock className="h-4 w-4" />,
-  gradient: 'radial-gradient(circle, rgba(161,98,7,0.15) 0%, rgba(133,77,14,0.06) 50%, transparent 100%)',
-  iconColor: 'group-hover:text-amber-400',
+/**
+ * An item's hues, from its movement's key. They used to be five hand-picked
+ * Tailwind colours (blue, purple, green, teal, orange) that matched nothing
+ * else on the page; now the Credentials item glows the orange its heading is
+ * drawn in.
+ */
+function configOf(key: SpectrumKey): ItemConfig {
+  const c = keyColor(key)
+  return {
+    gradient: `radial-gradient(circle, color-mix(in srgb, ${c} 15%, transparent) 0%, color-mix(in srgb, ${c} 6%, transparent) 50%, transparent 100%)`,
+    iconColor: HOVER_TEXT[key],
+    activeGlow: `color-mix(in srgb, ${c} 12%, transparent)`,
+  }
 }
 
 const frontVariants = { initial: { rotateX: 0, opacity: 1 }, hover: { rotateX: -90, opacity: 0 } }
@@ -71,31 +69,78 @@ const gradientVariants = {
 }
 const flipSpring = { type: 'spring', stiffness: 320, damping: 26 } as const
 
-function NavItem({
-  label,
-  config,
-  isActive = false,
-  onClick,
-}: {
+const FACE =
+  'flex items-center gap-1.5 lg:gap-2 px-2 lg:px-3 py-1.5 lg:py-2 rounded-xl font-mono text-label uppercase tracking-wider whitespace-nowrap transition-colors'
+
+/** An unmodified primary click (or Enter): the kind a page may take over. */
+const isPlainClick = (e: MouseEvent) => e.button === 0 && !e.metaKey && !e.ctrlKey && !e.shiftKey && !e.altKey
+
+interface NavItemProps {
+  href: string
   label: string
+  /** The musical name, on the face that flips in on hover. Route items have none. */
+  back?: string
+  icon: ReactNode
+  /** After the label: the arrow on a route item. */
+  trailing?: ReactNode
   config: ItemConfig
-  isActive?: boolean
-  onClick: () => void
-}) {
-  // no position class here — the front face adds `relative`, the back face
-  // `absolute`; sharing `relative` let it override `absolute` (Tailwind emits
-  // it later) and every pill stacked its two faces vertically.
-  const buttonClass = `flex items-center gap-1.5 lg:gap-2 px-2 lg:px-3 py-1.5 lg:py-2 z-10 rounded-xl text-[10px] lg:text-xs font-mono uppercase tracking-wider whitespace-nowrap cursor-pointer transition-colors ${
-    isActive ? 'text-white' : 'text-white/40'
-  }`
-  const content = (
+  current?: 'location' | 'page'
+  /** A next/link to another route, rather than a plain link to a section. */
+  route?: boolean
+  onClick?: (e: MouseEvent<HTMLAnchorElement>) => void
+}
+
+/**
+ * One nav link. The link itself is the outer box and both faces sit inside
+ * it, so a click lands on the link whichever face is showing: the faces used
+ * to be two buttons, and mid-flip the pointer could fall between them. The
+ * back face is decoration (aria-hidden, no pointer events); the link's name is
+ * always the front label. The front reserves the back face's width, so a
+ * longer musical name never spills onto its neighbours.
+ */
+function NavItem({ href, label, back, icon, trailing, config, current, route = false, onClick }: NavItemProps) {
+  const active = current !== undefined
+  const tint = (
+    <span className={`hidden lg:inline-flex items-center transition-colors duration-300 ${config.iconColor}`} aria-hidden="true">
+      {icon}
+    </span>
+  )
+  const ink = active ? 'text-white' : 'text-ink-meta'
+  const faces = (
     <>
-      <span className={`hidden lg:inline-flex items-center transition-colors duration-300 ${config.iconColor}`}>
-        {config.icon}
-      </span>
-      {label}
+      <motion.span
+        className={`${FACE} relative ${ink}`}
+        variants={back ? frontVariants : undefined}
+        transition={flipSpring}
+        style={{ transformStyle: 'preserve-3d', transformOrigin: 'center bottom', backfaceVisibility: 'hidden' }}
+      >
+        {tint}
+        <span className="inline-grid justify-items-center">
+          <span className="col-start-1 row-start-1">{label}</span>
+          {back && (
+            <span className="invisible col-start-1 row-start-1" aria-hidden="true">
+              {back}
+            </span>
+          )}
+        </span>
+        {trailing}
+      </motion.span>
+      {back && (
+        <motion.span
+          data-face="back"
+          aria-hidden="true"
+          className={`${FACE} pointer-events-none absolute inset-0 justify-center ${ink}`}
+          variants={backVariants}
+          transition={flipSpring}
+          style={{ transformStyle: 'preserve-3d', transformOrigin: 'center top', backfaceVisibility: 'hidden' }}
+        >
+          {tint}
+          {back}
+        </motion.span>
+      )}
     </>
   )
+  const linkClass = 'relative z-10 block rounded-xl'
   return (
     <motion.div
       className="relative overflow-visible group"
@@ -103,55 +148,55 @@ function NavItem({
       whileHover="hover"
       initial="initial"
     >
-      <motion.div
+      <motion.span
         className="absolute inset-0 z-0 pointer-events-none rounded-xl"
         variants={gradientVariants}
         style={{ background: config.gradient, opacity: 0 }}
+        aria-hidden="true"
       />
-      {isActive && config.activeGlow && (
-        <div
+      {active && (
+        <span
           className="absolute inset-0 z-0 pointer-events-none rounded-xl"
-          style={{
-            background: `radial-gradient(circle, ${config.activeGlow} 0%, transparent 70%)`,
-            transform: 'scale(1.5)',
-          }}
+          style={{ background: `radial-gradient(circle, ${config.activeGlow} 0%, transparent 70%)`, transform: 'scale(1.5)' }}
+          aria-hidden="true"
         />
       )}
-      <motion.button
-        onClick={onClick}
-        className={`${buttonClass} relative`}
-        variants={frontVariants}
-        transition={flipSpring}
-        style={{ transformStyle: 'preserve-3d', transformOrigin: 'center bottom', backfaceVisibility: 'hidden' }}
-      >
-        {content}
-      </motion.button>
-      <motion.button
-        onClick={onClick}
-        className={`${buttonClass} absolute inset-0 z-10 justify-center`}
-        variants={backVariants}
-        transition={flipSpring}
-        style={{ transformStyle: 'preserve-3d', transformOrigin: 'center top', backfaceVisibility: 'hidden' }}
-        tabIndex={-1}
-        aria-hidden="true"
-      >
-        {content}
-      </motion.button>
+      {route ? (
+        <Link href={href} className={linkClass} aria-current={current} onClick={onClick}>
+          {faces}
+        </Link>
+      ) : (
+        <a href={href} className={linkClass} aria-current={current} onClick={onClick}>
+          {faces}
+        </a>
+      )}
     </motion.div>
   )
 }
 
 export default function Nav() {
   const pathname = usePathname()
+  const onHome = pathname === ROUTES.home
   const isLoaded = useStore((s) => s.isLoaded)
   // Only the home page has a boot to wait for; every other route shows the
   // nav at once.
-  const shown = isLoaded || pathname !== '/'
+  const shown = isLoaded || !onHome
   const activeSection = useStore((s) => s.activeSection)
   const setActiveSection = useStore((s) => s.setActiveSection)
-  useScrollSpy({ enabled: pathname === '/', onChange: setActiveSection, labelOf })
   const setCursorVariant = useStore((s) => s.setCursorVariant)
+  const { jumpTo, announce } = useScrollSpy({ enabled: onHome, onChange: setActiveSection, labelOf })
   const [menuOpen, setMenuOpen] = useState(false)
+
+  /** On the home page a section link scrolls (through Lenis) instead of reloading. */
+  const jump = useCallback(
+    (id: MovementId) => (e: MouseEvent<HTMLAnchorElement>) => {
+      if (!onHome || !isPlainClick(e)) return
+      e.preventDefault()
+      jumpTo(id)
+      window.history.replaceState(null, '', `#${id}`)
+    },
+    [onHome, jumpTo],
+  )
 
   const scrollTo = useCallback((href: string) => {
     setMenuOpen(false)
@@ -170,35 +215,57 @@ export default function Nav() {
       initial={{ y: -80, opacity: 0 }}
       animate={shown ? { y: 0, opacity: 1 } : {}}
       transition={{ type: 'spring', stiffness: 200, damping: 30, delay: 0.3 }}
+      inert={!shown}
     >
       <nav className="px-4 py-2 md:px-4 lg:px-5 md:py-2 lg:py-2.5 flex items-center justify-between rounded-xl border border-white/[0.06] w-full bg-black/70 backdrop-blur-xl shadow-[inset_0_1px_0_rgba(255,255,255,0.06),0_8px_32px_rgba(0,0,0,0.4)]">
-        <a
-          href="#"
+        <Link
+          href={ROUTES.home}
           className="font-display font-bold text-sm md:text-base tracking-tight text-white cursor-pointer relative z-20"
-          onClick={(e) => { e.preventDefault(); window.scrollTo({ top: 0, behavior: 'smooth' }) }}
+          onClick={(e) => {
+            if (!onHome || !isPlainClick(e)) return
+            e.preventDefault()
+            scrollToTarget(0)
+            window.history.replaceState(null, '', ROUTES.home)
+          }}
           onMouseEnter={() => setCursorVariant('hover')}
           onMouseLeave={() => setCursorVariant('default')}
         >
           RK<span className="text-gradient">.</span>
-        </a>
+        </Link>
 
         {/* Desktop */}
         <div className="hidden md:flex items-center gap-0.5 lg:gap-1">
-          {NAV_ITEMS.map((item) => {
-            const id = item.href.slice(1)
-            const config = ITEM_CONFIG[id]
-            if (!config) return null
-            return (
-              <NavItem
-                key={item.href}
-                label={item.label}
-                config={config}
-                isActive={activeSection === id}
-                onClick={() => scrollTo(item.href)}
-              />
-            )
-          })}
-          <NavItem label="Resume" config={RESUME_CONFIG} onClick={() => { window.location.href = '/resume' }} />
+          {NUMBERED.map(({ id, score, key }) => (
+            <NavItem
+              key={id}
+              href={sectionHref(id, pathname)}
+              label={score}
+              back={score}
+              icon={ICONS[id]}
+              config={configOf(key)}
+              current={onHome && activeSection === id ? 'location' : undefined}
+              onClick={jump(id)}
+            />
+          ))}
+          <NavItem
+            href={ROUTES.works}
+            label="All work"
+            icon={<Music className={ICON} />}
+            trailing={<ArrowRight className="h-3.5 w-3.5" aria-hidden="true" />}
+            config={configOf(movementOf('symphony').key)}
+            current={pathname === ROUTES.works ? 'page' : undefined}
+            route
+          />
+          {RESUME_HREF && (
+            <NavItem
+              href={RESUME_HREF}
+              label="Résumé"
+              icon={<Lock className={ICON} />}
+              config={configOf(movementOf('conductor').key)}
+              current={pathname === RESUME_HREF ? 'page' : undefined}
+              route
+            />
+          )}
         </div>
 
         {/* Mobile hamburger */}
@@ -218,6 +285,9 @@ export default function Nav() {
         </button>
       </nav>
     </motion.div>
+      <p aria-live="polite" className="sr-only">
+        {announce}
+      </p>
 
       {/* Mobile terminal menu — sibling of the animated bar so its
           fixed positioning is viewport-relative, never transform-trapped */}
@@ -255,20 +325,18 @@ export default function Nav() {
               </motion.div>
 
               <div className="flex flex-col gap-1">
-                {NAV_ITEMS.map((item, i) => {
-                  const id = item.href.slice(1)
-                  const config = ITEM_CONFIG[id]
+                {NUMBERED.map(({ id, key }, i) => {
+                  const config = { ...configOf(key), icon: ICONS[id] }
                   const isActive = activeSection === id
-                  if (!config) return null
                   return (
                     <motion.div
-                      key={item.href}
+                      key={id}
                       initial={{ opacity: 0, x: -20 }}
                       animate={{ opacity: 1, x: 0 }}
                       transition={{ delay: 0.15 + 0.08 * i }}
                     >
                       <button
-                        onClick={() => scrollTo(item.href)}
+                        onClick={() => scrollTo(`#${id}`)}
                         className="relative w-full text-left cursor-pointer group py-2.5 overflow-visible"
                         style={{ perspective: '600px' }}
                       >
@@ -304,7 +372,7 @@ export default function Nav() {
                 <motion.div
                   initial={{ opacity: 0, x: -20 }}
                   animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: 0.15 + 0.08 * NAV_ITEMS.length }}
+                  transition={{ delay: 0.15 + 0.08 * NUMBERED.length }}
                 >
                   <button
                     onClick={() => { setMenuOpen(false); window.location.href = '/resume' }}
@@ -323,7 +391,7 @@ export default function Nav() {
                 <motion.div
                   initial={{ opacity: 0, x: -20 }}
                   animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: 0.15 + 0.08 * (NAV_ITEMS.length + 1) }}
+                  transition={{ delay: 0.15 + 0.08 * (NUMBERED.length + 1) }}
                 >
                   <button
                     onClick={() => setMenuOpen(false)}
