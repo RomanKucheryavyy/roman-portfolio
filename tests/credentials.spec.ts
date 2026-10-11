@@ -194,8 +194,12 @@ test.describe('Credentials', () => {
     expect(walk).toEqual(CERTIFICATIONS.map((c) => `Flip the ${c.name} card`))
 
     // A click pins a card too, so it still shows its back after the mouse leaves.
+    // The walk tabbed out of the section and the page followed, so come back first.
     await page.evaluate(() => (document.activeElement as HTMLElement | null)?.blur())
+    await scrollToId(page, 'measures')
+    await settle(600)
     const third = (await cards.nth(2).boundingBox())!
+    expect(third.y + third.height, 'the third card is on screen').toBeLessThan(page.viewportSize()!.height)
     await page.mouse.click(third.x + 20, third.y + 20)
     await page.mouse.move(0, 0)
     expect(await pressed(2)).toBe('true')
