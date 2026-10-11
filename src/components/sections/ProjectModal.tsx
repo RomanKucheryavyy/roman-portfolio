@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react'
 import { useStore } from '@/stores/useStore'
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog'
 import WorkCard from '@/components/ui/WorkCard'
+import { notesHrefOf } from '@/lib/case-studies'
 import { getLenis } from '@/lib/lenis'
 import { CLIENT_WORK, type Work } from '@/lib/work'
 
@@ -64,6 +65,7 @@ export default function ProjectModal({ index, onClose }: ProjectModalProps) {
             size="lg"
             layout="stacked"
             titleAs={DialogTitle}
+            notesHref={notesHrefOf(shown.work.id)}
             imageSizes="(max-width: 1024px) 92vw, 896px"
             imageLoading="eager"
           />
