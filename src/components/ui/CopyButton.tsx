@@ -23,8 +23,10 @@ const ICONS = { idle: Copy, copied: Check, error: X } as const
  * shadows and dark-mode variants, and the faces swap without its spring
  * crossfade.
  *
- * The button's name stays `label` whatever the state; the status line beside
- * it says "Copied" or "Copy failed" to a screen reader.
+ * The button's name is the face on show ("Copy email", then "Copied" or "Copy
+ * failed" for 2s): the hidden faces are visibility:hidden, so they drop out of
+ * the name, and the name always matches the visible label (WCAG 2.5.3). The
+ * status line beside it announces the change.
  */
 export function CopyButton({
   text,
@@ -41,7 +43,6 @@ export function CopyButton({
     <>
       <button
         type="button"
-        aria-label={label}
         onClick={() => {
           void copy(text)
         }}
@@ -53,7 +54,7 @@ export function CopyButton({
             return <Icon key={s} size={14} className={cn('col-start-1 row-start-1', s !== state && 'invisible')} />
           })}
         </span>
-        <span className="inline-grid" aria-hidden="true">
+        <span className="inline-grid">
           {states.map((s) => (
             <span key={s} className={cn('col-start-1 row-start-1 whitespace-nowrap', s !== state && 'invisible')}>
               {labels[s]}
