@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 32 32">
+  <!-- DynamicFavicon's resting glyph: bold monospace RK, white on transparent.
+       A light browser theme gets it in black, where white would vanish. -->
+  <style>
+    text { fill: #fff; }
+    @media (prefers-color-scheme: light) { text { fill: #000; } }
+  </style>
+  <text x="16" y="17" text-anchor="middle" dominant-baseline="central" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, 'DejaVu Sans Mono', monospace" font-size="14" font-weight="700">RK</text>
+</svg>

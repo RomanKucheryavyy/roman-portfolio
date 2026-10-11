@@ -62,3 +62,43 @@ jobs:
             playwright-report/
             test-results/
           retention-days: 14
+
+  # Every case study is a draft, so the default build has no /works/<slug>
+  # page to test. This builds with the fixture study (src/lib/case-studies.ts)
+  # and runs the @fixture tests against it. APP_STORE_ID_OVERRIDE=0 makes the
+  # App Store lookup fail on purpose, so the "no rating on failure" path is
+  # tested and the job never depends on Apple. The fixture refuses to build
+  # when CONTEXT=production, which Actions never sets.
+  e2e-fixture:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      CASE_STUDY_FIXTURE: '1'
+      APP_STORE_ID_OVERRIDE: '0'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+
+      - run: npm ci
+      - run: npm run build
+
+      - name: Install Chromium for Playwright
+        run: npx playwright install --with-deps chromium
+
+      - run: npx playwright test tests/proof.spec.ts --grep @fixture --project=desktop
+
+      - name: Upload the Playwright report
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report-fixture
+          path: |
+            playwright-report/
+            test-results/
+          retention-days: 14
