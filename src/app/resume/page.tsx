@@ -5,6 +5,7 @@ import { Lock, Mail, FileText, WandSparkles, Download, ArrowLeft, LoaderCircle }
 // Type only: the data itself carries the phone number and the case metrics,
 // so it comes from /api/resume/data after the PIN, never from this bundle.
 import type { ResumeData } from '@/lib/resume-data'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 
 type TabId = 'resume' | 'tailor' | 'cover-letter'
 
@@ -212,7 +213,6 @@ const downloadBlob = (blob: Blob, filename: string) => {
 
 export default function ResumeBuilder() {
   const [pin, setPin] = useState<string | null>(null)
-  const [activeTab, setActiveTab] = useState<TabId>('resume')
   const [resume, setResume] = useState<ResumeData | null>(null)
   const [loadError, setLoadError] = useState<string | null>(null)
   const [loadAttempt, setLoadAttempt] = useState(0)
@@ -350,9 +350,9 @@ export default function ResumeBuilder() {
   }
 
   const tabs: { id: TabId; label: string; icon: React.ReactNode }[] = [
-    { id: 'resume', label: 'My Resume', icon: <FileText size={16} /> },
-    { id: 'tailor', label: 'Tailor', icon: <WandSparkles size={16} /> },
-    { id: 'cover-letter', label: 'Cover Letter', icon: <Mail size={16} /> },
+    { id: 'resume', label: 'My Resume', icon: <FileText size={16} className="hidden sm:block" /> },
+    { id: 'tailor', label: 'Tailor', icon: <WandSparkles size={16} className="hidden sm:block" /> },
+    { id: 'cover-letter', label: 'Cover Letter', icon: <Mail size={16} className="hidden sm:block" /> },
   ]
 
   const downloadBtnClass =
@@ -381,30 +381,24 @@ export default function ResumeBuilder() {
         </button>
       </header>
 
-      <div className="border-b border-white/5 px-6 flex gap-1">
-        {tabs.map((t) => (
-          <button
-            key={t.id}
-            onClick={() => setActiveTab(t.id)}
-            className={`flex items-center gap-2 px-4 py-3 text-sm font-mono transition-colors border-b-2 -mb-px ${
-              activeTab === t.id ? 'text-white border-white' : 'text-white/30 border-transparent hover:text-white/50'
-            }`}
-          >
-            {t.icon}
-            {t.label}
-          </button>
-        ))}
-      </div>
+      <Tabs defaultValue="resume">
+        <TabsList className="px-6">
+          {tabs.map((t) => (
+            <TabsTrigger key={t.id} value={t.id}>
+              {t.icon}
+              {t.label}
+            </TabsTrigger>
+          ))}
+        </TabsList>
 
-      <div className="max-w-6xl mx-auto px-6 py-8">
-        {error && (
-          <div className="mb-6 p-4 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400 text-sm font-mono">
-            {error}
-          </div>
-        )}
+        <div className="max-w-6xl mx-auto px-6 py-8">
+          {error && (
+            <div className="mb-6 p-4 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400 text-sm font-mono">
+              {error}
+            </div>
+          )}
 
-        {activeTab === 'resume' && (
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          <TabsContent value="resume" className="grid grid-cols-1 lg:grid-cols-2 gap-8">
             <div className="space-y-6">
               <Section title="Summary">
                 <textarea
@@ -459,11 +453,9 @@ export default function ResumeBuilder() {
                 <ResumePreview resume={resume} />
               </div>
             </div>
-          </div>
-        )}
+          </TabsContent>
 
-        {activeTab === 'tailor' && (
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          <TabsContent value="tailor" className="grid grid-cols-1 lg:grid-cols-2 gap-8">
             <div className="space-y-6">
               <Section title="Paste Job Description">
                 <textarea
@@ -501,11 +493,9 @@ export default function ResumeBuilder() {
                 )}
               </div>
             </div>
-          </div>
-        )}
+          </TabsContent>
 
-        {activeTab === 'cover-letter' && (
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          <TabsContent value="cover-letter" className="grid grid-cols-1 lg:grid-cols-2 gap-8">
             <div className="space-y-6">
               <Section title="Company Name (optional)">
                 <input
@@ -559,9 +549,9 @@ export default function ResumeBuilder() {
                 )}
               </div>
             </div>
-          </div>
-        )}
-      </div>
+          </TabsContent>
+        </div>
+      </Tabs>
     </div>
   )
 }
