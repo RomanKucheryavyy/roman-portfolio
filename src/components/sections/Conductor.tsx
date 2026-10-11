@@ -289,7 +289,7 @@ export default function Conductor() {
                         {item.label}
                         {item.current ? (
                           <>
-                            <span aria-hidden="true" className="ml-2 text-lead leading-none sm:hidden">
+                            <span aria-hidden="true" className="-my-1 ml-2 inline-block align-middle text-lead leading-none sm:hidden">
                               {'\u{1D110}'}
                             </span>
                             <span className="sr-only">, current</span>
