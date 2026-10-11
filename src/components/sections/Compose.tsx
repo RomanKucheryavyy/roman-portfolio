@@ -168,7 +168,7 @@ export default function Compose() {
 
   const dynamics = dynamicsFor(form.message.length)
   const inlineInput =
-    'inline-block bg-transparent font-mono text-base md:text-small text-ink-body placeholder:text-ink-faint focus:outline-none border-b border-transparent focus:border-white/20 min-w-0'
+    'inline-block bg-transparent font-mono text-base md:text-small text-ink-body placeholder:text-ink-faint border-b border-transparent focus:outline-hidden focus:border-white/40 focus-visible:border-white/60 min-w-0'
 
   return (
     <SectionShell ref={sectionRef} id="compose">
@@ -247,8 +247,6 @@ export default function Compose() {
                   onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
                   placeholder="Your Name"
                   className={`${inlineInput} w-[38%]`}
-                  onFocus={() => setCursorVariant('hidden')}
-                  onBlur={() => setCursorVariant('default')}
                 />
                 <span aria-hidden="true" className="font-mono text-small text-ink-faint">&lt;</span>
                 <input
@@ -261,8 +259,6 @@ export default function Compose() {
                   placeholder="your@email.com"
                   aria-label="Your email address"
                   className={`${inlineInput} flex-1`}
-                  onFocus={() => setCursorVariant('hidden')}
-                  onBlur={() => setCursorVariant('default')}
                 />
                 <span aria-hidden="true" className="font-mono text-small text-ink-faint">&gt;</span>
               </div>
@@ -273,7 +269,7 @@ export default function Compose() {
                 </span>
               </div>
 
-              <div className="relative">
+              <div className="relative rounded-md focus-within:ring-1 focus-within:ring-white/40">
                 <label htmlFor="compose-message" className="sr-only">
                   Message
                 </label>
@@ -284,9 +280,7 @@ export default function Compose() {
                   value={form.message}
                   onChange={(e) => setForm((f) => ({ ...f, message: e.target.value }))}
                   placeholder="Dear Roman, …"
-                  className="w-full bg-transparent font-body text-base md:text-small text-ink-body leading-relaxed placeholder:text-ink-faint focus:outline-none resize-none pt-2 max-h-[40vh]"
-                  onFocus={() => setCursorVariant('hidden')}
-                  onBlur={() => setCursorVariant('default')}
+                  className="w-full bg-transparent font-body text-base md:text-small text-ink-body leading-relaxed placeholder:text-ink-faint focus:outline-hidden resize-none pt-2 max-h-[40vh]"
                   onKeyDown={(e) => {
                     if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') e.currentTarget.form?.requestSubmit()
                   }}
