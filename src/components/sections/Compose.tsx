@@ -1,12 +1,18 @@
 'use client'
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState, useSyncExternalStore } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
-import { Github, Linkedin, Mail } from 'lucide-react'
+import { CircleAlert, Github, Linkedin, Mail } from 'lucide-react'
 import { gsap } from '@/hooks/useGSAP'
 import { useStore } from '@/stores/useStore'
 import { useRevealOnScroll } from '@/hooks/useRevealOnScroll'
 import { SectionHeader, SectionShell } from '@/components/ui/SectionShell'
+import { Button } from '@/components/ui/Button'
+import { CopyButton } from '@/components/ui/CopyButton'
+import { Panel } from '@/components/ui/Panel'
+import { TerminalBar } from '@/components/ui/TerminalBar'
 import { LINKS } from '@/lib/constants'
+import { modKeyGlyph } from '@/lib/platform'
+import { RESUME_PDF_HREF, RESUME_REQUEST } from '@/lib/routes'
 
 /** Musician's dynamics for how loudly the message is being written. */
 const dynamicsFor = (length: number): { mark: string; word: string } => {
@@ -44,6 +50,11 @@ const burstFrom = (x: number, y: number, host: HTMLElement) => {
   }
 }
 
+/** The platform never changes under a page, so there is nothing to subscribe to. */
+const noSubscribe = () => () => {}
+
+const [EMAIL_USER, EMAIL_DOMAIN] = LINKS.email.split('@')
+
 const DRAFT_KEY = 'compose:draft'
 const EMPTY = { name: '', email: '', message: '' }
 
@@ -52,11 +63,15 @@ export default function Compose() {
   const windowRef = useRef<HTMLDivElement>(null)
   const bodyRef = useRef<HTMLDivElement>(null)
   const burstHostRef = useRef<HTMLDivElement>(null)
+  const sentRef = useRef<HTMLParagraphElement>(null)
   const setCursorVariant = useStore((s) => s.setCursorVariant)
   const [form, setForm] = useState(EMPTY)
   const [status, setStatus] = useState<'idle' | 'sending' | 'sent' | 'error'>('idle')
   const [savedAt, setSavedAt] = useState<string | null>(null)
   const [errorKind, setErrorKind] = useState<'rate_limited' | 'generic'>('generic')
+  // ⌘ on Apple, Ctrl elsewhere. The server can't know, so it renders the ⌘ the
+  // button always showed and the client corrects it after hydrating.
+  const modKey = useSyncExternalStore(noSubscribe, modKeyGlyph, () => '⌘')
   // Bots fill every field they can see; humans take longer than a second and a half.
   // Stamped on mount rather than in the initializer — reading the clock during
   // render is a side effect, and 0 fails open, which is the right way to fail.
@@ -95,6 +110,8 @@ export default function Compose() {
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
     if (!form.name || !form.email || !form.message) return
+    // ⌘↩ in the textarea calls requestSubmit(), which a pending button can't swallow.
+    if (status === 'sending' || status === 'sent') return
     setStatus('sending')
     try {
       const res = await fetch('/api/contact', {
@@ -138,6 +155,8 @@ export default function Compose() {
 
     const rect = win.getBoundingClientRect()
     const hostRect = host.getBoundingClientRect()
+    // What's left once the body goes: the title bar and the window's own border.
+    const collapsed = rect.height - body.offsetHeight
     const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches
 
     if (reduced) {
@@ -148,27 +167,36 @@ export default function Compose() {
     win.style.height = `${rect.height}px`
     gsap.to(body, { opacity: 0, duration: 0.2 })
     gsap.to(win, {
-      height: 45,
+      height: collapsed,
       duration: 0.4,
       delay: 0.15,
       ease: 'expo.inOut',
       onComplete: () => {
+        // Collapsed means gone, as on the reduced path: an opacity-0 form left
+        // in place still took focus and clicks under the title bar.
+        body.style.display = 'none'
         const corners: [number, number][] = [
           [rect.left - hostRect.left, rect.top - hostRect.top],
           [rect.right - hostRect.left, rect.top - hostRect.top],
-          [rect.left - hostRect.left, rect.top - hostRect.top + 45],
-          [rect.right - hostRect.left, rect.top - hostRect.top + 45],
+          [rect.left - hostRect.left, rect.top - hostRect.top + collapsed],
+          [rect.right - hostRect.left, rect.top - hostRect.top + collapsed],
         ]
         corners.forEach(([x, y]) => burstFrom(x, y, host))
       },
     })
   }, [status])
 
+  // The sent line takes focus as it appears, so a keyboard or screen-reader
+  // visitor lands on the confirmation instead of inside a vanished form.
+  useEffect(() => {
+    if (status === 'sent') sentRef.current?.focus({ preventScroll: true })
+  }, [status])
+
   useRevealOnScroll(sectionRef)
 
   const dynamics = dynamicsFor(form.message.length)
   const inlineInput =
-    'inline-block bg-transparent font-mono text-base md:text-[13px] text-white/80 placeholder:text-white/20 focus:outline-none border-b border-transparent focus:border-white/20 min-w-0'
+    'inline-block bg-transparent font-mono text-base md:text-small text-ink-body placeholder:text-ink-faint border-b border-transparent focus:outline-hidden focus:border-white/40 focus-visible:border-white/60 min-w-0'
 
   return (
     <SectionShell ref={sectionRef} id="compose">
@@ -183,39 +211,31 @@ export default function Compose() {
 
       <div ref={burstHostRef} data-reveal className="relative">
         {/* The email window IS the form */}
-        <div
-          ref={windowRef}
-          className="hud-corners rounded-xl border border-white/5 bg-[#0a0a0a] overflow-hidden max-w-2xl mx-auto"
-        >
-          {/* title bar */}
-          <div className="flex items-center gap-2 px-4 py-3 border-b border-white/5">
-            <div className="w-2.5 h-2.5 rounded-full bg-[#ff5f57]" />
-            <div className="w-2.5 h-2.5 rounded-full bg-[#febc2e]" />
-            <motion.div
-              className="w-2.5 h-2.5 rounded-full bg-[#28c840]"
-              animate={status === 'sent' ? { scale: [1, 1.6, 1, 1.6, 1] } : {}}
-              transition={{ duration: 0.8 }}
-            />
-            <span className="ml-3 font-mono text-[10px] text-white/30" aria-live="polite">
-              {status === 'sent' ? 'message sent — 250 OK' : 'New Message'}
-            </span>
+        <Panel ref={windowRef} hud className="mx-auto max-w-2xl overflow-hidden">
+          <TerminalBar
+            title={status === 'sent' ? 'message sent — 250 OK' : status === 'sending' ? 'sending…' : 'New Message'}
+            live
+            pulse={status === 'sent'}
+          >
             <AnimatePresence>
               {savedAt && status === 'idle' && (
                 <motion.span
                   key={savedAt}
                   initial={{ opacity: 0 }}
-                  animate={{ opacity: [0.2, 0.5] }}
+                  animate={{ opacity: 1 }}
                   exit={{ opacity: 0 }}
-                  className="ml-auto font-mono text-[9px] text-white/25"
+                  className="ml-auto font-mono text-label text-ink-meta"
                 >
                   draft · saved {savedAt}
                 </motion.span>
               )}
             </AnimatePresence>
-          </div>
+          </TerminalBar>
 
           {/* the email body — every field is part of the letter */}
-          <div ref={bodyRef}>
+          {/* inert as soon as the message is sent: the form leaves the tab
+              order at once, while it is still fading out */}
+          <div ref={bodyRef} inert={status === 'sent'}>
             <form onSubmit={handleSubmit} className="p-5 space-y-3">
               {/* Honeypot. Hidden from people and from screen readers, irresistible to bots. */}
               <div className="hidden" aria-hidden="true">
@@ -231,11 +251,16 @@ export default function Compose() {
               </div>
 
               <div className="flex items-center gap-3">
-                <span className="font-mono text-[10px] text-white/25 w-10 shrink-0">To:</span>
-                <span className="font-mono text-[13px] text-white/50">{LINKS.email}</span>
+                <span className="font-mono text-label text-ink-meta w-10 shrink-0">To:</span>
+                {/* On a 320px phone the address doesn't fit beside "To:": it breaks
+                    after the @ instead of being clipped by the window. */}
+                <span className="min-w-0 font-mono text-small text-ink-body wrap-anywhere">
+                  {EMAIL_USER}@<wbr />
+                  {EMAIL_DOMAIN}
+                </span>
               </div>
               <div className="flex items-center gap-3">
-                <label htmlFor="compose-name" className="font-mono text-[10px] text-white/25 w-10 shrink-0">
+                <label htmlFor="compose-name" className="font-mono text-label text-ink-meta w-10 shrink-0">
                   From:
                 </label>
                 <input
@@ -247,10 +272,8 @@ export default function Compose() {
                   onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
                   placeholder="Your Name"
                   className={`${inlineInput} w-[38%]`}
-                  onFocus={() => setCursorVariant('hidden')}
-                  onBlur={() => setCursorVariant('default')}
                 />
-                <span className="font-mono text-[13px] text-white/25">&lt;</span>
+                <span aria-hidden="true" className="font-mono text-small text-ink-faint">&lt;</span>
                 <input
                   id="compose-email"
                   type="email"
@@ -261,19 +284,19 @@ export default function Compose() {
                   placeholder="your@email.com"
                   aria-label="Your email address"
                   className={`${inlineInput} flex-1`}
-                  onFocus={() => setCursorVariant('hidden')}
-                  onBlur={() => setCursorVariant('default')}
                 />
-                <span className="font-mono text-[13px] text-white/25">&gt;</span>
+                <span aria-hidden="true" className="font-mono text-small text-ink-faint">&gt;</span>
               </div>
-              <div className="flex items-center gap-3 pb-3 border-b border-white/5">
-                <span className="font-mono text-[10px] text-white/25 w-10 shrink-0">Subj:</span>
-                <span className="font-mono text-[13px] text-white/50">
+              <div className="flex items-center gap-3 pb-3 border-b border-white/10">
+                <span className="font-mono text-label text-ink-meta w-10 shrink-0">Subj:</span>
+                <span className="font-mono text-small text-ink-body">
                   {form.name ? `Message from ${form.name}` : 'New message'}
                 </span>
               </div>
 
-              <div className="relative">
+              {/* The ring sits 8px outside the text (-mx-2 px-2 pb-2), so it clears the
+                  first line and the dynamics mark; the text keeps its column. */}
+              <div className="relative -mx-2 rounded-md px-2 pb-2 focus-within:ring-1 focus-within:ring-white/40">
                 <label htmlFor="compose-message" className="sr-only">
                   Message
                 </label>
@@ -284,9 +307,7 @@ export default function Compose() {
                   value={form.message}
                   onChange={(e) => setForm((f) => ({ ...f, message: e.target.value }))}
                   placeholder="Dear Roman, …"
-                  className="w-full bg-transparent font-body text-base md:text-sm text-white/70 leading-relaxed placeholder:text-white/20 focus:outline-none resize-none pt-2 max-h-[40vh]"
-                  onFocus={() => setCursorVariant('hidden')}
-                  onBlur={() => setCursorVariant('default')}
+                  className="w-full bg-transparent font-body text-base md:text-small text-ink-body leading-relaxed placeholder:text-ink-faint focus:outline-hidden resize-none pt-2 max-h-[40vh]"
                   onKeyDown={(e) => {
                     if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') e.currentTarget.form?.requestSubmit()
                   }}
@@ -296,10 +317,10 @@ export default function Compose() {
                   <motion.span
                     key={dynamics.mark}
                     initial={{ opacity: 0, scale: 1.3 }}
-                    animate={{ opacity: 0.5, scale: 1 }}
+                    animate={{ opacity: 1, scale: 1 }}
                     exit={{ opacity: 0 }}
                     transition={{ duration: 0.25 }}
-                    className="absolute bottom-1 right-1 font-serif italic text-lg text-white/50 pointer-events-none"
+                    className="absolute bottom-3 right-3 font-serif italic text-lg text-ink-faint pointer-events-none"
                     title={dynamics.word}
                   >
                     {dynamics.mark}
@@ -307,101 +328,124 @@ export default function Compose() {
                 </AnimatePresence>
               </div>
 
-              <div className="pt-2 border-t border-white/5">
-                <p className="font-mono text-[9px] text-white/35">{form.name ? `— ${form.name}` : '— Your Name'}</p>
+              <div className="pt-2 border-t border-white/10">
+                <p className="font-mono text-label text-ink-meta">{form.name ? `— ${form.name}` : '— Your Name'}</p>
               </div>
 
-              <div className="flex items-center justify-between pt-2">
-                <a
-                  href="/resume"
-                  className="font-mono text-[10px] text-white/30 hover:text-white/60 transition-colors"
-                  onMouseEnter={() => setCursorVariant('hover')}
-                  onMouseLeave={() => setCursorVariant('default')}
-                >
-                  [ attach: resume.pdf ]
-                </a>
-                <button
+              <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-3 pt-2">
+                {/* /resume is Roman's PIN-gated builder: a visitor who clicked "attach"
+                    got a lock screen. Until the résumé is public, they ask for it. */}
+                {RESUME_PDF_HREF ? (
+                  <a
+                    href={RESUME_PDF_HREF}
+                    download
+                    className="whitespace-nowrap font-mono text-label text-ink-meta hover:text-white transition-colors"
+                    onMouseEnter={() => setCursorVariant('hover')}
+                    onMouseLeave={() => setCursorVariant('default')}
+                  >
+                    [ attach: resume.pdf ]
+                  </a>
+                ) : (
+                  <a
+                    href={RESUME_REQUEST}
+                    className="whitespace-nowrap font-mono text-label text-ink-meta hover:text-white transition-colors"
+                    onMouseEnter={() => setCursorVariant('hover')}
+                    onMouseLeave={() => setCursorVariant('default')}
+                  >
+                    [ request: resume.pdf ]
+                  </a>
+                )}
+                <Button
+                  variant="solid"
                   type="submit"
-                  disabled={status === 'sending' || status === 'sent'}
-                  className="flex items-center gap-2 px-6 py-2.5 rounded-full font-mono text-xs font-semibold tracking-wider uppercase transition-all duration-300 cursor-pointer disabled:opacity-50 bg-white text-black hover:opacity-80"
+                  pending={status === 'sending'}
+                  pendingLabel="Sending…"
+                  disabled={status === 'sent'}
+                  aria-label="Send message"
+                  className="ml-auto"
                 >
-                  {status === 'sending' ? 'Sending…' : '⌘↩ Send'}
-                </button>
+                  <span aria-hidden="true">{modKey}↩</span> Send
+                </Button>
               </div>
               {status === 'error' && (
-                <p role="alert" className="font-mono text-[11px] leading-relaxed text-white/45">
-                  {errorKind === 'rate_limited' ? (
-                    <>That&apos;s a few messages in a row — give it ten minutes, or reach me at{' '}</>
-                  ) : (
-                    <>
-                      Your draft is safe and still here.{' '}
-                      <a href={mailtoFallback} className="text-white/70 underline underline-offset-4">
-                        Open it in your mail app
-                      </a>{' '}
-                      — or write to{' '}
-                    </>
-                  )}
-                  <a href={`mailto:${LINKS.email}`} className="text-white/70 underline underline-offset-4">
-                    {LINKS.email}
-                  </a>
+                <p role="alert" className="flex gap-2 border-l border-spectrum-red pl-3 font-mono text-small text-ink-body">
+                  <CircleAlert aria-hidden="true" size={14} className="mt-1 shrink-0 text-spectrum-red" />
+                  <span>
+                    {errorKind === 'rate_limited' ? (
+                      <>That&apos;s a few messages in a row — give it ten minutes, or reach me at{' '}</>
+                    ) : (
+                      <>
+                        Your draft is safe and still here.{' '}
+                        <a href={mailtoFallback} className="text-white underline underline-offset-4">
+                          Open it in your mail app
+                        </a>{' '}
+                        — or write to{' '}
+                      </>
+                    )}
+                    <a href={`mailto:${LINKS.email}`} className="text-white underline underline-offset-4">
+                      {LINKS.email}
+                    </a>
+                  </span>
                 </p>
               )}
             </form>
           </div>
-        </div>
+        </Panel>
 
         {/* post-send toast */}
         <AnimatePresence>
           {status === 'sent' && (
             <motion.p
+              ref={sentRef}
+              id="compose-sent"
+              role="status"
+              tabIndex={-1}
               initial={{ opacity: 0, y: 8 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.6 }}
-              className="text-center font-mono text-[11px] text-white/45 mt-6"
+              className="text-center font-mono text-small text-ink-body mt-6 outline-none"
             >
               {'𝄐 received — roman usually replies the same day.'}
             </motion.p>
           )}
         </AnimatePresence>
-      </div>
 
-      {/* email-signature footer strip: connect + location in one line */}
-      <div data-reveal className="mt-8 flex flex-wrap items-center justify-center gap-x-5 gap-y-2 font-mono text-[11px] text-white/35">
-        <span className="text-white/50">— R.K.</span>
-        <span>Auburn, WA (PT)</span>
-        <a
-          href={LINKS.github}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="flex items-center gap-1.5 hover:text-white/70 transition-colors py-2"
-          onMouseEnter={() => setCursorVariant('hover')}
-          onMouseLeave={() => setCursorVariant('default')}
-        >
-          <Github size={12} /> github
-        </a>
-        <a
-          href={LINKS.linkedin}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="flex items-center gap-1.5 hover:text-white/70 transition-colors py-2"
-          onMouseEnter={() => setCursorVariant('hover')}
-          onMouseLeave={() => setCursorVariant('default')}
-        >
-          <Linkedin size={12} /> linkedin
-        </a>
-        <a
-          href={`mailto:${LINKS.email}`}
-          className="flex items-center gap-1.5 hover:text-white/70 transition-colors py-2"
-          onMouseEnter={() => setCursorVariant('hover')}
-          onMouseLeave={() => setCursorVariant('default')}
-        >
-          <Mail size={12} /> email
-        </a>
-      </div>
-
-      <div className="mt-16 md:mt-24 pt-8 border-t border-white/5 flex flex-col sm:flex-row items-center justify-between gap-4">
-        <p className="font-mono text-[10px] text-white/20">© {new Date().getFullYear()} Roman Kucheryavyy</p>
-        <p className="font-mono text-[10px] text-white/25">Built with Next.js, Three.js, GSAP &amp; Tailwind</p>
+        {/* email-signature footer strip: connect + location in one line. It
+            reveals with the window: on its own it sat below the reveal line
+            even at the very bottom of the page, so it never appeared. */}
+        <div className="mt-8 flex flex-wrap items-center justify-center gap-x-5 gap-y-2 font-mono text-label text-ink-meta">
+          <span className="text-ink-body">— R.K.</span>
+          <span>Auburn, WA (PT)</span>
+          <a
+            href={LINKS.github}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center gap-1.5 hover:text-white transition-colors py-2"
+            onMouseEnter={() => setCursorVariant('hover')}
+            onMouseLeave={() => setCursorVariant('default')}
+          >
+            <Github size={12} /> github
+          </a>
+          <a
+            href={LINKS.linkedin}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center gap-1.5 hover:text-white transition-colors py-2"
+            onMouseEnter={() => setCursorVariant('hover')}
+            onMouseLeave={() => setCursorVariant('default')}
+          >
+            <Linkedin size={12} /> linkedin
+          </a>
+          <a
+            href={`mailto:${LINKS.email}`}
+            className="flex items-center gap-1.5 hover:text-white transition-colors py-2"
+            onMouseEnter={() => setCursorVariant('hover')}
+            onMouseLeave={() => setCursorVariant('default')}
+          >
+            <Mail size={12} /> email
+          </a>
+          <CopyButton text={LINKS.email} />
+        </div>
       </div>
     </SectionShell>
   )
