@@ -2,7 +2,7 @@
 import { useCallback, useEffect, useRef, useState, lazy, Suspense, type ComponentType } from 'react'
 import Link from 'next/link'
 import { AnimatePresence, motion, useMotionValue, useTransform } from 'framer-motion'
-import { ArrowUpRight, ChevronUp, ChevronDown } from 'lucide-react'
+import { ArrowRight, ChevronUp, ChevronDown } from 'lucide-react'
 import { useStore } from '@/stores/useStore'
 import { useDeviceCapability } from '@/hooks/useDeviceCapability'
 import { useRevealOnScroll } from '@/hooks/useRevealOnScroll'
@@ -166,7 +166,7 @@ function DesktopDeck({ onOpen }: { onOpen: (index: number) => void }) {
         ref={deckRef}
         role="region"
         aria-roledescription="deck"
-        aria-label="Client work"
+        aria-label="Work"
         className="relative w-[85vw] sm:w-[75vw] md:w-[60vw] lg:w-[50vw] xl:w-[44vw] aspect-[16/10] overflow-visible"
       >
         <DeckStatus work={deck[0]} />
@@ -253,7 +253,9 @@ function DesktopDeck({ onOpen }: { onOpen: (index: number) => void }) {
           />
         ))}
       </div>
-      <p className="font-mono text-label text-white/35 tracking-wider">Drag up/down or use arrows to navigate</p>
+      <p className="font-mono text-label text-ink-meta tracking-wider">
+        Drag <span aria-hidden="true">↑ ↓</span> through the setlist, or use the arrow keys
+      </p>
     </div>
   )
 }
@@ -301,7 +303,7 @@ function MobileDeck() {
       <div
         role="region"
         aria-roledescription="deck"
-        aria-label="Client work"
+        aria-label="Work"
         className="relative w-full max-w-lg"
         style={{ overflow: 'clip visible' }}
       >
@@ -370,7 +372,9 @@ function MobileDeck() {
           />
         ))}
       </div>
-      <p className="font-mono text-label text-white/50 tracking-wider">Swipe ← → through the setlist</p>
+      <p className="font-mono text-label text-ink-meta tracking-wider">
+        Swipe <span aria-hidden="true">← →</span> through the setlist
+      </p>
     </div>
   )
 }
@@ -401,15 +405,19 @@ export default function Projects() {
         <SectionHeader
           movement="symphony"
           title={{ lead: 'The', accent: 'Symphony' }}
-          intro={isMobile ? 'Swipe through the setlist.' : 'Drag through the setlist. Click any piece to hear its story.'}
+          intro={
+            isMobile
+              ? "Sites and apps I've designed, built and shipped."
+              : "Sites and apps I've designed, built and shipped. Open any card to see it whole."
+          }
         >
           <Link
             data-reveal
             href="/works"
-            className="mt-4 inline-flex items-center gap-2 font-mono text-label tracking-wider text-white/50 transition-colors hover:text-white"
+            className="mt-4 inline-flex items-center gap-2 font-mono text-label tracking-wider text-ink-meta transition-colors hover:text-white"
           >
-            open the whole setlist
-            <ArrowUpRight size={12} aria-hidden="true" />
+            {`see all ${TOTAL} in the setlist`}
+            <ArrowRight size={12} aria-hidden="true" />
           </Link>
         </SectionHeader>
         <div className="flex-1 flex items-center justify-center pt-8">
