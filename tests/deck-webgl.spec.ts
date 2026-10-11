@@ -54,8 +54,21 @@ test.describe('deck and WebGL', () => {
 
   test('on a normal network, the Spline phone draws a canvas in the front card', async ({ page }) => {
     test.skip(test.info().project.name !== 'desktop', 'A desktop-deck scenario (the phone deck never loads Spline).')
+    // The scene comes from Spline's own host, which this suite does not run.
+    // If the runner cannot reach it at all (a network error, not an HTTP
+    // status), there is nothing of ours to test: skip, and say why. Any
+    // response that arrives, even an error status, still has to end in a canvas.
+    const unreachable: string[] = []
+    page.on('requestfailed', (req) => {
+      if (/spline\.design/.test(req.url())) unreachable.push(`${req.url()} (${req.failure()?.errorText ?? 'failed'})`)
+    })
     const card = await frontTheSplineCard(page)
-    await expect(card.locator('canvas')).toBeAttached({ timeout: 10_000 })
+    try {
+      await expect(card.locator('canvas')).toBeAttached({ timeout: 10_000 })
+    } catch (err) {
+      test.skip(unreachable.length > 0, `Spline's host was unreachable from this runner: ${unreachable[0]}`)
+      throw err
+    }
     await expect(page.locator('#symphony')).toBeAttached()
   })
 })
