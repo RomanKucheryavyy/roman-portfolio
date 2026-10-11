@@ -275,12 +275,6 @@ canvas { touch-action: pan-y; }
   background: linear-gradient(90deg, rgba(255, 255, 255, 0.2), transparent);
 }
 
-/* ── Code syntax highlight (CodePeek) ── */
-.code-comment { color: #ffffff40; font-style: italic; }
-.code-keyword { color: #af52dee6; }
-.code-string  { color: #30d158cc; }
-.code-number  { color: #ffb300cc; }
-
 /* ── Reduced Motion ── */
 /* A near-zero duration alone left every infinite animation (the gradient
    shift, pulses, blinking carets) restarting on every frame, and smooth
