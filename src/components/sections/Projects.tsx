@@ -2,10 +2,11 @@
 import { useCallback, useEffect, useRef, useState, lazy, Suspense, type ComponentType } from 'react'
 import Link from 'next/link'
 import { AnimatePresence, motion, useMotionValue, useTransform } from 'framer-motion'
-import { ArrowRight, ChevronUp, ChevronDown } from 'lucide-react'
+import { ArrowRight, ChevronDown, ChevronLeft, ChevronRight, ChevronUp } from 'lucide-react'
 import { useStore } from '@/stores/useStore'
 import { useDeviceCapability } from '@/hooks/useDeviceCapability'
 import { useRevealOnScroll } from '@/hooks/useRevealOnScroll'
+import { useDeckKeys } from '@/hooks/useDeckKeys'
 import { SectionHeader, SectionShell } from '@/components/ui/SectionShell'
 import WorkCard from '@/components/ui/WorkCard'
 import WebGLBoundary, { useCanWebGL } from '@/components/ui/WebGLBoundary'
@@ -64,10 +65,6 @@ function DesktopDeck({ onOpen }: { onOpen: (index: number) => void }) {
   // A drag ends with a pointerup over the card, which the browser follows with
   // a click. Without this the card you just flicked away opened its detail.
   const dragged = useRef(false)
-  // Arrowing through the deck from the keyboard moves the focused card to the
-  // back, where it is inert; focus follows the new front card instead of
-  // falling to the page.
-  const refocus = useRef(false)
   // Spline needs WebGL, and its failures used to unmount the whole page. Off
   // until the probe passes, so a machine without WebGL never downloads it, and
   // off for good once it throws: the iOS card then shows its screenshot.
@@ -87,52 +84,9 @@ function DesktopDeck({ onOpen }: { onOpen: (index: number) => void }) {
     setCounter((c) => (c - 1 + TOTAL) % TOTAL)
   }, [])
 
-  useEffect(() => {
-    if (!refocus.current) return
-    refocus.current = false
-    // By id, not [data-front]: the card that just left is still in the DOM,
-    // still marked front, for the length of its exit animation.
-    deckRef.current?.querySelector<HTMLElement>(`[data-work="${deck[0].id}"] [data-open]`)?.focus()
-  }, [deck])
-
-  // Arrow keys drive the deck, but this listener is on the window: it used to
-  // fire while someone was arrowing through the text they were typing into the
-  // contact form, silently shuffling a section they could not even see. Only
-  // act when the deck is actually on screen and the keypress is not going into
-  // a field.
-  useEffect(() => {
-    const isTyping = (target: EventTarget | null) => {
-      const el = target as HTMLElement | null
-      if (!el?.tagName) return false
-      return (
-        el.tagName === 'INPUT' ||
-        el.tagName === 'TEXTAREA' ||
-        el.tagName === 'SELECT' ||
-        el.isContentEditable
-      )
-    }
-
-    const onKey = (e: KeyboardEvent) => {
-      if (isTyping(e.target)) return
-      // Nor while the detail view is open over the deck.
-      if ((e.target as HTMLElement | null)?.closest?.('[role="dialog"]')) return
-      if (e.metaKey || e.ctrlKey || e.altKey) return
-      const deck = deckRef.current
-      if (!deck) return
-      const { top, bottom } = deck.getBoundingClientRect()
-      if (bottom < 0 || top > window.innerHeight) return
-
-      const step = e.key === 'ArrowUp' || e.key === 'ArrowLeft' ? prev
-        : e.key === 'ArrowDown' || e.key === 'ArrowRight' ? next
-        : null
-      if (!step) return
-      e.preventDefault()
-      refocus.current = deck.contains(document.activeElement)
-      step()
-    }
-    window.addEventListener('keydown', onKey)
-    return () => window.removeEventListener('keydown', onKey)
-  }, [next, prev])
+  // Arrow keys, with the typing, dialog and on-screen guards; focus follows
+  // the new front card when it was in the deck.
+  useDeckKeys(deckRef, next, prev, 'y', deck[0].id)
 
   const handleDragEnd = (_: unknown, info: { offset: { y: number }; velocity: { y: number } }) => {
     const oy = info.offset.y
@@ -159,7 +113,7 @@ function DesktopDeck({ onOpen }: { onOpen: (index: number) => void }) {
         whileHover={{ scale: 1.1, y: -3 }}
         whileTap={{ scale: 0.9 }}
       >
-        <ChevronUp className="w-5 h-5 text-white/60" />
+        <ChevronUp className="w-5 h-5 text-ink-body" aria-hidden="true" />
       </motion.button>
 
       <div
@@ -237,7 +191,7 @@ function DesktopDeck({ onOpen }: { onOpen: (index: number) => void }) {
         whileHover={{ scale: 1.1, y: 3 }}
         whileTap={{ scale: 0.9 }}
       >
-        <ChevronDown className="w-5 h-5 text-white/60" />
+        <ChevronDown className="w-5 h-5 text-ink-body" aria-hidden="true" />
       </motion.button>
 
       <div className="flex gap-2" aria-hidden="true">
@@ -264,6 +218,7 @@ function MobileDeck() {
   const [deck, setDeck] = useState<Work[]>([...CLIENT_WORK])
   const [counter, setCounter] = useState(0)
   const [exitDirection, setExitDirection] = useState<'left' | 'right' | null>(null)
+  const deckRef = useRef<HTMLDivElement>(null)
 
   // Horizontal drag on purpose: a vertical drag axis + touchAction none on a
   // card covering most of the viewport made the page unscrollable past the
@@ -271,24 +226,28 @@ function MobileDeck() {
   const dragX = useMotionValue(0)
   const rotateZ = useTransform(dragX, [-200, 0, 200], [-6, 0, 6])
 
+  const next = useCallback(() => {
+    setDeck((d) => [...d.slice(1), d[0]])
+    setCounter((c) => (c + 1) % TOTAL)
+  }, [])
+  const prev = useCallback(() => {
+    setDeck((d) => [d[d.length - 1], ...d.slice(0, -1)])
+    setCounter((c) => (c - 1 + TOTAL) % TOTAL)
+  }, [])
+
+  // ArrowLeft / ArrowRight only: up and down keep scrolling the page.
+  useDeckKeys(deckRef, next, prev, 'x', deck[0].id)
+
   const handleDragEnd = (_: unknown, info: { offset: { x: number }; velocity: { x: number } }) => {
     const ox = info.offset.x
     const vx = info.velocity.x
     if (Math.abs(ox) > 40 || Math.abs(vx) > 400) {
       if (ox < 0 || vx < 0) {
         setExitDirection('left')
-        setTimeout(() => {
-          setDeck((d) => [...d.slice(1), d[0]])
-          setCounter((c) => (c + 1) % TOTAL)
-          setExitDirection(null)
-        }, 150)
+        setTimeout(() => { next(); setExitDirection(null) }, 150)
       } else {
         setExitDirection('right')
-        setTimeout(() => {
-          setDeck((d) => [d[d.length - 1], ...d.slice(0, -1)])
-          setCounter((c) => (c - 1 + TOTAL) % TOTAL)
-          setExitDirection(null)
-        }, 150)
+        setTimeout(() => { prev(); setExitDirection(null) }, 150)
       }
     }
     dragX.set(0)
@@ -301,10 +260,14 @@ function MobileDeck() {
           to its middle 47%. All cards share one grid cell, so the deck is as
           tall as its tallest card and every card in it is that tall too. */}
       <div
+        ref={deckRef}
         role="region"
         aria-roledescription="deck"
         aria-label="Work"
-        className="relative w-full max-w-lg"
+        // Focus lands here when a key turns the deck and the new front card
+        // has nothing focusable of its own (an unlaunched piece).
+        tabIndex={-1}
+        className="relative w-full max-w-lg outline-none"
         style={{ overflow: 'clip visible' }}
       >
         <DeckStatus work={deck[0]} />
@@ -317,6 +280,7 @@ function MobileDeck() {
               return (
                 <motion.li
                   key={work.id}
+                  data-work={work.id}
                   data-front={isFront}
                   inert={!isFront}
                   className="relative [grid-area:1/1] list-none overflow-hidden rounded-xl"
@@ -359,18 +323,40 @@ function MobileDeck() {
         </ul>
       </div>
 
-      <div className="flex gap-2" aria-hidden="true">
-        {CLIENT_WORK.map((_, t) => (
-          <div
-            key={t}
-            className="rounded-full transition-all duration-300"
-            style={{
-              width: t === counter % TOTAL ? 16 : 5,
-              height: 5,
-              backgroundColor: t === counter % TOTAL ? '#fff' : 'rgba(255,255,255,0.2)',
-            }}
-          />
-        ))}
+      {/* The swipe has a button twin either side of the dots, the same pair the
+          desktop deck has: a swipe is not the only way through (WCAG 2.5.1). */}
+      <div className="flex items-center gap-4">
+        <motion.button
+          type="button"
+          onClick={prev}
+          aria-label="Previous piece"
+          className="p-3 rounded-full bg-white/5 border border-white/10 backdrop-blur-sm hover:bg-white/10 transition-colors cursor-pointer"
+          whileTap={{ scale: 0.9 }}
+        >
+          <ChevronLeft className="w-5 h-5 text-ink-body" aria-hidden="true" />
+        </motion.button>
+        <div className="flex gap-2" aria-hidden="true">
+          {CLIENT_WORK.map((_, t) => (
+            <div
+              key={t}
+              className="rounded-full transition-all duration-300"
+              style={{
+                width: t === counter % TOTAL ? 16 : 5,
+                height: 5,
+                backgroundColor: t === counter % TOTAL ? '#fff' : 'rgba(255,255,255,0.2)',
+              }}
+            />
+          ))}
+        </div>
+        <motion.button
+          type="button"
+          onClick={next}
+          aria-label="Next piece"
+          className="p-3 rounded-full bg-white/5 border border-white/10 backdrop-blur-sm hover:bg-white/10 transition-colors cursor-pointer"
+          whileTap={{ scale: 0.9 }}
+        >
+          <ChevronRight className="w-5 h-5 text-ink-body" aria-hidden="true" />
+        </motion.button>
       </div>
       <p className="font-mono text-label text-ink-meta tracking-wider">
         Swipe <span aria-hidden="true">← →</span> through the setlist
