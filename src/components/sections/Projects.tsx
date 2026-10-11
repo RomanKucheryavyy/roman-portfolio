@@ -390,6 +390,7 @@ export default function Projects() {
         innerClassName="flex flex-1 flex-col"
       >
         <SectionHeader
+          movement="symphony"
           kicker="// 02. Projects & Work"
           title={{ lead: 'The', accent: 'Symphony' }}
           intro={isMobile ? 'Swipe through the setlist.' : 'Drag through the setlist. Click any piece to hear its story.'}

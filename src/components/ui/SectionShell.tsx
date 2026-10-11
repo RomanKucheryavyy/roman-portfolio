@@ -1,6 +1,7 @@
 'use client'
 import { useState, type ComponentPropsWithoutRef, type ReactNode, type Ref } from 'react'
 import ScatterText from '@/components/effects/ScatterText'
+import { kickerOf, type MovementId } from '@/lib/score'
 import { cn } from '@/lib/utils'
 
 interface SectionShellProps extends ComponentPropsWithoutRef<'section'> {
@@ -33,9 +34,20 @@ export function SectionShell({ ref, className, innerClassName, children, ...prop
   )
 }
 
-interface SectionHeaderProps {
-  /** The "// 02. Projects & Work" line above the heading. */
-  kicker: string
+type SectionHeaderKicker =
+  | {
+      /** Which movement this is, from score.ts. It names the kicker (`// 02. Work`). */
+      movement: MovementId
+      /** Overrides the movement's kicker. */
+      kicker?: string
+    }
+  | {
+      movement?: undefined
+      /** The line above the heading, for a header outside the score. */
+      kicker: string
+    }
+
+type SectionHeaderProps = SectionHeaderKicker & {
   /** The heading is `{lead} {accent}`, with the accent word in the brand gradient. */
   title: { lead: string; accent: string }
   /** The paragraph under the heading. */
@@ -53,13 +65,14 @@ interface SectionHeaderProps {
  * renaming it in two places or the gradient word broke. The assembled state
  * is now just state.
  */
-export function SectionHeader({ kicker, title, intro, children, className }: SectionHeaderProps) {
+export function SectionHeader({ movement, kicker, title, intro, children, className }: SectionHeaderProps) {
   const [assembled, setAssembled] = useState(false)
+  const label = kicker ?? (movement ? kickerOf(movement) : '')
   const text = `${title.lead} ${title.accent}`
   return (
     <header className={cn('mb-10 md:mb-16', className)}>
       <p data-reveal className="section-label font-mono text-label tracking-[0.3em] uppercase text-white/30 mb-3">
-        {kicker}
+        {label}
       </p>
       <h2 className="font-display text-4xl md:text-6xl font-bold tracking-tight text-white">
         {assembled ? (
