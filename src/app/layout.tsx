@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from 'next'
 import { Archivo, JetBrains_Mono, Space_Grotesk } from 'next/font/google'
 import { SITE } from '@/lib/constants'
 import { TITLE_TEMPLATE } from '@/lib/seo'
+import { jsonLd, siteGraph } from '@/lib/structured-data'
 import SiteChrome from '@/components/ui/SiteChrome'
 import SiteFooter from '@/components/ui/SiteFooter'
 import './globals.css'
@@ -69,6 +70,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <SiteChrome />
         {children}
         <SiteFooter />
+        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLd(siteGraph()) }} />
       </body>
     </html>
   )
