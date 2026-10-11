@@ -1,6 +1,10 @@
+import { CERT_VERIFY } from '@/lib/site-facts'
+
 export const SITE = {
   name: 'Roman Kucheryavyy',
-  title: 'Roman Kucheryavyy — Orchestrating Logic & Art',
+  // His own hero words (Hero.tsx: "Salesforce engineer by day. Full-stack
+  // builder by nature."). needs Roman: confirm.
+  title: 'Roman Kucheryavyy — Salesforce engineer & full-stack builder',
   description:
     'Salesforce engineer, full-stack developer, and band conductor building at the intersection of precision and creativity.',
   url: 'https://romankucheryavyy.com',
@@ -12,16 +16,31 @@ export const LINKS = {
   email: 'kucheryavyyroman@gmail.com',
 } as const
 
-export const CERTIFICATIONS = [
-  { id: 'pd1', name: 'Platform Developer I', short: 'PD1', date: 'Jul 2025', category: 'developer' },
-  { id: 'dcc', name: 'Data Cloud Consultant', short: 'DCC', date: 'Mar 2025', category: 'consultant' },
-  { id: 'ais', name: 'AI Specialist', short: 'AIS', date: 'Nov 2024', category: 'ai' },
-  { id: 'scc', name: 'Sales Cloud Consultant', short: 'SCC', date: 'Aug 2024', category: 'consultant' },
-  { id: 'scaa', name: 'Advanced Administrator', short: 'SCAA', date: 'Apr 2024', category: 'admin' },
-  { id: 'aia', name: 'AI Associate', short: 'AIA', date: 'Apr 2024', category: 'ai' },
-  { id: 'pab', name: 'Platform App Builder', short: 'PAB', date: 'Jan 2024', category: 'developer' },
-  { id: 'sca', name: 'Administrator', short: 'SCA', date: 'Dec 2023', category: 'admin' },
-] as const
+export interface Certification {
+  id: string
+  name: string
+  short: string
+  date: string
+  category: 'developer' | 'consultant' | 'ai' | 'admin'
+  /** A public page that proves it. Set from CERT_VERIFY in site-facts.ts, which
+   *  is empty until Roman supplies the links; a card links nothing without one.
+   *  needs Roman: confirm. */
+  verifyUrl?: string
+}
+
+/** The one list of Roman's certifications. The résumé and every count on the site read it. */
+export const CERTIFICATIONS: readonly Certification[] = (
+  [
+    { id: 'pd1', name: 'Platform Developer I', short: 'PD1', date: 'Jul 2025', category: 'developer' },
+    { id: 'dcc', name: 'Data Cloud Consultant', short: 'DCC', date: 'Mar 2025', category: 'consultant' },
+    { id: 'ais', name: 'AI Specialist', short: 'AIS', date: 'Nov 2024', category: 'ai' },
+    { id: 'scc', name: 'Sales Cloud Consultant', short: 'SCC', date: 'Aug 2024', category: 'consultant' },
+    { id: 'scaa', name: 'Advanced Administrator', short: 'SCAA', date: 'Apr 2024', category: 'admin' },
+    { id: 'aia', name: 'AI Associate', short: 'AIA', date: 'Apr 2024', category: 'ai' },
+    { id: 'pab', name: 'Platform App Builder', short: 'PAB', date: 'Jan 2024', category: 'developer' },
+    { id: 'sca', name: 'Administrator', short: 'SCA', date: 'Dec 2023', category: 'admin' },
+  ] as const
+).map((cert) => (CERT_VERIFY[cert.id] ? { ...cert, verifyUrl: CERT_VERIFY[cert.id] } : cert))
 
 /** Client work & shipped products — performed in The Symphony deck. */
 export const PROJECTS = [
@@ -33,6 +52,9 @@ export const PROJECTS = [
     description:
       'Brewed from scratch — a full-stack e-commerce experience that turns first-time visitors into repeat customers. Custom design system, responsive to the last pixel.',
     tags: ['Web Design', 'E-commerce', 'Branding'],
+    // source: resume-data.ts:135 at 05a1a6c^ (his résumé before the July 2026 rewrite).
+    // needs Roman: confirm it is still the stack.
+    stack: ['React', 'Next.js', 'Tailwind', 'Netlify'],
     color: '#C4A265',
   },
   {
@@ -53,6 +75,9 @@ export const PROJECTS = [
     description:
       'Where the music lives online. Event listings, media galleries, and a live performance showcase for the band I conduct — built with the same rhythm we play.',
     tags: ['Web Design', 'Music', 'CMS'],
+    // source: resume-data.ts:142 at 05a1a6c^ (his résumé before the July 2026 rewrite).
+    // needs Roman: confirm it is still the stack.
+    stack: ['React', 'Vite', 'Supabase', 'Netlify'],
     color: '#FF6B4A',
   },
   {
@@ -115,6 +140,8 @@ export const PROJECTS = [
     description:
       "Native Swift from the ground up. Push notifications, real-time ordering, and Apple Pay — because good coffee shouldn't require a complicated checkout.",
     tags: ['iOS', 'Swift', 'Mobile App'],
+    stack: ['Swift', 'SwiftUI', 'Firebase', 'Supabase'], // source: resume-data.ts:110 at abb0023
+    year: 2026, // source: App Store releaseDate 2026-03-12 (iTunes Lookup id6760352447, checked 2026-10-10)
     color: '#A855F7',
     isApp: true,
   },
@@ -128,7 +155,9 @@ export const COMPOSITIONS = [
     id: 'sembly',
     title: 'Sembly',
     tagline: 'Scheduling for worship teams',
-    status: 'Live at sembly.app',
+    // The card's link pill already reads "sembly.app"; the status no longer repeats it.
+    // needs Roman: confirm.
+    status: 'Live',
     url: 'https://sembly.app',
     description:
       'The answer to "am I playing this Sunday?" — on the phone that gets asked. Volunteers see the dates they serve, their position, the running order with every song key, and the sheet music; leaders plan a whole month from the same screen. Row-level security in Postgres is the actual boundary, so a volunteer only ever sees the services they are on.',

@@ -27,15 +27,31 @@ export interface Work {
   url?: string
   /** Where it stands, in words: "Launching soon", "Paper trading daily". */
   status?: string
+  /** What it is built with. Set only where a source says so (each value cites one
+   *  in constants.ts); never guessed. Products' stack is their tags. */
+  stack?: readonly string[]
+  /** The year it first shipped, only where a source dates it. */
+  year?: number
+  // There is deliberately no `role`: nothing in the repo states one for any
+  // piece, and the invented "Design & Development" was the bug. needs Roman.
 }
 
 export const CLIENT_WORK: readonly Work[] = PROJECTS.map((project) => ({ ...project, kind: 'client' }))
 
-export const PRODUCTS: readonly Work[] = COMPOSITIONS.map(({ stack, ...product }) => ({
+export const PRODUCTS: readonly Work[] = COMPOSITIONS.map((product) => ({
   ...product,
-  tags: stack,
+  tags: product.stack,
   kind: 'product',
 }))
+
+/** Client work a visitor can open today: a live site, or the app on the App Store. */
+export const LIVE_CLIENT_WORK: readonly Work[] = CLIENT_WORK.filter((work) => work.url)
+
+/** The App Store id in an app's link: ".../fubc-coffee/id6760352447" → "6760352447". */
+export function appStoreIdOf(work: Work): string | null {
+  if (!work.isApp || !work.url) return null
+  return /\/id(\d+)/.exec(work.url)?.[1] ?? null
+}
 
 /**
  * What a card offers the visitor, decided once. Every card has exactly one

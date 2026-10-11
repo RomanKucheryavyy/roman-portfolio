@@ -7,9 +7,10 @@ For a fresh Claude Code session. Everything it needs is here or in
 
 ## 1. Who this is for
 
-**Roman Kucheryavyy** — Sr. Technical Support Engineer, Salesforce Gov Cloud.
-8 Salesforce certifications. Full-stack builder. Conducts the FUBC band
-(trumpet). Auburn, WA.
+**Roman Kucheryavyy** — Sr. Technical Support Engineer, Salesforce Signature
+Success (since April 2026; Premier support for Government Cloud before that,
+per `src/lib/site-facts.ts`). 8 Salesforce certifications. Full-stack builder.
+Conducts the FUBC band (trumpet). Auburn, WA.
 
 Live site: <https://romankucheryavyy.com> · Repo: `RomanKucheryavyy/roman-portfolio`
 
@@ -42,7 +43,7 @@ What almost none of them have, and Roman actually does:
 | Sr. TSE on Salesforce **Gov Cloud**, 8 certs | "Passionate about clean code" |
 | An iOS app **shipped to the App Store** | A screenshot of a side project |
 | Software running a **real coffee cart at real weddings** | A to-do app |
-| A worship-scheduling product (Sembly) **with live users** | A landing page |
+| A worship-scheduling product (Sembly) **with live users** *(unsourced: no user count exists anywhere in the repo; needs Roman)* | A landing page |
 | An AI trading desk + an Obsidian second brain **running unattended** | An OpenAI wrapper |
 | **Conducts a band** — a genuinely rare narrative | A hobbies section |
 
@@ -142,7 +143,8 @@ Grouped. Numbered for reference, not priority — Phase 0 comes first regardless
 13. **Three real case studies** at `/work/[slug]` — problem, constraint,
     decision, outcome, with a number in the outcome.
 14. Lead with **Alongside Events**: software that runs a real coffee cart at
-    real weddings. Thermal printing, QR ordering, offline tolerance.
+    real weddings. Thermal printing, QR ordering, offline tolerance *(unsourced:
+    nothing in the repo describes Alongside Events working offline; needs Roman)*.
 15. **FUBC Coffee iOS** — it is on the App Store. Say so with the badge.
 16. **Sembly** — a product with live users and row-level-security as the actual
     boundary. That detail is senior-engineer signal.
