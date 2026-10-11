@@ -12,8 +12,7 @@ export default function ConsoleSignature() {
       '%c𝄞%c═══♩═══♪═══♫═══♪═══♬═══%c\n\n' +
         '%cRoman Kucheryavyy%c — Orchestrating Logic & Art\n\n' +
         '%cYou read consoles. I like you already.\n' +
-        'The score is open: the </> tab on the right edge shows\n' +
-        "this site's own source for whatever section you're in.\n\n" +
+        `How this site is built: ${window.location.origin}/colophon\n\n` +
         '%c$ git clone https://github.com/RomanKucheryavyy\n',
       'font-size: 28px; color: #5ac8fa;',
       'font-size: 14px; color: rgba(255,255,255,0.4);',

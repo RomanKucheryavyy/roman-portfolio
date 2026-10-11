@@ -196,14 +196,6 @@ export const COMPOSITIONS = [
   },
 ] as const
 
-export const NAV_ITEMS = [
-  { label: 'Measures', href: '#measures' },
-  { label: 'Symphony', href: '#symphony' },
-  { label: 'Compositions', href: '#compositions' },
-  { label: 'Conductor', href: '#conductor' },
-  { label: 'Compose', href: '#compose' },
-] as const
-
 export const TECH_SKILLS = [
   'JavaScript', 'TypeScript', 'React', 'Next.js', 'Swift',
   'Java', 'Python', 'C', 'SQL', 'Apex',
