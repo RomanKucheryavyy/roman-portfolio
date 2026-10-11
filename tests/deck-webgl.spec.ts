@@ -1,5 +1,3 @@
-import { existsSync } from 'node:fs'
-import path from 'node:path'
 import { expect, test, type Page } from '@playwright/test'
 import { gotoHome } from './helpers'
 
@@ -8,12 +6,9 @@ import { gotoHome } from './helpers'
  *
  * Before W0's WebGLBoundary, a Spline failure (no WebGL, or its scene host
  * unreachable) threw through the whole React tree and left a blank page. These
- * are W0's acceptance scenarios. Until the boundary is on the branch they are
- * marked as expected failures, so the suite records the bug instead of hiding
- * it, and the moment the file lands they must pass.
+ * are W0's acceptance scenarios; they ran as expected failures until the
+ * boundary landed, and now they must pass.
  */
-const BOUNDARY_LANDED = existsSync(path.join(process.cwd(), 'src', 'components', 'ui', 'WebGLBoundary.tsx'))
-const PENDING_W0 = 'Spline white-screens the site until W0 adds WebGLBoundary'
 
 const SPLINE_HOSTS = /spline\.design|unpkg\.com/
 
@@ -28,7 +23,6 @@ async function frontTheSplineCard(page: Page) {
 test.describe('deck and WebGL', () => {
   test('with the Spline host unreachable, the site survives and the card shows its screenshot', async ({ page }) => {
     test.skip(test.info().project.name !== 'desktop', 'A desktop-deck scenario (the phone deck never loads Spline).')
-    test.fail(!BOUNDARY_LANDED, PENDING_W0)
     await page.route(/spline\.design/, (route) => route.abort())
 
     const card = await frontTheSplineCard(page)
@@ -40,7 +34,6 @@ test.describe('deck and WebGL', () => {
 
   test('with WebGL off, the site survives, shows the screenshot and never fetches Spline', async ({ page }) => {
     test.skip(test.info().project.name !== 'no-webgl', 'Runs only where WebGL is switched off.')
-    test.fail(!BOUNDARY_LANDED, PENDING_W0)
     const splineRequests: string[] = []
     page.on('request', (req) => { if (SPLINE_HOSTS.test(req.url())) splineRequests.push(req.url()) })
 
