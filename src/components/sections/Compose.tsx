@@ -57,6 +57,7 @@ export default function Compose() {
   const windowRef = useRef<HTMLDivElement>(null)
   const bodyRef = useRef<HTMLDivElement>(null)
   const burstHostRef = useRef<HTMLDivElement>(null)
+  const sentRef = useRef<HTMLParagraphElement>(null)
   const setCursorVariant = useStore((s) => s.setCursorVariant)
   const [form, setForm] = useState(EMPTY)
   const [status, setStatus] = useState<'idle' | 'sending' | 'sent' | 'error'>('idle')
@@ -163,6 +164,9 @@ export default function Compose() {
       delay: 0.15,
       ease: 'expo.inOut',
       onComplete: () => {
+        // Collapsed means gone, as on the reduced path: an opacity-0 form left
+        // in place still took focus and clicks under the title bar.
+        body.style.display = 'none'
         const corners: [number, number][] = [
           [rect.left - hostRect.left, rect.top - hostRect.top],
           [rect.right - hostRect.left, rect.top - hostRect.top],
@@ -172,6 +176,12 @@ export default function Compose() {
         corners.forEach(([x, y]) => burstFrom(x, y, host))
       },
     })
+  }, [status])
+
+  // The sent line takes focus as it appears, so a keyboard or screen-reader
+  // visitor lands on the confirmation instead of inside a vanished form.
+  useEffect(() => {
+    if (status === 'sent') sentRef.current?.focus({ preventScroll: true })
   }, [status])
 
   useRevealOnScroll(sectionRef)
@@ -207,7 +217,7 @@ export default function Compose() {
               transition={{ duration: 0.8 }}
             />
             <span className="ml-3 font-mono text-label text-ink-meta" aria-live="polite">
-              {status === 'sent' ? 'message sent — 250 OK' : 'New Message'}
+              {status === 'sent' ? 'message sent — 250 OK' : status === 'sending' ? 'sending…' : 'New Message'}
             </span>
             <AnimatePresence>
               {savedAt && status === 'idle' && (
@@ -225,7 +235,9 @@ export default function Compose() {
           </div>
 
           {/* the email body — every field is part of the letter */}
-          <div ref={bodyRef}>
+          {/* inert as soon as the message is sent: the form leaves the tab
+              order at once, while it is still fading out */}
+          <div ref={bodyRef} inert={status === 'sent'}>
             <form onSubmit={handleSubmit} className="p-5 space-y-3">
               {/* Honeypot. Hidden from people and from screen readers, irresistible to bots. */}
               <div className="hidden" aria-hidden="true">
@@ -361,10 +373,14 @@ export default function Compose() {
         <AnimatePresence>
           {status === 'sent' && (
             <motion.p
+              ref={sentRef}
+              id="compose-sent"
+              role="status"
+              tabIndex={-1}
               initial={{ opacity: 0, y: 8 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.6 }}
-              className="text-center font-mono text-small text-ink-body mt-6"
+              className="text-center font-mono text-small text-ink-body mt-6 outline-none"
             >
               {'𝄐 received — roman usually replies the same day.'}
             </motion.p>
