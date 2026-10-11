@@ -53,7 +53,9 @@ export default function SiteFooter() {
               </Link>
             </li>
             <li>
-              <Link href={ROUTES.colophon} className={LINK}>
+              {/* No prefetch: on a build without /colophon yet (it lands with
+                  the proof routes), every page would log a 404 for it. */}
+              <Link href={ROUTES.colophon} prefetch={false} className={LINK}>
                 Liner notes
               </Link>
             </li>
