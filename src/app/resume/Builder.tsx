@@ -159,6 +159,9 @@ const SHEET = 'bg-white rounded-xl p-8 text-paper-ink overflow-auto max-h-[80vh]
 /** Room at the top for the Download PDF button pinned over the sheet's corner,
  *  so it no longer sits on the centred name. */
 const SHEET_UNDER_BUTTON = 'pt-16'
+/** A sheet scrolls once the résumé outgrows 80vh, so it takes focus: the
+ *  arrow keys can then scroll it without a mouse. */
+const sheetRegion = { role: 'region', 'aria-label': 'Preview', tabIndex: 0 } as const
 
 const downloadBlob = (blob: Blob, filename: string) => {
   const url = URL.createObjectURL(blob)
@@ -386,7 +389,7 @@ export default function Builder({ pin, resume, setResume, onLock }: BuilderProps
                 <Button {...download} onClick={() => handleDownloadResume('base')} title="Download as PDF">
                   {downloadFace}
                 </Button>
-                <div className={cn(SHEET, SHEET_UNDER_BUTTON)}>
+                <div {...sheetRegion} className={cn(SHEET, SHEET_UNDER_BUTTON)}>
                   <ResumePreview resume={resume} />
                 </div>
               </div>
@@ -424,7 +427,7 @@ export default function Builder({ pin, resume, setResume, onLock }: BuilderProps
                     {downloadFace}
                   </Button>
                 )}
-                <div className={cn(SHEET, tailoredResume && SHEET_UNDER_BUTTON)}>
+                <div {...sheetRegion} className={cn(SHEET, tailoredResume && SHEET_UNDER_BUTTON)}>
                   {tailoredResume ? (
                     <ResumePreview resume={tailoredResume} />
                   ) : (
@@ -475,7 +478,7 @@ export default function Builder({ pin, resume, setResume, onLock }: BuilderProps
                     {downloadFace}
                   </Button>
                 )}
-                <div className={cn(SHEET, coverLetter && SHEET_UNDER_BUTTON)}>
+                <div {...sheetRegion} className={cn(SHEET, coverLetter && SHEET_UNDER_BUTTON)}>
                   {coverLetter ? (
                     <div>
                       <div className="whitespace-pre-wrap font-body text-sm leading-relaxed">{coverLetter}</div>
