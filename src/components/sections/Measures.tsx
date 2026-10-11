@@ -135,6 +135,14 @@ const CERT_ACCENTS: Record<Certification['category'], SpectrumKey> = {
 const FLIP_ON_FOCUS = '[&:has(:focus-visible)_.flip-card-inner]:[transform:rotateY(180deg)]'
 
 /**
+ * A pressed card stays turned on every screen. globals.css turns a .flipped
+ * card only under (hover: none), so on a desktop Enter, Space or a click set
+ * aria-pressed while the card went back to its front as soon as focus or the
+ * mouse left it.
+ */
+const FLIP_WHEN_PRESSED = '[&.flipped_.flip-card-inner]:[transform:rotateY(180deg)]'
+
+/**
  * One certification. The front leads with its full name, the one heading per
  * cert; the back says who certified it and when, and links a verification
  * page once there is one.
@@ -162,7 +170,7 @@ function CertCard({ cert }: { cert: Certification }) {
   return (
     <div
       data-reveal
-      className={cn('flip-card relative h-44', FLIP_ON_FOCUS, flipped && 'flipped')}
+      className={cn('flip-card relative h-44', FLIP_ON_FOCUS, FLIP_WHEN_PRESSED, flipped && 'flipped')}
       onMouseMove={handleMouseMove}
       onMouseEnter={() => setCursorVariant('hover')}
       onMouseLeave={() => setCursorVariant('default')}

@@ -160,21 +160,31 @@ test.describe('Credentials', () => {
         pressed: document.activeElement?.getAttribute('aria-pressed') ?? '',
       }))
 
-    expect((await focused()).pressed).toBe('false')
-    await expect
-      .poll(() =>
-        page.evaluate(() => {
-          const inner = document.activeElement?.closest('.flip-card')?.querySelector('.flip-card-inner')
-          return inner ? getComputedStyle(inner).transform : ''
-        }),
-      )
-      // rotateY(180deg) as Chromium serialises it
-      .toMatch(/^matrix3d\(-1, 0, (-?0|1\.2\d*e-16), 0, 0, 1, 0, 0, (-?0|-?1\.2\d*e-16), 0, -1, 0, 0, 0, 0, 1\)$/)
+    // rotateY(180deg) as Chromium serialises it; a card at rest computes `none`.
+    const TURNED = /^matrix3d\(-1, 0, (-?0|1\.2\d*e-16), 0, 0, 1, 0, 0, (-?0|-?1\.2\d*e-16), 0, -1, 0, 0, 0, 0, 1\)$/
+    const cards = page.locator('#measures .flip-card')
+    const turn = (i: number) => () => cards.nth(i).locator('.flip-card-inner').evaluate((el) => getComputedStyle(el).transform)
+    const pressed = (i: number) => cards.nth(i).locator('button[aria-pressed]').getAttribute('aria-pressed')
 
+    expect((await focused()).pressed).toBe('false')
+    // Focus alone shows the back.
+    await expect.poll(turn(0)).toMatch(TURNED)
+
+    // Enter pins it: the back stays once focus moves on, and the state says so.
     await page.keyboard.press('Enter')
     expect((await focused()).pressed).toBe('true')
+    await page.keyboard.press('Tab')
+    expect(await pressed(0)).toBe('true')
+    await expect.poll(turn(0)).toMatch(TURNED)
+
+    // Space lets it go: once focus moves on, the front is back.
+    await page.keyboard.press('Shift+Tab')
     await page.keyboard.press('Space')
     expect((await focused()).pressed).toBe('false')
+    await page.keyboard.press('Tab')
+    expect(await pressed(0)).toBe('false')
+    await expect.poll(turn(0)).toBe('none')
+    await page.keyboard.press('Shift+Tab')
 
     const walk: string[] = []
     for (let i = 0; i < CERTIFICATIONS.length; i++) {
@@ -182,6 +192,18 @@ test.describe('Credentials', () => {
       await page.keyboard.press('Tab')
     }
     expect(walk).toEqual(CERTIFICATIONS.map((c) => `Flip the ${c.name} card`))
+
+    // A click pins a card too, so it still shows its back after the mouse leaves.
+    await page.evaluate(() => (document.activeElement as HTMLElement | null)?.blur())
+    const third = (await cards.nth(2).boundingBox())!
+    await page.mouse.click(third.x + 20, third.y + 20)
+    await page.mouse.move(0, 0)
+    expect(await pressed(2)).toBe('true')
+    await expect.poll(turn(2)).toMatch(TURNED)
+    await page.mouse.click(third.x + 20, third.y + 20)
+    await page.mouse.move(0, 0)
+    expect(await pressed(2)).toBe('false')
+    await expect.poll(turn(2)).toBe('none')
   })
 
   test('a tap flips a card on a phone, and the longest name fits its front', async ({ page }) => {
