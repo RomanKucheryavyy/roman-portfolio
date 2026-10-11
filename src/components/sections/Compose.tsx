@@ -1,12 +1,14 @@
 'use client'
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState, useSyncExternalStore } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import { Github, Linkedin, Mail } from 'lucide-react'
 import { gsap } from '@/hooks/useGSAP'
 import { useStore } from '@/stores/useStore'
 import { useRevealOnScroll } from '@/hooks/useRevealOnScroll'
 import { SectionHeader, SectionShell } from '@/components/ui/SectionShell'
+import { Button } from '@/components/ui/Button'
 import { LINKS } from '@/lib/constants'
+import { modKeyGlyph } from '@/lib/platform'
 
 /** Musician's dynamics for how loudly the message is being written. */
 const dynamicsFor = (length: number): { mark: string; word: string } => {
@@ -44,6 +46,9 @@ const burstFrom = (x: number, y: number, host: HTMLElement) => {
   }
 }
 
+/** The platform never changes under a page, so there is nothing to subscribe to. */
+const noSubscribe = () => () => {}
+
 const DRAFT_KEY = 'compose:draft'
 const EMPTY = { name: '', email: '', message: '' }
 
@@ -57,6 +62,9 @@ export default function Compose() {
   const [status, setStatus] = useState<'idle' | 'sending' | 'sent' | 'error'>('idle')
   const [savedAt, setSavedAt] = useState<string | null>(null)
   const [errorKind, setErrorKind] = useState<'rate_limited' | 'generic'>('generic')
+  // ⌘ on Apple, Ctrl elsewhere. The server can't know, so it renders the ⌘ the
+  // button always showed and the client corrects it after hydrating.
+  const modKey = useSyncExternalStore(noSubscribe, modKeyGlyph, () => '⌘')
   // Bots fill every field they can see; humans take longer than a second and a half.
   // Stamped on mount rather than in the initializer — reading the clock during
   // render is a side effect, and 0 fails open, which is the right way to fail.
@@ -95,6 +103,8 @@ export default function Compose() {
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
     if (!form.name || !form.email || !form.message) return
+    // ⌘↩ in the textarea calls requestSubmit(), which a pending button can't swallow.
+    if (status === 'sending' || status === 'sent') return
     setStatus('sending')
     try {
       const res = await fetch('/api/contact', {
@@ -314,13 +324,16 @@ export default function Compose() {
                 >
                   [ attach: resume.pdf ]
                 </a>
-                <button
+                <Button
+                  variant="solid"
                   type="submit"
-                  disabled={status === 'sending' || status === 'sent'}
-                  className="flex items-center gap-2 px-6 py-2.5 rounded-full font-mono text-xs font-semibold tracking-wider uppercase transition-all duration-300 cursor-pointer disabled:opacity-50 bg-white text-black hover:opacity-80"
+                  pending={status === 'sending'}
+                  pendingLabel="Sending…"
+                  disabled={status === 'sent'}
+                  aria-label="Send message"
                 >
-                  {status === 'sending' ? 'Sending…' : '⌘↩ Send'}
-                </button>
+                  <span aria-hidden="true">{modKey}↩</span> Send
+                </Button>
               </div>
               {status === 'error' && (
                 <p role="alert" className="font-mono text-small text-ink-body">
