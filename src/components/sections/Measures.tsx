@@ -6,6 +6,22 @@ import { SectionHeader, SectionShell } from '@/components/ui/SectionShell'
 import DNAHelix from '@/components/canvas/DNAHelix'
 import { CERTIFICATIONS } from '@/lib/constants'
 
+/** "eight", for a count that opens a sentence. Past twenty it stays a numeral. */
+const NUMBER_WORDS = [
+  'zero', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine', 'ten',
+  'eleven', 'twelve', 'thirteen', 'fourteen', 'fifteen', 'sixteen', 'seventeen', 'eighteen', 'nineteen', 'twenty',
+] as const
+
+function toWords(n: number): string {
+  return NUMBER_WORDS[n] ?? String(n)
+}
+
+const capitalize = (s: string) => s.charAt(0).toUpperCase() + s.slice(1)
+
+// The count is CERTIFICATIONS.length: the intro said "Eight" by hand.
+const CERT_COUNT = CERTIFICATIONS.length
+const INTRO = `${capitalize(toWords(CERT_COUNT))} certification${CERT_COUNT === 1 ? '' : 's'}, one CS degree, and a relentless habit of learning. Each credential here was earned in the field — not a checklist, but a growing repertoire.`
+
 const CERT_ACCENTS: Record<string, string> = {
   developer: '#ffffff',
   consultant: '#888888',
@@ -73,7 +89,7 @@ export default function Measures() {
       <SectionHeader
         movement="measures"
         title={{ lead: 'The', accent: 'Measures' }}
-        intro="Eight certifications, one CS degree, and a relentless habit of learning. Each credential here was earned in the field — not a checklist, but a growing repertoire."
+        intro={INTRO}
       />
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 lg:gap-8">
