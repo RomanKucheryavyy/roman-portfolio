@@ -107,7 +107,8 @@ function RecordRow() {
     },
     {
       term: 'Shipped',
-      value: `${LIVE_CLIENT_WORK.length} live sites & apps · ${APPS_LIVE} on the App Store`,
+      // A comma, not a dot: at 1440 the line wraps, and a dot left at its end reads as a stray.
+      value: `${LIVE_CLIENT_WORK.length} live sites & apps, ${APPS_LIVE} on the App Store`,
       note: ratingNote(appStore),
     },
   ]
