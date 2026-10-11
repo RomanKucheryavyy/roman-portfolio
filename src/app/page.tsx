@@ -1,120 +1,92 @@
-'use client'
-import { useEffect } from 'react'
-import Lenis from 'lenis'
-import { gsap, ScrollTrigger } from '@/hooks/useGSAP'
-import { useMouseTracking } from '@/hooks/useMouseVelocity'
-import { useIsHydrated } from '@/hooks/useMediaQuery'
-import { useStore } from '@/stores/useStore'
-import { setLenis } from '@/lib/lenis'
-import DynamicFavicon from '@/components/effects/DynamicFavicon'
-import AmbientBackground from '@/components/effects/AmbientBackground'
-import ScrollProgress from '@/components/effects/ScrollProgress'
-import SectionTransition from '@/components/effects/SectionTransition'
-import CodePeek from '@/components/effects/CodePeek'
-import ConsoleSignature from '@/components/effects/ConsoleSignature'
-import Loader from '@/components/ui/Loader'
-import Cursor from '@/components/ui/Cursor'
-import Nav from '@/components/ui/Nav'
-import Hero from '@/components/sections/Hero'
-import Measures from '@/components/sections/Measures'
-import Projects from '@/components/sections/Projects'
-import Compositions from '@/components/sections/Compositions'
-import Manifesto from '@/components/sections/Manifesto'
-import Conductor from '@/components/sections/Conductor'
-import Compose from '@/components/sections/Compose'
+import HomeClient from './HomeClient'
+import { CERTIFICATIONS, LINKS, SITE } from '@/lib/constants'
+import { ROUTES } from '@/lib/routes'
+import { movementOf } from '@/lib/score'
+import { pageMetadata } from '@/lib/seo'
+import { CLIENT_WORK, PRODUCTS, actionOf } from '@/lib/work'
 
-const SECTIONS = ['hero', 'measures', 'symphony', 'compositions', 'interlude', 'conductor', 'compose']
+export const metadata = pageMetadata({ path: ROUTES.home })
 
-function AppContent() {
-  useMouseTracking()
-  const setActiveSection = useStore((s) => s.setActiveSection)
-  const setScrollVelocity = useStore((s) => s.setScrollVelocity)
-  const setScrollProgress = useStore((s) => s.setScrollProgress)
+const H2 = 'mt-12 mb-4 font-display text-2xl font-bold tracking-tight text-white'
+const ITEM = 'text-small text-ink-body'
+const LINK = 'text-white underline decoration-white/30 underline-offset-4 hover:decoration-white'
 
-  // Lenis smooth scroll wired into GSAP's ticker + ScrollTrigger
-  useEffect(() => {
-    const lenis = new Lenis({
-      duration: 1.2,
-      easing: (t: number) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
-      touchMultiplier: 2,
-    })
-    setLenis(lenis)
-    let smoothed = 0
-    lenis.on('scroll', (e: { velocity: number; progress: number }) => {
-      ScrollTrigger.update()
-      const v = Math.min(Math.abs(e.velocity) / 2000, 1)
-      smoothed += (v - smoothed) * 0.1
-      setScrollVelocity(smoothed)
-      setScrollProgress(e.progress)
-    })
-    const raf = (time: number) => lenis.raf(time * 1000)
-    gsap.ticker.add(raf)
-    gsap.ticker.lagSmoothing(0)
-    return () => {
-      gsap.ticker.remove(raf)
-      setLenis(null)
-      lenis.destroy()
-    }
-  }, [setScrollVelocity, setScrollProgress])
-
-  // Active-section tracking
-  useEffect(() => {
-    const observers = SECTIONS.map((id) => {
-      const el = document.getElementById(id)
-      if (!el) return null
-      const io = new IntersectionObserver(
-        ([entry]) => { if (entry.isIntersecting) setActiveSection(id) },
-        { threshold: 0.15, rootMargin: '-5% 0px -5% 0px' }
-      )
-      io.observe(el)
-      return io
-    })
-    return () => observers.forEach((io) => io?.disconnect())
-  }, [setActiveSection])
-
+/**
+ * The home page. Everything a visitor sees is client-rendered (HomeClient waits
+ * for hydration before it draws anything), so without this the server HTML of
+ * the site's main page said nothing at all: no name, no work, no way to get in
+ * touch. The <noscript> summary is that HTML for a crawler, a link unfurler or
+ * a browser with scripts off. Every line is read from the same data the page
+ * draws.
+ */
+export default function Home() {
   return (
     <>
-      <ConsoleSignature />
-      <DynamicFavicon />
-      <AmbientBackground />
-      <ScrollProgress />
-      <div className="noise-overlay" aria-hidden="true" />
-      <Loader />
-      <Cursor />
-      <Nav />
-      <CodePeek />
-      <main className="relative z-[1]">
-        <Hero />
-        <SectionTransition commentText="// loading credentials..." />
-        <Measures />
-        <SectionTransition commentText="/* compiling the work */" />
-        <Projects />
-        <SectionTransition commentText="// premiering original works..." />
-        <Compositions />
-        <SectionTransition commentText="/* decoding signal */" />
-        <Manifesto />
-        <SectionTransition commentText="// the conductor speaks..." />
-        <Conductor />
-        <SectionTransition commentText="/* opening a channel */" />
-        <Compose />
-      </main>
+      <HomeClient />
+      <noscript>
+        {/* Above HomeClient's fixed pre-hydration screen (z-200), which never
+            lifts without scripts. */}
+        <div className="relative z-[201] min-h-svh bg-black px-[clamp(1.5rem,5vw,4rem)] py-14 md:py-24">
+          <div className="mx-auto w-full max-w-6xl">
+            <h1 className="font-display text-4xl font-bold tracking-tight text-white md:text-6xl">{SITE.name}</h1>
+            <p className="mt-4 max-w-lg text-body text-ink-body">{SITE.description}</p>
+
+            <h2 className={H2}>{movementOf('symphony').label}</h2>
+            <ul className="space-y-2">
+              {CLIENT_WORK.map((work) => {
+                const action = actionOf(work)
+                return (
+                  <li key={work.id} className={ITEM}>
+                    <span className="text-white">{work.title}</span>
+                    {' · '}
+                    {'href' in action ? (
+                      <a href={action.href} className={LINK}>
+                        {action.label}
+                      </a>
+                    ) : (
+                      action.label
+                    )}
+                  </li>
+                )
+              })}
+            </ul>
+
+            <h2 className={H2}>{movementOf('compositions').label}</h2>
+            <ul className="space-y-2">
+              {PRODUCTS.map((product) => (
+                <li key={product.id} className={ITEM}>
+                  <span className="text-white">{product.title}</span>
+                  {product.tagline ? ` · ${product.tagline}` : null}
+                </li>
+              ))}
+            </ul>
+
+            <h2 className={H2}>{movementOf('measures').label}</h2>
+            <ul className="space-y-2">
+              {CERTIFICATIONS.map((cert) => (
+                <li key={cert.id} className={ITEM}>
+                  Salesforce {cert.name} · {cert.date}
+                </li>
+              ))}
+            </ul>
+
+            <p className="mt-12 flex flex-wrap gap-x-6 gap-y-2 font-mono text-label text-ink-meta">
+              <a href={ROUTES.works} className={LINK}>
+                All work
+              </a>
+              <a href={`mailto:${LINKS.email}`} className={LINK}>
+                {LINKS.email}
+              </a>
+              <a href={LINKS.linkedin} className={LINK}>
+                LinkedIn
+              </a>
+              <a href={LINKS.github} className={LINK}>
+                GitHub
+              </a>
+            </p>
+          </div>
+        </div>
+      </noscript>
     </>
   )
-}
-
-export default function Home() {
-  const mounted = useIsHydrated()
-
-  if (!mounted) {
-    return (
-      <div className="fixed inset-0 z-[200] bg-black flex flex-col items-center justify-center">
-        <div className="w-48 h-px bg-white/10 relative overflow-hidden">
-          <div className="absolute inset-0 bg-white origin-left animate-progress" />
-        </div>
-        <p className="font-mono text-[10px] text-white/20 mt-4 tracking-wider">{'> initializing...'}</p>
-      </div>
-    )
-  }
-
-  return <AppContent />
 }
