@@ -321,7 +321,7 @@ export default function Builder({ pin, resume, setResume, onLock }: BuilderProps
           >
             <ArrowLeft size={18} aria-hidden="true" />
           </Link>
-          <h1 className="font-display text-lg font-bold text-white">
+          <h1 className="font-display text-lead font-bold text-white">
             Resume <span className="text-gradient">Builder</span>
           </h1>
         </div>
