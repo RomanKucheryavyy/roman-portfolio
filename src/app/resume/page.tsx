@@ -8,6 +8,8 @@ import type { ResumeData } from '@/lib/resume-data'
 import { Button } from '@/components/ui/Button'
 import { Field, FIELD_LABEL, Input, Textarea } from '@/components/ui/Field'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { useCopyToClipboard, type CopyState } from '@/hooks/useCopyToClipboard'
+import { cn } from '@/lib/utils'
 
 type TabId = 'resume' | 'tailor' | 'cover-letter'
 
@@ -198,6 +200,40 @@ function ResumePreview({ resume }: { resume: ResumeData }) {
         </>
       )}
     </div>
+  )
+}
+
+const COPY_LABELS: Record<CopyState, string> = { idle: 'Copy to clipboard', copied: 'Copied', error: 'Copy failed' }
+const COPY_STATES = Object.keys(COPY_LABELS) as CopyState[]
+
+/**
+ * The cover letter's copy control, on the paper. It used to call
+ * navigator.clipboard.writeText bare: no word on whether it worked, and an
+ * unhandled rejection wherever the clipboard is refused. The shared hook
+ * falls back to execCommand and reports the outcome; every label sits in one
+ * grid cell so the line never changes width, and a status line announces it.
+ */
+function CopyLetter({ text }: { text: string }) {
+  const { copy, state } = useCopyToClipboard()
+  return (
+    <>
+      <button
+        type="button"
+        onClick={() => {
+          void copy(text)
+        }}
+        className="mt-6 inline-grid cursor-pointer text-left font-mono text-label text-paper-muted transition-colors hover:text-paper-ink"
+      >
+        {COPY_STATES.map((s) => (
+          <span key={s} className={cn('col-start-1 row-start-1', s !== state && 'invisible')}>
+            {COPY_LABELS[s]}
+          </span>
+        ))}
+      </button>
+      <span role="status" className="sr-only">
+        {state === 'idle' ? '' : COPY_LABELS[state]}
+      </span>
+    </>
   )
 }
 
@@ -548,12 +584,7 @@ export default function ResumeBuilder() {
                 {coverLetter ? (
                   <div className="prose prose-sm max-w-none">
                     <div className="whitespace-pre-wrap font-body text-sm leading-relaxed">{coverLetter}</div>
-                    <button
-                      onClick={() => navigator.clipboard.writeText(coverLetter)}
-                      className="mt-6 text-xs text-gray-500 hover:text-black transition-colors font-mono"
-                    >
-                      Copy to clipboard
-                    </button>
+                    <CopyLetter text={coverLetter} />
                   </div>
                 ) : (
                   <div className="h-full flex items-center justify-center text-gray-400 text-sm">
