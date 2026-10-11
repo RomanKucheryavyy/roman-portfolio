@@ -1,3 +1,4 @@
+import { notFound } from 'next/navigation'
 import { FONT, OG_CONTENT_TYPE, OG_SIZE, OgKicker, keyGradient, ogImage } from '../../_og/frame'
 import { publishedStudies, studyOf } from '@/lib/case-studies'
 import { ROUTES } from '@/lib/routes'
@@ -9,13 +10,21 @@ export const alt = 'Program notes by Roman Kucheryavyy'
 export const size = OG_SIZE
 export const contentType = OG_CONTENT_TYPE
 
+/**
+ * Like the page: only published slugs get a card, and any other slug is a 404,
+ * never an on-demand render. twitter-image.tsx declares this again, because
+ * Next reads route segment config from each file's own source, not re-exports.
+ */
+export const dynamicParams = false
+
 export function generateStaticParams() {
   return publishedStudies().map((study) => ({ slug: study.slug }))
 }
 
 export default async function ProgramNotesImage({ params }: { params: Promise<{ slug: string }> }) {
   const study = studyOf((await params).slug)
-  if (!study?.published) throw new Error('program notes card: no published study for this slug')
+  // Belt and braces with dynamicParams: a 404, not a thrown 500 and a logged function error.
+  if (!study?.published) notFound()
   const work = workFor(study)
   const title = splitTitle(study.title)
   const [from, to] = keysOf(work)

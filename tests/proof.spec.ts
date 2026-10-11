@@ -55,6 +55,15 @@ test.describe('program notes', () => {
     expect((await request.get('/works/fubc-coffee-ios')).status()).toBe(404)
   })
 
+  test('an unknown or draft slug has no share card either: a 404, not a 500', async ({ request }) => {
+    for (const slug of ['not-a-slug', 'fubc-coffee-ios']) {
+      for (const card of ['opengraph-image', 'twitter-image']) {
+        const url = `/works/${slug}/${card}`
+        expect((await request.get(url)).status(), url).toBe(404)
+      }
+    }
+  })
+
   test('the default sitemap lists no program notes', async ({ request }) => {
     test.skip(FIXTURE, 'the fixture build publishes one')
     const { text } = await html(request, '/sitemap.xml')
