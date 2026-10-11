@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test'
-import { collectConsole, gotoHome, wheelThrough } from './helpers'
+import { collectConsole, collectCspReports, gotoHome, wheelThrough } from './helpers'
 
 /**
  * The floor: every public route answers, the home page survives a full scroll
@@ -64,6 +64,63 @@ test.describe('console', () => {
     await page.waitForTimeout(1000)
     log.expectClean()
   })
+})
+
+test.describe('content security policy (report-only)', () => {
+  const CSP_ROUTES = ['/', '/works', '/colophon', '/resume', '/llms.txt', '/does-not-exist']
+
+  test('every route sends the policy report-only, and nothing enforces one', async ({ request }) => {
+    for (const path of CSP_ROUTES) {
+      const headers = (await request.get(path)).headers()
+      expect(headers['content-security-policy-report-only'], path).toContain("default-src 'self'")
+      expect(headers['content-security-policy-report-only'], path).toContain("frame-ancestors 'none'")
+      expect(headers['content-security-policy'], path).toBeUndefined()
+    }
+  })
+
+  test('the home page, the ocean and the Spline phone: no report', async ({ page }) => {
+    const project = test.info().project.name
+    const csp = await collectCspReports(page)
+    const spline = { requested: false, unreachable: '' }
+    page.on('request', (req) => {
+      if (/spline\.design/.test(req.url())) spline.requested = true
+    })
+    page.on('requestfailed', (req) => {
+      if (/spline\.design/.test(req.url())) spline.unreachable = `${req.url()} (${req.failure()?.errorText ?? 'failed'})`
+    })
+    // The ocean renders under the hero from the first frame (its WebGL2 path
+    // here; the static fallback in no-webgl). The scroll mounts every section.
+    await gotoHome(page)
+    await wheelThrough(page)
+    if (project !== 'mobile') {
+      // The Spline phone is the desktop deck's last card (the phone deck
+      // never loads it, and with WebGL off it never downloads).
+      await page.locator('#symphony').scrollIntoViewIfNeeded()
+      await page.getByRole('button', { name: 'Previous piece' }).click()
+      const card = page.locator('#symphony [data-work="fubc-coffee-ios"]')
+      if (project === 'desktop') {
+        await expect.poll(() => spline.requested, { timeout: 15_000 }).toBe(true)
+        // A canvas means the runtime loaded and drew. If the host is out of
+        // this runner's reach, the requests it did make were still checked
+        // against the policy (the check comes before the network).
+        if (!spline.unreachable) await expect(card.locator('canvas')).toBeAttached({ timeout: 20_000 })
+        else test.info().annotations.push({ type: 'spline-unreachable', description: spline.unreachable })
+      }
+      // The runtime fetches its WebAssembly and starts its workers after the first frame.
+      await page.waitForTimeout(4000)
+    }
+    expect(await csp.reports()).toEqual([])
+  })
+
+  for (const path of ['/works', '/colophon', '/resume', '/does-not-exist']) {
+    test(`${path}: no report`, async ({ page }) => {
+      const csp = await collectCspReports(page)
+      await page.goto(path)
+      await expect(page.locator('main#main')).toHaveCount(1)
+      await page.waitForTimeout(1500)
+      expect(await csp.reports()).toEqual([])
+    })
+  }
 })
 
 test.describe('detail view', () => {

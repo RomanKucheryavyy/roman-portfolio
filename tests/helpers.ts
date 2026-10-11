@@ -54,6 +54,41 @@ export async function waitForChrome(page: Page) {
   )
 }
 
+export interface CspLog {
+  /** Every report so far: the browser's console lines and the page's securitypolicyviolation events. */
+  reports(): Promise<string[]>
+}
+
+/**
+ * Records what the Content-Security-Policy-Report-Only header (next.config.ts)
+ * would have blocked. Two channels, because neither alone covers everything:
+ * the browser's own "[Report Only] Refused to …" console line, and the
+ * securitypolicyviolation event, which report-only policies fire too. Call it
+ * before navigating.
+ */
+export async function collectCspReports(page: Page): Promise<CspLog> {
+  const lines: string[] = []
+  page.on('console', (msg) => {
+    const text = msg.text()
+    if (/Content Security Policy|\[Report Only\]/i.test(text)) lines.push(`console.${msg.type()}: ${text}`)
+  })
+  await page.addInitScript(() => {
+    const seen: string[] = []
+    ;(window as unknown as { __cspReports: string[] }).__cspReports = seen
+    document.addEventListener('securitypolicyviolation', (e) => {
+      seen.push(`${e.disposition} ${e.effectiveDirective}: ${e.blockedURI || '(inline)'} at ${e.sourceFile || '?'}:${e.lineNumber}`)
+    })
+  })
+  return {
+    async reports() {
+      const events = await page
+        .evaluate(() => (window as unknown as { __cspReports?: string[] }).__cspReports ?? [])
+        .catch(() => [] as string[])
+      return [...lines, ...events]
+    },
+  }
+}
+
 /** Software WebGL in headless Chromium: noise from the GPU stack, not the site. */
 const ALWAYS_ALLOWED: RegExp[] = [/Automatic fallback to software WebGL/, /GL Driver Message/]
 
