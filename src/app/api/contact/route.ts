@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
-import { LINKS, SITE } from '@/lib/constants'
+import { SITE } from '@/lib/constants'
+import { contactFrom, contactTo, netlifyOrigin, resendApiKey } from '@/lib/env'
 
 /**
  * Contact delivery.
@@ -65,13 +66,12 @@ interface Payload {
 
 /** A real email, via Resend's REST API — no SDK, same as the other sites. */
 async function sendViaResend({ name, email, message }: Payload): Promise<boolean> {
-  const key = process.env.RESEND_API_KEY
+  const key = resendApiKey()
   if (!key) return false
 
-  const to = process.env.CONTACT_TO ?? LINKS.email
-  // Resend's shared sender only delivers to the account owner's own address.
-  // Verify romankucheryavyy.com in Resend and set CONTACT_FROM to use the domain.
-  const from = process.env.CONTACT_FROM ?? 'Portfolio <onboarding@resend.dev>'
+  // CONTACT_FROM: Resend's shared sender only delivers to the account owner's
+  // own address. Verify romankucheryavyy.com in Resend to use the domain.
+  const from = contactFrom()
 
   try {
     const res = await fetch('https://api.resend.com/emails', {
@@ -79,7 +79,7 @@ async function sendViaResend({ name, email, message }: Payload): Promise<boolean
       headers: { Authorization: `Bearer ${key}`, 'Content-Type': 'application/json' },
       body: JSON.stringify({
         from,
-        to: to.split(',').map((a) => a.trim()).filter(Boolean),
+        to: contactTo(),
         reply_to: email,
         subject: `Portfolio — ${oneLine(name)}`,
         text: `${message}\n\n— ${name} <${email}>\nSent from ${SITE.url}`,
@@ -117,7 +117,7 @@ async function recordInNetlifyForms({ name, email, message }: Payload): Promise<
   // Netlify sets URL/DEPLOY_PRIME_URL; nothing else does. Without one of them we
   // are not on Netlify, and there is no form handler to post to — posting to a
   // local /__forms.html would just get the static file back and read as success.
-  const origin = process.env.URL ?? process.env.DEPLOY_PRIME_URL
+  const origin = netlifyOrigin()
   if (!origin) return false
   try {
     const res = await fetch(`${origin}/__forms.html`, {
@@ -179,7 +179,7 @@ export async function POST(req: Request) {
     // The reason belongs in the logs, not the response: which channels exist is
     // the site owner's business, and the visitor gets the same fallback either way.
     console.error(
-      process.env.RESEND_API_KEY
+      resendApiKey()
         ? 'contact: every delivery channel failed'
         : 'contact: no delivery channel configured — set RESEND_API_KEY, or register the contact form in Netlify',
     )

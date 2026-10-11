@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import { pinMatches } from '@/lib/env'
 import { clientIp, rateLimited, LIMITS } from '@/lib/rate-limit'
 import { RESUME_DATA } from '@/lib/resume-data'
 
@@ -21,7 +22,7 @@ export async function POST(req: Request) {
 
   try {
     const { pin } = await req.json()
-    if (typeof pin === 'string' && process.env.RESUME_PIN && pin === process.env.RESUME_PIN) {
+    if (pinMatches(pin)) {
       return NextResponse.json(RESUME_DATA, { headers: { 'Cache-Control': 'private, no-store' } })
     }
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
