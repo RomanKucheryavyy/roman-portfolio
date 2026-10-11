@@ -41,6 +41,10 @@ CI (`.github/workflows/ci.yml`) runs typecheck, lint, check:protected, build,
 budget and test:e2e on every PR and branch push. It never deploys and uses no
 secrets.
 
+The budgets in `scripts/budget.json` are the plan's: each route at abb0023
+plus 2%. A stream that goes over says so in its PR instead of raising its own
+line; budgets move only in a commit that says why, and W12 ratchets them down.
+
 ## The non-negotiables
 
 1–8 are `docs/REDESIGN-BRIEF.md` §3, verbatim ("violating these makes it
