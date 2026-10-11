@@ -54,7 +54,8 @@ const typeAndInkExempt = {
 }
 
 const config = [
-  { ignores: ['.next/**', 'node_modules/**', 'out/**', 'next-env.d.ts'] },
+  // .claude/worktrees holds agents' throwaway checkouts during local sessions.
+  { ignores: ['.next/**', 'node_modules/**', 'out/**', 'next-env.d.ts', '.claude/worktrees/**', 'test-results/**', 'playwright-report/**'] },
   ...next,
   typeAndInkGuard,
   typeAndInkExempt,
