@@ -157,9 +157,14 @@ export default function Conductor() {
       <SectionHeader movement="conductor" title={{ lead: 'The', accent: 'Conductor' }} intro={INTRO} />
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        {/* Photo */}
+        {/* Photo: 3:4 on its own; three across it fills the row, so its
+            foot lines up with the two cards beside it. */}
         <div ref={tiltRef}>
-          <div ref={photoRef} className="relative rounded-xl overflow-hidden aspect-[3/4] group" style={{ opacity: 0 }}>
+          <div
+            ref={photoRef}
+            className="relative rounded-xl overflow-hidden aspect-[3/4] lg:aspect-auto lg:h-full group"
+            style={{ opacity: 0 }}
+          >
             <Image
               src="/images/roman.jpg"
               alt="Roman Kucheryavyy"
