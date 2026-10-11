@@ -1,23 +1,27 @@
 'use client'
-import { useCallback, useEffect, useRef, useState, type MouseEvent, type ReactNode } from 'react'
+import { useCallback, useEffect, useRef, useState, type CSSProperties, type MouseEvent, type ReactNode } from 'react'
+import dynamic from 'next/dynamic'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { motion } from 'framer-motion'
-import { ArrowRight, Award, AudioLines, Lock, Mail, Music, User, X } from 'lucide-react'
-import { CopyButton } from '@/components/ui/CopyButton'
-import { Dialog, DialogClose, DialogContent, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
-import { TerminalDots } from '@/components/ui/TerminalBar'
-import { LINKS } from '@/lib/constants'
+import { ArrowRight, Award, AudioLines, Lock, Mail, Music, User } from 'lucide-react'
+import { useIsHydrated } from '@/hooks/useMediaQuery'
+import { useScrollSpy } from '@/hooks/useScrollSpy'
 import { getLenis, scrollToTarget } from '@/lib/lenis'
 import { RESUME_HREF, ROUTES, sectionHref } from '@/lib/routes'
 import { NUMBERED, keyColor, movementOf, type MovementId, type SpectrumKey } from '@/lib/score'
-import { useScrollSpy } from '@/hooks/useScrollSpy'
 import { useStore } from '@/stores/useStore'
+
+/** The phone menu, fetched when it is first wanted (see NavMenu.tsx). */
+const loadMenu = () => import('@/components/ui/NavMenu')
+const NavMenu = dynamic(loadMenu, { ssr: false })
+
+/** The menu dialog's id, for the burger's aria-controls. */
+export const MENU_ID = 'site-menu'
 
 const labelOf = (id: MovementId) => movementOf(id).label ?? movementOf(id).id
 
-const ICON = 'h-4 w-4'
-const ICONS: Record<string, ReactNode> = {
+export const ICON = 'h-4 w-4'
+export const ICONS: Record<string, ReactNode> = {
   measures: <Award className={ICON} />,
   symphony: <Music className={ICON} />,
   compositions: <AudioLines className={ICON} />,
@@ -36,7 +40,7 @@ const HOVER_TEXT: Record<SpectrumKey, string> = {
   purple: 'group-hover:text-spectrum-purple',
 }
 
-interface ItemConfig {
+export interface ItemConfig {
   gradient: string
   iconColor: string
   activeGlow: string
@@ -48,7 +52,7 @@ interface ItemConfig {
  * else on the page; now the Credentials item glows the orange its heading is
  * drawn in.
  */
-function configOf(key: SpectrumKey): ItemConfig {
+export function configOf(key: SpectrumKey): ItemConfig {
   const c = keyColor(key)
   return {
     gradient: `radial-gradient(circle, color-mix(in srgb, ${c} 15%, transparent) 0%, color-mix(in srgb, ${c} 6%, transparent) 50%, transparent 100%)`,
@@ -57,23 +61,35 @@ function configOf(key: SpectrumKey): ItemConfig {
   }
 }
 
-const frontVariants = { initial: { rotateX: 0, opacity: 1 }, hover: { rotateX: -90, opacity: 0 } }
-const backVariants = { initial: { rotateX: 90, opacity: 0 }, hover: { rotateX: 0, opacity: 1 } }
-const gradientVariants = {
-  initial: { opacity: 0, scale: 0.8 },
-  hover: {
-    opacity: 1,
-    scale: 1.4, // stay inside the pill's footprint — 2x bled into neighbors
-    transition: {
-      opacity: { duration: 0.35, ease: [0.4, 0, 0.2, 1] as const },
-      scale: { duration: 0.35, type: 'spring' as const, stiffness: 300, damping: 25 },
-    },
-  },
+/*
+ * The nav's motion is CSS, timed to the springs it used to run on
+ * framer-motion: each linear() below is that spring (mass 1) sampled from 0
+ * to 1, so the flip still overshoots by the same 3.5% and settles as fast.
+ * CSS keeps framer-motion (and its 130 KB) out of every route's first load;
+ * the home page loads it for its sections anyway. Under reduced motion the
+ * global reset in globals.css makes every transition instant.
+ */
+/** stiffness 320, damping 26: the face flip. Settles in 450ms. */
+const SPRING_FLIP =
+  'linear(0, 0.02, 0.071, 0.139, 0.223, 0.31, 0.398, 0.488, 0.574, 0.65, 0.718, 0.782, 0.835, 0.882, 0.919, 0.952, 0.977, 0.996, 1.011, 1.021, 1.028, 1.033, 1.035, 1.035, 1.034, 1.032, 1.03, 1.027, 1.024, 1.02, 1.017, 1.014, 1.012, 1.009, 1.007, 1.005, 1.004, 1.002, 1.001, 1.001, 1)'
+/** stiffness 300, damping 25: the hover glow's growth. Settles in 463ms. */
+const SPRING_GLOW =
+  'linear(0, 0.02, 0.069, 0.138, 0.22, 0.308, 0.397, 0.489, 0.573, 0.65, 0.72, 0.782, 0.836, 0.882, 0.922, 0.953, 0.979, 0.998, 1.013, 1.023, 1.03, 1.035, 1.037, 1.037, 1.036, 1.034, 1.031, 1.028, 1.024, 1.021, 1.018, 1.015, 1.012, 1.01, 1.007, 1.005, 1.004, 1.002, 1.001, 1.001, 1)'
+/** stiffness 200, damping 30: the bar dropping in. Settles in 693ms. */
+const SPRING_ENTER =
+  'linear(0, 0.027, 0.089, 0.169, 0.253, 0.34, 0.422, 0.496, 0.565, 0.627, 0.679, 0.727, 0.767, 0.802, 0.832, 0.858, 0.879, 0.898, 0.914, 0.927, 0.939, 0.948, 0.956, 0.963, 0.969, 0.974, 0.978, 0.981, 0.984, 0.987, 0.989, 0.991, 0.992, 0.993, 0.994, 0.995, 0.996, 0.997, 0.997, 0.998, 1)'
+
+const FLIP: CSSProperties = {
+  transition: `transform 450ms ${SPRING_FLIP}, opacity 450ms ${SPRING_FLIP}`,
+  transformStyle: 'preserve-3d',
+  backfaceVisibility: 'hidden',
 }
-const flipSpring = { type: 'spring', stiffness: 320, damping: 26 } as const
+const GLOW: CSSProperties = {
+  transition: `opacity 350ms cubic-bezier(0.4, 0, 0.2, 1), scale 463ms ${SPRING_GLOW}`,
+}
 
 const FACE =
-  'flex items-center gap-1.5 lg:gap-2 px-2 lg:px-3 py-1.5 lg:py-2 rounded-xl font-mono text-label uppercase tracking-wider whitespace-nowrap transition-colors'
+  'flex items-center gap-1.5 lg:gap-2 px-2 lg:px-3 py-1.5 lg:py-2 rounded-xl font-mono text-label uppercase tracking-wider whitespace-nowrap'
 
 /** An unmodified primary click (or Enter): the kind a page may take over. */
 const isPlainClick = (e: MouseEvent) => e.button === 0 && !e.metaKey && !e.ctrlKey && !e.shiftKey && !e.altKey
@@ -99,23 +115,22 @@ interface NavItemProps {
  * to be two buttons, and mid-flip the pointer could fall between them. The
  * back face is decoration (aria-hidden, no pointer events); the link's name is
  * always the front label. The front reserves the back face's width, so a
- * longer musical name never spills onto its neighbours.
+ * longer musical name never spills onto its neighbours. The flip is on hover
+ * only (Tailwind's hover variants apply only where the device can hover).
  */
 function NavItem({ href, label, back, icon, trailing, config, current, route = false, onClick }: NavItemProps) {
   const active = current !== undefined
+  const ink = active ? 'text-white' : 'text-ink-meta'
   const tint = (
     <span className={`hidden lg:inline-flex items-center transition-colors duration-300 ${config.iconColor}`} aria-hidden="true">
       {icon}
     </span>
   )
-  const ink = active ? 'text-white' : 'text-ink-meta'
   const faces = (
     <>
-      <motion.span
-        className={`${FACE} relative ${ink}`}
-        variants={back ? frontVariants : undefined}
-        transition={flipSpring}
-        style={{ transformStyle: 'preserve-3d', transformOrigin: 'center bottom', backfaceVisibility: 'hidden' }}
+      <span
+        className={`${FACE} relative ${ink} ${back ? 'group-hover:[transform:rotateX(-90deg)] group-hover:opacity-0' : ''}`}
+        style={{ ...FLIP, transformOrigin: 'center bottom' }}
       >
         {tint}
         <span className="inline-grid justify-items-center">
@@ -127,34 +142,26 @@ function NavItem({ href, label, back, icon, trailing, config, current, route = f
           )}
         </span>
         {trailing}
-      </motion.span>
+      </span>
       {back && (
-        <motion.span
+        <span
           data-face="back"
           aria-hidden="true"
-          className={`${FACE} pointer-events-none absolute inset-0 justify-center ${ink}`}
-          variants={backVariants}
-          transition={flipSpring}
-          style={{ transformStyle: 'preserve-3d', transformOrigin: 'center top', backfaceVisibility: 'hidden' }}
+          className={`${FACE} ${ink} pointer-events-none absolute inset-0 justify-center opacity-0 [transform:rotateX(90deg)] group-hover:opacity-100 group-hover:[transform:rotateX(0deg)]`}
+          style={{ ...FLIP, transformOrigin: 'center top' }}
         >
           {tint}
           {back}
-        </motion.span>
+        </span>
       )}
     </>
   )
   const linkClass = 'relative z-10 block rounded-xl'
   return (
-    <motion.div
-      className="relative overflow-visible group"
-      style={{ perspective: '600px' }}
-      whileHover="hover"
-      initial="initial"
-    >
-      <motion.span
-        className="absolute inset-0 z-0 pointer-events-none rounded-xl"
-        variants={gradientVariants}
-        style={{ background: config.gradient, opacity: 0 }}
+    <div className="relative overflow-visible group" style={{ perspective: '600px' }}>
+      <span
+        className="absolute inset-0 z-0 pointer-events-none rounded-xl opacity-0 scale-80 group-hover:opacity-100 group-hover:scale-140"
+        style={{ ...GLOW, background: config.gradient }}
         aria-hidden="true"
       />
       {active && (
@@ -173,11 +180,11 @@ function NavItem({ href, label, back, icon, trailing, config, current, route = f
           {faces}
         </a>
       )}
-    </motion.div>
+    </div>
   )
 }
 
-interface Rect {
+export interface Rect {
   left: number
   top: number
   width: number
@@ -190,7 +197,7 @@ const rectOf = (el: Element | null): Rect | null => {
 }
 
 /** The burger's two bars, or the X they turn into. */
-function Bars({ open }: { open: boolean }) {
+export function Bars({ open }: { open: boolean }) {
   const bar = 'absolute w-4 h-[1.5px] bg-white transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)]'
   return (
     <>
@@ -200,32 +207,23 @@ function Bars({ open }: { open: boolean }) {
   )
 }
 
-/** A line's entrance: the terminal printing itself, one line after another. */
-const lineIn = (delay: number) => ({
-  initial: { opacity: 0, x: -20 },
-  animate: { opacity: 1, x: 0 },
-  transition: { delay },
-})
-const rowIn = (i: number) => lineIn(0.15 + 0.08 * i)
-
-const PROMPT = 'font-mono text-label mr-2'
-const VERB = 'font-mono text-label text-ink-faint mr-3 w-6'
-const PATH = 'font-mono text-lead tracking-tight transition-all duration-200'
-const LINK_OUT = 'inline-flex min-h-11 items-center font-mono text-label text-ink-meta transition-colors active:text-white hover:text-white'
-
 export default function Nav() {
   const pathname = usePathname()
   const onHome = pathname === ROUTES.home
+  const hydrated = useIsHydrated()
   const isLoaded = useStore((s) => s.isLoaded)
-  // Only the home page has a boot to wait for; every other route shows the
-  // nav at once.
-  const shown = isLoaded || !onHome
+  // Only the home page has a boot to wait for; every other route drops the
+  // bar in as soon as it hydrates.
+  const shown = hydrated && (isLoaded || !onHome)
   const activeSection = useStore((s) => s.activeSection)
   const setActiveSection = useStore((s) => s.setActiveSection)
   const setCursorVariant = useStore((s) => s.setCursorVariant)
   const { jumpTo, announce } = useScrollSpy({ enabled: onHome, onChange: setActiveSection, labelOf })
+  const current = onHome ? (activeSection as MovementId) : null
 
   const [menuOpen, setMenuOpen] = useState(false)
+  /** Mounted on first open and kept, so its closing fade and later opens are instant. */
+  const [menuWanted, setMenuWanted] = useState(false)
   const barRef = useRef<HTMLElement>(null)
   const burgerRef = useRef<HTMLButtonElement>(null)
   const [rects, setRects] = useState<{ bar: Rect; burger: Rect } | null>(null)
@@ -243,22 +241,18 @@ export default function Nav() {
     [onHome, jumpTo],
   )
 
-  // The menu's close button sits exactly where the burger is, drawn as the X
-  // the burger would have turned into: Radix makes everything outside the
-  // dialog inert, the burger included, so the menu brings its own.
+  // The menu's close button sits exactly where the burger is (see NavMenu).
   const measure = useCallback(() => {
     const bar = rectOf(barRef.current)
     const burger = rectOf(burgerRef.current)
     if (bar && burger) setRects({ bar, burger })
   }, [])
 
-  const onOpenChange = useCallback(
-    (open: boolean) => {
-      if (open) measure()
-      setMenuOpen(open)
-    },
-    [measure],
-  )
+  const openMenu = () => {
+    measure()
+    setMenuWanted(true)
+    setMenuOpen(true)
+  }
 
   // Lenis drives the scroll from its own wheel listener, so the page would
   // keep moving behind the menu unless Lenis itself stops.
@@ -283,8 +277,18 @@ export default function Nav() {
     return () => mql.removeEventListener('change', onChange)
   }, [])
 
+  // On a phone, fetch the menu's code once the page is idle, so the first tap
+  // on the burger doesn't wait for it. Wider screens never show the burger.
+  useEffect(() => {
+    if (!shown || !window.matchMedia('(max-width: 767px)').matches) return
+    const idle = window.requestIdleCallback ?? ((cb: () => void) => window.setTimeout(cb, 1500))
+    const cancel = window.cancelIdleCallback ?? window.clearTimeout
+    const id = idle(() => void loadMenu())
+    return () => cancel(id)
+  }, [shown])
+
   /** A section row: close the menu, then jump once it has gone. */
-  const row = (id: MovementId) => (e: MouseEvent<HTMLAnchorElement>) => {
+  const onRow = (id: MovementId) => (e: MouseEvent<HTMLAnchorElement>) => {
     if (!onHome || !isPlainClick(e)) return
     e.preventDefault()
     pendingJump.current = id
@@ -292,9 +296,14 @@ export default function Nav() {
   }
 
   const onCloseAutoFocus = (e: Event) => {
-    const id = pendingJump.current
-    if (!id) return // Escape, the X or /close: focus goes back to the burger.
+    // There is no Radix trigger (the menu's code arrives later than the
+    // burger), so focus is handed back here rather than by Radix.
     e.preventDefault()
+    const id = pendingJump.current
+    if (!id) {
+      burgerRef.current?.focus() // Escape, the X or /close
+      return
+    }
     pendingJump.current = null
     // Two frames: Lenis has restarted and the page is scrollable again.
     requestAnimationFrame(() =>
@@ -306,12 +315,14 @@ export default function Nav() {
   }
 
   return (
-    <Dialog open={menuOpen} onOpenChange={onOpenChange}>
-      <motion.div
+    <>
+      <div
         className="fixed top-0 left-0 right-0 z-[100] px-4 pt-4 md:px-4"
-        initial={{ y: -80, opacity: 0 }}
-        animate={shown ? { y: 0, opacity: 1 } : {}}
-        transition={{ type: 'spring', stiffness: 200, damping: 30, delay: 0.3 }}
+        style={{
+          transform: shown ? 'none' : 'translateY(-80px)',
+          opacity: shown ? 1 : 0,
+          transition: `transform 693ms ${SPRING_ENTER} 300ms, opacity 693ms ${SPRING_ENTER} 300ms`,
+        }}
         inert={!shown}
       >
         <nav
@@ -343,7 +354,7 @@ export default function Nav() {
                 back={score}
                 icon={ICONS[id]}
                 config={configOf(key)}
-                current={onHome && activeSection === id ? 'location' : undefined}
+                current={current === id ? 'location' : undefined}
                 onClick={jump(id)}
               />
             ))}
@@ -368,167 +379,39 @@ export default function Nav() {
             )}
           </div>
 
-          {/* Phone: the burger opens the menu sheet (Radix sets aria-expanded,
-              aria-controls and aria-haspopup, and returns focus here). */}
-          <DialogTrigger asChild>
-            <button
-              ref={burgerRef}
-              type="button"
-              className="md:hidden relative w-11 h-11 -my-2 -mr-2 flex items-center justify-center cursor-pointer z-[102]"
-              aria-label="Open menu"
-            >
-              <Bars open={menuOpen} />
-            </button>
-          </DialogTrigger>
+          {/* Phone: the burger opens the menu sheet. */}
+          <button
+            ref={burgerRef}
+            type="button"
+            className="md:hidden relative w-11 h-11 -my-2 -mr-2 flex items-center justify-center cursor-pointer z-[102]"
+            aria-label="Open menu"
+            aria-haspopup="dialog"
+            aria-expanded={menuOpen}
+            aria-controls={menuOpen ? MENU_ID : undefined}
+            onPointerEnter={() => void loadMenu()}
+            onPointerDown={() => void loadMenu()}
+            onFocus={() => void loadMenu()}
+            onClick={openMenu}
+          >
+            <Bars open={menuOpen} />
+          </button>
         </nav>
-      </motion.div>
+      </div>
       <p aria-live="polite" className="sr-only">
         {announce}
       </p>
 
-      {/* The phone menu: a terminal session over the whole screen. */}
-      <DialogContent
-        variant="sheet"
-        hideClose
-        // Radix hides the rest of the page from assistive tech (aria-hidden)
-        // but doesn't say so on the dialog itself.
-        aria-modal="true"
-        aria-describedby={undefined}
-        onCloseAutoFocus={onCloseAutoFocus}
-        className="bg-black flex flex-col justify-between px-6 pt-24 pb-10 md:hidden"
-      >
-        <DialogTitle className="sr-only">Site menu</DialogTitle>
-
-        {/* The bar as it looked when the menu opened, so the top of the screen
-            doesn't jump; the X takes the burger's exact box. */}
-        {rects && (
-          <div
-            aria-hidden="true"
-            className="pointer-events-none absolute flex items-center rounded-xl border border-white/[0.06] px-4"
-            style={rects.bar}
-          >
-            <span className="font-display font-bold text-sm tracking-tight text-white">
-              RK<span className="text-gradient">.</span>
-            </span>
-          </div>
-        )}
-        <DialogClose
-          className="absolute flex items-center justify-center cursor-pointer rounded-full"
-          style={rects?.burger ?? { top: 16, right: 16, width: 44, height: 44 }}
-          aria-label="Close menu"
-        >
-          <Bars open />
-        </DialogClose>
-
-        <div>
-          <motion.div className="flex items-center mb-6" aria-hidden="true" {...lineIn(0.05)}>
-            <TerminalDots />
-            <span className="font-mono text-label text-ink-faint ml-2">rk@portfolio ~ %</span>
-          </motion.div>
-
-          <motion.div className="font-mono text-label text-spectrum-green/60 mb-8" aria-hidden="true" {...lineIn(0.1)}>
-            $ ls ./sections
-          </motion.div>
-
-          <ul className="flex flex-col gap-1">
-            {NUMBERED.map(({ id, key }, i) => {
-              const config = configOf(key)
-              const isActive = onHome && activeSection === id
-              return (
-                <motion.li key={id} {...rowIn(i)}>
-                  <a
-                    href={sectionHref(id, pathname)}
-                    onClick={row(id)}
-                    aria-current={isActive ? 'location' : undefined}
-                    className="relative flex w-full items-center text-left cursor-pointer group py-2.5 overflow-visible rounded-lg"
-                  >
-                    {isActive && (
-                      <span
-                        className="absolute inset-0 pointer-events-none rounded-lg"
-                        style={{ background: `radial-gradient(circle at left, ${config.activeGlow} 0%, transparent 60%)` }}
-                        aria-hidden="true"
-                      />
-                    )}
-                    <span className="flex items-center relative z-10">
-                      <span className={`${PROMPT} text-spectrum-green/40`} aria-hidden="true">&gt;</span>
-                      <span className={VERB} aria-hidden="true">cd</span>
-                      <span
-                        className={`mr-2 transition-colors duration-300 ${isActive ? 'text-white' : 'text-ink-faint'} ${config.iconColor}`}
-                        aria-hidden="true"
-                      >
-                        {ICONS[id]}
-                      </span>
-                      <span
-                        className={`${PATH} ${isActive ? 'text-white' : 'text-ink-meta'}`}
-                        style={{ textShadow: isActive ? '0 0 20px rgba(255,255,255,0.3)' : 'none' }}
-                      >
-                        /{id}
-                      </span>
-                      {isActive && (
-                        <span className="ml-3 font-mono text-label text-spectrum-green/50 animate-pulse motion-reduce:animate-none" aria-hidden="true">
-                          ● current
-                        </span>
-                      )}
-                    </span>
-                  </a>
-                </motion.li>
-              )
-            })}
-            <motion.li {...rowIn(NUMBERED.length)} className="mt-2">
-              <Link
-                href={ROUTES.works}
-                onClick={() => setMenuOpen(false)}
-                aria-current={pathname === ROUTES.works ? 'page' : undefined}
-                className="flex w-full items-center text-left cursor-pointer group py-2.5"
-              >
-                <span className={`${PROMPT} text-spectrum-amber/40`} aria-hidden="true">&gt;</span>
-                <span className={VERB} aria-hidden="true">ls</span>
-                <Music className={`h-4 w-4 mr-2 text-ink-faint ${configOf(movementOf('symphony').key).iconColor}`} aria-hidden="true" />
-                <span className={`${PATH} ${pathname === ROUTES.works ? 'text-white' : 'text-ink-meta'}`}>/works</span>
-              </Link>
-            </motion.li>
-            {RESUME_HREF && (
-              <motion.li {...rowIn(NUMBERED.length + 1)}>
-                <Link
-                  href={RESUME_HREF}
-                  onClick={() => setMenuOpen(false)}
-                  className="flex w-full items-center text-left cursor-pointer group py-2.5"
-                >
-                  <span className={`${PROMPT} text-spectrum-amber/40`} aria-hidden="true">&gt;</span>
-                  <span className={VERB} aria-hidden="true">su</span>
-                  <Lock className="h-4 w-4 mr-2 text-spectrum-amber/30" aria-hidden="true" />
-                  <span className={`${PATH} text-ink-meta`}>/resume</span>
-                </Link>
-              </motion.li>
-            )}
-            <motion.li {...rowIn(NUMBERED.length + 2)} className="mt-2">
-              <DialogClose className="flex w-full items-center text-left cursor-pointer group py-2.5" aria-label="Close menu">
-                <span className={`${PROMPT} text-spectrum-red/40`} aria-hidden="true">&gt;</span>
-                <span className={VERB} aria-hidden="true">exit</span>
-                <X className="h-4 w-4 mr-2 text-ink-faint" aria-hidden="true" />
-                <span className={`${PATH} text-ink-meta`}>/close</span>
-              </DialogClose>
-            </motion.li>
-          </ul>
-        </div>
-
-        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.6 }}>
-          <div className="h-px bg-white/5 mb-4" />
-          <div className="font-mono text-label text-ink-faint mb-1" aria-hidden="true">$ echo $LINKS</div>
-          <div className="flex flex-wrap items-center gap-x-5">
-            <a href={LINKS.github} target="_blank" rel="noopener noreferrer" className={LINK_OUT}>
-              github
-            </a>
-            <a href={LINKS.linkedin} target="_blank" rel="noopener noreferrer" className={LINK_OUT}>
-              linkedin
-            </a>
-            <a href={`mailto:${LINKS.email}`} className={LINK_OUT}>
-              email
-            </a>
-          </div>
-          <CopyButton text={LINKS.email} className="mt-3" />
-        </motion.div>
-      </DialogContent>
-    </Dialog>
+      {menuWanted && (
+        <NavMenu
+          open={menuOpen}
+          onOpenChange={setMenuOpen}
+          pathname={pathname}
+          current={current}
+          rects={rects}
+          onRow={onRow}
+          onCloseAutoFocus={onCloseAutoFocus}
+        />
+      )}
+    </>
   )
 }
