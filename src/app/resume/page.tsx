@@ -5,6 +5,7 @@ import { Lock, Mail, FileText, WandSparkles, Download, ArrowLeft, LoaderCircle }
 // Type only: the data itself carries the phone number and the case metrics,
 // so it comes from /api/resume/data after the PIN, never from this bundle.
 import type { ResumeData } from '@/lib/resume-data'
+import { Field, FIELD_LABEL, Input, Textarea } from '@/components/ui/Field'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 
 type TabId = 'resume' | 'tailor' | 'cover-letter'
@@ -114,10 +115,11 @@ function ResumeLoading({ error, onRetry }: { error: string | null; onRetry: () =
   )
 }
 
+/** A group of fields under one heading: one experience entry and its bullets. */
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <div>
-      <h3 className="font-mono text-[10px] text-white/30 uppercase tracking-wider mb-2">{title}</h3>
+      <h2 className={FIELD_LABEL}>{title}</h2>
       {children}
     </div>
   )
@@ -359,8 +361,6 @@ export default function ResumeBuilder() {
     'absolute top-3 right-3 z-10 flex items-center gap-2 px-4 py-2 rounded-full bg-black text-white text-xs font-mono uppercase tracking-wider hover:bg-gray-800 transition-all duration-200 disabled:opacity-40 shadow-lg'
   const aiBtnClass =
     'flex items-center gap-2 px-6 py-3 rounded-full bg-white text-black font-mono text-sm font-semibold tracking-wider uppercase hover:opacity-80 transition-all duration-300 disabled:opacity-30'
-  const textareaClass =
-    'w-full bg-white/5 border border-white/10 rounded-lg p-4 text-white text-sm font-body focus:outline-none focus:border-white/30 resize-none placeholder:text-white/15 transition-colors'
 
   return (
     <div className="min-h-screen bg-black">
@@ -400,44 +400,42 @@ export default function ResumeBuilder() {
 
           <TabsContent value="resume" className="grid grid-cols-1 lg:grid-cols-2 gap-8">
             <div className="space-y-6">
-              <Section title="Summary">
-                <textarea
+              <Field label="Summary">
+                <Textarea
                   value={resume.summary}
                   rows={4}
                   onChange={(e) => setResume({ ...resume, summary: e.target.value })}
-                  className="w-full bg-white/5 border border-white/10 rounded-lg p-3 text-white text-base md:text-sm font-body focus:outline-none focus:border-white/30 resize-none transition-colors"
                 />
-              </Section>
+              </Field>
               {resume.experience.map((exp, i) => (
                 <Section key={i} title={`${exp.company} — ${exp.title}`}>
-                  <p className="text-white/30 text-xs font-mono mb-2">{exp.dates}</p>
+                  <p className="mb-2 font-mono text-label text-ink-meta">{exp.dates}</p>
                   {exp.bullets.map((bullet, j) => (
-                    <textarea
-                      key={j}
-                      value={bullet}
-                      rows={2}
-                      onChange={(e) => {
-                        setResume((prev) => {
-                          if (!prev) return prev
-                          const next = structuredClone(prev)
-                          next.experience[i].bullets[j] = e.target.value
-                          return next
-                        })
-                      }}
-                      className="w-full bg-white/5 border border-white/10 rounded-lg p-2 text-white text-xs font-body focus:outline-none focus:border-white/30 resize-none mb-2 transition-colors"
-                    />
+                    <Field key={j} label={`${exp.company} — ${exp.title}: bullet ${j + 1}`} hideLabel className="mb-2">
+                      <Textarea
+                        value={bullet}
+                        rows={2}
+                        onChange={(e) => {
+                          setResume((prev) => {
+                            if (!prev) return prev
+                            const next = structuredClone(prev)
+                            next.experience[i].bullets[j] = e.target.value
+                            return next
+                          })
+                        }}
+                      />
+                    </Field>
                   ))}
                 </Section>
               ))}
-              <Section title="Skills">
-                <input
+              <Field label="Skills">
+                <Input
                   value={resume.skills.join(', ')}
                   onChange={(e) =>
                     setResume({ ...resume, skills: e.target.value.split(',').map((s) => s.trim()).filter(Boolean) })
                   }
-                  className="w-full bg-white/5 border border-white/10 rounded-lg p-3 text-white text-base md:text-sm font-body focus:outline-none focus:border-white/30 transition-colors"
                 />
-              </Section>
+              </Field>
             </div>
             <div className="relative">
               <button
@@ -457,15 +455,15 @@ export default function ResumeBuilder() {
 
           <TabsContent value="tailor" className="grid grid-cols-1 lg:grid-cols-2 gap-8">
             <div className="space-y-6">
-              <Section title="Paste Job Description">
-                <textarea
+              <Field label="Paste Job Description">
+                <Textarea
                   value={jobDescription}
                   rows={12}
                   onChange={(e) => setJobDescription(e.target.value)}
                   placeholder="Paste the full job description here..."
-                  className={textareaClass}
+                  className="min-h-72"
                 />
-              </Section>
+              </Field>
               <button onClick={handleTailor} disabled={aiLoading || !jobDescription.trim()} className={aiBtnClass}>
                 {aiLoading ? <LoaderCircle size={16} className="animate-spin" /> : <WandSparkles size={16} />}
                 {aiLoading ? 'Tailoring...' : 'Tailor Resume'}
@@ -497,23 +495,22 @@ export default function ResumeBuilder() {
 
           <TabsContent value="cover-letter" className="grid grid-cols-1 lg:grid-cols-2 gap-8">
             <div className="space-y-6">
-              <Section title="Company Name (optional)">
-                <input
+              <Field label="Company Name (optional)">
+                <Input
                   value={companyName}
                   onChange={(e) => setCompanyName(e.target.value)}
                   placeholder="e.g. Google, Amazon..."
-                  className="w-full bg-white/5 border border-white/10 rounded-lg p-3 text-white text-base md:text-sm font-body focus:outline-none focus:border-white/30 placeholder:text-white/15 transition-colors"
                 />
-              </Section>
-              <Section title="Paste Job Description">
-                <textarea
+              </Field>
+              <Field label="Paste Job Description">
+                <Textarea
                   value={jobDescription}
                   rows={10}
                   onChange={(e) => setJobDescription(e.target.value)}
                   placeholder="Paste the full job description here..."
-                  className={textareaClass}
+                  className="min-h-60"
                 />
-              </Section>
+              </Field>
               <button onClick={handleCoverLetter} disabled={aiLoading || !jobDescription.trim()} className={aiBtnClass}>
                 {aiLoading ? <LoaderCircle size={16} className="animate-spin" /> : <Mail size={16} />}
                 {aiLoading ? 'Generating...' : 'Generate Cover Letter'}
