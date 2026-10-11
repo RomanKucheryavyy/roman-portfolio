@@ -1,9 +1,12 @@
 'use client'
 import { useEffect, useRef } from 'react'
 import { gsap } from '@/hooks/useGSAP'
+import { movementOf, type MovementId } from '@/lib/score'
 
-/** Code-comment interludes between sections, with a faint rainbow hairline. */
-export default function SectionTransition({ commentText }: { commentText: string }) {
+/** Code-comment interludes between sections, with a faint rainbow hairline.
+ *  `movement` is the one being entered; its caption comes from score.ts. */
+export default function SectionTransition({ movement }: { movement: MovementId }) {
+  const commentText = movementOf(movement).caption
   const wrapRef = useRef<HTMLDivElement>(null)
   const textRef = useRef<HTMLSpanElement>(null)
 

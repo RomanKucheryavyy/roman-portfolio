@@ -27,25 +27,21 @@ const SECTIONS = ['hero', 'measures', 'symphony', 'compositions', 'interlude', '
 function AppContent() {
   useMouseTracking()
   const setActiveSection = useStore((s) => s.setActiveSection)
-  const setScrollVelocity = useStore((s) => s.setScrollVelocity)
-  const setScrollProgress = useStore((s) => s.setScrollProgress)
+  const isLoaded = useStore((s) => s.isLoaded)
 
-  // Lenis smooth scroll wired into GSAP's ticker + ScrollTrigger
+  // Lenis smooth scroll wired into GSAP's ticker + ScrollTrigger. Not under
+  // reduced motion: Lenis eases every wheel notch and every jump, which is the
+  // motion that preference asks to remove, and ScrollTrigger listens to the
+  // native scroll by itself.
   useEffect(() => {
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return
     const lenis = new Lenis({
       duration: 1.2,
       easing: (t: number) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
       touchMultiplier: 2,
     })
     setLenis(lenis)
-    let smoothed = 0
-    lenis.on('scroll', (e: { velocity: number; progress: number }) => {
-      ScrollTrigger.update()
-      const v = Math.min(Math.abs(e.velocity) / 2000, 1)
-      smoothed += (v - smoothed) * 0.1
-      setScrollVelocity(smoothed)
-      setScrollProgress(e.progress)
-    })
+    lenis.on('scroll', () => ScrollTrigger.update())
     const raf = (time: number) => lenis.raf(time * 1000)
     gsap.ticker.add(raf)
     gsap.ticker.lagSmoothing(0)
@@ -54,7 +50,7 @@ function AppContent() {
       setLenis(null)
       lenis.destroy()
     }
-  }, [setScrollVelocity, setScrollProgress])
+  }, [])
 
   // Active-section tracking
   useEffect(() => {
@@ -80,19 +76,21 @@ function AppContent() {
       <ScrollProgress />
       <Loader />
       <CodePeek />
-      <main className="relative z-[1]">
+      {/* The skip link's target. Inert during the boot, so a keyboard can't
+          walk through a page the Loader is still covering. */}
+      <main id="main" tabIndex={-1} inert={!isLoaded} className="relative z-[1] outline-none">
         <Hero />
-        <SectionTransition commentText="// loading credentials..." />
+        <SectionTransition movement="measures" />
         <Measures />
-        <SectionTransition commentText="/* compiling the work */" />
+        <SectionTransition movement="symphony" />
         <Projects />
-        <SectionTransition commentText="// premiering original works..." />
+        <SectionTransition movement="compositions" />
         <Compositions />
-        <SectionTransition commentText="/* decoding signal */" />
+        <SectionTransition movement="interlude" />
         <Manifesto />
-        <SectionTransition commentText="// the conductor speaks..." />
+        <SectionTransition movement="conductor" />
         <Conductor />
-        <SectionTransition commentText="/* opening a channel */" />
+        <SectionTransition movement="compose" />
         <Compose />
       </main>
     </MotionConfig>
@@ -104,11 +102,11 @@ export default function HomeClient() {
 
   if (!mounted) {
     return (
-      <div className="fixed inset-0 z-[200] bg-black flex flex-col items-center justify-center">
+      <div className="fixed inset-0 z-[200] bg-black flex flex-col items-center justify-center" aria-hidden="true">
         <div className="w-48 h-px bg-white/10 relative overflow-hidden">
           <div className="absolute inset-0 bg-white origin-left animate-progress" />
         </div>
-        <p className="font-mono text-[10px] text-white/20 mt-4 tracking-wider">{'> initializing...'}</p>
+        <p className="font-mono text-label text-ink-faint mt-4 tracking-wider">{'> initializing...'}</p>
       </div>
     )
   }
