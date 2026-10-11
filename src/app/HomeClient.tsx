@@ -23,11 +23,8 @@ import Manifesto from '@/components/sections/Manifesto'
 import Conductor from '@/components/sections/Conductor'
 import Compose from '@/components/sections/Compose'
 
-const SECTIONS = ['hero', 'measures', 'symphony', 'compositions', 'interlude', 'conductor', 'compose']
-
 function AppContent() {
   useMouseTracking()
-  const setActiveSection = useStore((s) => s.setActiveSection)
   const isLoaded = useStore((s) => s.isLoaded)
 
   // Lenis smooth scroll wired into GSAP's ticker + ScrollTrigger. Not under
@@ -61,21 +58,6 @@ function AppContent() {
     const id = window.location.hash.slice(1)
     if (MOVEMENTS.some((m) => m.id === id)) scrollToTarget(id, { immediate: true })
   }, [isLoaded])
-
-  // Active-section tracking
-  useEffect(() => {
-    const observers = SECTIONS.map((id) => {
-      const el = document.getElementById(id)
-      if (!el) return null
-      const io = new IntersectionObserver(
-        ([entry]) => { if (entry.isIntersecting) setActiveSection(id) },
-        { threshold: 0.15, rootMargin: '-5% 0px -5% 0px' }
-      )
-      io.observe(el)
-      return io
-    })
-    return () => observers.forEach((io) => io?.disconnect())
-  }, [setActiveSection])
 
   // The nav, the cursor and the grain are the layout's (SiteChrome), on every route.
   return (

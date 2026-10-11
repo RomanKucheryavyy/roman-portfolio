@@ -5,6 +5,10 @@ import { AnimatePresence, motion } from 'framer-motion'
 import { Award, Music, User, Mail, Lock, AudioLines, X } from 'lucide-react'
 import { NAV_ITEMS, LINKS } from '@/lib/constants'
 import { useStore } from '@/stores/useStore'
+import { useScrollSpy } from '@/hooks/useScrollSpy'
+import { movementOf, type MovementId } from '@/lib/score'
+
+const labelOf = (id: MovementId) => movementOf(id).label ?? movementOf(id).id
 
 interface ItemConfig {
   icon: React.ReactNode
@@ -144,6 +148,8 @@ export default function Nav() {
   // nav at once.
   const shown = isLoaded || pathname !== '/'
   const activeSection = useStore((s) => s.activeSection)
+  const setActiveSection = useStore((s) => s.setActiveSection)
+  useScrollSpy({ enabled: pathname === '/', onChange: setActiveSection, labelOf })
   const setCursorVariant = useStore((s) => s.setCursorVariant)
   const [menuOpen, setMenuOpen] = useState(false)
 
