@@ -1,7 +1,6 @@
 'use client'
 
-import { PageHeader } from '@/app/_components/PageHeader'
-import { PageShell } from '@/app/_components/PageShell'
+import { PageHeader, SectionShell } from '@/components/ui/SectionShell'
 import { PILL_OUTLINE } from '@/components/ui/pill'
 import { keyOf, nextKeyOf } from '@/lib/score'
 
@@ -11,9 +10,10 @@ import { keyOf, nextKeyOf } from '@/lib/score'
  * layout (nav, footer) stays; global-error.tsx covers a throw in the layout.
  *
  * React already reports the error to the console, so nothing is logged here.
- * This boundary loads on every route, so it uses PageShell and PILL_OUTLINE
- * directly (SectionShell would bring GSAP, Button tailwind-merge and
- * next/link), and its way home is a plain "/" rather than ROUTES.home:
+ * This boundary loads on every route, so it uses only what costs no client
+ * JavaScript of its own: SectionShell and PageHeader (plain markup, see
+ * SectionShell.tsx) and PILL_OUTLINE directly (Button would bring
+ * tailwind-merge and next/link). Its way home is a plain "/" rather than ROUTES.home:
  * routes.ts imports constants.ts, which would carry every card's copy into
  * every route. A full load is also the surest way out of a broken page.
  */
@@ -29,11 +29,15 @@ export default function ErrorPage({
 }) {
   return (
     <main id="main" tabIndex={-1} className="relative w-full bg-black outline-none">
-      <PageShell className="flex min-h-svh items-center">
-        <PageHeader kicker="// error" lead="Something" accent="broke." keys={[keyOf('compose'), nextKeyOf('compose')]}>
-          <p role="alert" className="mt-4 max-w-lg text-body text-ink-meta">
-            This part of the page failed to load. Try it again, or head back to the top.
-          </p>
+      <SectionShell className="flex min-h-svh items-center">
+        <PageHeader
+          kicker="// error"
+          lead="Something"
+          accent="broke."
+          keys={[keyOf('compose'), nextKeyOf('compose')]}
+          intro="This part of the page failed to load. Try it again, or head back to the top."
+          introRole="alert"
+        >
           <div className="mt-8 flex flex-wrap gap-3">
             <button type="button" onClick={() => (retry ?? reset)()} className={`${PILL_OUTLINE} cursor-pointer`}>
               Try again
@@ -44,7 +48,7 @@ export default function ErrorPage({
             </a>
           </div>
         </PageHeader>
-      </PageShell>
+      </SectionShell>
     </main>
   )
 }

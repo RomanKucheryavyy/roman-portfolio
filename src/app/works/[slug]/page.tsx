@@ -2,8 +2,7 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { PageBlock } from '@/app/_components/PageBlock'
-import { PageHeader } from '@/app/_components/PageHeader'
-import { PageShell } from '@/app/_components/PageShell'
+import { PageHeader, SectionShell } from '@/components/ui/SectionShell'
 import FactList from '@/components/ui/FactList'
 import WorkCard from '@/components/ui/WorkCard'
 import { getAppStoreFacts, siteAppStoreId } from '@/lib/app-store'
@@ -78,7 +77,7 @@ export default async function ProgramNotesPage({ params }: Props) {
   return (
     <main id="main" tabIndex={-1} className="relative min-h-svh w-full bg-black outline-none">
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: structuredDataOf(study, work) }} />
-      <PageShell className="pt-28 md:pt-32">
+      <SectionShell className="pt-28 md:pt-32">
         <nav aria-label="Breadcrumb" className="mb-8 font-mono text-label text-ink-meta">
           <ol className="flex flex-wrap items-center gap-2">
             <li>
@@ -176,7 +175,7 @@ export default async function ProgramNotesPage({ params }: Props) {
             })}
           </ol>
         </section>
-      </PageShell>
+      </SectionShell>
     </main>
   )
 }

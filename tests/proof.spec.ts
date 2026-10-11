@@ -295,7 +295,7 @@ test.describe('colophon', () => {
     await noSeriousAxe(page)
   })
 
-  test("sits on the home page's column (PageShell matches SectionShell)", async ({ page }) => {
+  test("sits on the home page's column (one SectionShell)", async ({ page }) => {
     const column = (selector: string) =>
       page.locator(selector).evaluate((section) => {
         const s = getComputedStyle(section)
@@ -306,6 +306,41 @@ test.describe('colophon', () => {
     const colophon = await column('main#main > section')
     await gotoHome(page)
     expect(colophon).toEqual(await column('#measures'))
+  })
+
+  test("its header is a movement's header: the same kicker, heading and intro type (one HeaderFrame)", async ({ page }) => {
+    // The page's h1 and a movement's h2 are both HeaderFrame (SectionShell.tsx).
+    // Before W12 the pages outside home copied its class strings, and only the
+    // column above was checked; this checks the type itself.
+    const type = (header: string) =>
+      page.locator(header).evaluate((el) => {
+        const pick = (node: Element | null) => {
+          if (!node) return null
+          const s = getComputedStyle(node)
+          return {
+            family: s.fontFamily,
+            size: s.fontSize,
+            weight: s.fontWeight,
+            tracking: s.letterSpacing,
+            transform: s.textTransform,
+            color: s.color,
+            gap: [s.marginTop, s.marginBottom],
+          }
+        }
+        return {
+          header: getComputedStyle(el).marginBottom,
+          kicker: pick(el.querySelector(':scope > p.section-label')),
+          heading: pick(el.querySelector(':scope > h1, :scope > h2')),
+          intro: pick(el.querySelector(':scope > p:not(.section-label)')),
+        }
+      })
+    await page.goto('/colophon')
+    const colophon = await type('main#main > section > div > header')
+    await gotoHome(page)
+    const measures = await type('#measures > div > header')
+    expect(colophon.kicker).not.toBeNull()
+    expect(colophon.intro).not.toBeNull()
+    expect(colophon).toEqual(measures)
   })
 })
 

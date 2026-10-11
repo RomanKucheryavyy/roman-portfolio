@@ -2,7 +2,8 @@
 import { useRef } from 'react'
 import { useStore } from '@/stores/useStore'
 import { useRevealOnScroll } from '@/hooks/useRevealOnScroll'
-import { SectionHeader, SectionShell } from '@/components/ui/SectionShell'
+import { SectionHeader } from '@/components/ui/SectionHeader'
+import { SectionShell } from '@/components/ui/SectionShell'
 import WorkCard from '@/components/ui/WorkCard'
 import { PRODUCTS } from '@/lib/work'
 
