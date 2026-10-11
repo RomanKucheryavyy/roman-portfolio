@@ -435,11 +435,6 @@ export default function Compose() {
         </a>
         <CopyButton text={LINKS.email} />
       </div>
-
-      <div className="mt-16 md:mt-24 pt-8 border-t border-white/5 flex flex-col sm:flex-row items-center justify-between gap-4">
-        <p className="font-mono text-[10px] text-white/20">© {new Date().getFullYear()} Roman Kucheryavyy</p>
-        <p className="font-mono text-[10px] text-white/25">Built with Next.js, Three.js, GSAP &amp; Tailwind</p>
-      </div>
     </SectionShell>
   )
 }
