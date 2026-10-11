@@ -12,7 +12,6 @@ import DynamicFavicon from '@/components/effects/DynamicFavicon'
 import AmbientBackground from '@/components/effects/AmbientBackground'
 import ScrollProgress from '@/components/effects/ScrollProgress'
 import SectionTransition from '@/components/effects/SectionTransition'
-import CodePeek from '@/components/effects/CodePeek'
 import ConsoleSignature from '@/components/effects/ConsoleSignature'
 import Loader from '@/components/ui/Loader'
 import Hero from '@/components/sections/Hero'
@@ -67,7 +66,6 @@ function AppContent() {
       <AmbientBackground />
       <ScrollProgress />
       <Loader />
-      <CodePeek />
       {/* The skip link's target. Inert during the boot, so a keyboard can't
           walk through a page the Loader is still covering. */}
       <main id="main" tabIndex={-1} inert={!isLoaded} className="relative z-[1] outline-none">
