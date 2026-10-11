@@ -194,7 +194,8 @@ export default function Conductor() {
             role="region"
             aria-label="roman.ts"
             tabIndex={0}
-            className="mobile-scroll-hide overflow-x-auto p-5 font-mono text-label leading-relaxed"
+            // The Panel clips anything outside it, so the ring is drawn inside.
+            className="mobile-scroll-hide overflow-x-auto p-5 font-mono text-label leading-relaxed focus-visible:-outline-offset-4"
           >
             <div className="w-max min-w-full">
               {CODE_LINES.map((line, i) => (
