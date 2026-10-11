@@ -9,7 +9,7 @@ export const metadata = pageMetadata({ path: ROUTES.home })
 
 const H2 = 'mt-12 mb-4 font-display text-2xl font-bold tracking-tight text-white'
 const ITEM = 'text-small text-ink-body'
-const LINK = 'text-white underline decoration-white/30 underline-offset-4 hover:decoration-white'
+const LINK = 'text-white underline decoration-ink-faint underline-offset-4 hover:decoration-white'
 
 /**
  * The home page. Everything a visitor sees is client-rendered (HomeClient waits
