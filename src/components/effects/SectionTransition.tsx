@@ -1,54 +1,27 @@
-'use client'
-import { useEffect, useRef } from 'react'
-import { gsap } from '@/hooks/useGSAP'
-import { movementOf, type MovementId } from '@/lib/score'
+import { MOVEMENTS, keyColor, movementOf, type MovementId } from '@/lib/score'
 
-/** Code-comment interludes between sections, with a faint rainbow hairline.
- *  `movement` is the one being entered; its caption comes from score.ts. */
+/**
+ * The code comment between two movements, over a hairline that runs from the
+ * key of the movement just finished into the key of the one beginning.
+ *
+ * `movement` is the one being entered; its caption comes from score.ts. The
+ * caption is still: it used to drift 40px on a ScrollTrigger scrub of its
+ * own, sit at a different opacity on phones than on desktop, and draw its
+ * hairline in a sixth palette of hex colours nothing else used.
+ */
 export default function SectionTransition({ movement }: { movement: MovementId }) {
-  const commentText = movementOf(movement).caption
-  const wrapRef = useRef<HTMLDivElement>(null)
-  const textRef = useRef<HTMLSpanElement>(null)
-
-  useEffect(() => {
-    const wrap = wrapRef.current
-    const text = textRef.current
-    if (!wrap || !text) return
-
-    const ctx = gsap.context(() => {
-      gsap.fromTo(
-        text,
-        { y: 20 },
-        {
-          y: -20,
-          ease: 'none',
-          scrollTrigger: { trigger: wrap, start: 'top bottom', end: 'bottom top', scrub: 0.5 },
-        }
-      )
-    }, wrap)
-
-    return () => ctx.revert()
-  }, [])
-
+  const { caption, key } = movementOf(movement)
+  const i = MOVEMENTS.findIndex((m) => m.id === movement)
+  const from = MOVEMENTS[Math.max(0, i - 1)].key
   return (
-    <div
-      ref={wrapRef}
-      className="relative w-full flex items-center justify-center overflow-hidden"
-      style={{ height: '60px' }}
-      aria-hidden="true"
-    >
-      <span
-        ref={textRef}
-        className="absolute font-mono text-[11px] tracking-wider text-white/25 md:text-white/10"
-      >
-        {commentText}
+    <div className="relative w-full overflow-hidden" style={{ height: '60px' }} aria-hidden="true">
+      <span className="absolute inset-x-0 bottom-1/2 mb-2 text-center font-mono text-label tracking-wider text-ink-faint">
+        {caption}
       </span>
       <div
-        className="absolute w-full"
+        className="absolute inset-x-0 top-1/2 h-px"
         style={{
-          height: '1px',
-          background:
-            'linear-gradient(90deg, transparent, #ff0040, #ff8c00, #ffef00, #00cc69, #00aaff, #8855ff, transparent)',
+          background: `linear-gradient(90deg, transparent, ${keyColor(from)}, ${keyColor(key)}, transparent)`,
           opacity: 0.2,
         }}
       />
