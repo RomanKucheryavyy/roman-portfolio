@@ -1,4 +1,3 @@
-// @ts-ignore -- @playwright/test comes with W1's harness, which merges before this branch; drop this line once it has.
 import { expect, test, type Page } from '@playwright/test'
 
 /**
