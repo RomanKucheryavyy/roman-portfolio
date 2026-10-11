@@ -1,32 +1,34 @@
 import { Document, Page, Text, View, StyleSheet } from '@react-pdf/renderer'
 import type { ResumeData } from '@/lib/resume-data'
+// Relative, so scripts/render-resume.ts (run with tsx) resolves it too.
+import { PAPER } from './paper'
 
 const styles = StyleSheet.create({
   // NOTE: no page-level lineHeight — @react-pdf computes unitless multipliers
   // against the font size where they're DEFINED and inherits the result, so a
   // page value sized for 9pt body text would clip the 20pt name.
-  page: { paddingVertical: 26, paddingHorizontal: 40, fontSize: 9, fontFamily: 'Helvetica', color: '#111' },
+  page: { paddingVertical: 26, paddingHorizontal: 40, fontSize: 9, fontFamily: 'Helvetica', color: PAPER.ink },
   name: { fontSize: 19, fontFamily: 'Helvetica-Bold', textAlign: 'center', marginBottom: 6 },
-  contact: { fontSize: 8, color: '#555', textAlign: 'center', marginBottom: 2, lineHeight: 1.35 },
-  summary: { fontSize: 9, color: '#333', marginTop: 6, marginBottom: 2, lineHeight: 1.4 },
+  contact: { fontSize: 8, color: PAPER.muted, textAlign: 'center', marginBottom: 2, lineHeight: 1.35 },
+  summary: { fontSize: 9, color: PAPER.body, marginTop: 6, marginBottom: 2, lineHeight: 1.4 },
   sectionTitle: {
     fontSize: 10, fontFamily: 'Helvetica-Bold', textTransform: 'uppercase', letterSpacing: 1,
-    borderBottomWidth: 1, borderBottomColor: '#bbb', paddingBottom: 2, marginTop: 7, marginBottom: 4,
+    borderBottomWidth: 1, borderBottomColor: PAPER.rule, paddingBottom: 2, marginTop: 7, marginBottom: 4,
   },
-  inlineList: { fontSize: 8.5, color: '#333', lineHeight: 1.4 },
+  inlineList: { fontSize: 8.5, color: PAPER.body, lineHeight: 1.4 },
   entry: { marginBottom: 6 },
   rowBetween: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-end' },
   company: { fontSize: 9.5, fontFamily: 'Helvetica-Bold' },
-  title: { fontSize: 9, fontFamily: 'Helvetica-Bold', color: '#222' },
-  dates: { fontSize: 8, color: '#555' },
+  title: { fontSize: 9, fontFamily: 'Helvetica-Bold', color: PAPER.ink },
+  dates: { fontSize: 8, color: PAPER.muted },
   bullet: { flexDirection: 'row', marginTop: 1.5, paddingLeft: 8 },
   bulletDot: { width: 8, fontSize: 9 },
-  bulletText: { flex: 1, fontSize: 8.5, color: '#333', lineHeight: 1.35 },
-  eduDegree: { fontSize: 8.5, color: '#333', marginTop: 1.5, lineHeight: 1.4 },
-  listItem: { fontSize: 8.5, color: '#333', marginBottom: 2, paddingLeft: 8, lineHeight: 1.4 },
-  skills: { fontSize: 8.5, color: '#333', lineHeight: 1.45 },
+  bulletText: { flex: 1, fontSize: 8.5, color: PAPER.body, lineHeight: 1.35 },
+  eduDegree: { fontSize: 8.5, color: PAPER.body, marginTop: 1.5, lineHeight: 1.4 },
+  listItem: { fontSize: 8.5, color: PAPER.body, marginBottom: 2, paddingLeft: 8, lineHeight: 1.4 },
+  skills: { fontSize: 8.5, color: PAPER.body, lineHeight: 1.45 },
   projectName: { fontSize: 9, fontFamily: 'Helvetica-Bold' },
-  projectTech: { fontSize: 8.5, fontFamily: 'Helvetica', color: '#555' },
+  projectTech: { fontSize: 8.5, fontFamily: 'Helvetica', color: PAPER.muted },
 })
 
 export default function ResumePDF({ resume }: { resume: ResumeData }) {
