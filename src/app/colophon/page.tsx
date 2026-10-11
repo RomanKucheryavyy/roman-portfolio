@@ -137,7 +137,7 @@ export default function ColophonPage() {
           lead="Liner"
           accent="notes"
           keys={[keyOf('compose'), nextKeyOf('compose')]}
-          intro="How this site is built. Every value below is read from the repository when the site is built, so none of it can drift from the code."
+          intro="How this site is built. The versions, the score, the build stamp and the budgets below are read from the repository when the site is built, so none of them can drift from the code."
         />
 
         <PageBlock id="typefaces" heading="Typefaces">
@@ -154,8 +154,8 @@ export default function ColophonPage() {
 
         <PageBlock id="score" heading="The score">
           <p className="mb-4 text-small text-ink-body">
-            Every movement of the home page is named once, in src/lib/score.ts. The nav, the kickers, the captions between
-            sections and each heading&apos;s accent all read this table.
+            Every movement of the home page is named once, in src/lib/score.ts. Each section&apos;s kicker and the accent
+            on its heading read this table.
           </p>
           <div
             role="region"
