@@ -281,9 +281,10 @@ function MobileDeck() {
         aria-roledescription="deck"
         aria-label="Work"
         // Focus lands here when a key turns the deck and the new front card
-        // has nothing focusable of its own (an unlaunched piece).
+        // has nothing focusable of its own (an unlaunched piece). Rounded like
+        // the card it wraps, so the ring is the card's shape.
         tabIndex={-1}
-        className="relative w-full max-w-lg"
+        className="relative w-full max-w-lg rounded-xl"
         style={{ overflow: 'clip visible' }}
       >
         <DeckStatus work={deck[0]} />
