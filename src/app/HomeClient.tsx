@@ -6,7 +6,8 @@ import { gsap, ScrollTrigger } from '@/hooks/useGSAP'
 import { useMouseTracking } from '@/hooks/useMouseVelocity'
 import { useIsHydrated } from '@/hooks/useMediaQuery'
 import { useStore } from '@/stores/useStore'
-import { setLenis } from '@/lib/lenis'
+import { scrollToTarget, setLenis } from '@/lib/lenis'
+import { MOVEMENTS } from '@/lib/score'
 import DynamicFavicon from '@/components/effects/DynamicFavicon'
 import AmbientBackground from '@/components/effects/AmbientBackground'
 import ScrollProgress from '@/components/effects/ScrollProgress'
@@ -51,6 +52,15 @@ function AppContent() {
       lenis.destroy()
     }
   }, [])
+
+  // A cold /#section link. The section doesn't exist when the browser looks
+  // for the fragment (the page renders after hydration), so the browser never
+  // scrolls; land there once the boot hands over.
+  useEffect(() => {
+    if (!isLoaded) return
+    const id = window.location.hash.slice(1)
+    if (MOVEMENTS.some((m) => m.id === id)) scrollToTarget(id, { immediate: true })
+  }, [isLoaded])
 
   // Active-section tracking
   useEffect(() => {
