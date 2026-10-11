@@ -25,7 +25,9 @@ import { LINKS } from '@/lib/constants'
 export type EnvState = 'ok' | 'missing' | 'invalid'
 
 const PIN_RULE = /^\d{4,8}$/
-const EMAIL_RULE = /^[^\s@,]+@[^\s@,]+\.[^\s@,]{2,}$/
+const ADDRESS = '[^\\s@,<>]+@[^\\s@,<>]+\\.[^\\s@,<>]{2,}'
+/** One CONTACT_TO entry: a bare address, or Resend's `Name <address>` form. */
+const RECIPIENT_RULE = new RegExp(`^(?:${ADDRESS}|[^<>,]*<${ADDRESS}>)$`)
 
 /** A variable's value, trimmed; undefined when it is unset or blank. */
 function read(name: string): string | undefined {
@@ -75,10 +77,11 @@ export function resendApiKey(): string | null {
 
 const recipients = (v: string) => v.split(',').map((a) => a.trim()).filter(Boolean)
 const contactToState = () =>
-  stateOf(read('CONTACT_TO'), (v) => recipients(v).length > 0 && recipients(v).every((a) => EMAIL_RULE.test(a)))
+  stateOf(read('CONTACT_TO'), (v) => recipients(v).length > 0 && recipients(v).every((a) => RECIPIENT_RULE.test(a)))
 
 /**
- * CONTACT_TO, a comma-separated list of addresses. Unset or malformed, mail
+ * CONTACT_TO, a comma-separated list of addresses, each bare or in the
+ * `Name <address>` form Resend accepts. Unset or malformed, mail
  * goes to the site's own address instead: a typo in a setting must not lose
  * a lead.
  */
