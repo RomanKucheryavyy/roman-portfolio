@@ -1,11 +1,14 @@
 'use client'
-import { useCallback, useEffect, useState, type MouseEvent, type ReactNode } from 'react'
+import { useCallback, useEffect, useRef, useState, type MouseEvent, type ReactNode } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { AnimatePresence, motion } from 'framer-motion'
+import { motion } from 'framer-motion'
 import { ArrowRight, Award, AudioLines, Lock, Mail, Music, User, X } from 'lucide-react'
+import { CopyButton } from '@/components/ui/CopyButton'
+import { Dialog, DialogClose, DialogContent, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
+import { TerminalDots } from '@/components/ui/TerminalBar'
 import { LINKS } from '@/lib/constants'
-import { scrollToTarget } from '@/lib/lenis'
+import { getLenis, scrollToTarget } from '@/lib/lenis'
 import { RESUME_HREF, ROUTES, sectionHref } from '@/lib/routes'
 import { NUMBERED, keyColor, movementOf, type MovementId, type SpectrumKey } from '@/lib/score'
 import { useScrollSpy } from '@/hooks/useScrollSpy'
@@ -174,6 +177,42 @@ function NavItem({ href, label, back, icon, trailing, config, current, route = f
   )
 }
 
+interface Rect {
+  left: number
+  top: number
+  width: number
+  height: number
+}
+const rectOf = (el: Element | null): Rect | null => {
+  if (!el) return null
+  const { left, top, width, height } = el.getBoundingClientRect()
+  return { left, top, width, height }
+}
+
+/** The burger's two bars, or the X they turn into. */
+function Bars({ open }: { open: boolean }) {
+  const bar = 'absolute w-4 h-[1.5px] bg-white transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)]'
+  return (
+    <>
+      <span className={bar} style={{ transform: open ? 'rotate(45deg)' : 'translateY(-3px)' }} aria-hidden="true" />
+      <span className={bar} style={{ transform: open ? 'rotate(-45deg)' : 'translateY(3px)' }} aria-hidden="true" />
+    </>
+  )
+}
+
+/** A line's entrance: the terminal printing itself, one line after another. */
+const lineIn = (delay: number) => ({
+  initial: { opacity: 0, x: -20 },
+  animate: { opacity: 1, x: 0 },
+  transition: { delay },
+})
+const rowIn = (i: number) => lineIn(0.15 + 0.08 * i)
+
+const PROMPT = 'font-mono text-label mr-2'
+const VERB = 'font-mono text-label text-ink-faint mr-3 w-6'
+const PATH = 'font-mono text-lead tracking-tight transition-all duration-200'
+const LINK_OUT = 'inline-flex min-h-11 items-center font-mono text-label text-ink-meta transition-colors active:text-white hover:text-white'
+
 export default function Nav() {
   const pathname = usePathname()
   const onHome = pathname === ROUTES.home
@@ -185,7 +224,13 @@ export default function Nav() {
   const setActiveSection = useStore((s) => s.setActiveSection)
   const setCursorVariant = useStore((s) => s.setCursorVariant)
   const { jumpTo, announce } = useScrollSpy({ enabled: onHome, onChange: setActiveSection, labelOf })
+
   const [menuOpen, setMenuOpen] = useState(false)
+  const barRef = useRef<HTMLElement>(null)
+  const burgerRef = useRef<HTMLButtonElement>(null)
+  const [rects, setRects] = useState<{ bar: Rect; burger: Rect } | null>(null)
+  /** A row picked in the phone menu: jumped to once the menu has closed. */
+  const pendingJump = useRef<MovementId | null>(null)
 
   /** On the home page a section link scrolls (through Lenis) instead of reloading. */
   const jump = useCallback(
@@ -198,238 +243,292 @@ export default function Nav() {
     [onHome, jumpTo],
   )
 
-  const scrollTo = useCallback((href: string) => {
-    setMenuOpen(false)
-    setTimeout(() => document.querySelector(href)?.scrollIntoView({ behavior: 'smooth' }), 100)
+  // The menu's close button sits exactly where the burger is, drawn as the X
+  // the burger would have turned into: Radix makes everything outside the
+  // dialog inert, the burger included, so the menu brings its own.
+  const measure = useCallback(() => {
+    const bar = rectOf(barRef.current)
+    const burger = rectOf(burgerRef.current)
+    if (bar && burger) setRects({ bar, burger })
   }, [])
 
+  const onOpenChange = useCallback(
+    (open: boolean) => {
+      if (open) measure()
+      setMenuOpen(open)
+    },
+    [measure],
+  )
+
+  // Lenis drives the scroll from its own wheel listener, so the page would
+  // keep moving behind the menu unless Lenis itself stops.
   useEffect(() => {
-    document.body.style.overflow = menuOpen ? 'hidden' : ''
-    return () => { document.body.style.overflow = '' }
-  }, [menuOpen])
+    if (!menuOpen) return
+    const lenis = getLenis()
+    lenis?.stop()
+    window.addEventListener('resize', measure)
+    return () => {
+      window.removeEventListener('resize', measure)
+      lenis?.start()
+    }
+  }, [menuOpen, measure])
+
+  // The menu is phone-only; widening the window past md closes it.
+  useEffect(() => {
+    const mql = window.matchMedia('(min-width: 768px)')
+    const onChange = () => {
+      if (mql.matches) setMenuOpen(false)
+    }
+    mql.addEventListener('change', onChange)
+    return () => mql.removeEventListener('change', onChange)
+  }, [])
+
+  /** A section row: close the menu, then jump once it has gone. */
+  const row = (id: MovementId) => (e: MouseEvent<HTMLAnchorElement>) => {
+    if (!onHome || !isPlainClick(e)) return
+    e.preventDefault()
+    pendingJump.current = id
+    setMenuOpen(false)
+  }
+
+  const onCloseAutoFocus = (e: Event) => {
+    const id = pendingJump.current
+    if (!id) return // Escape, the X or /close: focus goes back to the burger.
+    e.preventDefault()
+    pendingJump.current = null
+    // Two frames: Lenis has restarted and the page is scrollable again.
+    requestAnimationFrame(() =>
+      requestAnimationFrame(() => {
+        jumpTo(id)
+        window.history.replaceState(null, '', `#${id}`)
+      }),
+    )
+  }
 
   return (
-    <>
-    <motion.div
-      className="fixed top-0 left-0 right-0 z-[100] px-4 pt-4 md:px-4"
-      initial={{ y: -80, opacity: 0 }}
-      animate={shown ? { y: 0, opacity: 1 } : {}}
-      transition={{ type: 'spring', stiffness: 200, damping: 30, delay: 0.3 }}
-      inert={!shown}
-    >
-      <nav className="px-4 py-2 md:px-4 lg:px-5 md:py-2 lg:py-2.5 flex items-center justify-between rounded-xl border border-white/[0.06] w-full bg-black/70 backdrop-blur-xl shadow-[inset_0_1px_0_rgba(255,255,255,0.06),0_8px_32px_rgba(0,0,0,0.4)]">
-        <Link
-          href={ROUTES.home}
-          className="font-display font-bold text-sm md:text-base tracking-tight text-white cursor-pointer relative z-20"
-          onClick={(e) => {
-            if (!onHome || !isPlainClick(e)) return
-            e.preventDefault()
-            scrollToTarget(0)
-            window.history.replaceState(null, '', ROUTES.home)
-          }}
-          onMouseEnter={() => setCursorVariant('hover')}
-          onMouseLeave={() => setCursorVariant('default')}
+    <Dialog open={menuOpen} onOpenChange={onOpenChange}>
+      <motion.div
+        className="fixed top-0 left-0 right-0 z-[100] px-4 pt-4 md:px-4"
+        initial={{ y: -80, opacity: 0 }}
+        animate={shown ? { y: 0, opacity: 1 } : {}}
+        transition={{ type: 'spring', stiffness: 200, damping: 30, delay: 0.3 }}
+        inert={!shown}
+      >
+        <nav
+          ref={barRef}
+          className="px-4 py-2 md:px-4 lg:px-5 md:py-2 lg:py-2.5 flex items-center justify-between rounded-xl border border-white/[0.06] w-full bg-black/70 backdrop-blur-xl shadow-[inset_0_1px_0_rgba(255,255,255,0.06),0_8px_32px_rgba(0,0,0,0.4)]"
         >
-          RK<span className="text-gradient">.</span>
-        </Link>
+          <Link
+            href={ROUTES.home}
+            className="font-display font-bold text-sm md:text-base tracking-tight text-white cursor-pointer relative z-20"
+            onClick={(e) => {
+              if (!onHome || !isPlainClick(e)) return
+              e.preventDefault()
+              scrollToTarget(0)
+              window.history.replaceState(null, '', ROUTES.home)
+            }}
+            onMouseEnter={() => setCursorVariant('hover')}
+            onMouseLeave={() => setCursorVariant('default')}
+          >
+            RK<span className="text-gradient">.</span>
+          </Link>
 
-        {/* Desktop */}
-        <div className="hidden md:flex items-center gap-0.5 lg:gap-1">
-          {NUMBERED.map(({ id, score, key }) => (
+          {/* Desktop */}
+          <div className="hidden md:flex items-center gap-0.5 lg:gap-1">
+            {NUMBERED.map(({ id, score, key }) => (
+              <NavItem
+                key={id}
+                href={sectionHref(id, pathname)}
+                label={score}
+                back={score}
+                icon={ICONS[id]}
+                config={configOf(key)}
+                current={onHome && activeSection === id ? 'location' : undefined}
+                onClick={jump(id)}
+              />
+            ))}
             <NavItem
-              key={id}
-              href={sectionHref(id, pathname)}
-              label={score}
-              back={score}
-              icon={ICONS[id]}
-              config={configOf(key)}
-              current={onHome && activeSection === id ? 'location' : undefined}
-              onClick={jump(id)}
-            />
-          ))}
-          <NavItem
-            href={ROUTES.works}
-            label="All work"
-            icon={<Music className={ICON} />}
-            trailing={<ArrowRight className="h-3.5 w-3.5" aria-hidden="true" />}
-            config={configOf(movementOf('symphony').key)}
-            current={pathname === ROUTES.works ? 'page' : undefined}
-            route
-          />
-          {RESUME_HREF && (
-            <NavItem
-              href={RESUME_HREF}
-              label="Résumé"
-              icon={<Lock className={ICON} />}
-              config={configOf(movementOf('conductor').key)}
-              current={pathname === RESUME_HREF ? 'page' : undefined}
+              href={ROUTES.works}
+              label="All work"
+              icon={<Music className={ICON} />}
+              trailing={<ArrowRight className="h-3.5 w-3.5" aria-hidden="true" />}
+              config={configOf(movementOf('symphony').key)}
+              current={pathname === ROUTES.works ? 'page' : undefined}
               route
             />
-          )}
-        </div>
+            {RESUME_HREF && (
+              <NavItem
+                href={RESUME_HREF}
+                label="Résumé"
+                icon={<Lock className={ICON} />}
+                config={configOf(movementOf('conductor').key)}
+                current={pathname === RESUME_HREF ? 'page' : undefined}
+                route
+              />
+            )}
+          </div>
 
-        {/* Mobile hamburger */}
-        <button
-          className="md:hidden relative w-11 h-11 -my-2 -mr-2 flex items-center justify-center cursor-pointer z-[102]"
-          aria-label={menuOpen ? 'Close menu' : 'Open menu'}
-          onClick={() => setMenuOpen((o) => !o)}
-        >
-          <span
-            className="absolute w-4 h-[1.5px] bg-white transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)]"
-            style={{ transform: menuOpen ? 'rotate(45deg)' : 'translateY(-3px)' }}
-          />
-          <span
-            className="absolute w-4 h-[1.5px] bg-white transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)]"
-            style={{ transform: menuOpen ? 'rotate(-45deg)' : 'translateY(3px)' }}
-          />
-        </button>
-      </nav>
-    </motion.div>
+          {/* Phone: the burger opens the menu sheet (Radix sets aria-expanded,
+              aria-controls and aria-haspopup, and returns focus here). */}
+          <DialogTrigger asChild>
+            <button
+              ref={burgerRef}
+              type="button"
+              className="md:hidden relative w-11 h-11 -my-2 -mr-2 flex items-center justify-center cursor-pointer z-[102]"
+              aria-label="Open menu"
+            >
+              <Bars open={menuOpen} />
+            </button>
+          </DialogTrigger>
+        </nav>
+      </motion.div>
       <p aria-live="polite" className="sr-only">
         {announce}
       </p>
 
-      {/* Mobile terminal menu — sibling of the animated bar so its
-          fixed positioning is viewport-relative, never transform-trapped */}
-      <AnimatePresence>
-        {menuOpen && (
-          <motion.div
-            className="fixed inset-0 z-[99] bg-black flex flex-col justify-between px-6 pt-24 pb-10 md:hidden"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.3 }}
+      {/* The phone menu: a terminal session over the whole screen. */}
+      <DialogContent
+        variant="sheet"
+        hideClose
+        // Radix hides the rest of the page from assistive tech (aria-hidden)
+        // but doesn't say so on the dialog itself.
+        aria-modal="true"
+        aria-describedby={undefined}
+        onCloseAutoFocus={onCloseAutoFocus}
+        className="bg-black flex flex-col justify-between px-6 pt-24 pb-10 md:hidden"
+      >
+        <DialogTitle className="sr-only">Site menu</DialogTitle>
+
+        {/* The bar as it looked when the menu opened, so the top of the screen
+            doesn't jump; the X takes the burger's exact box. */}
+        {rects && (
+          <div
+            aria-hidden="true"
+            className="pointer-events-none absolute flex items-center rounded-xl border border-white/[0.06] px-4"
+            style={rects.bar}
           >
-            <div>
-              <motion.div
-                className="flex items-center mb-6"
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: 0.05 }}
-              >
-                <div className="flex gap-1.5">
-                  <span className="w-2.5 h-2.5 rounded-full bg-red-500/60" />
-                  <span className="w-2.5 h-2.5 rounded-full bg-yellow-500/60" />
-                  <span className="w-2.5 h-2.5 rounded-full bg-green-500/60" />
-                </div>
-                <span className="font-mono text-[10px] text-white/20 ml-2">rk@portfolio ~ %</span>
-              </motion.div>
-
-              <motion.div
-                className="font-mono text-[11px] text-green-400/60 mb-8"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ delay: 0.1 }}
-              >
-                $ ls ./sections
-              </motion.div>
-
-              <div className="flex flex-col gap-1">
-                {NUMBERED.map(({ id, key }, i) => {
-                  const config = { ...configOf(key), icon: ICONS[id] }
-                  const isActive = activeSection === id
-                  return (
-                    <motion.div
-                      key={id}
-                      initial={{ opacity: 0, x: -20 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      transition={{ delay: 0.15 + 0.08 * i }}
-                    >
-                      <button
-                        onClick={() => scrollTo(`#${id}`)}
-                        className="relative w-full text-left cursor-pointer group py-2.5 overflow-visible"
-                        style={{ perspective: '600px' }}
-                      >
-                        {isActive && config.activeGlow && (
-                          <div
-                            className="absolute inset-0 pointer-events-none rounded-lg"
-                            style={{ background: `radial-gradient(circle at left, ${config.activeGlow} 0%, transparent 60%)` }}
-                          />
-                        )}
-                        <div className="flex items-center relative z-10">
-                          <span className="font-mono text-[11px] text-green-400/40 mr-2">&gt;</span>
-                          <span className="font-mono text-[10px] text-white/20 mr-3 w-6">cd</span>
-                          <span className={`mr-2 transition-colors duration-300 ${isActive ? 'text-white' : 'text-white/30'} ${config.iconColor}`}>
-                            {config.icon}
-                          </span>
-                          <span
-                            className="font-mono text-xl tracking-tight transition-all duration-200"
-                            style={{
-                              color: isActive ? '#fff' : 'rgba(255,255,255,0.5)',
-                              textShadow: isActive ? '0 0 20px rgba(255,255,255,0.3)' : 'none',
-                            }}
-                          >
-                            /{id}
-                          </span>
-                          {isActive && (
-                            <span className="ml-3 font-mono text-[9px] text-green-400/50 animate-pulse">● current</span>
-                          )}
-                        </div>
-                      </button>
-                    </motion.div>
-                  )
-                })}
-                <motion.div
-                  initial={{ opacity: 0, x: -20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: 0.15 + 0.08 * NUMBERED.length }}
-                >
-                  <button
-                    onClick={() => { setMenuOpen(false); window.location.href = '/resume' }}
-                    className="w-full text-left cursor-pointer group py-2.5 mt-2"
-                  >
-                    <div className="flex items-center">
-                      <span className="font-mono text-[11px] text-yellow-400/40 mr-2">&gt;</span>
-                      <span className="font-mono text-[10px] text-white/20 mr-3 w-6">su</span>
-                      <Lock className="h-4 w-4 mr-2 text-amber-400/30" />
-                      <span className="font-mono text-xl tracking-tight text-white/30 group-active:text-white/50 transition-all duration-200">
-                        /resume
-                      </span>
-                    </div>
-                  </button>
-                </motion.div>
-                <motion.div
-                  initial={{ opacity: 0, x: -20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: 0.15 + 0.08 * (NUMBERED.length + 1) }}
-                >
-                  <button
-                    onClick={() => setMenuOpen(false)}
-                    className="w-full text-left cursor-pointer group py-2.5 mt-2"
-                    aria-label="Close menu"
-                  >
-                    <div className="flex items-center">
-                      <span className="font-mono text-[11px] text-red-400/40 mr-2">&gt;</span>
-                      <span className="font-mono text-[10px] text-white/20 mr-3 w-6">exit</span>
-                      <X className="h-4 w-4 mr-2 text-white/30" />
-                      <span className="font-mono text-xl tracking-tight text-white/40 group-active:text-white/70 transition-all duration-200">
-                        /close
-                      </span>
-                    </div>
-                  </button>
-                </motion.div>
-              </div>
-            </div>
-
-            <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.6 }}>
-              <div className="h-px bg-white/5 mb-4" />
-              <div className="font-mono text-[10px] text-white/15 mb-4">$ echo $LINKS</div>
-              <div className="flex items-center gap-5">
-                <a href={LINKS.github} target="_blank" rel="noopener noreferrer" className="font-mono text-[11px] text-white/25 active:text-white/60 transition-colors">
-                  github
-                </a>
-                <a href={LINKS.linkedin} target="_blank" rel="noopener noreferrer" className="font-mono text-[11px] text-white/25 active:text-white/60 transition-colors">
-                  linkedin
-                </a>
-                <a href={`mailto:${LINKS.email}`} className="font-mono text-[11px] text-white/25 active:text-white/60 transition-colors">
-                  email
-                </a>
-              </div>
-              <div className="font-mono text-[9px] text-white/10 mt-3">{LINKS.email}</div>
-            </motion.div>
-          </motion.div>
+            <span className="font-display font-bold text-sm tracking-tight text-white">
+              RK<span className="text-gradient">.</span>
+            </span>
+          </div>
         )}
-      </AnimatePresence>
-    </>
+        <DialogClose
+          className="absolute flex items-center justify-center cursor-pointer rounded-full"
+          style={rects?.burger ?? { top: 16, right: 16, width: 44, height: 44 }}
+          aria-label="Close menu"
+        >
+          <Bars open />
+        </DialogClose>
+
+        <div>
+          <motion.div className="flex items-center mb-6" aria-hidden="true" {...lineIn(0.05)}>
+            <TerminalDots />
+            <span className="font-mono text-label text-ink-faint ml-2">rk@portfolio ~ %</span>
+          </motion.div>
+
+          <motion.div className="font-mono text-label text-spectrum-green/60 mb-8" aria-hidden="true" {...lineIn(0.1)}>
+            $ ls ./sections
+          </motion.div>
+
+          <ul className="flex flex-col gap-1">
+            {NUMBERED.map(({ id, key }, i) => {
+              const config = configOf(key)
+              const isActive = onHome && activeSection === id
+              return (
+                <motion.li key={id} {...rowIn(i)}>
+                  <a
+                    href={sectionHref(id, pathname)}
+                    onClick={row(id)}
+                    aria-current={isActive ? 'location' : undefined}
+                    className="relative flex w-full items-center text-left cursor-pointer group py-2.5 overflow-visible rounded-lg"
+                  >
+                    {isActive && (
+                      <span
+                        className="absolute inset-0 pointer-events-none rounded-lg"
+                        style={{ background: `radial-gradient(circle at left, ${config.activeGlow} 0%, transparent 60%)` }}
+                        aria-hidden="true"
+                      />
+                    )}
+                    <span className="flex items-center relative z-10">
+                      <span className={`${PROMPT} text-spectrum-green/40`} aria-hidden="true">&gt;</span>
+                      <span className={VERB} aria-hidden="true">cd</span>
+                      <span
+                        className={`mr-2 transition-colors duration-300 ${isActive ? 'text-white' : 'text-ink-faint'} ${config.iconColor}`}
+                        aria-hidden="true"
+                      >
+                        {ICONS[id]}
+                      </span>
+                      <span
+                        className={`${PATH} ${isActive ? 'text-white' : 'text-ink-meta'}`}
+                        style={{ textShadow: isActive ? '0 0 20px rgba(255,255,255,0.3)' : 'none' }}
+                      >
+                        /{id}
+                      </span>
+                      {isActive && (
+                        <span className="ml-3 font-mono text-label text-spectrum-green/50 animate-pulse motion-reduce:animate-none" aria-hidden="true">
+                          ● current
+                        </span>
+                      )}
+                    </span>
+                  </a>
+                </motion.li>
+              )
+            })}
+            <motion.li {...rowIn(NUMBERED.length)} className="mt-2">
+              <Link
+                href={ROUTES.works}
+                onClick={() => setMenuOpen(false)}
+                aria-current={pathname === ROUTES.works ? 'page' : undefined}
+                className="flex w-full items-center text-left cursor-pointer group py-2.5"
+              >
+                <span className={`${PROMPT} text-spectrum-amber/40`} aria-hidden="true">&gt;</span>
+                <span className={VERB} aria-hidden="true">ls</span>
+                <Music className={`h-4 w-4 mr-2 text-ink-faint ${configOf(movementOf('symphony').key).iconColor}`} aria-hidden="true" />
+                <span className={`${PATH} ${pathname === ROUTES.works ? 'text-white' : 'text-ink-meta'}`}>/works</span>
+              </Link>
+            </motion.li>
+            {RESUME_HREF && (
+              <motion.li {...rowIn(NUMBERED.length + 1)}>
+                <Link
+                  href={RESUME_HREF}
+                  onClick={() => setMenuOpen(false)}
+                  className="flex w-full items-center text-left cursor-pointer group py-2.5"
+                >
+                  <span className={`${PROMPT} text-spectrum-amber/40`} aria-hidden="true">&gt;</span>
+                  <span className={VERB} aria-hidden="true">su</span>
+                  <Lock className="h-4 w-4 mr-2 text-spectrum-amber/30" aria-hidden="true" />
+                  <span className={`${PATH} text-ink-meta`}>/resume</span>
+                </Link>
+              </motion.li>
+            )}
+            <motion.li {...rowIn(NUMBERED.length + 2)} className="mt-2">
+              <DialogClose className="flex w-full items-center text-left cursor-pointer group py-2.5" aria-label="Close menu">
+                <span className={`${PROMPT} text-spectrum-red/40`} aria-hidden="true">&gt;</span>
+                <span className={VERB} aria-hidden="true">exit</span>
+                <X className="h-4 w-4 mr-2 text-ink-faint" aria-hidden="true" />
+                <span className={`${PATH} text-ink-meta`}>/close</span>
+              </DialogClose>
+            </motion.li>
+          </ul>
+        </div>
+
+        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.6 }}>
+          <div className="h-px bg-white/5 mb-4" />
+          <div className="font-mono text-label text-ink-faint mb-1" aria-hidden="true">$ echo $LINKS</div>
+          <div className="flex flex-wrap items-center gap-x-5">
+            <a href={LINKS.github} target="_blank" rel="noopener noreferrer" className={LINK_OUT}>
+              github
+            </a>
+            <a href={LINKS.linkedin} target="_blank" rel="noopener noreferrer" className={LINK_OUT}>
+              linkedin
+            </a>
+            <a href={`mailto:${LINKS.email}`} className={LINK_OUT}>
+              email
+            </a>
+          </div>
+          <CopyButton text={LINKS.email} className="mt-3" />
+        </motion.div>
+      </DialogContent>
+    </Dialog>
   )
 }
