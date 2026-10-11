@@ -5,6 +5,7 @@ import { CLIENT_WORK } from '@/lib/work'
 import { LINKS, SITE } from '@/lib/constants'
 import { NUMBERED, type MovementId, type NumberedMovement } from '@/lib/score'
 import { RESUME_HREF } from '@/lib/routes'
+import { RESUME_DATA } from '@/lib/resume-data'
 import { sha7 } from '@/lib/build-info'
 import { capture, collectConsole, gotoHome, wheelThrough } from './helpers'
 
@@ -565,3 +566,30 @@ function hoverClearance(nav: Element, href: string) {
   const next = links[k + 1] ? extent(links[k + 1].querySelector('[data-face="front"]')!).left : Infinity
   return Math.min(back.left - prev, next - back.right)
 }
+
+test.describe('the résumé builder', () => {
+  test('its header clears the nav: the back link, the title and Lock each take their own clicks', async ({ page }) => {
+    test.skip(test.info().project.name === 'no-webgl', 'desktop and mobile cover it')
+    // Unlocked, with the data mocked: the builder's header only exists past the PIN.
+    await page.addInitScript(() => {
+      try {
+        localStorage.setItem('resume_pin', '4242')
+      } catch {}
+    })
+    await page.route('**/api/resume/data', (route) => route.fulfill({ json: RESUME_DATA }))
+    await page.goto('/resume')
+    const lock = page.getByRole('button', { name: 'Lock' })
+    await expect(lock).toBeVisible()
+    await expect(page.getByRole('navigation')).toBeVisible()
+    for (const control of [page.locator('header a[href="/"]'), page.locator('header h1'), lock]) {
+      const own = await control.evaluate((el: Element) => {
+        const b = el.getBoundingClientRect()
+        const top = document.elementFromPoint(b.left + b.width / 2, b.top + b.height / 2)
+        return top !== null && el.contains(top)
+      })
+      expect(own).toBe(true)
+    }
+    await lock.click()
+    await expect(page.getByText('Enter your PIN')).toBeVisible()
+  })
+})

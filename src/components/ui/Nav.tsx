@@ -208,7 +208,17 @@ export function Bars({ open }: { open: boolean }) {
   )
 }
 
-export default function Nav() {
+interface NavProps {
+  /**
+   * Sticky rather than fixed, so the bar keeps its own height in the page's
+   * flow and the page starts below it. For a page laid out from its very top
+   * (the résumé builder's header holds its back link and Lock), which a fixed
+   * bar would cover. Every other page leaves room for a fixed bar itself.
+   */
+  inFlow?: boolean
+}
+
+export default function Nav({ inFlow = false }: NavProps) {
   const pathname = usePathname()
   const onHome = pathname === ROUTES.home
   const hydrated = useIsHydrated()
@@ -318,7 +328,7 @@ export default function Nav() {
   return (
     <>
       <div
-        className="fixed top-0 left-0 right-0 z-[100] px-4 pt-4 md:px-4"
+        className={`${inFlow ? 'sticky' : 'fixed'} top-0 left-0 right-0 z-[100] px-4 pt-4 md:px-4`}
         style={{
           transform: shown ? 'none' : 'translateY(-80px)',
           opacity: shown ? 1 : 0,
