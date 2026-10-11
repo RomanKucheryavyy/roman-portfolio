@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from 'next'
 import { Archivo, JetBrains_Mono, Space_Grotesk } from 'next/font/google'
 import { SITE } from '@/lib/constants'
+import { TITLE_TEMPLATE } from '@/lib/seo'
 import './globals.css'
 
 // Self-hosted at build time, on each family's full variable weight axis (no
@@ -12,12 +13,16 @@ const archivo = Archivo({ subsets: ['latin'], display: 'swap', variable: '--font
 const spaceGrotesk = Space_Grotesk({ subsets: ['latin'], display: 'swap', variable: '--font-space-grotesk' })
 const jetbrainsMono = JetBrains_Mono({ subsets: ['latin'], display: 'swap', variable: '--font-jetbrains-mono' })
 
+// No canonical, robots or manifest here: a canonical set in the root layout is
+// inherited by every route that doesn't set its own, so /resume and the 404
+// both told search engines they were the home page. Each page sets its own
+// through pageMetadata() (src/lib/seo.ts). Indexing is the default without a
+// robots tag. The manifest link moves to app/manifest.ts, which Next links by
+// itself. The template names every other page "<title> — Roman Kucheryavyy".
 export const metadata: Metadata = {
-  title: SITE.title,
+  title: { default: SITE.title, template: TITLE_TEMPLATE },
   description: SITE.description,
   metadataBase: new URL(SITE.url),
-  manifest: '/manifest.json',
-  alternates: { canonical: '/' },
   openGraph: {
     title: SITE.title,
     description: SITE.description,
@@ -31,7 +36,6 @@ export const metadata: Metadata = {
     title: SITE.title,
     description: SITE.description,
   },
-  robots: { index: true, follow: true },
 }
 
 export const viewport: Viewport = {
@@ -51,6 +55,15 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       suppressHydrationWarning
     >
       <body className="bg-black text-white antialiased" suppressHydrationWarning>
+        {/* First in the tab order on every route. Every page renders
+            <main id="main" tabIndex={-1}>, so following it moves focus, not
+            just the scroll position. Above the boot loader (z-200). */}
+        <a
+          href="#main"
+          className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-[210] focus:rounded-full focus:bg-white focus:px-4 focus:py-2 focus:font-mono focus:text-label focus:text-black"
+        >
+          Skip to content
+        </a>
         {children}
       </body>
     </html>
