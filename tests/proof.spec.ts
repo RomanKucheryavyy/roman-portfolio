@@ -8,7 +8,7 @@ import { CERTIFICATIONS, SITE } from '@/lib/constants'
 import { FIXTURE_WORK } from '@/lib/case-studies'
 import { RESUME_PUBLIC } from '@/lib/routes'
 import { CLIENT_WORK, PRODUCTS } from '@/lib/work'
-import { gotoHome } from './helpers'
+import { gotoHome, waitForChrome } from './helpers'
 
 /**
  * The proof and head routes (W8): program notes, the liner notes, llms.txt,
@@ -42,6 +42,7 @@ function pngSize(buf: Buffer) {
 }
 
 async function noSeriousAxe(page: Page) {
+  await waitForChrome(page)
   const results = await new AxeBuilder({ page }).analyze()
   const serious = results.violations
     .filter((v) => v.impact === 'serious' || v.impact === 'critical')

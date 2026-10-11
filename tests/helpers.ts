@@ -33,6 +33,27 @@ export async function gotoHome(page: Page, { boot = false }: { boot?: boolean } 
   return response
 }
 
+/**
+ * Resolves once the site nav has finished dropping in. Off the home page it
+ * fades in from opacity 0 as soon as the page hydrates (a 300ms delay, then
+ * 693ms); on / it waits for the boot. An axe pass that lands mid-fade samples
+ * half-transparent labels and files them as colour-contrast failures (six
+ * nodes on /colophon in the no-webgl project), which is one frame of a
+ * transition, not the page. Audit the page at rest.
+ */
+export async function waitForChrome(page: Page) {
+  await page.waitForFunction(
+    () => {
+      // The first <nav> is the site nav: SiteChrome renders before any page.
+      const bar = document.querySelector('nav')?.parentElement
+      if (!bar) return false
+      return getComputedStyle(bar).opacity === '1' && bar.getAnimations().every((a) => a.playState !== 'running')
+    },
+    undefined,
+    { timeout: 15_000 },
+  )
+}
+
 /** Software WebGL in headless Chromium: noise from the GPU stack, not the site. */
 const ALWAYS_ALLOWED: RegExp[] = [/Automatic fallback to software WebGL/, /GL Driver Message/]
 
