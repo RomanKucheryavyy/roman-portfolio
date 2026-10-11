@@ -153,41 +153,49 @@ function Section({ title, children }: { title: string; children: React.ReactNode
 }
 
 function ResumePreview({ resume }: { resume: ResumeData }) {
-  const headingClass = 'font-bold text-sm border-b border-gray-300 pb-1 mb-3 uppercase tracking-wider'
+  const headingClass = 'font-bold text-sm border-b border-paper-rule pb-1 mb-3 uppercase tracking-wider'
   return (
-    <div className="text-black text-xs leading-relaxed">
+    <div className="text-paper-ink text-xs leading-relaxed">
       <h1 className="text-2xl font-bold text-center mb-1">{resume.name}</h1>
-      <p className="text-center text-gray-500 text-[10px] mb-1">
+      {/* eslint-disable-next-line no-restricted-syntax -- constraint 7: the print preview mirrors the PDF's sizes */}
+      <p className="text-center text-paper-muted text-[10px] mb-1">
         {resume.location} | {resume.phone} | {resume.email}
       </p>
-      <p className="text-center text-gray-500 text-[10px] mb-4">
+      {/* eslint-disable-next-line no-restricted-syntax -- constraint 7: the print preview mirrors the PDF's sizes */}
+      <p className="text-center text-paper-muted text-[10px] mb-4">
         {resume.linkedin} | {resume.github}
         {resume.website ? ` | ${resume.website}` : ''}
       </p>
       {resume.summary && (
-        <p className="text-[11px] text-gray-700 mb-4 leading-relaxed">{resume.summary}</p>
+        // eslint-disable-next-line no-restricted-syntax -- constraint 7: the print preview mirrors the PDF's sizes
+        <p className="text-[11px] text-paper-body mb-4 leading-relaxed">{resume.summary}</p>
       )}
 
       <h2 className={headingClass}>Professional Experience</h2>
       {resume.experience.map((exp, i) => (
         <div key={i} className="mb-4">
           <div className="flex justify-between items-baseline">
+            {/* eslint-disable-next-line no-restricted-syntax -- constraint 7: the print preview mirrors the PDF's sizes */}
             <h3 className="font-bold text-[11px]">{exp.company}, {exp.location}</h3>
           </div>
           <div className="flex justify-between items-baseline">
+            {/* eslint-disable-next-line no-restricted-syntax -- constraint 7: the print preview mirrors the PDF's sizes */}
             <p className="font-semibold text-[10px]">{exp.title}</p>
-            <p className="text-gray-500 text-[10px]">{exp.dates}</p>
+            {/* eslint-disable-next-line no-restricted-syntax -- constraint 7: the print preview mirrors the PDF's sizes */}
+            <p className="text-paper-muted text-[10px]">{exp.dates}</p>
           </div>
           <ul className="list-disc ml-4 mt-1 space-y-0.5">
             {exp.bullets.map((b, j) => (
-              <li key={j} className="text-[10px] text-gray-700 leading-relaxed">{b}</li>
+              // eslint-disable-next-line no-restricted-syntax -- constraint 7: the print preview mirrors the PDF's sizes
+              <li key={j} className="text-[10px] text-paper-body leading-relaxed">{b}</li>
             ))}
           </ul>
         </div>
       ))}
 
       <h2 className={headingClass}>Certifications</h2>
-      <p className="text-[10px] text-gray-700 mb-4 leading-relaxed">
+      {/* eslint-disable-next-line no-restricted-syntax -- constraint 7: the print preview mirrors the PDF's sizes */}
+      <p className="text-[10px] text-paper-body mb-4 leading-relaxed">
         <span className="font-bold">{resume.certifications.length}x Salesforce Certified:</span>{' '}
         {resume.certifications.map((cert) => `${cert.name} (${cert.date})`).join('  ·  ')}
       </p>
@@ -195,30 +203,35 @@ function ResumePreview({ resume }: { resume: ResumeData }) {
       <h2 className={headingClass}>Education</h2>
       {resume.education.map((edu, i) => (
         <div key={i} className="flex justify-between items-baseline mb-1">
-          <p className="text-[10px] text-gray-700">
+          {/* eslint-disable-next-line no-restricted-syntax -- constraint 7: the print preview mirrors the PDF's sizes */}
+          <p className="text-[10px] text-paper-body">
             <span className="font-bold">{edu.school}, {edu.location}</span>
             {' — '}
             {edu.degree}
             {edu.gpa ? ` (${edu.gpa} GPA)` : ''}
           </p>
-          <p className="text-gray-500 text-[10px]">{edu.dates}</p>
+          {/* eslint-disable-next-line no-restricted-syntax -- constraint 7: the print preview mirrors the PDF's sizes */}
+          <p className="text-paper-muted text-[10px]">{edu.dates}</p>
         </div>
       ))}
 
       <h2 className={`${headingClass} mt-4`}>Technical Skills</h2>
-      <p className="text-[10px] text-gray-700">{resume.skills.join(', ')}</p>
+      {/* eslint-disable-next-line no-restricted-syntax -- constraint 7: the print preview mirrors the PDF's sizes */}
+      <p className="text-[10px] text-paper-body">{resume.skills.join(', ')}</p>
 
       {resume.projects.length > 0 && (
         <>
           <h2 className={`${headingClass} mt-4`}>Projects</h2>
           {resume.projects.map((project, i) => (
             <div key={i} className="mb-3">
+              {/* eslint-disable-next-line no-restricted-syntax -- constraint 7: the print preview mirrors the PDF's sizes */}
               <p className="font-bold text-[11px]">
-                {project.name} <span className="font-normal text-gray-500">({project.tech})</span>
+                {project.name} <span className="font-normal text-paper-muted">({project.tech})</span>
               </p>
               <ul className="list-disc ml-4 space-y-0.5">
                 {project.bullets.map((b, j) => (
-                  <li key={j} className="text-[10px] text-gray-700">{b}</li>
+                  // eslint-disable-next-line no-restricted-syntax -- constraint 7: the print preview mirrors the PDF's sizes
+                  <li key={j} className="text-[10px] text-paper-body">{b}</li>
                 ))}
               </ul>
             </div>
@@ -528,7 +541,7 @@ export default function ResumeBuilder() {
                 <Button {...download} onClick={() => handleDownloadResume('base')} title="Download as PDF">
                   {downloadFace}
                 </Button>
-                <div className="bg-white rounded-xl p-8 text-black overflow-auto max-h-[80vh]">
+                <div className="bg-white rounded-xl p-8 text-paper-ink overflow-auto max-h-[80vh]">
                   <ResumePreview resume={resume} />
                 </div>
               </div>
@@ -566,11 +579,11 @@ export default function ResumeBuilder() {
                     {downloadFace}
                   </Button>
                 )}
-                <div className="bg-white rounded-xl p-8 text-black overflow-auto max-h-[80vh]">
+                <div className="bg-white rounded-xl p-8 text-paper-ink overflow-auto max-h-[80vh]">
                   {tailoredResume ? (
                     <ResumePreview resume={tailoredResume} />
                   ) : (
-                    <div className="h-full flex items-center justify-center text-gray-400 text-sm">
+                    <div className="h-full flex items-center justify-center text-paper-muted text-sm">
                       Paste a job description and click Tailor to see the result
                     </div>
                   )}
@@ -617,14 +630,14 @@ export default function ResumeBuilder() {
                     {downloadFace}
                   </Button>
                 )}
-                <div className="bg-white rounded-xl p-8 text-black overflow-auto max-h-[80vh]">
+                <div className="bg-white rounded-xl p-8 text-paper-ink overflow-auto max-h-[80vh]">
                   {coverLetter ? (
-                    <div className="prose prose-sm max-w-none">
+                    <div>
                       <div className="whitespace-pre-wrap font-body text-sm leading-relaxed">{coverLetter}</div>
                       <CopyLetter text={coverLetter} />
                     </div>
                   ) : (
-                    <div className="h-full flex items-center justify-center text-gray-400 text-sm">
+                    <div className="h-full flex items-center justify-center text-paper-muted text-sm">
                       Paste a job description and click Generate to see the result
                     </div>
                   )}
