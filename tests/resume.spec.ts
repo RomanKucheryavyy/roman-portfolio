@@ -359,9 +359,14 @@ test.describe('contact route', () => {
 
     const headers = { 'x-nf-client-connection-ip': ip() }
     const data = { name: 'Playwright', email: 'e2e@example.com', message: 'Rate-limit test, not a lead.', elapsedMs: 5000 }
-    const statuses: number[] = []
-    for (let i = 0; i < 6; i++) statuses.push((await request.post('/api/contact', { headers, data })).status())
-    // No delivery channel in the test server, so the five allowed posts fail honestly.
-    expect(statuses).toEqual([502, 502, 502, 502, 502, 429])
+    // No delivery channel in the test server, so the five allowed posts fail
+    // honestly. Each status is checked as it comes: a reused server that does
+    // deliver (a local one with a real RESEND_API_KEY, which the config blanks
+    // only on servers it starts) fails on the first post, not after five
+    // real emails.
+    for (let i = 0; i < 6; i++) {
+      const status = (await request.post('/api/contact', { headers, data })).status()
+      expect(status, `post ${i + 1}`).toBe(i < 5 ? 502 : 429)
+    }
   })
 })
