@@ -20,13 +20,21 @@ interface SectionShellProps extends ComponentPropsWithoutRef<'section'> {
  * pixel past 767. The clamp keeps both ends (24px on a phone, 64px from 1280)
  * and is monotonic in between.
  *
+ * scroll-mt-8 below md keeps a jump to the section (the phone menu, a
+ * /#section deep link) from parking its kicker under the fixed nav: py-14
+ * alone puts the kicker 6px under a 62px nav, and 32px of margin clears it by
+ * 26px, the gap desktop already has. From md up the nav is 61-70px tall and
+ * py-24 puts the kicker at 96px, so no margin is added; one would only push
+ * the Symphony deck down past the fold. Lenis doesn't read scroll-margin, so
+ * a Lenis jump passes its own offset.
+ *
  * Named SectionShell, not Section: resume/page.tsx declares its own Section.
  */
 export function SectionShell({ ref, className, innerClassName, children, ...props }: SectionShellProps) {
   return (
     <section
       ref={ref}
-      className={cn('relative z-10 py-14 md:py-24 px-[clamp(1.5rem,5vw,4rem)]', className)}
+      className={cn('relative z-10 scroll-mt-8 md:scroll-mt-0 py-14 md:py-24 px-[clamp(1.5rem,5vw,4rem)]', className)}
       {...props}
     >
       <div className={cn('relative mx-auto w-full max-w-6xl', innerClassName)}>{children}</div>
