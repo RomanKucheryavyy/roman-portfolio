@@ -20,7 +20,9 @@ interface Bucket {
   max: number
 }
 
-const hits = new Map<string, number[]>()
+/** Each key keeps its bucket's window, so the prune below can judge it by
+ *  its own window rather than the caller's. */
+const hits = new Map<string, { windowMs: number; times: number[] }>()
 
 /** Reads the caller's address from whichever header the host actually sets. */
 export function clientIp(req: Request): string {
@@ -38,14 +40,16 @@ export function clientIp(req: Request): string {
 export function rateLimited(ip: string, { name, windowMs, max }: Bucket): boolean {
   const now = Date.now()
   const key = `${name}:${ip}`
-  const recent = (hits.get(key) ?? []).filter((t) => now - t < windowMs)
+  const recent = (hits.get(key)?.times ?? []).filter((t) => now - t < windowMs)
   recent.push(now)
-  hits.set(key, recent)
+  hits.set(key, { windowMs, times: recent })
 
-  // Keep the map from growing without bound on a long-lived instance.
+  // Keep the map from growing without bound on a long-lived instance. A key
+  // goes once its own window has passed: an hour-long ai tally must not be
+  // wiped by a pin check that only looks back ten minutes.
   if (hits.size > 500) {
     for (const [k, v] of hits) {
-      if (!v.some((t) => now - t < windowMs)) hits.delete(k)
+      if (!v.times.some((t) => now - t < v.windowMs)) hits.delete(k)
     }
   }
 
