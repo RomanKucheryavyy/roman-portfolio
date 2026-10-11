@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { SITE } from '@/lib/constants'
 import { contactFrom, contactTo, netlifyOrigin, resendApiKey } from '@/lib/env'
+import { clientIp, rateLimited, LIMITS } from '@/lib/rate-limit'
 
 /**
  * Contact delivery.
@@ -31,26 +32,6 @@ export const dynamic = 'force-dynamic'
 
 const MAX = { name: 100, email: 200, message: 5000 } as const
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/
-
-/** Best-effort per-IP throttle. Serverless instances are short-lived, so this
- *  trims bursts rather than promising a hard limit. */
-const WINDOW_MS = 10 * 60_000
-const MAX_PER_WINDOW = 5
-const hits = new Map<string, number[]>()
-
-const rateLimited = (ip: string): boolean => {
-  const now = Date.now()
-  const recent = (hits.get(ip) ?? []).filter((t) => now - t < WINDOW_MS)
-  recent.push(now)
-  hits.set(ip, recent)
-  if (hits.size > 500) for (const [k, v] of hits) if (!v.some((t) => now - t < WINDOW_MS)) hits.delete(k)
-  return recent.length > MAX_PER_WINDOW
-}
-
-const clientIp = (req: Request): string =>
-  req.headers.get('x-nf-client-connection-ip') ??
-  req.headers.get('x-forwarded-for')?.split(',')[0].trim() ??
-  'unknown'
 
 const esc = (s: string) =>
   s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;')
@@ -161,7 +142,8 @@ export async function POST(req: Request) {
   if (!EMAIL_RE.test(email)) {
     return NextResponse.json({ error: 'invalid_email' }, { status: 400 })
   }
-  if (rateLimited(clientIp(req))) {
+  // After validation, so a malformed post doesn't spend a visitor's allowance.
+  if (rateLimited(clientIp(req), LIMITS.contact)) {
     return NextResponse.json({ error: 'rate_limited' }, { status: 429 })
   }
 

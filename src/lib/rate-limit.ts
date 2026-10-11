@@ -4,7 +4,8 @@
  * Extracted from the contact route, which was the only endpoint that had one.
  * The two resume endpoints call Claude with max_tokens 8000 and bill a real
  * account, and the PIN check guarding them was brute-forceable at line rate —
- * all three were wide open.
+ * all three were wide open. Every route that throttles, the contact route
+ * included, now uses this one copy, each with its own bucket in LIMITS.
  *
  * Serverless instances are short-lived and not shared, so this trims bursts
  * rather than promising a hard limit. That is the right trade for a portfolio:
