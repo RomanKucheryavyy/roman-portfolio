@@ -16,10 +16,10 @@ import { useStore } from '@/stores/useStore'
  * and a visitor who landed on one from a shared link had no way to the rest
  * of the site.
  *
- * The résumé builder is a work surface full of text fields, not a page to
- * look at: it keeps the native pointer, and its nav sits in the flow (see
- * Nav's inFlow) so the builder's own header, with its back link and Lock,
- * starts below it.
+ * The résumé builder is a work surface full of text fields and a print
+ * preview, not a page to look at: it keeps the native pointer and no grain
+ * over the white paper, and its nav sits in the flow (see Nav's inFlow) so
+ * the builder's own header, with its back link and Lock, starts below it.
  *
  * None of it uses framer-motion, so it adds none to any route's first load:
  * the nav's motion is CSS, and the phone menu (which does use framer-motion,
@@ -30,7 +30,7 @@ export default function SiteChrome() {
   const workSurface = pathname.startsWith('/resume')
   return (
     <>
-      <div className="noise-overlay" aria-hidden="true" />
+      {!workSurface && <div className="noise-overlay" aria-hidden="true" />}
       {!workSurface && <Cursor />}
       <Nav inFlow={workSurface} />
     </>
