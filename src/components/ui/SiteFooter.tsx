@@ -5,6 +5,16 @@ import { LINKS, SITE } from '@/lib/constants'
 import { RESUME_HREF, ROUTES } from '@/lib/routes'
 
 const LINK = 'inline-flex min-h-11 items-center transition-colors hover:text-white focus-visible:text-white'
+const PART = 'flex items-center whitespace-nowrap'
+
+/** The stamp's separator, spaced like the gap before it. */
+function Dot({ className = '' }: { className?: string }) {
+  return (
+    <span aria-hidden="true" className={`mr-2 ${className}`}>
+      ·
+    </span>
+  )
+}
 
 /**
  * The foot of every route: a real build stamp and the ways out.
@@ -27,23 +37,33 @@ export default function SiteFooter() {
   return (
     <BootInert>
       <footer className="relative z-10 border-t border-white/10 px-[clamp(1.5rem,5vw,4rem)] md:[body:has([data-stage])_&]:hidden">
-        <div className="mx-auto flex w-full max-w-6xl flex-col gap-2 py-6 font-mono text-label text-ink-meta md:flex-row md:items-center md:justify-between md:gap-6">
+        {/* One row only from xl: below that the stamp and the links don't
+            both fit on a line, and the stamp broke in the middle. */}
+        <div className="mx-auto flex w-full max-w-6xl flex-col gap-2 py-6 font-mono text-label text-ink-meta xl:flex-row xl:items-center xl:justify-between xl:gap-6">
+          {/* Each part carries the dot before it and never breaks inside, so
+              a line that wraps starts on a part instead of ending on a dot.
+              On a phone the name takes its own line and the build details
+              the next, with no dot between them. */}
           <p className="flex flex-wrap items-center gap-x-2">
-            <span>
+            <span className="whitespace-nowrap max-md:basis-full">
               © {year} {SITE.name}
             </span>
-            <span aria-hidden="true">·</span>
-            <span>{sha ? `build ${sha}` : 'local build'}</span>
+            <span className={PART}>
+              <Dot className="max-md:hidden" />
+              {sha ? `build ${sha}` : 'local build'}
+            </span>
             {day && (
-              <>
-                <span aria-hidden="true">·</span>
+              <span className={PART}>
+                <Dot />
                 <time dateTime={BUILD_TIME}>{day}</time>
-              </>
+              </span>
             )}
-            <span aria-hidden="true">·</span>
-            <a href={commitUrl ?? REPO_URL} target="_blank" rel="noopener noreferrer" className={LINK}>
-              source<span aria-hidden="true">&nbsp;↗</span>
-            </a>
+            <span className={PART}>
+              <Dot />
+              <a href={commitUrl ?? REPO_URL} target="_blank" rel="noopener noreferrer" className={LINK}>
+                source<span aria-hidden="true">&nbsp;↗</span>
+              </a>
+            </span>
           </p>
           <ul className="flex flex-wrap items-center gap-x-5">
             <li>
