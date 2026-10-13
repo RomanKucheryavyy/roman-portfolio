@@ -380,7 +380,10 @@ export function WorksWheel({
             {items[active].status}
           </p>
         )}
-        <p data-description className="text-ink-body mt-4 line-clamp-5 text-small">
+        {/* Whole, not clamped: this panel is the only place desktop /works
+            says what a piece is, and at 768-1280 five lines cut most of them
+            off mid-sentence. The longest fits beside the front card. */}
+        <p data-description className="text-ink-body mt-4 text-small">
           {items[active]?.description}
         </p>
       </div>
