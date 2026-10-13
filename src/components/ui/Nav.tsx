@@ -3,7 +3,7 @@ import { useCallback, useEffect, useRef, useState, type CSSProperties, type Mous
 import dynamic from 'next/dynamic'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { ArrowRight, Award, AudioLines, Lock, Mail, Music, User } from 'lucide-react'
+import { ArrowRight, Award, AudioLines, ListMusic, Lock, Mail, Music, User } from 'lucide-react'
 import { useIsHydrated } from '@/hooks/useMediaQuery'
 import { useScrollSpy } from '@/hooks/useScrollSpy'
 import { getLenis, scrollToTarget } from '@/lib/lenis'
@@ -380,7 +380,8 @@ export default function Nav({ inFlow = false }: NavProps) {
             <NavItem
               href={ROUTES.works}
               label="All work"
-              icon={<Music className={ICON} />}
+              // A list, not Work's note: side by side the two read as one item twice.
+              icon={<ListMusic className={ICON} />}
               trailing={<ArrowRight className="h-3.5 w-3.5" aria-hidden="true" />}
               config={configOf(movementOf('symphony').key)}
               current={pathname === ROUTES.works ? 'page' : undefined}
