@@ -343,6 +343,8 @@ export function WorksWheel({
                 total={count}
                 size="sm"
                 layout="overlay"
+                // Under the page's h1, like the phone list's cards.
+                titleAs="h2"
                 imageSizes="(min-width: 768px) 34vw, 1px"
                 className="size-full shadow-[0_18px_40px_-18px_rgba(255,255,255,0.12)]"
               />
