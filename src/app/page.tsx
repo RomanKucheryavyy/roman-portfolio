@@ -1,4 +1,5 @@
 import HomeClient from './HomeClient'
+import { notesHrefs } from '@/lib/case-studies'
 import { CERTIFICATIONS, LINKS, SITE } from '@/lib/constants'
 import { ROUTES } from '@/lib/routes'
 import { movementOf } from '@/lib/score'
@@ -22,7 +23,7 @@ const LINK = 'text-white underline decoration-ink-faint underline-offset-4 hover
 export default function Home() {
   return (
     <>
-      <HomeClient />
+      <HomeClient notesHrefs={notesHrefs()} />
       <noscript>
         {/* Above HomeClient's fixed pre-hydration screen (z-200), which never
             lifts without scripts. */}

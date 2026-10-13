@@ -236,6 +236,15 @@ export function notesHrefOf(id: string): string | undefined {
   return publishedStudies().some((s) => s.slug === id) ? `/works/${id}` : undefined
 }
 
+/**
+ * Every published piece's notes link, by work id: all a client component needs
+ * to know. The home page computes it on the server and passes it down, so the
+ * drafts, their open questions and the fixture never reach a visitor's JS.
+ */
+export function notesHrefs(): Readonly<Record<string, string>> {
+  return Object.fromEntries(publishedStudies().map((s) => [s.slug, `/works/${s.slug}`]))
+}
+
 /** Every claim in reading order, so footnote n is claims[n - 1]. */
 export function claimsOf(study: CaseStudy): Claim[] {
   return STUDY_BLOCKS.flatMap(({ key }) => study[key])

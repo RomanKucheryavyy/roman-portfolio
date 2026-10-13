@@ -3,7 +3,6 @@ import { useEffect, useState } from 'react'
 import { useStore } from '@/stores/useStore'
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog'
 import WorkCard from '@/components/ui/WorkCard'
-import { notesHrefOf } from '@/lib/case-studies'
 import { getLenis } from '@/lib/lenis'
 import { CLIENT_WORK, type Work } from '@/lib/work'
 
@@ -11,6 +10,8 @@ interface ProjectModalProps {
   /** Index into CLIENT_WORK, or null when closed. */
   index: number | null
   onClose: () => void
+  /** Published program notes by work id (page.tsx computes it on the server). */
+  notesHrefs: Readonly<Record<string, string>>
 }
 
 /**
@@ -22,7 +23,7 @@ interface ProjectModalProps {
  *
  * Desktop only, as before; on a phone the deck card already shows everything.
  */
-export default function ProjectModal({ index, onClose }: ProjectModalProps) {
+export default function ProjectModal({ index, onClose, notesHrefs }: ProjectModalProps) {
   const setCursorVariant = useStore((s) => s.setCursorVariant)
   const work = index !== null ? CLIENT_WORK[index] : null
   const open = work !== null
@@ -65,7 +66,7 @@ export default function ProjectModal({ index, onClose }: ProjectModalProps) {
             size="lg"
             layout="stacked"
             titleAs={DialogTitle}
-            notesHref={notesHrefOf(shown.work.id)}
+            notesHref={notesHrefs[shown.work.id]}
             imageSizes="(max-width: 1024px) 92vw, 896px"
             imageLoading="eager"
           />

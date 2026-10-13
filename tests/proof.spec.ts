@@ -1,5 +1,5 @@
 import { execFileSync } from 'node:child_process'
-import { readFileSync } from 'node:fs'
+import { readdirSync, readFileSync } from 'node:fs'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import AxeBuilder from '@axe-core/playwright'
@@ -63,6 +63,23 @@ test.describe('program notes', () => {
         expect((await request.get(url)).status(), url).toBe(404)
       }
     }
+  })
+
+  test('no built client chunk carries a draft, its open questions or the fixture', () => {
+    // The deck and the detail view only need to know which pieces have
+    // published notes; the home page works that out on the server. These are
+    // a draft's gap, a draft's claim and the fixture's marker.
+    const needles = /Whether to name the church|First released on the App Store on|FIXTURE — not real|must never ship/
+    const hits: string[] = []
+    const walk = (dir: string) => {
+      for (const entry of readdirSync(dir, { withFileTypes: true })) {
+        const file = path.join(dir, entry.name)
+        if (entry.isDirectory()) walk(file)
+        else if (needles.test(readFileSync(file, 'utf8'))) hits.push(path.relative(ROOT, file))
+      }
+    }
+    walk(path.join(ROOT, '.next', 'static'))
+    expect(hits).toEqual([])
   })
 
   test('the default sitemap lists no program notes', async ({ request }) => {

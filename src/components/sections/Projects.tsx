@@ -12,7 +12,6 @@ import { SectionHeader } from '@/components/ui/SectionHeader'
 import { SectionShell } from '@/components/ui/SectionShell'
 import WorkCard, { altOf } from '@/components/ui/WorkCard'
 import WebGLBoundary, { useCanWebGL } from '@/components/ui/WebGLBoundary'
-import { notesHrefOf } from '@/lib/case-studies'
 import { CLIENT_WORK, counterOf, type Work } from '@/lib/work'
 
 const Spline = lazy(() => import('@splinetool/react-spline'))
@@ -20,6 +19,9 @@ const SPLINE_IPHONE_URL = 'https://prod.spline.design/Mi7zxeQ50WnJzGOr/scene.spl
 
 const SPRING = { type: 'spring', stiffness: 170, damping: 26 } as const
 const TOTAL = CLIENT_WORK.length
+
+/** Published program notes by work id, computed on the server (page.tsx). */
+export type NotesHrefs = Readonly<Record<string, string>>
 
 /**
  * How many cards are drawn behind the front one. The stack offsets each card by
@@ -72,7 +74,7 @@ function DeckStatus({ work }: { work: Work }) {
   )
 }
 
-function DesktopDeck({ onOpen }: { onOpen: (index: number) => void }) {
+function DesktopDeck({ onOpen, notesHrefs }: { onOpen: (index: number) => void; notesHrefs: NotesHrefs }) {
   const [deck, setDeck] = useState<Work[]>([...CLIENT_WORK])
   const [counter, setCounter] = useState(0)
   const [exitDirection, setExitDirection] = useState<'up' | 'down' | null>(null)
@@ -194,7 +196,7 @@ function DesktopDeck({ onOpen }: { onOpen: (index: number) => void }) {
                     details={isFront ? 'dimmed' : 'hidden'}
                     media={work.isApp && splineOk ? <WebGLBoundary fallback={null} onError={() => setSplineFailed(true)}><SplineIphone work={work} isFront={isFront} /></WebGLBoundary> : undefined}
                     onOpen={isFront ? () => { if (!dragged.current) onOpen(originalIndex) } : undefined}
-                    notesHref={isFront ? notesHrefOf(work.id) : undefined}
+                    notesHref={isFront ? notesHrefs[work.id] : undefined}
                     imageSizes="(max-width: 768px) 85vw, 50vw"
                     className="h-full"
                   />
@@ -235,7 +237,7 @@ function DesktopDeck({ onOpen }: { onOpen: (index: number) => void }) {
   )
 }
 
-function MobileDeck() {
+function MobileDeck({ notesHrefs }: { notesHrefs: NotesHrefs }) {
   const [deck, setDeck] = useState<Work[]>([...CLIENT_WORK])
   const [counter, setCounter] = useState(0)
   const [exitDirection, setExitDirection] = useState<'left' | 'right' | null>(null)
@@ -335,7 +337,7 @@ function MobileDeck() {
                     total={TOTAL}
                     size="md"
                     layout="stacked"
-                    notesHref={isFront ? notesHrefOf(work.id) : undefined}
+                    notesHref={isFront ? notesHrefs[work.id] : undefined}
                     imageSizes="(max-width: 580px) 88vw, 512px"
                     className="h-full"
                   />
@@ -388,11 +390,15 @@ function MobileDeck() {
   )
 }
 
-export default function Projects() {
+export default function Projects({ notesHrefs = {} }: { notesHrefs?: NotesHrefs }) {
   const sectionRef = useRef<HTMLElement>(null)
   const { isMobile } = useDeviceCapability()
   const [projectIndex, setProjectIndex] = useState<number | null>(null)
-  const [Modal, setModal] = useState<ComponentType<{ index: number | null; onClose: () => void }> | null>(null)
+  const [Modal, setModal] = useState<ComponentType<{
+    index: number | null
+    onClose: () => void
+    notesHrefs: NotesHrefs
+  }> | null>(null)
   useRevealOnScroll(sectionRef)
 
   useEffect(() => {
@@ -430,10 +436,10 @@ export default function Projects() {
           </Link>
         </SectionHeader>
         <div className="flex-1 flex items-center justify-center pt-8">
-          {isMobile ? <MobileDeck /> : <DesktopDeck onOpen={setProjectIndex} />}
+          {isMobile ? <MobileDeck notesHrefs={notesHrefs} /> : <DesktopDeck onOpen={setProjectIndex} notesHrefs={notesHrefs} />}
         </div>
       </SectionShell>
-      {!isMobile && Modal && <Modal index={projectIndex} onClose={() => setProjectIndex(null)} />}
+      {!isMobile && Modal && <Modal index={projectIndex} onClose={() => setProjectIndex(null)} notesHrefs={notesHrefs} />}
     </>
   )
 }

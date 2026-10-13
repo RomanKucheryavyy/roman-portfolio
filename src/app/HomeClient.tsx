@@ -16,13 +16,13 @@ import ConsoleSignature from '@/components/effects/ConsoleSignature'
 import Loader from '@/components/ui/Loader'
 import Hero from '@/components/sections/Hero'
 import Measures from '@/components/sections/Measures'
-import Projects from '@/components/sections/Projects'
+import Projects, { type NotesHrefs } from '@/components/sections/Projects'
 import Compositions from '@/components/sections/Compositions'
 import Manifesto from '@/components/sections/Manifesto'
 import Conductor from '@/components/sections/Conductor'
 import Compose from '@/components/sections/Compose'
 
-function AppContent() {
+function AppContent({ notesHrefs }: { notesHrefs: NotesHrefs }) {
   useMouseTracking()
   const isLoaded = useStore((s) => s.isLoaded)
 
@@ -73,7 +73,7 @@ function AppContent() {
         <SectionTransition movement="measures" />
         <Measures />
         <SectionTransition movement="symphony" />
-        <Projects />
+        <Projects notesHrefs={notesHrefs} />
         <SectionTransition movement="compositions" />
         <Compositions />
         <SectionTransition movement="interlude" />
@@ -87,7 +87,9 @@ function AppContent() {
   )
 }
 
-export default function HomeClient() {
+/** `notesHrefs`: the published program notes by work id, from the server, so
+ *  the case-study drafts never ship in the client bundle. */
+export default function HomeClient({ notesHrefs }: { notesHrefs: NotesHrefs }) {
   const mounted = useIsHydrated()
 
   if (!mounted) {
@@ -101,5 +103,5 @@ export default function HomeClient() {
     )
   }
 
-  return <AppContent />
+  return <AppContent notesHrefs={notesHrefs} />
 }
