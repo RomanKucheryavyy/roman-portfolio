@@ -6,7 +6,7 @@ import { gsap, ScrollTrigger } from '@/hooks/useGSAP'
 import { useMouseTracking } from '@/hooks/useMouseVelocity'
 import { useIsHydrated } from '@/hooks/useMediaQuery'
 import { useStore } from '@/stores/useStore'
-import { scrollToTarget, setLenis } from '@/lib/lenis'
+import { getLenis, scrollToTarget, setLenis } from '@/lib/lenis'
 import { MOVEMENTS } from '@/lib/score'
 import DynamicFavicon from '@/components/effects/DynamicFavicon'
 import AmbientBackground from '@/components/effects/AmbientBackground'
@@ -48,6 +48,22 @@ function AppContent({ notesHrefs }: { notesHrefs: NotesHrefs }) {
       lenis.destroy()
     }
   }, [])
+
+  // Nothing scrolls under the boot. The Loader is opaque and main is inert,
+  // but inert doesn't stop a wheel: four notches during the boot landed a
+  // visitor mid-page, past the hero they never saw. Lenis stops, and the root
+  // can't scroll natively either (the reduced-motion path has no Lenis).
+  useEffect(() => {
+    if (isLoaded) return
+    const root = document.documentElement
+    const overflow = root.style.overflow
+    root.style.overflow = 'hidden'
+    getLenis()?.stop()
+    return () => {
+      root.style.overflow = overflow
+      getLenis()?.start()
+    }
+  }, [isLoaded])
 
   // A cold /#section link. The section doesn't exist when the browser looks
   // for the fragment (the page renders after hydration), so the browser never
