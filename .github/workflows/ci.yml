@@ -10,7 +10,10 @@ on:
     branches: ['**']
 
 concurrency:
-  group: ci-${{ github.ref }}
+  # One group per branch for both events: a push to a PR branch fires `push`
+  # (refs/heads/<branch>) and `pull_request` (refs/pull/<n>/merge), which
+  # used to land in two groups, so every PR push ran the whole suite twice.
+  group: ci-${{ github.head_ref || github.ref_name }}
   cancel-in-progress: true
 
 permissions:
