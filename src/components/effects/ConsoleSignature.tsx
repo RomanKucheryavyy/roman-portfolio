@@ -1,5 +1,6 @@
 'use client'
 import { useEffect } from 'react'
+import { REPO_URL } from '@/lib/build-info'
 
 let signed = false
 
@@ -13,7 +14,8 @@ export default function ConsoleSignature() {
         '%cRoman Kucheryavyy%c — Orchestrating Logic & Art\n\n' +
         '%cYou read consoles. I like you already.\n' +
         `How this site is built: ${window.location.origin}/colophon\n\n` +
-        '%c$ git clone https://github.com/RomanKucheryavyy\n',
+        // The repository itself: the profile URL this used to print can't be cloned.
+        `%c$ git clone ${REPO_URL}\n`,
       'font-size: 28px; color: #5ac8fa;',
       'font-size: 14px; color: rgba(255,255,255,0.4);',
       '',
