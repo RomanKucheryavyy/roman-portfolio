@@ -106,6 +106,7 @@ export function WorksWheel({
   className,
   ...props
 }: WorksWheelProps) {
+  const sectionRef = React.useRef<HTMLElement>(null);
   const stageRef = React.useRef<HTMLDivElement>(null);
   const wheelRef = React.useRef<HTMLDivElement>(null);
   const cardRefs = React.useRef<(HTMLElement | null)[]>([]);
@@ -247,9 +248,11 @@ export function WorksWheel({
 
   // Native listener, because the wheel has to be cancellable - and it only
   // cancels while it still has somewhere to go, so the page scrolls on at
-  // either end instead of trapping the reader.
+  // either end instead of trapping the reader. On the whole section, not just
+  // the stage: the rail is the stage's sibling, and a wheel over it (where the
+  // pointer is right after clicking a title) used to do nothing.
   React.useEffect(() => {
-    const el = stageRef.current;
+    const el = sectionRef.current;
     if (!el) return;
     const onWheel = (event: WheelEvent) => {
       const next = target.current + event.deltaY / WHEEL_UNITS;
@@ -274,6 +277,7 @@ export function WorksWheel({
 
   return (
     <section
+      ref={sectionRef}
       aria-label={label}
       className={cn(
         "bg-background text-foreground relative h-full min-h-[24rem] w-full overflow-hidden select-none",
@@ -299,9 +303,12 @@ export function WorksWheel({
           drag.current = event.clientY;
         }}
         onPointerUp={() => {
-          // Land on an item rather than between two.
+          // Land on an item rather than between two, and never half way
+          // between the ring and the drum: a short drag from the ring used to
+          // leave the wheel at about 0.5, half ring and half drum, with the
+          // side panel at half strength over it.
           drag.current = null;
-          if (target.current > 1) to(Math.round(target.current));
+          to(Math.round(target.current));
         }}
         onKeyDown={(event) => {
           // Turn 1 is the drum with the first piece at the front, last + 1
