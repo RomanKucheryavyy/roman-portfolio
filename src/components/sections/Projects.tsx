@@ -503,8 +503,8 @@ export default function Projects({ notesHrefs = {} }: { notesHrefs?: NotesHrefs 
           title={{ lead: 'The', accent: 'Symphony' }}
           intro={
             isMobile
-              ? "Sites and apps I've designed, built and shipped."
-              : "Sites and apps I've designed, built and shipped. Open any card to see it whole."
+              ? "Sites and apps I've designed and built."
+              : "Sites and apps I've designed and built. Open any card to see it whole."
           }
         >
           <Link
