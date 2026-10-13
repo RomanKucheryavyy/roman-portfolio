@@ -191,22 +191,32 @@ export default function Conductor() {
         {/* Terminal */}
         <Panel data-reveal className="overflow-hidden">
           <TerminalBar title="roman@portfolio ~" />
-          <div
-            role="region"
-            aria-label="roman.ts"
-            tabIndex={0}
-            // The Panel clips anything outside it, so the ring is drawn inside.
-            className="mobile-scroll-hide overflow-x-auto p-5 font-mono text-label leading-relaxed focus-visible:-outline-offset-4"
-          >
-            <div className="w-max min-w-full">
-              {CODE_LINES.map((line, i) => (
-                <div key={i} className="flex whitespace-pre">
-                  <span aria-hidden="true" className="mr-3 w-5 flex-shrink-0 select-none text-right text-ink-meta">
-                    {i + 1}
-                  </span>
-                  <span className={inkOf(line)}>{line || ' '}</span>
-                </div>
-              ))}
+          {/* The lines wrap, with a hanging indent under their own code, so
+              the whole card reads at every width. It used to be a sideways
+              scroller with no visible scrollbar, and its two longest lines
+              (the role and the craft list) were cut at the card's edge at
+              1440, 1024 and 390, mid-word. Nothing scrolls now, so the
+              region is no longer a tab stop. */}
+          <div role="region" aria-label="roman.ts" className="p-5 font-mono text-label leading-relaxed">
+            <div>
+              {CODE_LINES.map((line, i) => {
+                const indent = line.length - line.trimStart().length
+                return (
+                  <div key={i} className="flex">
+                    <span aria-hidden="true" className="mr-3 w-5 flex-shrink-0 select-none text-right text-ink-meta">
+                      {i + 1}
+                    </span>
+                    <span
+                      className={cn('min-w-0 whitespace-pre-wrap wrap-break-word', inkOf(line))}
+                      // The first line starts at its indent; a wrapped line two
+                      // characters further in.
+                      style={{ paddingLeft: `${indent + 2}ch`, textIndent: '-2ch' }}
+                    >
+                      {line.trimStart() || ' '}
+                    </span>
+                  </div>
+                )
+              })}
               <div className="mt-1 flex">
                 <span aria-hidden="true" className="mr-3 w-5 select-none text-right text-ink-meta">
                   {CODE_LINES.length + 1}
