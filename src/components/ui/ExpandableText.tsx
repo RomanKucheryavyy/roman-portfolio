@@ -12,6 +12,10 @@ interface ExpandableTextProps {
   /** Give it the text's own type classes, so the CSS clamp (`Nlh`) counts the
    *  text's lines and not the body's. */
   className?: string
+  /** The id of what the text is about (its card's title), read after the
+   *  toggle's label: four "$ cat --more" buttons were indistinguishable in a
+   *  screen reader's list of buttons. */
+  describedBy?: string
   children: ReactNode
 }
 
@@ -33,6 +37,7 @@ export default function ExpandableText({
   moreLabel = 'Show more',
   lessLabel = 'Show less',
   className,
+  describedBy,
   children,
 }: ExpandableTextProps) {
   const id = useId()
@@ -87,6 +92,7 @@ export default function ExpandableText({
           type="button"
           aria-expanded={expanded}
           aria-controls={id}
+          aria-describedby={describedBy}
           onClick={() => setExpanded((value) => !value)}
           // A 24px line with 10px of slop either side: a 44px target that
           // doesn't push the tags any further down.

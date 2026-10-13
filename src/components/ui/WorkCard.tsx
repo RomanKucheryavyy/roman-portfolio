@@ -2,7 +2,7 @@
 import Image from 'next/image'
 import Link from 'next/link'
 import { ArrowRight } from 'lucide-react'
-import { type CSSProperties, type ElementType, type ReactNode } from 'react'
+import { useId, type CSSProperties, type ElementType, type ReactNode } from 'react'
 import { useMediaQuery } from '@/hooks/useMediaQuery'
 import { cn } from '@/lib/utils'
 import { counterOf, type Work } from '@/lib/work'
@@ -293,6 +293,7 @@ function TextCard({ work, counter, notes, Title, className, style }: {
 }) {
   // Phones clamp the description to four lines; from md up it shows whole.
   const isNarrow = useMediaQuery('(max-width: 767px)')
+  const titleId = useId()
   return (
     <article
       className={cn(FRAME, 'flex h-full flex-col transition-colors duration-500 hover:border-white/20', className)}
@@ -318,7 +319,9 @@ function TextCard({ work, counter, notes, Title, className, style }: {
             </p>
           )}
         </div>
-        <Title className={cn(TITLE, 'text-2xl md:text-3xl')}>{work.title}</Title>
+        <Title id={titleId} className={cn(TITLE, 'text-2xl md:text-3xl')}>
+          {work.title}
+        </Title>
         {work.tagline && (
           <p className="mt-2 mb-4 font-mono text-label uppercase tracking-wider text-ink-meta">{work.tagline}</p>
         )}
@@ -327,6 +330,7 @@ function TextCard({ work, counter, notes, Title, className, style }: {
           enabled={isNarrow}
           moreLabel="$ cat --more"
           lessLabel="$ cat --less"
+          describedBy={titleId}
           className={BODY_TYPE}
         >
           <p data-card-description className={BODY}>{work.description}</p>
