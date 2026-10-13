@@ -290,8 +290,10 @@ test.describe('colophon', () => {
     await expect(valueOf('Commit')).toHaveText(sha ? sha.slice(0, 7) : 'local build')
 
     const budget = JSON.parse(readFileSync(path.join(ROOT, 'scripts/budget.json'), 'utf8'))
+    // The 404 route is listed under a plain name, with its key as the note.
+    const LABEL: Record<string, string> = { '/_not-found': '404 page' }
     for (const [route, bytes] of Object.entries<number>(budget.routes)) {
-      await expect(valueOf(route)).toContainText(`${bytes.toLocaleString('en-US')} B`)
+      await expect(valueOf(LABEL[route] ?? route)).toContainText(`${bytes.toLocaleString('en-US')} B`)
     }
     await expect(valueOf('any other route')).toHaveText(`${budget.defaultRouteBudget.toLocaleString('en-US')} B`)
 
