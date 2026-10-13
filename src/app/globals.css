@@ -282,4 +282,12 @@ canvas { touch-action: pan-y; }
     transition-duration: 0.01ms !important;
     scroll-behavior: auto !important;
   }
+  /* The hero's own loops (the spotlight beams, the name's gradient, the scroll
+     cue) end on the frame they start on, so a finished iteration held there is
+     the still hero reduced-motion visitors always saw. Without the hold the
+     beams fell back to their inline ±20° fan and the gradient to 0% 0%, a
+     hero nobody had seen before. Hero.tsx is untouched. */
+  #hero, #hero *, #hero *::before, #hero *::after {
+    animation-fill-mode: forwards !important;
+  }
 }
