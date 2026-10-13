@@ -24,7 +24,7 @@ import {
 } from '@/lib/case-studies'
 import { getAppStoreFacts, siteAppStoreId } from '@/lib/app-store'
 import { CLIENT_WORK, LIVE_CLIENT_WORK, appStoreIdOf } from '@/lib/work'
-import { pageMetadata } from '@/lib/seo'
+import { SITE_CARD, pageMetadata } from '@/lib/seo'
 import { RESUME_HREF, RESUME_PDF_HREF, RESUME_PUBLIC, RESUME_REQUEST, sectionHref } from '@/lib/routes'
 import { blobUrlOf, commitUrlOf, sha7 } from '@/lib/build-info'
 import { GET as getAppStoreRoute } from '@/app/api/app-store/route'
@@ -236,7 +236,9 @@ test.describe('links and head', () => {
     expect(meta.title).toEqual({ absolute: 'The setlist — Roman Kucheryavyy' })
     expect(meta.openGraph?.title).toBe('The setlist — Roman Kucheryavyy')
     expect(meta.twitter?.title).toBe('The setlist — Roman Kucheryavyy')
-    expect(meta.openGraph?.images).toEqual(['/opengraph-image'])
+    // The site card by default, named with its size, type and alt.
+    expect(meta.openGraph?.images).toEqual([SITE_CARD])
+    expect(meta.twitter?.images).toEqual([{ ...SITE_CARD, url: '/twitter-image' }])
     expect(pageMetadata({ path: '/', images: false }).openGraph).not.toHaveProperty('images')
   })
 

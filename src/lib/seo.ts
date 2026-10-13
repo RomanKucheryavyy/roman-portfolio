@@ -9,12 +9,33 @@ export function fullTitle(title?: string): string {
   return title ? TITLE_TEMPLATE.replace('%s', title) : SITE.title
 }
 
+/**
+ * The site card, app/opengraph-image.tsx (and twitter-image.tsx, its twin), as
+ * a page names it: the URL alone used to go out with no og:image:width,
+ * height, type or alt. A route below app/ that sets its own openGraph replaces
+ * the root segment's file-convention images, so it has to carry these itself.
+ */
+export const SITE_CARD = {
+  url: '/opengraph-image',
+  alt: `${SITE.name} — Orchestrating Logic & Art`,
+  width: 1200,
+  height: 630,
+  type: 'image/png',
+} as const
+const SITE_TWITTER_CARD = { ...SITE_CARD, url: '/twitter-image' } as const
+
 export interface PageMetaInput {
   /** The page's own path, which becomes its canonical URL ("/works"). */
   path: string
   title?: string
   description?: string
-  /** OG images; the site card by default. `false` leaves them to the segment's own opengraph-image file. */
+  /**
+   * OG images. By default the site card, with its size, type and alt.
+   * `false` names none, and Next's file convention supplies the card with
+   * all of that plus its cache-busting hash: right for a segment with its own
+   * opengraph-image file (/works, program notes) and for the home page, whose
+   * segment holds the site card's file.
+   */
   images?: string[] | false
 }
 
@@ -27,8 +48,10 @@ export function pageMetadata({
   path,
   title,
   description = SITE.description,
-  images = ['/opengraph-image'],
+  images,
 }: PageMetaInput): Metadata {
+  const og = images === undefined ? [SITE_CARD] : images
+  const tw = images === undefined ? [SITE_TWITTER_CARD] : images
   const full = fullTitle(title)
   return {
     // Absolute, so <title>, og:title and twitter:title are always the same string.
@@ -42,13 +65,13 @@ export function pageMetadata({
       url: path,
       title: full,
       description,
-      ...(images ? { images } : {}),
+      ...(og ? { images: og } : {}),
     },
     twitter: {
       card: 'summary_large_image',
       title: full,
       description,
-      ...(images ? { images } : {}),
+      ...(tw ? { images: tw } : {}),
     },
   }
 }

@@ -6,7 +6,9 @@ import { movementOf } from '@/lib/score'
 import { pageMetadata } from '@/lib/seo'
 import { CLIENT_WORK, PRODUCTS, actionOf } from '@/lib/work'
 
-export const metadata = pageMetadata({ path: ROUTES.home })
+// images: false, so the root segment's own opengraph-image / twitter-image
+// files supply the card with its hash, size and alt.
+export const metadata = pageMetadata({ path: ROUTES.home, images: false })
 
 const H2 = 'mt-12 mb-4 font-display text-2xl font-bold tracking-tight text-white'
 const ITEM = 'text-small text-ink-body'

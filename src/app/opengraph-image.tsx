@@ -1,6 +1,8 @@
+import { SITE_CARD } from '@/lib/seo'
 import { BRAND_GRADIENT, FONT, OG_CONTENT_TYPE, OG_SIZE, OgKicker, ogImage } from './_og/frame'
 
-export const alt = 'Roman Kucheryavyy — Orchestrating Logic & Art'
+/** One alt for the card, wherever it is named (seo.ts SITE_CARD). */
+export const alt = SITE_CARD.alt
 export const size = OG_SIZE
 export const contentType = OG_CONTENT_TYPE
 

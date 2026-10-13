@@ -261,6 +261,18 @@ test.describe('icons, manifest and share cards', () => {
     expect(pngSize(await res.body())).toEqual({ width: 180, height: 180 })
   })
 
+  test('every page names its card with its size, type and alt', async ({ request }) => {
+    for (const route of ['/', '/colophon', '/resume', '/works', '/does-not-exist']) {
+      const { text } = await html(request, route)
+      expect(text, route).toMatch(/<meta property="og:image" content="[^"]*\/opengraph-image/)
+      expect(text, route).toContain('<meta property="og:image:width" content="1200"/>')
+      expect(text, route).toContain('<meta property="og:image:height" content="630"/>')
+      expect(text, route).toContain('<meta property="og:image:type" content="image/png"/>')
+      expect(text, route).toMatch(/<meta property="og:image:alt" content="[^"]+"/)
+      expect(text, route).toMatch(/<meta name="twitter:image" content="[^"]*\/twitter-image/)
+    }
+  })
+
   test('the home and /works cards are 1200x630 PNGs, and /works points at its own', async ({ request }) => {
     for (const card of ['/opengraph-image', '/works/opengraph-image', '/works/twitter-image']) {
       const res = await request.get(card)
