@@ -59,7 +59,8 @@ const WORK_FACTS: Fact[] = [
 
 const LIFE_FACTS: Fact[] = [
   { term: 'Music', value: 'FUBC Band — trumpet, arranger, director' },
-  { term: 'Home', value: 'Husband and father' },
+  // Roman's own words, as he has had them since his first commit (286708e).
+  { term: 'Home', value: 'Husband and father — the most important role' },
 ]
 
 /**
