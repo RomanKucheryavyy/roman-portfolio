@@ -41,6 +41,12 @@ const SECTION_PATHS: Record<string, string> = {
  *   workers; this scene started none in testing, so it is the plan's
  *   allowance rather than a measured need.
  * - frame-ancestors 'none': X-Frame-Options DENY, in CSP terms.
+ * - base-uri, form-action, object-src: they don't fall back to default-src.
+ *   No page sets a <base>, every form posts to this origin's /api (by fetch),
+ *   and nothing embeds a plugin.
+ * - report-uri / report-to: violations go to /api/csp-report, which logs one
+ *   line each on the server, so a deploy preview has a log to read. Both, for
+ *   browsers with and without the Reporting API.
  *
  * Enforcing it is a later, separate change: switch the header name once a
  * deploy preview has run report-only with nothing logged.
@@ -54,6 +60,11 @@ const CSP = [
   "connect-src 'self' https://prod.spline.design https://unpkg.com",
   "worker-src 'self' blob:",
   "frame-ancestors 'none'",
+  "base-uri 'self'",
+  "form-action 'self'",
+  "object-src 'none'",
+  'report-uri /api/csp-report',
+  'report-to csp',
 ].join('; ')
 
 const nextConfig: NextConfig = {
@@ -81,6 +92,8 @@ const nextConfig: NextConfig = {
           // and the Conductor photo tilt with the phone through
           // deviceorientation, and an empty allowlist would switch that off.
           { key: 'Permissions-Policy', value: 'camera=(), microphone=(), geolocation=(), payment=(), usb=()' },
+          { key: 'X-Content-Type-Options', value: 'nosniff' },
+          { key: 'Reporting-Endpoints', value: 'csp="/api/csp-report"' },
           { key: 'Content-Security-Policy-Report-Only', value: CSP },
         ],
       },

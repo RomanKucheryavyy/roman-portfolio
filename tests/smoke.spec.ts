@@ -75,7 +75,26 @@ test.describe('content security policy (report-only)', () => {
       expect(headers['content-security-policy-report-only'], path).toContain("default-src 'self'")
       expect(headers['content-security-policy-report-only'], path).toContain("frame-ancestors 'none'")
       expect(headers['content-security-policy'], path).toBeUndefined()
+      expect(headers['x-content-type-options'], path).toBe('nosniff')
     }
+  })
+
+  test('reports have somewhere to go, and the endpoint takes either format', async ({ request }) => {
+    const headers = (await request.get('/')).headers()
+    expect(headers['content-security-policy-report-only']).toContain('report-uri /api/csp-report')
+    expect(headers['content-security-policy-report-only']).toContain('report-to csp')
+    expect(headers['reporting-endpoints']).toBe('csp="/api/csp-report"')
+    const legacy = await request.post('/api/csp-report', {
+      headers: { 'content-type': 'application/csp-report' },
+      data: JSON.stringify({ 'csp-report': { 'violated-directive': 'img-src', 'blocked-uri': 'https://example.com/x.png', 'document-uri': '/' } }),
+    })
+    expect(legacy.status()).toBe(204)
+    const modern = await request.post('/api/csp-report', {
+      headers: { 'content-type': 'application/reports+json' },
+      data: JSON.stringify([{ type: 'csp-violation', body: { effectiveDirective: 'img-src', blockedURL: 'https://example.com/x.png', documentURL: '/' } }]),
+    })
+    expect(modern.status()).toBe(204)
+    expect((await request.post('/api/csp-report', { data: 'not json' })).status()).toBe(204)
   })
 
   test('the home page, the ocean and the Spline phone: no report', async ({ page }) => {
