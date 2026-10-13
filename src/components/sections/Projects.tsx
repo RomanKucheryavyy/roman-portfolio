@@ -23,6 +23,67 @@ const TOTAL = CLIENT_WORK.length
 /** Published program notes by work id, computed on the server (page.tsx). */
 export type NotesHrefs = Readonly<Record<string, string>>
 
+/** The longest a card's exit may take before the deck stops waiting for it. */
+const EXIT_GRACE_MS = 700
+
+/**
+ * The deck's order and its two steps, shared by both decks.
+ *
+ * A step sends one card out of the drawn stack, and that card fades out over
+ * 0.2s. A second step started while it was still leaving left AnimatePresence
+ * with exits it never cleared: four invisible cards stayed mounted over the
+ * front one, so a click opened the wrong piece and the drag stopped working,
+ * until a reload. Any input could do it at about four steps a second (a held
+ * arrow key, quick chevron clicks). So a step waits for the last one's exit
+ * (AnimatePresence's onExitComplete, which the deck passes back as `settled`),
+ * and keeps the latest press that arrives meanwhile, so nothing is lost: the
+ * deck just turns at the speed its animation allows.
+ */
+function useDeckSteps() {
+  const [deck, setDeck] = useState<Work[]>([...CLIENT_WORK])
+  const [counter, setCounter] = useState(0)
+  const busy = useRef(false)
+  const queued = useRef<'next' | 'prev' | null>(null)
+  const grace = useRef(0)
+  const stepRef = useRef<(dir: 'next' | 'prev') => void>(() => {})
+
+  const settled = useCallback(() => {
+    window.clearTimeout(grace.current)
+    busy.current = false
+    const dir = queued.current
+    queued.current = null
+    if (dir) stepRef.current(dir)
+  }, [])
+
+  const step = useCallback(
+    (dir: 'next' | 'prev') => {
+      if (busy.current) {
+        queued.current = dir
+        return
+      }
+      busy.current = true
+      // Should an exit never report back, the deck still unlocks.
+      grace.current = window.setTimeout(settled, EXIT_GRACE_MS)
+      if (dir === 'next') {
+        setDeck((d) => [...d.slice(1), d[0]])
+        setCounter((c) => (c + 1) % TOTAL)
+      } else {
+        setDeck((d) => [d[d.length - 1], ...d.slice(0, -1)])
+        setCounter((c) => (c - 1 + TOTAL) % TOTAL)
+      }
+    },
+    [settled],
+  )
+  useEffect(() => {
+    stepRef.current = step
+  }, [step])
+  useEffect(() => () => window.clearTimeout(grace.current), [])
+
+  const next = useCallback(() => step('next'), [step])
+  const prev = useCallback(() => step('prev'), [step])
+  return { deck, counter, next, prev, settled }
+}
+
 /**
  * How many cards are drawn behind the front one. The stack offsets each card by
  * -10% and 6% of scale, so rendering the whole list sent the tail of a longer
@@ -75,8 +136,7 @@ function DeckStatus({ work }: { work: Work }) {
 }
 
 function DesktopDeck({ onOpen, notesHrefs }: { onOpen: (index: number) => void; notesHrefs: NotesHrefs }) {
-  const [deck, setDeck] = useState<Work[]>([...CLIENT_WORK])
-  const [counter, setCounter] = useState(0)
+  const { deck, counter, next, prev, settled } = useDeckSteps()
   const [exitDirection, setExitDirection] = useState<'up' | 'down' | null>(null)
   const deckRef = useRef<HTMLDivElement>(null)
   const setCursorVariant = useStore((s) => s.setCursorVariant)
@@ -92,15 +152,6 @@ function DesktopDeck({ onOpen, notesHrefs }: { onOpen: (index: number) => void; 
 
   const dragY = useMotionValue(0)
   const rotateX = useTransform(dragY, [-200, 0, 200], [15, 0, -15])
-
-  const next = useCallback(() => {
-    setDeck((d) => [...d.slice(1), d[0]])
-    setCounter((c) => (c + 1) % TOTAL)
-  }, [])
-  const prev = useCallback(() => {
-    setDeck((d) => [d[d.length - 1], ...d.slice(0, -1)])
-    setCounter((c) => (c - 1 + TOTAL) % TOTAL)
-  }, [])
 
   // Arrow keys, with the typing, dialog and on-screen guards; focus follows
   // the new front card when it was in the deck.
@@ -147,7 +198,7 @@ function DesktopDeck({ onOpen, notesHrefs }: { onOpen: (index: number) => void; 
       >
         <DeckStatus work={deck[0]} />
         <ul className="relative w-full h-full m-0 p-0">
-          <AnimatePresence>
+          <AnimatePresence onExitComplete={settled}>
             {deck.slice(0, STACK_DEPTH).map((work, i) => {
               const isFront = i === 0
               const brightness = Math.max(0.3, 1 - 0.15 * i)
@@ -238,8 +289,7 @@ function DesktopDeck({ onOpen, notesHrefs }: { onOpen: (index: number) => void; 
 }
 
 function MobileDeck({ notesHrefs }: { notesHrefs: NotesHrefs }) {
-  const [deck, setDeck] = useState<Work[]>([...CLIENT_WORK])
-  const [counter, setCounter] = useState(0)
+  const { deck, counter, next, prev, settled } = useDeckSteps()
   const [exitDirection, setExitDirection] = useState<'left' | 'right' | null>(null)
   const deckRef = useRef<HTMLDivElement>(null)
 
@@ -248,15 +298,6 @@ function MobileDeck({ notesHrefs }: { notesHrefs: NotesHrefs }) {
   // deck — the audit's single worst mobile finding.
   const dragX = useMotionValue(0)
   const rotateZ = useTransform(dragX, [-200, 0, 200], [-6, 0, 6])
-
-  const next = useCallback(() => {
-    setDeck((d) => [...d.slice(1), d[0]])
-    setCounter((c) => (c + 1) % TOTAL)
-  }, [])
-  const prev = useCallback(() => {
-    setDeck((d) => [d[d.length - 1], ...d.slice(0, -1)])
-    setCounter((c) => (c - 1 + TOTAL) % TOTAL)
-  }, [])
 
   // ArrowLeft / ArrowRight only: up and down keep scrolling the page.
   useDeckKeys(deckRef, next, prev, 'x', deck[0].id)
@@ -296,7 +337,21 @@ function MobileDeck({ notesHrefs }: { notesHrefs: NotesHrefs }) {
       >
         <DeckStatus work={deck[0]} />
         <ul className="relative grid w-full m-0 p-0">
-          <AnimatePresence>
+          {/* The deck's height, held. The grid cell is as tall as its tallest
+              card, and only five of the nine are drawn at a time, so the deck
+              grew and shrank by up to 45px as it turned (with Nelectric's or
+              DanTheMan's longer copy in the stack or not), and the Previous /
+              Next buttons below jumped out from under the thumb between two
+              taps. One invisible copy of every card's text sits in the same
+              cell, so the cell is always as tall as the tallest of all nine,
+              whichever card that is at this width. Text only: no image is
+              fetched for them, and they are inert and hidden from AT. */}
+          {CLIENT_WORK.map((work, i) => (
+            <li key={`sizer-${work.id}`} aria-hidden="true" inert className="invisible [grid-area:1/1] list-none">
+              <WorkCard work={work} index={i} total={TOTAL} size="md" layout="stacked" media={<span />} className="h-full" />
+            </li>
+          ))}
+          <AnimatePresence onExitComplete={settled}>
             {deck.slice(0, STACK_DEPTH).map((work, i) => {
               const isFront = i === 0
               const brightness = Math.max(0.3, 1 - 0.15 * i)
