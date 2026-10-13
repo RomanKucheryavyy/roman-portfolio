@@ -92,7 +92,13 @@ for (const route of ROUTES) {
     const project = test.info().project.name
 
     await route.ready(page)
-    const results = await new AxeBuilder({ page }).exclude(DECORATIVE).analyze()
+    // target-size (WCAG 2.2 AA 2.5.8) ships disabled in axe-core, so the
+    // default rule set never ran it: the /works rail's 21px rows passed. It is
+    // added on top of the defaults (not a tag filter, which would drop them).
+    const results = await new AxeBuilder({ page })
+      .exclude(DECORATIVE)
+      .options({ rules: { 'target-size': { enabled: true } } })
+      .analyze()
 
     const observed: Counts = {}
     for (const v of results.violations) {

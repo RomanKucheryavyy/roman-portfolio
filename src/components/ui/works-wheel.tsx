@@ -399,7 +399,8 @@ export function WorksWheel({
               aria-current={i === active ? "true" : undefined}
               onClick={() => to(i + 1)}
               className={cn(
-                "focus-visible:outline-foreground cursor-pointer transition-colors focus-visible:outline-1",
+                // py-0.5: the rows touched at 21px, under WCAG 2.2's 24px target.
+                "focus-visible:outline-foreground cursor-pointer py-0.5 transition-colors focus-visible:outline-1",
                 i === active && "text-foreground font-medium",
               )}
             >
