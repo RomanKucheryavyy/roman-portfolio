@@ -93,7 +93,14 @@ export function useScrollSpy({ enabled, onChange, labelOf }: UseScrollSpyOptions
   useEffect(() => {
     if (!enabled) return
     const abandon = () => {
-      if (lock.current) release()
+      if (!lock.current) return
+      // A jump cut short by the reader's own wheel or touch: the hash the nav
+      // wrote for it names a section they never reached, and a copied URL
+      // would open there. Drop it; the spy goes on naming what is read.
+      if (window.location.hash === `#${lock.current}`) {
+        window.history.replaceState(null, '', window.location.pathname + window.location.search)
+      }
+      release()
     }
     window.addEventListener('scroll', sync, { passive: true })
     window.addEventListener('resize', sync)
