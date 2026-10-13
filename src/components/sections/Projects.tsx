@@ -116,11 +116,36 @@ function SplineIphone({ work, isFront }: { work: Work; isFront: boolean }) {
             </div>
           }
         >
-          <div className="absolute inset-0">
-            <Spline scene={SPLINE_IPHONE_URL} style={{ width: '100%', height: '100%' }} />
-          </div>
+          <SplineScene />
         </Suspense>
       )}
+    </div>
+  )
+}
+
+/**
+ * The scene, mounted only while the card is at the front, so it remounts on
+ * every visit. react-spline's cleanup disposes the app but leaves its WebGL
+ * context alive, and Chrome keeps 16: on the 16th visit it evicted the oldest,
+ * the hero's ocean, for the rest of the session. Losing the context on unmount
+ * gives it back. After a tick, so Spline's own dispose has run first.
+ */
+function SplineScene() {
+  const host = useRef<HTMLDivElement>(null)
+  useEffect(() => {
+    const el = host.current
+    return () => {
+      const canvas = el?.querySelector('canvas')
+      if (!canvas) return
+      window.setTimeout(() => {
+        const gl = (canvas.getContext('webgl2') ?? canvas.getContext('webgl')) as WebGLRenderingContext | null
+        gl?.getExtension('WEBGL_lose_context')?.loseContext()
+      }, 0)
+    }
+  }, [])
+  return (
+    <div ref={host} className="absolute inset-0">
+      <Spline scene={SPLINE_IPHONE_URL} style={{ width: '100%', height: '100%' }} />
     </div>
   )
 }
