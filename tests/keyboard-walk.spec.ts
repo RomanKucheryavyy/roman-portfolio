@@ -15,7 +15,7 @@ import { collectConsole, gotoHome, waitForChrome } from './helpers'
  *   indicator is actually drawn;
  * - it has a non-empty accessible name;
  * - once the page has scrolled to it, it is inside the viewport and not
- *   under the fixed nav.
+ *   under the fixed nav, nor painted over by anything else on the page.
  *
  * On the home page the walk must reach Send ("Send message"), the end of the
  * page's one job. Every other route is walked until focus leaves the page.
@@ -54,6 +54,8 @@ interface Stop {
   visibility: string
   inViewport: boolean
   underNav: boolean
+  /** What is painted over the middle of it, if anything is. */
+  coveredBy: string | null
   focused: Look
 }
 
@@ -108,9 +110,22 @@ async function readStop(page: Page, n: number): Promise<Stop | null> {
     // viewport belongs to the nav. (The nav's own items are, of course, fine.)
     const nav = document.querySelector('nav')
     const [left, right] = [Math.max(r.left, 0), Math.min(r.right, innerWidth)]
-    const [top, bottom] = [Math.max(r.top, 0), Math.min(r.bottom, innerHeight)]
-    const hit = document.elementFromPoint(Math.min((left + right) / 2, innerWidth - 1), Math.min((top + bottom) / 2, innerHeight - 1))
+    const [top0, bottom] = [Math.max(r.top, 0), Math.min(r.bottom, innerHeight)]
+    const hit = document.elementFromPoint(Math.min((left + right) / 2, innerWidth - 1), Math.min((top0 + bottom) / 2, innerHeight - 1))
     const underNav = !!nav && !nav.contains(el) && !!hit && nav.contains(hit)
+    // Painted over. elementFromPoint skips inert subtrees, so the hit above
+    // goes straight through the deck's inert back cards to whatever they
+    // cover: the deck's Previous button sat under them, unseen, and passed.
+    // For this one read the page is not inert anywhere, so the hit is what is
+    // drawn on top. The attribute goes back before the frame ends.
+    const inert = Array.from(document.querySelectorAll<HTMLElement>('[inert]'))
+    for (const node of inert) node.inert = false
+    const top = document.elementFromPoint(Math.min((left + right) / 2, innerWidth - 1), Math.min((top0 + bottom) / 2, innerHeight - 1))
+    for (const node of inert) node.inert = true
+    const coveredBy =
+      top && !el.contains(top) && !top.contains(el) && !(nav && nav.contains(top))
+        ? `${top.tagName.toLowerCase()}${top.closest('[data-work]') ? ` in [data-work="${top.closest('[data-work]')!.getAttribute('data-work')}"]` : ''}`
+        : null
     const name = el.getAttribute('aria-label') || (el.textContent ?? '').trim().replace(/\s+/g, ' ').slice(0, 40)
     return {
       n,
@@ -119,6 +134,7 @@ async function readStop(page: Page, n: number): Promise<Stop | null> {
       visibility: getComputedStyle(el).visibility,
       inViewport,
       underNav,
+      coveredBy,
       focused: look(el),
     }
   }, n)
@@ -177,7 +193,7 @@ async function walk(page: Page, done: (stop: Stop) => boolean = () => false) {
     let stop = await readStop(page, n)
     if (!stop) break // focus left the document: the walk is over
     // Give the page (Lenis, a reveal) a moment to bring the element into view.
-    for (let tries = 0; tries < 15 && stop && (!stop.inViewport || stop.underNav || stop.opacity === 0); tries++) {
+    for (let tries = 0; tries < 15 && stop && (!stop.inViewport || stop.underNav || stop.coveredBy || stop.opacity === 0); tries++) {
       await page.waitForTimeout(100)
       stop = await readStop(page, n)
     }
@@ -205,6 +221,7 @@ function check(stops: Stop[], unfocused: Record<string, Look>) {
     if (stop.visibility === 'hidden') problems.push(`${where} is visibility:hidden`)
     if (!stop.inViewport) problems.push(`${where} is outside the viewport`)
     if (stop.underNav) problems.push(`${where} is under the fixed nav`)
+    if (stop.coveredBy) problems.push(`${where} is painted over by ${stop.coveredBy}`)
     if (indicatorOf(stop.focused, unfocused[String(stop.n)]).length === 0) problems.push(`${where} has no visible focus indicator`)
   }
   expect(problems).toEqual([])

@@ -122,10 +122,14 @@ function DesktopDeck({ onOpen }: { onOpen: (index: number) => void }) {
 
   return (
     <div className="relative flex flex-col items-center justify-center gap-8">
+      {/* Above the back cards, which rise over it (they sit at z 1-4, the
+          front card at 5, a dragged one at 6): at z-auto they covered it, so
+          the up chevron and its focus ring were never seen. At 5 it still goes
+          under the front card while that is dragged up. */}
       <motion.button
         onClick={prev}
         aria-label="Previous piece"
-        className="p-3 rounded-full bg-white/5 border border-white/10 backdrop-blur-sm hover:bg-white/10 transition-colors cursor-pointer"
+        className="relative z-[5] p-3 rounded-full bg-white/5 border border-white/10 backdrop-blur-sm hover:bg-white/10 transition-colors cursor-pointer"
         whileHover={{ scale: 1.1, y: -3 }}
         whileTap={{ scale: 0.9 }}
       >
