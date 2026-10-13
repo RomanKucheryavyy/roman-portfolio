@@ -2,7 +2,7 @@ import Link from 'next/link'
 import { ArrowRight } from 'lucide-react'
 import { WorksWheel } from '@/components/ui/works-wheel'
 import WorkCard from '@/components/ui/WorkCard'
-import { PILL_OUTLINE } from '@/components/ui/pill'
+import { PILL_OUTLINE, TAP_PILL } from '@/components/ui/pill'
 import { SITE } from '@/lib/constants'
 import { notesHrefOf } from '@/lib/case-studies'
 import { pageMetadata } from '@/lib/seo'
@@ -123,7 +123,7 @@ export default function WorksPage() {
           page: after the list on phones, bottom-left of the stage from md up. */}
       <Link
         href="/#compositions"
-        className={cn(PILL_OUTLINE, 'mx-6 mb-16 md:absolute md:bottom-[5%] md:left-[2.5%] md:z-10 md:m-0')}
+        className={cn(PILL_OUTLINE, TAP_PILL, 'mx-6 mb-16 md:absolute md:bottom-[5%] md:left-[2.5%] md:z-10 md:m-0')}
       >
         Products I build &amp; run
         <ArrowRight size={12} aria-hidden="true" />

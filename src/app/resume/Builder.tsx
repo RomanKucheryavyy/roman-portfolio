@@ -328,7 +328,8 @@ export default function Builder({ pin, resume, setResume, onLock }: BuilderProps
         <button
           type="button"
           onClick={onLock}
-          className="cursor-pointer font-mono text-label text-ink-meta transition-colors hover:text-white"
+          // A 29x16 word: on phones its hit area is 45x44 (an ::after, as TAP_TEXT in pill.ts, a little wider).
+          className="relative cursor-pointer font-mono text-label text-ink-meta transition-colors hover:text-white max-md:after:absolute max-md:after:-inset-x-2 max-md:after:-inset-y-3.5 max-md:after:content-['']"
         >
           Lock
         </button>

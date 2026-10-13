@@ -9,6 +9,7 @@ import { SectionHeader } from '@/components/ui/SectionHeader'
 import { SectionShell } from '@/components/ui/SectionShell'
 import { Button } from '@/components/ui/Button'
 import { CopyButton } from '@/components/ui/CopyButton'
+import { TAP_TEXT } from '@/components/ui/pill'
 import { Panel } from '@/components/ui/Panel'
 import { TerminalBar } from '@/components/ui/TerminalBar'
 import { LINKS } from '@/lib/constants'
@@ -349,7 +350,7 @@ export default function Compose() {
                   <a
                     href={RESUME_PDF_HREF}
                     download
-                    className="whitespace-nowrap font-mono text-label text-ink-meta hover:text-white transition-colors"
+                    className={`${TAP_TEXT} whitespace-nowrap font-mono text-label text-ink-meta hover:text-white transition-colors`}
                     onMouseEnter={() => setCursorVariant('hover')}
                     onMouseLeave={() => setCursorVariant('default')}
                   >
@@ -358,7 +359,7 @@ export default function Compose() {
                 ) : (
                   <a
                     href={RESUME_REQUEST}
-                    className="whitespace-nowrap font-mono text-label text-ink-meta hover:text-white transition-colors"
+                    className={`${TAP_TEXT} whitespace-nowrap font-mono text-label text-ink-meta hover:text-white transition-colors`}
                     onMouseEnter={() => setCursorVariant('hover')}
                     onMouseLeave={() => setCursorVariant('default')}
                   >
@@ -372,7 +373,7 @@ export default function Compose() {
                   pendingLabel="Sending…"
                   disabled={status === 'sent'}
                   aria-label="Send message"
-                  className="ml-auto"
+                  className="ml-auto max-md:min-h-11"
                 >
                   <span aria-hidden="true">{modKey}↩</span> Send
                 </Button>
@@ -430,7 +431,7 @@ export default function Compose() {
             href={LINKS.github}
             target="_blank"
             rel="noopener noreferrer"
-            className="flex items-center gap-1.5 hover:text-white transition-colors py-2"
+            className="relative flex items-center gap-1.5 hover:text-white transition-colors py-2 max-md:after:absolute max-md:after:-inset-y-1.5 max-md:after:inset-x-0 max-md:after:content-['']"
             onMouseEnter={() => setCursorVariant('hover')}
             onMouseLeave={() => setCursorVariant('default')}
           >
@@ -440,7 +441,7 @@ export default function Compose() {
             href={LINKS.linkedin}
             target="_blank"
             rel="noopener noreferrer"
-            className="flex items-center gap-1.5 hover:text-white transition-colors py-2"
+            className="relative flex items-center gap-1.5 hover:text-white transition-colors py-2 max-md:after:absolute max-md:after:-inset-y-1.5 max-md:after:inset-x-0 max-md:after:content-['']"
             onMouseEnter={() => setCursorVariant('hover')}
             onMouseLeave={() => setCursorVariant('default')}
           >
@@ -448,7 +449,7 @@ export default function Compose() {
           </a>
           <a
             href={`mailto:${LINKS.email}`}
-            className="flex items-center gap-1.5 hover:text-white transition-colors py-2"
+            className="relative flex items-center gap-1.5 hover:text-white transition-colors py-2 max-md:after:absolute max-md:after:-inset-y-1.5 max-md:after:inset-x-0 max-md:after:content-['']"
             onMouseEnter={() => setCursorVariant('hover')}
             onMouseLeave={() => setCursorVariant('default')}
           >

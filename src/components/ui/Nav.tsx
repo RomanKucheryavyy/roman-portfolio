@@ -346,7 +346,8 @@ export default function Nav({ inFlow = false }: NavProps) {
         >
           <Link
             href={ROUTES.home}
-            className="font-display font-bold text-sm md:text-base tracking-tight text-white cursor-pointer relative z-20"
+            // A 24x20 glyph; on phones its hit area is 48x44 (an ::after).
+            className="font-display font-bold text-sm md:text-base tracking-tight text-white cursor-pointer relative z-20 max-md:after:absolute max-md:after:-inset-x-3 max-md:after:-inset-y-3 max-md:after:content-['']"
             onClick={(e) => {
               if (!onHome || !isPlainClick(e)) return
               e.preventDefault()

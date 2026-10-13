@@ -11,6 +11,7 @@ import { useDeckKeys } from '@/hooks/useDeckKeys'
 import { SectionHeader } from '@/components/ui/SectionHeader'
 import { SectionShell } from '@/components/ui/SectionShell'
 import WorkCard, { altOf } from '@/components/ui/WorkCard'
+import { TAP_TEXT } from '@/components/ui/pill'
 import WebGLBoundary, { useCanWebGL } from '@/components/ui/WebGLBoundary'
 import { CLIENT_WORK, counterOf, type Work } from '@/lib/work'
 
@@ -509,7 +510,7 @@ export default function Projects({ notesHrefs = {} }: { notesHrefs?: NotesHrefs 
           <Link
             data-reveal
             href="/works"
-            className="mt-4 inline-flex items-center gap-2 font-mono text-label tracking-wider text-ink-meta transition-colors hover:text-white"
+            className={`${TAP_TEXT} mt-4 inline-flex items-center gap-2 font-mono text-label tracking-wider text-ink-meta transition-colors hover:text-white`}
           >
             {`see all ${TOTAL} in the setlist`}
             <ArrowRight size={12} aria-hidden="true" />

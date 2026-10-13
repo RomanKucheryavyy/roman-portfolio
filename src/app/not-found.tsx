@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import { PageHeader, SectionShell } from '@/components/ui/SectionShell'
-import { PILL_OUTLINE } from '@/components/ui/pill'
+import { PILL_OUTLINE, TAP_PILL } from '@/components/ui/pill'
+import { cn } from '@/lib/utils'
 import { SITE } from '@/lib/constants'
 import { ROUTES } from '@/lib/routes'
 import { keyOf, nextKeyOf } from '@/lib/score'
@@ -52,13 +53,13 @@ export default function NotFound() {
         >
           <div className="mt-8 flex flex-wrap gap-3">
             {/* Plain links, not next/link: see above. */}
-            <a href={ROUTES.home} className={PILL_OUTLINE}>
+            <a href={ROUTES.home} className={cn(PILL_OUTLINE, TAP_PILL)}>
               <span aria-hidden="true">←</span> Back to the top
             </a>
-            <a href={ROUTES.works} className={PILL_OUTLINE}>
+            <a href={ROUTES.works} className={cn(PILL_OUTLINE, TAP_PILL)}>
               The setlist
             </a>
-            <a href={`${ROUTES.home}#compose`} className={PILL_OUTLINE}>
+            <a href={`${ROUTES.home}#compose`} className={cn(PILL_OUTLINE, TAP_PILL)}>
               Let’s compose
             </a>
           </div>

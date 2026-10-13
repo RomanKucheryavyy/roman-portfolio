@@ -195,7 +195,8 @@ export default function NavMenu({ open, onOpenChange, pathname, current, rects, 
               <a href={LINKS.linkedin} target="_blank" rel="noopener noreferrer" className={LINK_OUT}>
                 linkedin
               </a>
-              <a href={`mailto:${LINKS.email}`} className={LINK_OUT}>
+              {/* "email" is five letters: padded out to a 44px-wide target. */}
+              <a href={`mailto:${LINKS.email}`} className={`${LINK_OUT} -mx-1 px-1`}>
                 email
               </a>
             </div>
