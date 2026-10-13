@@ -6,6 +6,16 @@ import { RESUME_HREF, ROUTES } from '@/lib/routes'
 
 const LINK = 'inline-flex min-h-11 items-center transition-colors hover:text-white focus-visible:text-white'
 const PART = 'flex items-center whitespace-nowrap'
+/**
+ * On the home page the contact section's signature strip, a few lines up,
+ * already carries github, linkedin and the copy control: two sets of the same
+ * links in one screen, drawn two ways. The footer's stand aside there.
+ */
+const NOT_ON_HOME = '[body:has(#compose)_&]:hidden'
+
+/** The build day, written the way every other date on the site is ("Oct 11, 2026"), in UTC. */
+const dayOf = (date: Date) =>
+  date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric', timeZone: 'UTC' })
 
 /** The stamp's separator, spaced like the gap before it. */
 function Dot({ className = '' }: { className?: string }) {
@@ -31,7 +41,7 @@ function Dot({ className = '' }: { className?: string }) {
 export default function SiteFooter() {
   const built = BUILD_TIME ? new Date(BUILD_TIME) : null
   const year = (built ?? new Date()).getFullYear()
-  const day = built ? built.toISOString().slice(0, 10) : null
+  const day = built && !Number.isNaN(built.getTime()) ? dayOf(built) : null
   const sha = sha7()
 
   return (
@@ -85,17 +95,17 @@ export default function SiteFooter() {
                 </Link>
               </li>
             )}
-            <li>
+            <li className={NOT_ON_HOME}>
               <a href={LINKS.github} target="_blank" rel="noopener noreferrer" className={LINK}>
                 github
               </a>
             </li>
-            <li>
+            <li className={NOT_ON_HOME}>
               <a href={LINKS.linkedin} target="_blank" rel="noopener noreferrer" className={LINK}>
                 linkedin
               </a>
             </li>
-            <li>
+            <li className={NOT_ON_HOME}>
               <FooterCopyButton text={LINKS.email} />
             </li>
           </ul>
