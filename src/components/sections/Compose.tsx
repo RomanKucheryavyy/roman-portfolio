@@ -5,7 +5,8 @@ import { CircleAlert, Github, Linkedin, Mail } from 'lucide-react'
 import { gsap } from '@/hooks/useGSAP'
 import { useStore } from '@/stores/useStore'
 import { useRevealOnScroll } from '@/hooks/useRevealOnScroll'
-import { SectionHeader, SectionShell } from '@/components/ui/SectionShell'
+import { SectionHeader } from '@/components/ui/SectionHeader'
+import { SectionShell } from '@/components/ui/SectionShell'
 import { Button } from '@/components/ui/Button'
 import { CopyButton } from '@/components/ui/CopyButton'
 import { Panel } from '@/components/ui/Panel'
@@ -320,7 +321,7 @@ export default function Compose() {
                     animate={{ opacity: 1, scale: 1 }}
                     exit={{ opacity: 0 }}
                     transition={{ duration: 0.25 }}
-                    className="absolute bottom-3 right-3 font-serif italic text-lg text-ink-faint pointer-events-none"
+                    className="absolute bottom-3 right-3 font-serif italic text-lg text-ink-meta pointer-events-none"
                     title={dynamics.word}
                   >
                     {dynamics.mark}

@@ -6,6 +6,13 @@ import { TECH_SKILLS } from '@/lib/constants'
 /**
  * Slowly rotating double helix of tech skills — decorative column on the
  * right edge of the Measures section. Desktop only.
+ *
+ * A watermark: the whole column is at 20% and its labels at 60% of that, so
+ * they read as texture, not text (about 1.3:1). It is aria-hidden and
+ * data-decorative: WCAG 1.4.3 sets no contrast minimum for pure decoration,
+ * and the axe checks (tests/a11y.spec.ts) leave out [data-decorative]
+ * subtrees, which that spec also holds to aria-hidden with nothing
+ * focusable inside. Text a visitor is meant to read never goes in one.
  */
 export default function DNAHelix() {
   const isMobile = useMediaQuery('(max-width: 767px), (pointer: coarse)')
@@ -48,6 +55,7 @@ export default function DNAHelix() {
       className="absolute right-0 top-1/2 -translate-y-1/2 w-32 pointer-events-none opacity-20 hidden lg:block"
       style={{ perspective: '800px', height: `${50 * count}px` }}
       aria-hidden="true"
+      data-decorative
     >
       <div ref={innerRef} className="relative w-full h-full" style={{ transformStyle: 'preserve-3d' }}>
         {TECH_SKILLS.map((skill, i) => {

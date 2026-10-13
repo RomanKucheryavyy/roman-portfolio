@@ -1,42 +1,29 @@
 {
   "desktop": {
     "home": {
-      "color-contrast": 79,
-      "link-name": 2,
-      "scrollable-region-focusable": 2
+      "link-name": 2
     },
-    "works": {
-      "color-contrast": 9
-    },
-    "resume": {
-      "color-contrast": 2
-    },
+    "works": {},
+    "colophon": {},
+    "resume": {},
     "not-found": {}
   },
   "mobile": {
     "home": {
-      "color-contrast": 26,
-      "link-name": 2,
-      "scrollable-region-focusable": 1
+      "link-name": 2
     },
     "works": {},
-    "resume": {
-      "color-contrast": 2
-    },
+    "colophon": {},
+    "resume": {},
     "not-found": {}
   },
   "no-webgl": {
     "home": {
-      "color-contrast": 79,
-      "link-name": 2,
-      "scrollable-region-focusable": 2
+      "link-name": 2
     },
-    "works": {
-      "color-contrast": 9
-    },
-    "resume": {
-      "color-contrast": 2
-    },
+    "works": {},
+    "colophon": {},
+    "resume": {},
     "not-found": {}
   }
 }

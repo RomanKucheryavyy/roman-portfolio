@@ -5,7 +5,8 @@ import { gsap } from '@/hooks/useGSAP'
 import { useGyroParallax } from '@/hooks/useGyroParallax'
 import { useMediaQuery } from '@/hooks/useMediaQuery'
 import { useRevealOnScroll } from '@/hooks/useRevealOnScroll'
-import { SectionHeader, SectionShell } from '@/components/ui/SectionShell'
+import { SectionHeader } from '@/components/ui/SectionHeader'
+import { SectionShell } from '@/components/ui/SectionShell'
 import { FactList, type Fact } from '@/components/ui/FactList'
 import { Panel } from '@/components/ui/Panel'
 import { TerminalBar } from '@/components/ui/TerminalBar'
@@ -200,14 +201,14 @@ export default function Conductor() {
             <div className="w-max min-w-full">
               {CODE_LINES.map((line, i) => (
                 <div key={i} className="flex whitespace-pre">
-                  <span aria-hidden="true" className="mr-3 w-5 flex-shrink-0 select-none text-right text-ink-faint">
+                  <span aria-hidden="true" className="mr-3 w-5 flex-shrink-0 select-none text-right text-ink-meta">
                     {i + 1}
                   </span>
                   <span className={inkOf(line)}>{line || ' '}</span>
                 </div>
               ))}
               <div className="mt-1 flex">
-                <span aria-hidden="true" className="mr-3 w-5 select-none text-right text-ink-faint">
+                <span aria-hidden="true" className="mr-3 w-5 select-none text-right text-ink-meta">
                   {CODE_LINES.length + 1}
                 </span>
                 <span

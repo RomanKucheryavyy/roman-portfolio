@@ -1,6 +1,5 @@
 import type { Metadata } from 'next'
-import { PageHeader } from '@/app/_components/PageHeader'
-import { PageShell } from '@/app/_components/PageShell'
+import { PageHeader, SectionShell } from '@/components/ui/SectionShell'
 import { PILL_OUTLINE } from '@/components/ui/pill'
 import { SITE } from '@/lib/constants'
 import { ROUTES } from '@/lib/routes'
@@ -21,8 +20,9 @@ const LINE = 'Nothing is written for this address. The page moved, or the link h
  * type or palette. role="alert" is borrowed from 36194.
  *
  * Every route's tree carries the root 404, so nothing here may pull client
- * JavaScript into every page: PageShell rather than SectionShell (GSAP), and
- * PILL_OUTLINE on plain links rather than Button (tailwind-merge and a
+ * JavaScript into every page: SectionShell and PageHeader are plain markup
+ * (see SectionShell.tsx), and the links are PILL_OUTLINE on plain anchors
+ * rather than Button (tailwind-merge and a
  * second copy of next/link's client code, about 29 KB on every route).
  */
 export const metadata: Metadata = {
@@ -42,15 +42,14 @@ export const metadata: Metadata = {
 export default function NotFound() {
   return (
     <main id="main" tabIndex={-1} className="relative w-full bg-black outline-none">
-      <PageShell className="flex min-h-svh items-center">
+      <SectionShell className="flex min-h-svh items-center">
         <PageHeader
           kicker="// 404. Not found"
           accent="Tacet."
           keys={[keyOf('compose'), nextKeyOf('compose')]}
+          intro={LINE}
+          introRole="alert"
         >
-          <p role="alert" className="mt-4 max-w-lg text-body text-ink-meta">
-            {LINE}
-          </p>
           <div className="mt-8 flex flex-wrap gap-3">
             {/* Plain links, not next/link: see above. */}
             <a href={ROUTES.home} className={PILL_OUTLINE}>
@@ -64,7 +63,7 @@ export default function NotFound() {
             </a>
           </div>
         </PageHeader>
-      </PageShell>
+      </SectionShell>
     </main>
   )
 }

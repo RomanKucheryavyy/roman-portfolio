@@ -24,9 +24,11 @@
 
   /* Ink: the three roles for white type on black, replacing the dozen
      text-white/NN opacities that used to be picked by eye. Primary type stays
-     text-white. Anything a visitor must read is ink-meta or stronger (5.28:1
-     on #000); ink-faint (about 3:1) is only for aria-hidden or redundant
-     decoration — prompt glyphs, line numbers, separators. They already carry
+     text-white. Any text a visitor can see is ink-meta or stronger (5.28:1
+     on #000), aria-hidden or not: contrast is for eyes, and aria-hidden only
+     takes text from screen readers. ink-faint (about 3:1) is for marks that
+     are not read as words — prompt glyphs, separators, underlines,
+     placeholders — and the few seconds of the boot line. They already carry
      their alpha, so never add an opacity modifier (text-ink-meta/50 would
      apply it twice). prefers-contrast: more raises all three, below. */
   --color-ink-body: rgb(255 255 255 / 0.7);
@@ -47,12 +49,6 @@
   --color-spectrum-teal: #00c7be;
   --color-spectrum-blue: #5ac8fa;
   --color-spectrum-purple: #af52de;
-
-  --color-gray-300: #aaa;
-  --color-gray-400: #888;
-  --color-gray-500: #666;
-  --color-gray-700: #222;
-  --color-gray-800: #1a1a1a;
 
   /* Monotonic, so the next step up is always rounder. rounded-xl is the card
      radius — every card on the site, from the wheel's to the deck's, uses it.
@@ -274,12 +270,6 @@ canvas { touch-action: pan-y; }
   max-width: 110px;
   background: linear-gradient(90deg, rgba(255, 255, 255, 0.2), transparent);
 }
-
-/* ── Code syntax highlight (CodePeek) ── */
-.code-comment { color: #ffffff40; font-style: italic; }
-.code-keyword { color: #af52dee6; }
-.code-string  { color: #30d158cc; }
-.code-number  { color: #ffb300cc; }
 
 /* ── Reduced Motion ── */
 /* A near-zero duration alone left every infinite animation (the gradient

@@ -16,6 +16,9 @@ export const metadata = pageMetadata({
   path: '/works',
   title: 'The setlist',
   description: `${TOTAL} sites and apps · ${LIVE} live, ${TOTAL - LIVE} launching soon. Designed and built by ${SITE.name}.`,
+  // The segment's own opengraph-image / twitter-image (the setlist card).
+  // The default would name the site card and override them.
+  images: false,
 })
 
 /** One entry of the setlist for search engines: what each piece is and where

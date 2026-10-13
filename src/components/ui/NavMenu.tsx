@@ -20,7 +20,7 @@ const lineIn = (delay: number) => ({
 const rowIn = (i: number) => lineIn(0.15 + 0.08 * i)
 
 const PROMPT = 'font-mono text-label mr-2'
-const VERB = 'font-mono text-label text-ink-faint mr-3 w-6'
+const VERB = 'font-mono text-label text-ink-meta mr-3 w-6'
 const PATH = 'font-mono text-lead tracking-tight transition-all duration-200'
 const LINK_OUT = 'inline-flex min-h-11 items-center font-mono text-label text-ink-meta transition-colors active:text-white hover:text-white'
 
@@ -88,10 +88,10 @@ export default function NavMenu({ open, onOpenChange, pathname, current, rects, 
           <div>
             <motion.div className="flex items-center mb-6" aria-hidden="true" {...lineIn(0.05)}>
               <TerminalDots />
-              <span className="font-mono text-label text-ink-faint ml-2">rk@portfolio ~ %</span>
+              <span className="font-mono text-label text-ink-meta ml-2">rk@portfolio ~ %</span>
             </motion.div>
 
-            <motion.div className="font-mono text-label text-spectrum-green/60 mb-8" aria-hidden="true" {...lineIn(0.1)}>
+            <motion.div className="font-mono text-label text-spectrum-green/70 mb-8" aria-hidden="true" {...lineIn(0.1)}>
               $ ls ./sections
             </motion.div>
 
@@ -133,11 +133,11 @@ export default function NavMenu({ open, onOpenChange, pathname, current, rects, 
                           >
                             /{label.toLowerCase()}
                           </span>
-                          <span className="font-mono text-label text-ink-faint" aria-hidden="true">
+                          <span className="font-mono text-label text-ink-meta" aria-hidden="true">
                             # {score.toLowerCase()}
                           </span>
                           {isActive && (
-                            <span className="font-mono text-label text-spectrum-green/50 animate-pulse motion-reduce:animate-none" aria-hidden="true">
+                            <span className="font-mono text-label text-spectrum-green/70 animate-pulse motion-reduce:animate-none" aria-hidden="true">
                               ● current
                             </span>
                           )}
@@ -187,7 +187,7 @@ export default function NavMenu({ open, onOpenChange, pathname, current, rects, 
 
           <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.6 }}>
             <div className="h-px bg-white/5 mb-4" />
-            <div className="font-mono text-label text-ink-faint mb-1" aria-hidden="true">$ echo $LINKS</div>
+            <div className="font-mono text-label text-ink-meta mb-1" aria-hidden="true">$ echo $LINKS</div>
             <div className="flex flex-wrap items-center gap-x-5">
               <a href={LINKS.github} target="_blank" rel="noopener noreferrer" className={LINK_OUT}>
                 github

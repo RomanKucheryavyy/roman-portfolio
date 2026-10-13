@@ -8,7 +8,7 @@ import { CERTIFICATIONS, SITE } from '@/lib/constants'
 import { FIXTURE_WORK } from '@/lib/case-studies'
 import { RESUME_PUBLIC } from '@/lib/routes'
 import { CLIENT_WORK, PRODUCTS } from '@/lib/work'
-import { gotoHome } from './helpers'
+import { gotoHome, waitForChrome } from './helpers'
 
 /**
  * The proof and head routes (W8): program notes, the liner notes, llms.txt,
@@ -42,6 +42,7 @@ function pngSize(buf: Buffer) {
 }
 
 async function noSeriousAxe(page: Page) {
+  await waitForChrome(page)
   const results = await new AxeBuilder({ page }).analyze()
   const serious = results.violations
     .filter((v) => v.impact === 'serious' || v.impact === 'critical')
@@ -261,9 +262,11 @@ test.describe('colophon', () => {
     expect(res?.status()).toBe(200)
     await expect(page.getByRole('heading', { level: 1 })).toHaveText('Liner notes')
 
-    /** The value beside a FactList term. */
+    /** The value beside a FactList term. The term is escaped: a route like /works/[slug] is not a pattern. */
     const valueOf = (term: string) =>
-      page.locator('dt', { hasText: new RegExp(`^${term}$`) }).locator('xpath=following-sibling::dd[1]')
+      page
+        .locator('dt', { hasText: new RegExp(`^${term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`) })
+        .locator('xpath=following-sibling::dd[1]')
 
     // next.config.ts copies Netlify's COMMIT_REF into the build; anywhere else it is unset.
     const sha = process.env.COMMIT_REF ?? ''
@@ -294,7 +297,7 @@ test.describe('colophon', () => {
     await noSeriousAxe(page)
   })
 
-  test("sits on the home page's column (PageShell matches SectionShell)", async ({ page }) => {
+  test("sits on the home page's column (one SectionShell)", async ({ page }) => {
     const column = (selector: string) =>
       page.locator(selector).evaluate((section) => {
         const s = getComputedStyle(section)
@@ -305,6 +308,41 @@ test.describe('colophon', () => {
     const colophon = await column('main#main > section')
     await gotoHome(page)
     expect(colophon).toEqual(await column('#measures'))
+  })
+
+  test("its header is a movement's header: the same kicker, heading and intro type (one HeaderFrame)", async ({ page }) => {
+    // The page's h1 and a movement's h2 are both HeaderFrame (SectionShell.tsx).
+    // Before W12 the pages outside home copied its class strings, and only the
+    // column above was checked; this checks the type itself.
+    const type = (header: string) =>
+      page.locator(header).evaluate((el) => {
+        const pick = (node: Element | null) => {
+          if (!node) return null
+          const s = getComputedStyle(node)
+          return {
+            family: s.fontFamily,
+            size: s.fontSize,
+            weight: s.fontWeight,
+            tracking: s.letterSpacing,
+            transform: s.textTransform,
+            color: s.color,
+            gap: [s.marginTop, s.marginBottom],
+          }
+        }
+        return {
+          header: getComputedStyle(el).marginBottom,
+          kicker: pick(el.querySelector(':scope > p.section-label')),
+          heading: pick(el.querySelector(':scope > h1, :scope > h2')),
+          intro: pick(el.querySelector(':scope > p:not(.section-label)')),
+        }
+      })
+    await page.goto('/colophon')
+    const colophon = await type('main#main > section > div > header')
+    await gotoHome(page)
+    const measures = await type('#measures > div > header')
+    expect(colophon.kicker).not.toBeNull()
+    expect(colophon.intro).not.toBeNull()
+    expect(colophon).toEqual(measures)
   })
 })
 

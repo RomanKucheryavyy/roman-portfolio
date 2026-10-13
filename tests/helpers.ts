@@ -33,6 +33,62 @@ export async function gotoHome(page: Page, { boot = false }: { boot?: boolean } 
   return response
 }
 
+/**
+ * Resolves once the site nav has finished dropping in. Off the home page it
+ * fades in from opacity 0 as soon as the page hydrates (a 300ms delay, then
+ * 693ms); on / it waits for the boot. An axe pass that lands mid-fade samples
+ * half-transparent labels and files them as colour-contrast failures (six
+ * nodes on /colophon in the no-webgl project), which is one frame of a
+ * transition, not the page. Audit the page at rest.
+ */
+export async function waitForChrome(page: Page) {
+  await page.waitForFunction(
+    () => {
+      // The first <nav> is the site nav: SiteChrome renders before any page.
+      const bar = document.querySelector('nav')?.parentElement
+      if (!bar) return false
+      return getComputedStyle(bar).opacity === '1' && bar.getAnimations().every((a) => a.playState !== 'running')
+    },
+    undefined,
+    { timeout: 15_000 },
+  )
+}
+
+export interface CspLog {
+  /** Every report so far: the browser's console lines and the page's securitypolicyviolation events. */
+  reports(): Promise<string[]>
+}
+
+/**
+ * Records what the Content-Security-Policy-Report-Only header (next.config.ts)
+ * would have blocked. Two channels, because neither alone covers everything:
+ * the browser's own "[Report Only] Refused to …" console line, and the
+ * securitypolicyviolation event, which report-only policies fire too. Call it
+ * before navigating.
+ */
+export async function collectCspReports(page: Page): Promise<CspLog> {
+  const lines: string[] = []
+  page.on('console', (msg) => {
+    const text = msg.text()
+    if (/Content Security Policy|\[Report Only\]/i.test(text)) lines.push(`console.${msg.type()}: ${text}`)
+  })
+  await page.addInitScript(() => {
+    const seen: string[] = []
+    ;(window as unknown as { __cspReports: string[] }).__cspReports = seen
+    document.addEventListener('securitypolicyviolation', (e) => {
+      seen.push(`${e.disposition} ${e.effectiveDirective}: ${e.blockedURI || '(inline)'} at ${e.sourceFile || '?'}:${e.lineNumber}`)
+    })
+  })
+  return {
+    async reports() {
+      const events = await page
+        .evaluate(() => (window as unknown as { __cspReports?: string[] }).__cspReports ?? [])
+        .catch(() => [] as string[])
+      return [...lines, ...events]
+    },
+  }
+}
+
 /** Software WebGL in headless Chromium: noise from the GPU stack, not the site. */
 const ALWAYS_ALLOWED: RegExp[] = [/Automatic fallback to software WebGL/, /GL Driver Message/]
 

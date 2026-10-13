@@ -15,8 +15,9 @@ import next from 'eslint-config-next'
  * - `text-white/NN`: use an ink role (text-ink-body, text-ink-meta,
  *   text-ink-faint), or text-white for primary type.
  *
- * Both are warnings, not errors, while the streams migrate their own files;
- * W12 turns them into errors. Legitimate exceptions (SVG axis ticks, the
+ * Both are errors. They were warnings while the Phase 2 streams moved their
+ * own files over (179 on src at BASE); W12 found none left and made them
+ * errors, so the count stays at 0. Legitimate exceptions (SVG axis ticks, the
  * résumé's print preview) take an inline
  * `// eslint-disable-next-line no-restricted-syntax -- constraint 7`.
  *
@@ -32,7 +33,7 @@ const typeAndInkGuard = {
   files: ['**/*.{js,jsx,mjs,ts,tsx}'],
   rules: {
     'no-restricted-syntax': [
-      'warn',
+      'error',
       { selector: `Literal[value=${ARBITRARY_SIZE}]`, message: SIZE_MESSAGE },
       { selector: `TemplateElement[value.raw=${ARBITRARY_SIZE}]`, message: SIZE_MESSAGE },
       { selector: `Literal[value=${WHITE_ALPHA}]`, message: INK_MESSAGE },

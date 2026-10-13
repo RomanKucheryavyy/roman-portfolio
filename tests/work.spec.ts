@@ -437,7 +437,8 @@ test.describe('/works', () => {
     await page.keyboard.press('PageDown')
     await expect(current).toHaveText(CLIENT_WORK[1].title)
 
-    await expect(page.locator('a[href="/#compositions"]')).toBeVisible()
+    // The page's own pill. The site nav's Products item links there too.
+    await expect(page.locator('main a[href="/#compositions"]')).toBeVisible()
     log.expectClean()
   })
 
@@ -473,7 +474,8 @@ test.describe('/works', () => {
     const live = CLIENT_WORK.filter((w) => w.url).length
     await expect(page.getByText(`${TOTAL} pieces · ${live} live, ${TOTAL - live} launching soon`)).toBeVisible()
     await expect(page.locator('main article').filter({ visible: true })).toHaveCount(TOTAL)
-    await expect(page.locator('a[href="/#compositions"]')).toBeVisible()
+    // The page's own pill. The site nav's Products item links there too.
+    await expect(page.locator('main a[href="/#compositions"]')).toBeVisible()
   })
 
   test('server HTML: its own canonical, matching titles, and an ItemList that parses', async ({ request }) => {

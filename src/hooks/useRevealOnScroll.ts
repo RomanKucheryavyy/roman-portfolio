@@ -31,22 +31,45 @@ export function useRevealOnScroll(ref: RefObject<HTMLElement | null>) {
       return
     }
 
+    const revealed = new Set<Element>()
     gsap.set(els, { opacity: 0, y: REVEAL.y })
     const triggers = ScrollTrigger.batch(els, {
       start: REVEAL.start,
       once: true,
-      onEnter: (batch) =>
-        gsap.to(batch, {
+      onEnter: (batch) => {
+        const fresh = batch.filter((el) => !revealed.has(el))
+        if (!fresh.length) return
+        fresh.forEach((el) => revealed.add(el))
+        gsap.to(fresh, {
           opacity: 1,
           y: 0,
           duration: REVEAL.duration,
           ease: REVEAL.ease,
           stagger: REVEAL.stagger,
           overwrite: true,
-        }),
+        })
+      },
     })
 
+    // Focus reveals at once. Tab scrolls the next control only just into
+    // view, so at the bottom of the screen it stops short of the reveal line
+    // (top 82%) and would sit there focused but invisible, its focus ring
+    // with it (the keyboard walk found "see all 9 in the setlist" at opacity
+    // 0 on a phone). Whatever holds the focus is shown in place, no tween.
+    const onFocusIn = (event: FocusEvent) => {
+      const hidden: HTMLElement[] = []
+      for (let node = event.target as HTMLElement | null; node && node !== root; node = node.parentElement) {
+        if (node.hasAttribute('data-reveal') && !revealed.has(node)) hidden.push(node)
+      }
+      if (!hidden.length) return
+      hidden.forEach((el) => revealed.add(el))
+      gsap.killTweensOf(hidden)
+      gsap.set(hidden, { opacity: 1, y: 0 })
+    }
+    root.addEventListener('focusin', onFocusIn)
+
     return () => {
+      root.removeEventListener('focusin', onFocusIn)
       triggers.forEach((t) => t.kill())
       gsap.killTweensOf(els)
     }

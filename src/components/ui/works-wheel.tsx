@@ -287,7 +287,7 @@ export function WorksWheel({
         role="group"
         aria-roledescription="wheel"
         aria-label={`${label}: use the up and down arrow keys to turn`}
-        className="focus-visible:outline-foreground absolute inset-0 cursor-grab touch-pan-x outline-none focus-visible:outline-2 focus-visible:-outline-offset-4 active:cursor-grabbing"
+        className="focus-visible:outline-foreground absolute inset-0 cursor-grab touch-pan-x focus-visible:outline-2 focus-visible:-outline-offset-4 active:cursor-grabbing"
         style={{ perspective: `${metrics.depth}px` }}
         onPointerDown={(event) => {
           drag.current = event.clientY;
@@ -396,7 +396,7 @@ export function WorksWheel({
               aria-current={i === active ? "true" : undefined}
               onClick={() => to(i + 1)}
               className={cn(
-                "focus-visible:outline-foreground cursor-pointer transition-colors outline-none focus-visible:outline-1",
+                "focus-visible:outline-foreground cursor-pointer transition-colors focus-visible:outline-1",
                 i === active && "text-foreground font-medium",
               )}
             >

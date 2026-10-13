@@ -1,8 +1,26 @@
-'use client'
-import { useState, type ComponentPropsWithoutRef, type CSSProperties, type ReactNode, type Ref } from 'react'
-import ScatterText from '@/components/effects/ScatterText'
-import { keyColor, keyOf, kickerOf, nextKeyOf, type MovementId } from '@/lib/score'
-import { cn } from '@/lib/utils'
+import type { AriaRole, ComponentPropsWithoutRef, CSSProperties, ReactNode, Ref } from 'react'
+import { keyColor, type SpectrumKey } from '@/lib/score'
+
+/*
+ * The column and the header every block of the site is drawn in: the home
+ * page's movements and the pages outside it (/colophon, program notes, the
+ * 404, the error boundary).
+ *
+ * Nothing here runs on the client by itself (no 'use client', no hooks), so a
+ * server page renders it with no JavaScript at all, and a client module that
+ * imports it adds only these few lines. The heading that assembles from
+ * scattered letters, which does need the client (ScatterText, GSAP), is
+ * SectionHeader.tsx, built on HeaderFrame below. Before W12 the pages outside
+ * home carried their own copies of these class strings (PageShell,
+ * PageHeader in src/app/_components) because this file was a client module
+ * that pulled GSAP into whatever imported it; the copies are gone.
+ *
+ * Classes are joined, not merged with tailwind-merge: the error boundary
+ * renders this on every route, and tailwind-merge (about 28 KB) would ride
+ * along. No caller overrides a class here, it only adds: a caller's pt-* still
+ * wins over py-*, because Tailwind emits padding-top after padding-block.
+ */
+const join = (...classes: (string | false | undefined)[]) => classes.filter(Boolean).join(' ')
 
 interface SectionShellProps extends ComponentPropsWithoutRef<'section'> {
   /** Lands on the <section> itself: every reveal and ScrollTrigger keys off it. */
@@ -28,93 +46,128 @@ interface SectionShellProps extends ComponentPropsWithoutRef<'section'> {
  * the Symphony deck down past the fold. Lenis doesn't read scroll-margin, so
  * a Lenis jump passes its own offset.
  *
- * Named SectionShell, not Section: resume/page.tsx declares its own Section.
+ * Named SectionShell, not Section: the résumé builder declares its own Section.
  */
 export function SectionShell({ ref, className, innerClassName, children, ...props }: SectionShellProps) {
   return (
     <section
       ref={ref}
-      className={cn('relative z-10 scroll-mt-8 md:scroll-mt-0 py-14 md:py-24 px-[clamp(1.5rem,5vw,4rem)]', className)}
+      className={join('relative z-10 scroll-mt-8 md:scroll-mt-0 py-14 md:py-24 px-[clamp(1.5rem,5vw,4rem)]', className)}
       {...props}
     >
-      <div className={cn('relative mx-auto w-full max-w-6xl', innerClassName)}>{children}</div>
+      <div className={join('relative mx-auto w-full max-w-6xl', innerClassName)}>{children}</div>
     </section>
   )
 }
 
-type SectionHeaderKicker =
-  | {
-      /** Which movement this is, from score.ts. It names the kicker (`// 02. Work`). */
-      movement: MovementId
-      /** Overrides the movement's kicker. */
-      kicker?: string
-    }
-  | {
-      movement?: undefined
-      /** The line above the heading, for a header outside the score. */
-      kicker: string
-    }
+/** The two keys a heading's accent runs between, for `.text-key`. */
+export function keyStyle(from: SpectrumKey, to: SpectrumKey): CSSProperties {
+  return { '--key-from': keyColor(from), '--key-to': keyColor(to) } as CSSProperties
+}
 
-type SectionHeaderProps = SectionHeaderKicker & {
-  /**
-   * The heading is `{lead} {accent}`. With a movement, the accent word is drawn
-   * in that movement's key running into the next one's; without, in the brand
-   * gradient.
-   */
-  title: { lead: string; accent: string }
+/**
+ * A heading's accent word: drawn in `keys[0]` running into `keys[1]` (a
+ * static gradient, the movement's key into the next one's), or, with no keys,
+ * in the animated brand gradient.
+ */
+export function Accent({ keys, children }: { keys?: readonly [SpectrumKey, SpectrumKey]; children: ReactNode }) {
+  return keys ? (
+    <span className="text-key" style={keyStyle(keys[0], keys[1])}>
+      {children}
+    </span>
+  ) : (
+    <span className="text-gradient">{children}</span>
+  )
+}
+
+export interface HeaderFrameProps {
+  /** h2 for a movement of the home page, h1 for the top of any other page. */
+  as?: 'h1' | 'h2'
+  /** The mono line above the heading: `// 01. Credentials`, `// colophon`. */
+  kicker: string
+  heading: ReactNode
   /** The paragraph under the heading. */
   intro?: ReactNode
+  /** The intro's role: `alert` where it is the page's message (the 404, the error page). */
+  introRole?: AriaRole
+  /** Marks the kicker and the intro for the section's scroll reveal (useRevealOnScroll). */
+  reveal?: boolean
   /** Anything that belongs to the header after the intro, like a link. */
   children?: ReactNode
   className?: string
 }
 
 /**
- * The kicker, the assembling heading and the intro, with one set of gaps.
- *
- * Each section used to hand-write this, and to finish the heading by
- * rewriting its own innerHTML from a selector, so renaming a heading meant
- * renaming it in two places or the gradient word broke. The assembled state
- * is now just state.
+ * The header contract: the kicker, the heading and the intro, with one set of
+ * type, ink and gaps, whichever page it tops. SectionHeader (the movements'
+ * assembling h2) and PageHeader (a route's static h1) are both this frame.
  */
-export function SectionHeader({ movement, kicker, title, intro, children, className }: SectionHeaderProps) {
-  const [assembled, setAssembled] = useState(false)
-  const label = kicker ?? (movement ? kickerOf(movement) : '')
-  const keyStyle = movement
-    ? ({ '--key-from': keyColor(keyOf(movement)), '--key-to': keyColor(nextKeyOf(movement)) } as CSSProperties)
-    : undefined
-  const text = `${title.lead} ${title.accent}`
+export function HeaderFrame({
+  as: Heading = 'h2',
+  kicker,
+  heading,
+  intro,
+  introRole,
+  reveal = false,
+  children,
+  className,
+}: HeaderFrameProps) {
+  const revealed = reveal ? { 'data-reveal': '' } : {}
   return (
-    <header className={cn('mb-10 md:mb-16', className)}>
-      <p data-reveal className="section-label font-mono text-label tracking-[0.3em] uppercase text-ink-meta mb-3">
-        {label}
+    <header className={join('mb-10 md:mb-16', className)}>
+      <p {...revealed} className="section-label mb-3 font-mono text-label uppercase tracking-[0.3em] text-ink-meta">
+        {kicker}
       </p>
-      <h2 className="font-display text-4xl md:text-6xl font-bold tracking-tight text-white">
-        {assembled ? (
-          <>
-            {title.lead}{' '}
-            <span className={movement ? 'text-key' : 'text-gradient'} style={keyStyle}>
-              {title.accent}
-            </span>
-          </>
-        ) : (
-          <ScatterText
-            className="font-display font-bold"
-            scatterRadius={500}
-            duration={2}
-            stagger={0.05}
-            onAssembled={() => setAssembled(true)}
-          >
-            {text}
-          </ScatterText>
-        )}
-      </h2>
-      {intro && (
-        <p data-reveal className="mt-4 max-w-lg text-body text-ink-meta">
+      <Heading className="font-display text-4xl font-bold tracking-tight text-white md:text-6xl">{heading}</Heading>
+      {intro ? (
+        <p {...revealed} role={introRole} className="mt-4 max-w-lg text-body text-ink-meta">
           {intro}
         </p>
-      )}
+      ) : null}
       {children}
     </header>
+  )
+}
+
+/**
+ * The top of a page that is not the home page: the header contract with an
+ * h1 that is in the server HTML as it reads (crawlers, link unfurls, a visitor
+ * with scripts off), where a movement's h2 assembles on the client.
+ */
+export function PageHeader({
+  kicker,
+  lead,
+  accent,
+  keys,
+  intro,
+  introRole,
+  children,
+}: {
+  /** The line above the heading: `// program notes`. */
+  kicker: string
+  /** Words before the accent, in white. */
+  lead?: string
+  /** The accent, drawn in `keys[0]` running into `keys[1]`. */
+  accent: string
+  keys: readonly [SpectrumKey, SpectrumKey]
+  intro?: ReactNode
+  introRole?: AriaRole
+  children?: ReactNode
+}) {
+  return (
+    <HeaderFrame
+      as="h1"
+      kicker={kicker}
+      heading={
+        <>
+          {lead ? `${lead} ` : null}
+          <Accent keys={keys}>{accent}</Accent>
+        </>
+      }
+      intro={intro}
+      introRole={introRole}
+    >
+      {children}
+    </HeaderFrame>
   )
 }

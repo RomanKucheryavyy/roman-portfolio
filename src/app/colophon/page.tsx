@@ -1,8 +1,7 @@
 import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { PageBlock } from '@/app/_components/PageBlock'
-import { PageHeader } from '@/app/_components/PageHeader'
-import { PageShell } from '@/app/_components/PageShell'
+import { PageHeader, SectionShell } from '@/components/ui/SectionShell'
 import FactList, { type Fact } from '@/components/ui/FactList'
 import { BUILD_CONTEXT, BUILD_SHA, BUILD_TIME, commitUrl, commitUrlOf, sha7 } from '@/lib/build-info'
 import { MOVEMENTS, keyColor, keyOf, nextKeyOf } from '@/lib/score'
@@ -131,7 +130,7 @@ export default function ColophonPage() {
 
   return (
     <main id="main" tabIndex={-1} className="relative min-h-svh w-full bg-black outline-none">
-      <PageShell className="pt-28 md:pt-32">
+      <SectionShell className="pt-28 md:pt-32">
         <PageHeader
           kicker="// colophon"
           lead="Liner"
@@ -229,7 +228,7 @@ export default function ColophonPage() {
             </ul>
           </PageBlock>
         ) : null}
-      </PageShell>
+      </SectionShell>
     </main>
   )
 }
