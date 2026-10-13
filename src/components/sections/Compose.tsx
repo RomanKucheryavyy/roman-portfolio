@@ -215,8 +215,10 @@ export default function Compose() {
           React tree — a form declared here never reaches the published HTML. */}
 
       <div ref={burstHostRef} data-reveal className="relative">
-        {/* The email window IS the form */}
-        <Panel ref={windowRef} hud className="mx-auto max-w-2xl overflow-hidden">
+        {/* The email window IS the form. Column-wide below lg: at 768 a
+            max-w-2xl window sat 10px in from the column's edges, where every
+            other section's content starts, and read as misaligned. */}
+        <Panel ref={windowRef} hud className="mx-auto overflow-hidden lg:max-w-2xl">
           <TerminalBar
             title={status === 'sent' ? 'message sent — 250 OK' : status === 'sending' ? 'sending…' : 'New Message'}
             live
