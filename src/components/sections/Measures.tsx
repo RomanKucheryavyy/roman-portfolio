@@ -234,6 +234,11 @@ function CertCard({ cert }: { cert: Certification }) {
           className={cn(PANEL, 'flip-card-back absolute inset-0 flex flex-col justify-center gap-2 border-l-2 p-4 sm:p-6')}
           style={edge}
         >
+          {/* The name again, so a turned card still says which it is. Hidden
+              from AT: the front's h3 already names the card. */}
+          <p aria-hidden="true" className="font-mono text-label uppercase tracking-wider text-ink-meta">
+            {cert.short} · {cert.name}
+          </p>
           <p className="font-mono text-small text-ink-body">Salesforce Certified</p>
           <p className="font-mono text-label text-ink-meta">{cert.date}</p>
           {cert.verifyUrl ? (
