@@ -287,7 +287,7 @@ export function WorksWheel({
         role="group"
         aria-roledescription="wheel"
         aria-label={`${label}: use the up and down arrow keys to turn`}
-        className="focus-visible:outline-foreground absolute inset-0 cursor-grab touch-pan-x focus-visible:outline-2 focus-visible:-outline-offset-4 active:cursor-grabbing"
+        className="focus-visible:outline-foreground absolute inset-x-0 top-[var(--wheel-top,0px)] bottom-0 cursor-grab touch-pan-x focus-visible:outline-2 focus-visible:-outline-offset-4 active:cursor-grabbing"
         style={{ perspective: `${metrics.depth}px` }}
         onPointerDown={(event) => {
           drag.current = event.clientY;
@@ -356,7 +356,7 @@ export function WorksWheel({
           proportions inside a card as well as at full bleed. */}
       <div
         ref={labelRef}
-        className="font-display pointer-events-none absolute inset-0 grid place-items-center font-black tracking-tighter"
+        className="font-display pointer-events-none absolute inset-x-0 top-[var(--wheel-top,0px)] bottom-0 grid place-items-center font-black tracking-tighter"
         style={{ fontSize: metrics.title }}
       >
         {label}
@@ -366,7 +366,7 @@ export function WorksWheel({
           the title is announced on a turn; the rest is there to read. */}
       <div
         ref={titleRef}
-        className="pointer-events-none absolute top-1/2 left-[8%] max-w-[22%] -translate-y-1/2 opacity-0"
+        className="pointer-events-none absolute top-[calc(50%_+_var(--wheel-top,0px)_/_2)] left-[8%] max-w-[22%] -translate-y-1/2 opacity-0"
       >
         <p
           aria-live="polite"
