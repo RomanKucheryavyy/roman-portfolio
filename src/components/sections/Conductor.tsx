@@ -20,6 +20,9 @@ import { cn } from '@/lib/utils'
  * role and team are read from site-facts, so a team change can't leave this
  * section a step behind again (it named his old team months after he moved).
  */
+// needs Roman: this intro and the code card say "Apex"; the Builds fact says
+// "Java". Both are in resume-data.ts. He picks (or keeps both), then one
+// constant feeds all three.
 const INTRO = `${CURRENT_ROLE.title} at ${CURRENT_ROLE.company}, on ${CURRENT_ROLE.team}; before that, Premier support for ${PREVIOUS_ROLES[0].team}. I build in React, Next.js, Swift and Apex, and I conduct the FUBC Band.`
 
 const CODE_LINES = [
