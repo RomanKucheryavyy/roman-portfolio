@@ -50,6 +50,13 @@ interface WorkCardProps {
 /** Fixed parts of the contract. Change them here and every surface follows. */
 const FRAME = cn('group/card relative overflow-hidden', PANEL)
 const COUNTER = 'font-mono text-label tracking-wider text-ink-meta'
+/**
+ * Over a screenshot the counter gets its own backing. The scrim is only about
+ * 65% black where the counter sits, and over a bright shot (Alongside's cream,
+ * the FUBC app) ink-meta measured 3.6-4.3:1. On the chip it is 5:1 or better
+ * whatever the screenshot is. Product cards sit on the card colour and need none.
+ */
+const COUNTER_ON_IMAGE = 'inline-block rounded bg-black/60 px-1.5'
 const TITLE = 'font-display font-black leading-[0.9] tracking-tighter text-white'
 // The description's type. The phone clamp around it wears the same, so the
 // lines it counts are this text's lines.
@@ -74,17 +81,35 @@ const TITLE_SIZE: Record<WorkCardSize, string> = {
   lg: 'text-2xl sm:text-3xl md:text-5xl',
 }
 const PAD: Record<WorkCardSize, string> = { sm: 'p-3', md: 'p-5', lg: 'p-6 md:p-8' }
+/**
+ * The deck's big overlay card is sized by the card, not the viewport. The deck
+ * is a share of the window (60vw at 768 down to 44vw from 1280), so between
+ * 768 and 1280 the card was 288-352px tall while the title was already at
+ * its 48px desktop size: two-line titles pushed the counter and the title's
+ * first line off the top of the card. The article is the container; these
+ * read its width. The stacked lg card (the detail view, program notes) keeps
+ * TITLE_SIZE.lg.
+ */
+const OVERLAY_LG_TITLE = 'text-3xl @[32rem]:text-4xl @[37.5rem]:text-5xl'
+const OVERLAY_LG_PAD = 'p-5 @[32rem]:p-6 @[37.5rem]:p-8'
+/** The gaps under the description and the tags, tightened with the padding. */
+const OVERLAY_LG_GAP = 'mb-3 @[37.5rem]:mb-4'
 const PAD_X: Record<WorkCardSize, string> = { sm: 'px-3', md: 'px-5', lg: 'px-6 md:px-8' }
 const PAD_B: Record<WorkCardSize, string> = { sm: 'pb-3', md: 'pb-5', lg: 'pb-6 md:pb-8' }
 
 const DETAILS: Record<NonNullable<WorkCardProps['details']>, string> = {
   shown: 'opacity-100',
-  // The front of the deck at rest: readable, then full strength on hover or
-  // when keyboard focus lands on the card.
+  // The front of the deck at rest: the details sit a little low, then rise on
+  // hover or when keyboard focus lands on the card. Only the description dims
+  // (DESCRIPTION_DIM): the tags and the "Launching soon" pill are ink-meta,
+  // the faintest ink that passes, and at 70% of it they measured 3.1:1.
   dimmed:
-    'translate-y-2.5 opacity-70 group-hover/card:translate-y-0 group-hover/card:opacity-100 group-focus-within/card:translate-y-0 group-focus-within/card:opacity-100',
+    'translate-y-2.5 group-hover/card:translate-y-0 group-focus-within/card:translate-y-0',
   hidden: 'translate-y-2.5 opacity-0',
 }
+/** ink-body at 70% is still 5.1:1 over the deck's scrim. */
+const DESCRIPTION_DIM =
+  'opacity-70 transition-opacity duration-200 group-hover/card:opacity-100 group-focus-within/card:opacity-100'
 
 /** The screenshot's alt text, shared with the deck's Spline poster. */
 export function altOf(work: Work) {
@@ -177,7 +202,8 @@ export default function WorkCard({
   className,
   style,
 }: WorkCardProps) {
-  const counter = <p className={COUNTER}>{counterOf(index, total)}</p>
+  const onImage = !!(work.image || media)
+  const counter = <p className={cn(COUNTER, onImage && COUNTER_ON_IMAGE)}>{counterOf(index, total)}</p>
 
   const notes = notesHref && size !== 'sm' ? <NotesLink href={notesHref} /> : null
 
@@ -191,11 +217,12 @@ export default function WorkCard({
   )
 
   if (layout === 'overlay') {
+    const big = size === 'lg'
     return (
-      <article className={cn(FRAME, 'aspect-[16/10] w-full', className)} style={style}>
+      <article className={cn(FRAME, 'aspect-[16/10] w-full', big && '@container', className)} style={style}>
         <div className="absolute inset-0">{screenshot}</div>
         {onOpen && <OpenButton work={work} onOpen={onOpen} />}
-        <div className={cn('pointer-events-none absolute inset-x-0 bottom-0 z-[2]', PAD[size])}>
+        <div className={cn('pointer-events-none absolute inset-x-0 bottom-0 z-[2]', big ? OVERLAY_LG_PAD : PAD[size])}>
           {size === 'sm' ? (
             <div className="flex items-end justify-between gap-2">
               <div className="min-w-0">
@@ -207,10 +234,15 @@ export default function WorkCard({
           ) : (
             <>
               <div className="mb-2">{counter}</div>
-              <Title className={cn(TITLE, TITLE_SIZE[size], 'mb-3')}>{work.title}</Title>
+              <Title className={cn(TITLE, big ? OVERLAY_LG_TITLE : TITLE_SIZE[size], 'mb-3')}>{work.title}</Title>
               <div className={cn('transition-[opacity,transform] duration-200', DETAILS[details])}>
-                <p data-card-description className={cn(BODY, 'mb-4 max-w-lg')}>{work.description}</p>
-                <TagList tags={work.tags} className="mb-4" />
+                <p
+                  data-card-description
+                  className={cn(BODY, 'max-w-lg', big ? OVERLAY_LG_GAP : 'mb-4', details === 'dimmed' && DESCRIPTION_DIM)}
+                >
+                  {work.description}
+                </p>
+                <TagList tags={work.tags} className={big ? OVERLAY_LG_GAP : 'mb-4'} />
                 <div className="flex flex-wrap items-center gap-x-5 gap-y-3">
                   <WorkLink work={work} />
                   {notes}
