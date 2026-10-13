@@ -7,6 +7,7 @@ import { Lock, LoaderCircle, CircleAlert } from 'lucide-react'
 // so it comes from /api/resume/data after the PIN, never from this bundle.
 import type { ResumeData } from '@/lib/resume-data'
 import { Button } from '@/components/ui/Button'
+import { TAP_TEXT } from '@/components/ui/pill'
 
 /**
  * The PIN, remembered across visits in localStorage. Read through
@@ -49,7 +50,7 @@ const pinStore = {
 const noPin = () => null
 
 /** The quiet way home from every state of the page. */
-const BACK_LINK = 'inline-block mt-6 font-mono text-label text-ink-meta transition-colors hover:text-white'
+const BACK_LINK = `${TAP_TEXT} inline-block mt-6 font-mono text-label text-ink-meta transition-colors hover:text-white`
 
 /** An error line: a red mark, readable ink. Red text on black reads as decoration, not a message. */
 function ErrorLine({ id, children }: { id?: string; children: React.ReactNode }) {

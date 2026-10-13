@@ -2,12 +2,12 @@
 import type { MouseEvent } from 'react'
 import Link from 'next/link'
 import { MotionConfig, motion } from 'framer-motion'
-import { Lock, Music, X } from 'lucide-react'
+import { ListMusic, Lock, X } from 'lucide-react'
 import { CopyButton } from '@/components/ui/CopyButton'
 import { Dialog, DialogClose, DialogContent, DialogTitle } from '@/components/ui/dialog'
 import { Bars, ICON, ICONS, MENU_ID, configOf, type Rect } from '@/components/ui/Nav'
 import { TerminalDots } from '@/components/ui/TerminalBar'
-import { LINKS } from '@/lib/constants'
+import { LINKS } from '@/lib/links'
 import { RESUME_HREF, ROUTES, sectionHref } from '@/lib/routes'
 import { NUMBERED, movementOf, type MovementId } from '@/lib/score'
 
@@ -78,7 +78,9 @@ export default function NavMenu({ open, onOpenChange, pathname, current, rects, 
             </div>
           )}
           <DialogClose
-            className="absolute flex items-center justify-center cursor-pointer rounded-full"
+            // The ring inside the button: at the global 3px offset it was a
+            // 54px circle poking past the 46px bar.
+            className="absolute flex items-center justify-center cursor-pointer rounded-full focus-visible:-outline-offset-2"
             style={rects?.burger ?? { top: 16, right: 16, width: 44, height: 44 }}
             aria-label="Close menu"
           >
@@ -156,7 +158,7 @@ export default function NavMenu({ open, onOpenChange, pathname, current, rects, 
                 >
                   <span className={`${PROMPT} text-spectrum-amber/40`} aria-hidden="true">&gt;</span>
                   <span className={VERB} aria-hidden="true">ls</span>
-                  <Music className={`${ICON} mr-2 text-ink-faint ${configOf(movementOf('symphony').key).iconColor}`} aria-hidden="true" />
+                  <ListMusic className={`${ICON} mr-2 text-ink-faint ${configOf(movementOf('symphony').key).iconColor}`} aria-hidden="true" />
                   <span className={`${PATH} ${onWorks ? 'text-white' : 'text-ink-meta'}`}>/works</span>
                 </Link>
               </motion.li>
@@ -195,7 +197,8 @@ export default function NavMenu({ open, onOpenChange, pathname, current, rects, 
               <a href={LINKS.linkedin} target="_blank" rel="noopener noreferrer" className={LINK_OUT}>
                 linkedin
               </a>
-              <a href={`mailto:${LINKS.email}`} className={LINK_OUT}>
+              {/* "email" is five letters: padded out to a 44px-wide target. */}
+              <a href={`mailto:${LINKS.email}`} className={`${LINK_OUT} -mx-1 px-1`}>
                 email
               </a>
             </div>

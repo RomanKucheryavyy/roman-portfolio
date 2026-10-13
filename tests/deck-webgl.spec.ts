@@ -64,4 +64,34 @@ test.describe('deck and WebGL', () => {
     }
     await expect(page.locator('#symphony')).toBeAttached()
   })
+
+  test('the Spline phone gives its WebGL context back when its card leaves the front', async ({ page }) => {
+    test.skip(test.info().project.name !== 'desktop', 'A desktop-deck scenario (the phone deck never loads Spline).')
+    // The scene remounts on every visit to the front. Each mount left a live
+    // context behind, and at the 16th Chrome evicted the oldest one: the
+    // hero's ocean, for the rest of the session.
+    const unreachable: string[] = []
+    page.on('requestfailed', (req) => {
+      if (/spline\.design/.test(req.url())) unreachable.push(`${req.url()} (${req.failure()?.errorText ?? 'failed'})`)
+    })
+    const card = await frontTheSplineCard(page)
+    try {
+      await expect(card.locator('canvas')).toBeAttached({ timeout: 10_000 })
+    } catch (err) {
+      test.skip(unreachable.length > 0, `Spline's host was unreachable from this runner: ${unreachable[0]}`)
+      throw err
+    }
+    const canvas = await card.locator('canvas').first().elementHandle()
+    await page.getByRole('button', { name: 'Next piece' }).click()
+    await expect
+      .poll(() =>
+        canvas!.evaluate((el) => {
+          const c = el as HTMLCanvasElement
+          const gl = (c.getContext('webgl2') ?? c.getContext('webgl')) as WebGLRenderingContext | null
+          return !c.isConnected && (gl?.isContextLost() ?? true)
+        }),
+      )
+      .toBe(true)
+    await expect(page.locator('#hero canvas').first()).toBeAttached()
+  })
 })

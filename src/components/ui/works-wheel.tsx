@@ -106,6 +106,7 @@ export function WorksWheel({
   className,
   ...props
 }: WorksWheelProps) {
+  const sectionRef = React.useRef<HTMLElement>(null);
   const stageRef = React.useRef<HTMLDivElement>(null);
   const wheelRef = React.useRef<HTMLDivElement>(null);
   const cardRefs = React.useRef<(HTMLElement | null)[]>([]);
@@ -247,9 +248,11 @@ export function WorksWheel({
 
   // Native listener, because the wheel has to be cancellable - and it only
   // cancels while it still has somewhere to go, so the page scrolls on at
-  // either end instead of trapping the reader.
+  // either end instead of trapping the reader. On the whole section, not just
+  // the stage: the rail is the stage's sibling, and a wheel over it (where the
+  // pointer is right after clicking a title) used to do nothing.
   React.useEffect(() => {
-    const el = stageRef.current;
+    const el = sectionRef.current;
     if (!el) return;
     const onWheel = (event: WheelEvent) => {
       const next = target.current + event.deltaY / WHEEL_UNITS;
@@ -274,6 +277,7 @@ export function WorksWheel({
 
   return (
     <section
+      ref={sectionRef}
       aria-label={label}
       className={cn(
         "bg-background text-foreground relative h-full min-h-[24rem] w-full overflow-hidden select-none",
@@ -287,7 +291,7 @@ export function WorksWheel({
         role="group"
         aria-roledescription="wheel"
         aria-label={`${label}: use the up and down arrow keys to turn`}
-        className="focus-visible:outline-foreground absolute inset-0 cursor-grab touch-pan-x focus-visible:outline-2 focus-visible:-outline-offset-4 active:cursor-grabbing"
+        className="focus-visible:outline-foreground absolute inset-x-0 top-[var(--wheel-top,0px)] bottom-0 cursor-grab touch-pan-x focus-visible:outline-2 focus-visible:-outline-offset-4 active:cursor-grabbing"
         style={{ perspective: `${metrics.depth}px` }}
         onPointerDown={(event) => {
           drag.current = event.clientY;
@@ -299,9 +303,12 @@ export function WorksWheel({
           drag.current = event.clientY;
         }}
         onPointerUp={() => {
-          // Land on an item rather than between two.
+          // Land on an item rather than between two, and never half way
+          // between the ring and the drum: a short drag from the ring used to
+          // leave the wheel at about 0.5, half ring and half drum, with the
+          // side panel at half strength over it.
           drag.current = null;
-          if (target.current > 1) to(Math.round(target.current));
+          to(Math.round(target.current));
         }}
         onKeyDown={(event) => {
           // Turn 1 is the drum with the first piece at the front, last + 1
@@ -343,6 +350,8 @@ export function WorksWheel({
                 total={count}
                 size="sm"
                 layout="overlay"
+                // Under the page's h1, like the phone list's cards.
+                titleAs="h2"
                 imageSizes="(min-width: 768px) 34vw, 1px"
                 className="size-full shadow-[0_18px_40px_-18px_rgba(255,255,255,0.12)]"
               />
@@ -356,7 +365,7 @@ export function WorksWheel({
           proportions inside a card as well as at full bleed. */}
       <div
         ref={labelRef}
-        className="font-display pointer-events-none absolute inset-0 grid place-items-center font-black tracking-tighter"
+        className="font-display pointer-events-none absolute inset-x-0 top-[var(--wheel-top,0px)] bottom-0 grid place-items-center font-black tracking-tighter"
         style={{ fontSize: metrics.title }}
       >
         {label}
@@ -366,7 +375,7 @@ export function WorksWheel({
           the title is announced on a turn; the rest is there to read. */}
       <div
         ref={titleRef}
-        className="pointer-events-none absolute top-1/2 left-[8%] max-w-[22%] -translate-y-1/2 opacity-0"
+        className="pointer-events-none absolute top-[calc(50%_+_var(--wheel-top,0px)_/_2)] left-[8%] max-w-[22%] -translate-y-1/2 opacity-0"
       >
         <p
           aria-live="polite"
@@ -380,7 +389,10 @@ export function WorksWheel({
             {items[active].status}
           </p>
         )}
-        <p data-description className="text-ink-body mt-4 line-clamp-5 text-small">
+        {/* Whole, not clamped: this panel is the only place desktop /works
+            says what a piece is, and at 768-1280 five lines cut most of them
+            off mid-sentence. The longest fits beside the front card. */}
+        <p data-description className="text-ink-body mt-4 text-small">
           {items[active]?.description}
         </p>
       </div>
@@ -396,7 +408,8 @@ export function WorksWheel({
               aria-current={i === active ? "true" : undefined}
               onClick={() => to(i + 1)}
               className={cn(
-                "focus-visible:outline-foreground cursor-pointer transition-colors focus-visible:outline-1",
+                // py-0.5: the rows touched at 21px, under WCAG 2.2's 24px target.
+                "focus-visible:outline-foreground cursor-pointer py-0.5 transition-colors focus-visible:outline-1",
                 i === active && "text-foreground font-medium",
               )}
             >

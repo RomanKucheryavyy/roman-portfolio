@@ -1,5 +1,5 @@
 import { execFileSync } from 'node:child_process'
-import { readFileSync } from 'node:fs'
+import { readdirSync, readFileSync } from 'node:fs'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import AxeBuilder from '@axe-core/playwright'
@@ -63,6 +63,23 @@ test.describe('program notes', () => {
         expect((await request.get(url)).status(), url).toBe(404)
       }
     }
+  })
+
+  test('no built client chunk carries a draft, its open questions or the fixture', () => {
+    // The deck and the detail view only need to know which pieces have
+    // published notes; the home page works that out on the server. These are
+    // a draft's gap, a draft's claim and the fixture's marker.
+    const needles = /Whether to name the church|First released on the App Store on|FIXTURE — not real|must never ship/
+    const hits: string[] = []
+    const walk = (dir: string) => {
+      for (const entry of readdirSync(dir, { withFileTypes: true })) {
+        const file = path.join(dir, entry.name)
+        if (entry.isDirectory()) walk(file)
+        else if (needles.test(readFileSync(file, 'utf8'))) hits.push(path.relative(ROOT, file))
+      }
+    }
+    walk(path.join(ROOT, '.next', 'static'))
+    expect(hits).toEqual([])
   })
 
   test('the default sitemap lists no program notes', async ({ request }) => {
@@ -244,6 +261,18 @@ test.describe('icons, manifest and share cards', () => {
     expect(pngSize(await res.body())).toEqual({ width: 180, height: 180 })
   })
 
+  test('every page names its card with its size, type and alt', async ({ request }) => {
+    for (const route of ['/', '/colophon', '/resume', '/works', '/does-not-exist']) {
+      const { text } = await html(request, route)
+      expect(text, route).toMatch(/<meta property="og:image" content="[^"]*\/opengraph-image/)
+      expect(text, route).toContain('<meta property="og:image:width" content="1200"/>')
+      expect(text, route).toContain('<meta property="og:image:height" content="630"/>')
+      expect(text, route).toContain('<meta property="og:image:type" content="image/png"/>')
+      expect(text, route).toMatch(/<meta property="og:image:alt" content="[^"]+"/)
+      expect(text, route).toMatch(/<meta name="twitter:image" content="[^"]*\/twitter-image/)
+    }
+  })
+
   test('the home and /works cards are 1200x630 PNGs, and /works points at its own', async ({ request }) => {
     for (const card of ['/opengraph-image', '/works/opengraph-image', '/works/twitter-image']) {
       const res = await request.get(card)
@@ -273,8 +302,10 @@ test.describe('colophon', () => {
     await expect(valueOf('Commit')).toHaveText(sha ? sha.slice(0, 7) : 'local build')
 
     const budget = JSON.parse(readFileSync(path.join(ROOT, 'scripts/budget.json'), 'utf8'))
+    // The 404 route is listed under a plain name, with its key as the note.
+    const LABEL: Record<string, string> = { '/_not-found': '404 page' }
     for (const [route, bytes] of Object.entries<number>(budget.routes)) {
-      await expect(valueOf(route)).toContainText(`${bytes.toLocaleString('en-US')} B`)
+      await expect(valueOf(LABEL[route] ?? route)).toContainText(`${bytes.toLocaleString('en-US')} B`)
     }
     await expect(valueOf('any other route')).toHaveText(`${budget.defaultRouteBudget.toLocaleString('en-US')} B`)
 

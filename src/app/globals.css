@@ -41,7 +41,6 @@
   --color-paper-muted: #555;
   --color-paper-rule: #bbb;
 
-  --color-pure-white: #fff;
   --color-spectrum-red: #ff2d55;
   --color-spectrum-orange: #ff6b35;
   --color-spectrum-amber: #ffb800;
@@ -82,14 +81,12 @@
   }
 }
 
-/* The brand gradients are the only custom properties defined outside @theme.
-   --gradient-brand fills .text-gradient; --gradient-brand-line is the same
-   seven keys laid flat, for hairlines and rules. The 39-token "semantic" layer
-   that used to sit here had no consumers at all, so it was deleted rather than
-   revived. */
+/* The brand gradient is the only custom property defined outside @theme: it
+   fills .text-gradient. The 39-token "semantic" layer that used to sit here
+   had no consumers at all, so it was deleted rather than revived, and so were
+   --color-pure-white and --gradient-brand-line, which never got one. */
 :root {
   --gradient-brand: linear-gradient(135deg, var(--color-spectrum-red), var(--color-spectrum-orange), var(--color-spectrum-amber), var(--color-spectrum-green), var(--color-spectrum-teal), var(--color-spectrum-blue), var(--color-spectrum-purple), var(--color-spectrum-red));
-  --gradient-brand-line: linear-gradient(90deg, var(--color-spectrum-red), var(--color-spectrum-orange), var(--color-spectrum-amber), var(--color-spectrum-green), var(--color-spectrum-teal), var(--color-spectrum-blue), var(--color-spectrum-purple));
 }
 
 /* ── Base ── */
@@ -118,6 +115,13 @@ body {
 @layer base {
   :focus-visible { outline: 2px solid rgb(255 255 255 / 0.8); outline-offset: 3px; }
   :focus:not(:focus-visible) { outline: none; }
+  /* Forced colours repaint the ring in the theme's text colour, which in a
+     light theme is dark navy, and vanished over the hero's canvas (forced
+     colours never repaint a canvas). Highlight is the theme's own focus
+     colour, and a wider ring. */
+  @media (forced-colors: active) {
+    :focus-visible { outline: 3px solid Highlight; outline-offset: 3px; }
+  }
 }
 
 ::-webkit-scrollbar { width: 0; height: 0; }
@@ -281,5 +285,13 @@ canvas { touch-action: pan-y; }
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
     scroll-behavior: auto !important;
+  }
+  /* The hero's own loops (the spotlight beams, the name's gradient, the scroll
+     cue) end on the frame they start on, so a finished iteration held there is
+     the still hero reduced-motion visitors always saw. Without the hold the
+     beams fell back to their inline ±20° fan and the gradient to 0% 0%, a
+     hero nobody had seen before. Hero.tsx is untouched. */
+  #hero, #hero *, #hero *::before, #hero *::after {
+    animation-fill-mode: forwards !important;
   }
 }

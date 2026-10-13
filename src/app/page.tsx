@@ -1,11 +1,14 @@
 import HomeClient from './HomeClient'
+import { notesHrefs } from '@/lib/case-studies'
 import { CERTIFICATIONS, LINKS, SITE } from '@/lib/constants'
 import { ROUTES } from '@/lib/routes'
 import { movementOf } from '@/lib/score'
 import { pageMetadata } from '@/lib/seo'
 import { CLIENT_WORK, PRODUCTS, actionOf } from '@/lib/work'
 
-export const metadata = pageMetadata({ path: ROUTES.home })
+// images: false, so the root segment's own opengraph-image / twitter-image
+// files supply the card with its hash, size and alt.
+export const metadata = pageMetadata({ path: ROUTES.home, images: false })
 
 const H2 = 'mt-12 mb-4 font-display text-2xl font-bold tracking-tight text-white'
 const ITEM = 'text-small text-ink-body'
@@ -22,11 +25,13 @@ const LINK = 'text-white underline decoration-ink-faint underline-offset-4 hover
 export default function Home() {
   return (
     <>
-      <HomeClient />
+      <HomeClient notesHrefs={notesHrefs()} />
       <noscript>
-        {/* Above HomeClient's fixed pre-hydration screen (z-200), which never
-            lifts without scripts. */}
-        <div className="relative z-[201] min-h-svh bg-black px-[clamp(1.5rem,5vw,4rem)] py-14 md:py-24">
+        {/* HomeClient's pre-hydration screen never lifts without scripts:
+            without this it covered the summary's footer and held a blank
+            screen above it. */}
+        <style>{'[data-boot-screen]{display:none}'}</style>
+        <main id="main" className="relative z-[201] min-h-svh bg-black px-[clamp(1.5rem,5vw,4rem)] py-14 md:py-24">
           <div className="mx-auto w-full max-w-6xl">
             <h1 className="font-display text-4xl font-bold tracking-tight text-white md:text-6xl">{SITE.name}</h1>
             <p className="mt-4 max-w-lg text-body text-ink-body">{SITE.description}</p>
@@ -85,7 +90,7 @@ export default function Home() {
               </a>
             </p>
           </div>
-        </div>
+        </main>
       </noscript>
     </>
   )

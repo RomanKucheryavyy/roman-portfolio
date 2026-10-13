@@ -9,6 +9,7 @@ import { SectionHeader } from '@/components/ui/SectionHeader'
 import { SectionShell } from '@/components/ui/SectionShell'
 import { Button } from '@/components/ui/Button'
 import { CopyButton } from '@/components/ui/CopyButton'
+import { TAP_TEXT } from '@/components/ui/pill'
 import { Panel } from '@/components/ui/Panel'
 import { TerminalBar } from '@/components/ui/TerminalBar'
 import { LINKS } from '@/lib/constants'
@@ -196,8 +197,11 @@ export default function Compose() {
   useRevealOnScroll(sectionRef)
 
   const dynamics = dynamicsFor(form.message.length)
+  // A faint underline at rest marks each field's edge (the placeholder alone,
+  // ink-faint, was the only cue); focus raises it. On phones each field is a
+  // 44px target (py-2.5), the site's tap size.
   const inlineInput =
-    'inline-block bg-transparent font-mono text-base md:text-small text-ink-body placeholder:text-ink-faint border-b border-transparent focus:outline-hidden focus:border-white/40 focus-visible:border-white/60 min-w-0'
+    'inline-block bg-transparent font-mono text-base md:text-small text-ink-body placeholder:text-ink-faint border-b border-white/25 focus:outline-hidden focus:border-white/40 focus-visible:border-white/60 min-w-0 max-md:py-2.5'
 
   return (
     <SectionShell ref={sectionRef} id="compose">
@@ -211,8 +215,10 @@ export default function Compose() {
           React tree — a form declared here never reaches the published HTML. */}
 
       <div ref={burstHostRef} data-reveal className="relative">
-        {/* The email window IS the form */}
-        <Panel ref={windowRef} hud className="mx-auto max-w-2xl overflow-hidden">
+        {/* The email window IS the form. Column-wide below lg: at 768 a
+            max-w-2xl window sat 10px in from the column's edges, where every
+            other section's content starts, and read as misaligned. */}
+        <Panel ref={windowRef} hud className="mx-auto overflow-hidden lg:max-w-2xl">
           <TerminalBar
             title={status === 'sent' ? 'message sent — 250 OK' : status === 'sending' ? 'sending…' : 'New Message'}
             live
@@ -260,7 +266,11 @@ export default function Compose() {
                   {EMAIL_DOMAIN}
                 </span>
               </div>
-              <div className="flex items-center gap-3">
+              {/* Below sm the address takes a row of its own, under the name and
+                  in the same column: on one row a 390px phone gave the email
+                  81px, which showed 'your@emai' and about nine characters of
+                  what was typed. From sm up it reads as one header line. */}
+              <div className="flex flex-wrap items-center gap-x-3 gap-y-1 sm:flex-nowrap">
                 <label htmlFor="compose-name" className="font-mono text-label text-ink-meta w-10 shrink-0">
                   From:
                 </label>
@@ -272,21 +282,23 @@ export default function Compose() {
                   value={form.name}
                   onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
                   placeholder="Your Name"
-                  className={`${inlineInput} w-[38%]`}
+                  className={`${inlineInput} flex-1 sm:flex-none sm:w-[38%]`}
                 />
-                <span aria-hidden="true" className="font-mono text-small text-ink-faint">&lt;</span>
-                <input
-                  id="compose-email"
-                  type="email"
-                  required
-                  autoComplete="email"
-                  value={form.email}
-                  onChange={(e) => setForm((f) => ({ ...f, email: e.target.value }))}
-                  placeholder="your@email.com"
-                  aria-label="Your email address"
-                  className={`${inlineInput} flex-1`}
-                />
-                <span aria-hidden="true" className="font-mono text-small text-ink-faint">&gt;</span>
+                <span className="flex min-w-0 items-center gap-3 max-sm:basis-full max-sm:pl-13 sm:flex-1">
+                  <span aria-hidden="true" className="font-mono text-small text-ink-faint">&lt;</span>
+                  <input
+                    id="compose-email"
+                    type="email"
+                    required
+                    autoComplete="email"
+                    value={form.email}
+                    onChange={(e) => setForm((f) => ({ ...f, email: e.target.value }))}
+                    placeholder="your@email.com"
+                    aria-label="Your email address"
+                    className={`${inlineInput} flex-1`}
+                  />
+                  <span aria-hidden="true" className="font-mono text-small text-ink-faint">&gt;</span>
+                </span>
               </div>
               <div className="flex items-center gap-3 pb-3 border-b border-white/10">
                 <span className="font-mono text-label text-ink-meta w-10 shrink-0">Subj:</span>
@@ -340,7 +352,7 @@ export default function Compose() {
                   <a
                     href={RESUME_PDF_HREF}
                     download
-                    className="whitespace-nowrap font-mono text-label text-ink-meta hover:text-white transition-colors"
+                    className={`${TAP_TEXT} whitespace-nowrap font-mono text-label text-ink-meta hover:text-white transition-colors`}
                     onMouseEnter={() => setCursorVariant('hover')}
                     onMouseLeave={() => setCursorVariant('default')}
                   >
@@ -349,7 +361,7 @@ export default function Compose() {
                 ) : (
                   <a
                     href={RESUME_REQUEST}
-                    className="whitespace-nowrap font-mono text-label text-ink-meta hover:text-white transition-colors"
+                    className={`${TAP_TEXT} whitespace-nowrap font-mono text-label text-ink-meta hover:text-white transition-colors`}
                     onMouseEnter={() => setCursorVariant('hover')}
                     onMouseLeave={() => setCursorVariant('default')}
                   >
@@ -363,7 +375,7 @@ export default function Compose() {
                   pendingLabel="Sending…"
                   disabled={status === 'sent'}
                   aria-label="Send message"
-                  className="ml-auto"
+                  className="ml-auto max-md:min-h-11"
                 >
                   <span aria-hidden="true">{modKey}↩</span> Send
                 </Button>
@@ -421,7 +433,7 @@ export default function Compose() {
             href={LINKS.github}
             target="_blank"
             rel="noopener noreferrer"
-            className="flex items-center gap-1.5 hover:text-white transition-colors py-2"
+            className="relative flex items-center gap-1.5 hover:text-white transition-colors py-2 max-md:after:absolute max-md:after:-inset-y-1.5 max-md:after:inset-x-0 max-md:after:content-['']"
             onMouseEnter={() => setCursorVariant('hover')}
             onMouseLeave={() => setCursorVariant('default')}
           >
@@ -431,7 +443,7 @@ export default function Compose() {
             href={LINKS.linkedin}
             target="_blank"
             rel="noopener noreferrer"
-            className="flex items-center gap-1.5 hover:text-white transition-colors py-2"
+            className="relative flex items-center gap-1.5 hover:text-white transition-colors py-2 max-md:after:absolute max-md:after:-inset-y-1.5 max-md:after:inset-x-0 max-md:after:content-['']"
             onMouseEnter={() => setCursorVariant('hover')}
             onMouseLeave={() => setCursorVariant('default')}
           >
@@ -439,7 +451,7 @@ export default function Compose() {
           </a>
           <a
             href={`mailto:${LINKS.email}`}
-            className="flex items-center gap-1.5 hover:text-white transition-colors py-2"
+            className="relative flex items-center gap-1.5 hover:text-white transition-colors py-2 max-md:after:absolute max-md:after:-inset-y-1.5 max-md:after:inset-x-0 max-md:after:content-['']"
             onMouseEnter={() => setCursorVariant('hover')}
             onMouseLeave={() => setCursorVariant('default')}
           >

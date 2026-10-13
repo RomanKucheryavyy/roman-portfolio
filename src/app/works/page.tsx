@@ -2,7 +2,7 @@ import Link from 'next/link'
 import { ArrowRight } from 'lucide-react'
 import { WorksWheel } from '@/components/ui/works-wheel'
 import WorkCard from '@/components/ui/WorkCard'
-import { PILL_OUTLINE } from '@/components/ui/pill'
+import { PILL_OUTLINE, TAP_PILL } from '@/components/ui/pill'
 import { SITE } from '@/lib/constants'
 import { notesHrefOf } from '@/lib/case-studies'
 import { pageMetadata } from '@/lib/seo'
@@ -75,13 +75,20 @@ export default function WorksPage() {
       <h1 className="px-6 pt-20 font-display text-4xl font-bold tracking-tight text-white md:sr-only">The Setlist</h1>
 
       {/* ── the wheel, from md up ───────────────────────────────────────────
-          data-stage: a full-bleed stage, so the site footer stands aside. */}
-      <div data-stage className="hidden h-full md:block">
+          data-stage: a full-bleed stage, so the site footer stands aside.
+          --wheel-top: the wheel measures and centres itself below the fixed
+          site nav (its pill ends at 70px), so the ring's top card, the front
+          piece on arrival, is no longer under the nav. The wheel still draws
+          full bleed: the drum's neighbours run off the top of the window,
+          under the nav, as they always ran off the frame. */}
+      <div data-stage className="hidden h-full [--wheel-top:6rem] md:block">
         <WorksWheel items={CLIENT_WORK} label="The Setlist" />
-        {/* The pill's box (py-2, a 1px border) on the same bottom line, so this
-            hint and the "Products" pill beside it share one baseline. */}
-        <p className="pointer-events-none absolute bottom-[5%] left-1/2 z-10 -translate-x-1/2 border border-transparent py-2 text-center font-mono text-label tracking-wider text-ink-meta">
-          scroll, drag or use <span aria-hidden="true">↑ ↓</span> to turn
+        {/* Bottom-right, on the "Products" pill's line (its py-2 and 1px
+            border), clear of the ring and the drum: centred, it sat on the
+            ring's two bottom cards and on the drum's next card. */}
+        <p className="pointer-events-none absolute right-[2.5%] bottom-[5%] z-10 border border-transparent py-2 text-right font-mono text-label tracking-wider text-ink-meta">
+          scroll, drag or use <span aria-hidden="true">↑ ↓</span>
+          <span className="sr-only">the arrow keys</span> to turn
         </p>
       </div>
 
@@ -116,7 +123,7 @@ export default function WorksPage() {
           page: after the list on phones, bottom-left of the stage from md up. */}
       <Link
         href="/#compositions"
-        className={cn(PILL_OUTLINE, 'mx-6 mb-16 md:absolute md:bottom-[5%] md:left-[2.5%] md:z-10 md:m-0')}
+        className={cn(PILL_OUTLINE, TAP_PILL, 'mx-6 mb-16 md:absolute md:bottom-[5%] md:left-[2.5%] md:z-10 md:m-0')}
       >
         Products I build &amp; run
         <ArrowRight size={12} aria-hidden="true" />

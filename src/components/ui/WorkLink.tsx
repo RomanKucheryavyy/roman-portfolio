@@ -51,7 +51,7 @@ export default function WorkLink({
           PILL_OUTLINE,
           shape,
           SIZE[size],
-          'pointer-events-auto relative duration-300 focus-visible:outline-none',
+          'pointer-events-auto relative duration-300 focus-visible:outline-hidden',
           "max-md:after:absolute max-md:after:-inset-y-2 max-md:after:inset-x-0 max-md:after:content-['']",
           className,
         )}

@@ -1,5 +1,5 @@
 'use client'
-import { useEffect, useRef, useState } from 'react'
+import { Fragment, useEffect, useRef, useState } from 'react'
 import { ArrowUpRight } from 'lucide-react'
 import { useStore } from '@/stores/useStore'
 import { useRevealOnScroll } from '@/hooks/useRevealOnScroll'
@@ -69,6 +69,33 @@ function ratingNote(facts: AppStoreFacts | null): string | null {
 }
 
 /**
+ * A note whose parts never break inside: 'Salesforce · since Apr 2026' wraps
+ * at its dot, and 'Dec 2023 – Jul 2025' at its dash, never as 'Apr / 2026'
+ * or '2018– / 2020'.
+ */
+function Unbroken({ text }: { text: string | null }) {
+  if (!text) return null
+  return (
+    <>
+      {text.split(' · ').map((part, i) => (
+        <Fragment key={i}>
+          {i > 0 ? ' · ' : null}
+          {part.split(' – ').map((side, j, sides) => (
+            <Fragment key={j}>
+              {j > 0 ? ' ' : null}
+              <span className="whitespace-nowrap">
+                {side}
+                {j < sides.length - 1 ? ' –' : null}
+              </span>
+            </Fragment>
+          ))}
+        </Fragment>
+      ))}
+    </>
+  )
+}
+
+/**
  * The record row: who Roman is, in five derived facts. Every value is read
  * from site-facts, CERTIFICATIONS and the work list, and the rating is
  * fetched live, so nothing here is typed twice.
@@ -89,28 +116,30 @@ function RecordRow() {
     {
       term: 'Now',
       value: roleTitle(CURRENT_ROLE),
-      note: `${CURRENT_ROLE.company} · since ${monthYear(CURRENT_ROLE.start)}`,
+      note: <Unbroken text={`${CURRENT_ROLE.company} · since ${monthYear(CURRENT_ROLE.start)}`} />,
     },
     {
       term: 'Before',
       value: [shortTitle(LAST_ROLE), LAST_ROLE.team].filter(Boolean).join(', '),
-      note: yearRange(LAST_ROLE),
+      note: <Unbroken text={yearRange(LAST_ROLE)} />,
     },
     {
       term: 'Certified',
       value: `${CERT_COUNT} Salesforce certifications`,
-      note: certSpan(),
+      note: <Unbroken text={certSpan()} />,
     },
     {
       term: 'Degree',
       value: DEGREE.degree,
-      note: `${DEGREE.short} · ${yearRange(DEGREE)}`,
+      note: <Unbroken text={`${DEGREE.short} · ${yearRange(DEGREE)}`} />,
     },
     {
       term: 'Shipped',
       // A comma, not a dot: at 1440 the line wraps, and a dot left at its end reads as a stray.
-      value: `${LIVE_CLIENT_WORK.length} live sites & apps, ${APPS_LIVE} on the App Store`,
-      note: ratingNote(appStore),
+      // 'including': the app is one of the live pieces, not a tenth. The
+      // non-breaking space keeps 'App Store' on one line.
+      value: `${LIVE_CLIENT_WORK.length} live sites & apps, including ${APPS_LIVE} on the App\u00a0Store`,
+      note: <Unbroken text={ratingNote(appStore)} />,
     },
   ]
 
@@ -205,6 +234,11 @@ function CertCard({ cert }: { cert: Certification }) {
           className={cn(PANEL, 'flip-card-back absolute inset-0 flex flex-col justify-center gap-2 border-l-2 p-4 sm:p-6')}
           style={edge}
         >
+          {/* The name again, so a turned card still says which it is. Hidden
+              from AT: the front's h3 already names the card. */}
+          <p aria-hidden="true" className="font-mono text-label uppercase tracking-wider text-ink-meta">
+            {cert.short} · {cert.name}
+          </p>
           <p className="font-mono text-small text-ink-body">Salesforce Certified</p>
           <p className="font-mono text-label text-ink-meta">{cert.date}</p>
           {cert.verifyUrl ? (

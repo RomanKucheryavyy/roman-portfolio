@@ -93,6 +93,19 @@ const TYPEFACES: Fact[] = [
 const ROW = 'border-t border-white/10'
 const CELL = 'px-4 py-3 align-top'
 
+/** Next's internal name for the 404 route, which a visitor shouldn't have to read. */
+const ROUTE_LABEL: Record<string, string> = { '/_not-found': '404 page' }
+
+/** A movement's label, or for the two that have none (the hero, the interlude) its id, set as an id. */
+const labelOf = (m: (typeof MOVEMENTS)[number]) => m.label ?? <span className="font-mono text-ink-meta">{m.id}</span>
+
+const KeyDot = ({ m }: { m: (typeof MOVEMENTS)[number] }) => (
+  <span className="inline-flex items-center gap-2">
+    <span aria-hidden="true" className="inline-block h-3 w-3 shrink-0 rounded-full" style={{ backgroundColor: keyColor(m.key) }} />
+    {m.key}
+  </span>
+)
+
 export default function ColophonPage() {
   const installed = installedVersions()
   const stack: Fact[] = STACK.map((name) => ({
@@ -117,15 +130,19 @@ export default function ColophonPage() {
   ]
 
   const budgets: Fact[] = [
-    ...Object.entries(budget.routes).map(([route, limit]) => ({
-      term: <Name>{route}</Name>,
-      value: <span className="font-mono">{bytes(limit)}</span>,
-      note:
+    ...Object.entries(budget.routes).map(([route, limit]) => {
+      const measured =
         route in budget.measured.routes
           ? `measured ${bytes(budget.measured.routes[route as keyof typeof budget.measured.routes])} on Next ${budget.measured.next}, ${day(budget.measured.date)}`
-          : undefined,
-    })),
-    { term: 'any other route', value: <span className="font-mono">{bytes(budget.defaultRouteBudget)}</span> },
+          : undefined
+      return {
+        term: <Name>{ROUTE_LABEL[route] ?? route}</Name>,
+        value: <span className="font-mono">{bytes(limit)}</span>,
+        // The route's own key stays on the record, under its plain name.
+        note: ROUTE_LABEL[route] ? [route, measured].filter(Boolean).join(' · ') : measured,
+      }
+    }),
+    { term: <Name>any other route</Name>, value: <span className="font-mono">{bytes(budget.defaultRouteBudget)}</span> },
   ]
 
   return (
@@ -153,16 +170,36 @@ export default function ColophonPage() {
 
         <PageBlock id="score" heading="The score">
           <p className="mb-4 text-small text-ink-body">
-            Every movement of the home page is named once, in src/lib/score.ts. Each section&apos;s kicker and the accent
-            on its heading read this table.
+            Every movement of the home page is named once, in src/lib/score.ts. The nav, the kickers, the captions between
+            sections and each heading&apos;s accent all read this table.
           </p>
-          <div
-            role="region"
-            aria-label="The score, as a table"
-            tabIndex={0}
-            className="overflow-x-auto rounded-xl border border-white/10"
-          >
-            <table className="w-full min-w-[36rem] text-left text-small text-ink-body">
+          {/* Below lg the five columns don't fit the column this block gets
+              (401px at 768, 340px on a phone): as a scroller with no visible
+              scrollbar, the Caption column simply wasn't there at 768 and the
+              keys were cut off on a phone. There, each movement is a row of
+              its own with the same five facts; from lg, the table. */}
+          <ol aria-label="The score" className="overflow-hidden rounded-xl border border-white/10 lg:hidden">
+            {MOVEMENTS.map((m) => (
+              <li key={m.id} className={`${ROW} first:border-t-0 px-4 py-3`}>
+                <p className="flex items-baseline gap-3 text-small">
+                  <span className="w-6 shrink-0 font-mono text-ink-meta">{m.numeral ?? '—'}</span>
+                  <span className="text-white">{labelOf(m)}</span>
+                </p>
+                <dl className="mt-2 grid grid-cols-[4.5rem_minmax(0,1fr)] gap-x-3 gap-y-1 pl-9 text-small text-ink-body">
+                  <dt className="font-mono text-label uppercase tracking-wider text-ink-meta">Score</dt>
+                  <dd>{m.score ?? '—'}</dd>
+                  <dt className="font-mono text-label uppercase tracking-wider text-ink-meta">Key</dt>
+                  <dd>
+                    <KeyDot m={m} />
+                  </dd>
+                  <dt className="font-mono text-label uppercase tracking-wider text-ink-meta">Caption</dt>
+                  <dd className="font-mono text-label text-ink-meta wrap-break-word">{m.caption ?? '—'}</dd>
+                </dl>
+              </li>
+            ))}
+          </ol>
+          <div className="hidden overflow-hidden rounded-xl border border-white/10 lg:block">
+            <table className="w-full text-left text-small text-ink-body">
               <thead className="font-mono text-label uppercase tracking-wider text-ink-meta">
                 <tr>
                   <th scope="col" className={CELL}>No.</th>
@@ -177,18 +214,11 @@ export default function ColophonPage() {
                   <tr key={m.id} className={ROW}>
                     <td className={`${CELL} font-mono`}>{m.numeral ?? '—'}</td>
                     <th scope="row" className={`${CELL} font-normal text-white`}>
-                      {m.label ?? m.id}
+                      {labelOf(m)}
                     </th>
                     <td className={CELL}>{m.score ?? '—'}</td>
                     <td className={CELL}>
-                      <span className="inline-flex items-center gap-2">
-                        <span
-                          aria-hidden="true"
-                          className="inline-block h-3 w-3 shrink-0 rounded-full"
-                          style={{ backgroundColor: keyColor(m.key) }}
-                        />
-                        {m.key}
-                      </span>
+                      <KeyDot m={m} />
                     </td>
                     <td className={`${CELL} font-mono text-label text-ink-meta`}>{m.caption ?? '—'}</td>
                   </tr>

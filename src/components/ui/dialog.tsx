@@ -79,7 +79,7 @@ const DialogContent = React.forwardRef<
       {children}
       {!hideClose && (
         <DialogPrimitive.Close
-          className="absolute right-4 top-4 z-10 rounded-full border border-white/20 bg-black/60 p-2.5 text-ink-body backdrop-blur-sm transition-colors hover:border-white/50 hover:text-white focus-visible:border-white focus-visible:text-white focus-visible:outline-none"
+          className="absolute right-4 top-4 z-10 rounded-full border border-white/20 bg-black/60 p-2.5 text-ink-body backdrop-blur-sm transition-colors hover:border-white/50 hover:text-white focus-visible:border-white focus-visible:text-white focus-visible:outline-hidden"
           onMouseEnter={() => onCloseHover?.(true)}
           onMouseLeave={() => onCloseHover?.(false)}
         >

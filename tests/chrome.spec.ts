@@ -331,6 +331,28 @@ test.describe('the boot', () => {
     await gotoHome(page)
     expect(await page.evaluate(() => document.documentElement.classList.contains('lenis'))).toBe(true)
   })
+
+  // Before hydration the page is a fixed screen; the footer used to be the
+  // only thing in the flow, at y=0 under it, and jumped to the bottom at
+  // hydration: CLS 0.10 at 1440 and 0.19 at 1024, and LCP on a hidden footer.
+  for (const [width, height] of [[1440, 900], [1024, 768]] as const) {
+    test(`the hand-over from the boot screen shifts nothing (${width}x${height})`, async ({ page }) => {
+      only('desktop')
+      await page.setViewportSize({ width, height })
+      await page.addInitScript(() => {
+        ;(window as unknown as { __cls: number }).__cls = 0
+        new PerformanceObserver((list) => {
+          for (const entry of list.getEntries() as (PerformanceEntry & { value: number; hadRecentInput: boolean })[]) {
+            if (!entry.hadRecentInput) (window as unknown as { __cls: number }).__cls += entry.value
+          }
+        }).observe({ type: 'layout-shift', buffered: true })
+      })
+      await gotoHome(page)
+      await settle(1000)
+      const cls = await page.evaluate(() => (window as unknown as { __cls: number }).__cls)
+      expect(cls).toBeLessThan(0.01)
+    })
+  }
 })
 
 test.describe('server HTML', () => {

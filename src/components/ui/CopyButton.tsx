@@ -1,6 +1,6 @@
 'use client'
 import { Check, Copy, X } from 'lucide-react'
-import { PILL_OUTLINE } from '@/components/ui/pill'
+import { PILL_OUTLINE, TAP_PILL } from '@/components/ui/pill'
 import { useCopyToClipboard, type CopyState } from '@/hooks/useCopyToClipboard'
 import { cn } from '@/lib/utils'
 
@@ -46,7 +46,7 @@ export function CopyButton({
         onClick={() => {
           void copy(text)
         }}
-        className={cn(PILL_OUTLINE, 'cursor-pointer select-none [touch-action:manipulation]', className)}
+        className={cn(PILL_OUTLINE, TAP_PILL, 'cursor-pointer select-none [touch-action:manipulation]', className)}
       >
         <span className="inline-grid" aria-hidden="true">
           {states.map((s) => {

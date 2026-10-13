@@ -6,7 +6,7 @@ import { gsap, ScrollTrigger } from '@/hooks/useGSAP'
 import { useMouseTracking } from '@/hooks/useMouseVelocity'
 import { useIsHydrated } from '@/hooks/useMediaQuery'
 import { useStore } from '@/stores/useStore'
-import { scrollToTarget, setLenis } from '@/lib/lenis'
+import { getLenis, scrollToTarget, setLenis } from '@/lib/lenis'
 import { MOVEMENTS } from '@/lib/score'
 import DynamicFavicon from '@/components/effects/DynamicFavicon'
 import AmbientBackground from '@/components/effects/AmbientBackground'
@@ -16,13 +16,13 @@ import ConsoleSignature from '@/components/effects/ConsoleSignature'
 import Loader from '@/components/ui/Loader'
 import Hero from '@/components/sections/Hero'
 import Measures from '@/components/sections/Measures'
-import Projects from '@/components/sections/Projects'
+import Projects, { type NotesHrefs } from '@/components/sections/Projects'
 import Compositions from '@/components/sections/Compositions'
 import Manifesto from '@/components/sections/Manifesto'
 import Conductor from '@/components/sections/Conductor'
 import Compose from '@/components/sections/Compose'
 
-function AppContent() {
+function AppContent({ notesHrefs }: { notesHrefs: NotesHrefs }) {
   useMouseTracking()
   const isLoaded = useStore((s) => s.isLoaded)
 
@@ -49,6 +49,22 @@ function AppContent() {
     }
   }, [])
 
+  // Nothing scrolls under the boot. The Loader is opaque and main is inert,
+  // but inert doesn't stop a wheel: four notches during the boot landed a
+  // visitor mid-page, past the hero they never saw. Lenis stops, and the root
+  // can't scroll natively either (the reduced-motion path has no Lenis).
+  useEffect(() => {
+    if (isLoaded) return
+    const root = document.documentElement
+    const overflow = root.style.overflow
+    root.style.overflow = 'hidden'
+    getLenis()?.stop()
+    return () => {
+      root.style.overflow = overflow
+      getLenis()?.start()
+    }
+  }, [isLoaded])
+
   // A cold /#section link. The section doesn't exist when the browser looks
   // for the fragment (the page renders after hydration), so the browser never
   // scrolls; land there once the boot hands over.
@@ -73,7 +89,7 @@ function AppContent() {
         <SectionTransition movement="measures" />
         <Measures />
         <SectionTransition movement="symphony" />
-        <Projects />
+        <Projects notesHrefs={notesHrefs} />
         <SectionTransition movement="compositions" />
         <Compositions />
         <SectionTransition movement="interlude" />
@@ -87,19 +103,29 @@ function AppContent() {
   )
 }
 
-export default function HomeClient() {
+/** `notesHrefs`: the published program notes by work id, from the server, so
+ *  the case-study drafts never ship in the client bundle. */
+export default function HomeClient({ notesHrefs }: { notesHrefs: NotesHrefs }) {
   const mounted = useIsHydrated()
 
   if (!mounted) {
+    // The outer box holds a screen's height in the flow. The screen itself is
+    // fixed, so without it nothing was in the flow but the site footer, which
+    // sat at y=0 under the screen and jumped to the bottom at hydration: the
+    // page's only layout shift on desktop (CLS 0.10 at 1440, 0.19 at 1024),
+    // and the hidden footer was the LCP element. data-boot-screen: with
+    // scripts off it never lifts, so page.tsx's <noscript> removes it.
     return (
-      <div className="fixed inset-0 z-[200] bg-black flex flex-col items-center justify-center" aria-hidden="true">
-        <div className="w-48 h-px bg-white/10 relative overflow-hidden">
-          <div className="absolute inset-0 bg-white origin-left animate-progress" />
+      <div data-boot-screen className="min-h-svh" aria-hidden="true">
+        <div className="fixed inset-0 z-[200] bg-black flex flex-col items-center justify-center">
+          <div className="w-48 h-px bg-white/10 relative overflow-hidden">
+            <div className="absolute inset-0 bg-white origin-left animate-progress" />
+          </div>
+          <p className="font-mono text-label text-ink-faint mt-4 tracking-wider">{'> initializing...'}</p>
         </div>
-        <p className="font-mono text-label text-ink-faint mt-4 tracking-wider">{'> initializing...'}</p>
       </div>
     )
   }
 
-  return <AppContent />
+  return <AppContent notesHrefs={notesHrefs} />
 }

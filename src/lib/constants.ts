@@ -10,11 +10,8 @@ export const SITE = {
   url: 'https://romankucheryavyy.com',
 } as const
 
-export const LINKS = {
-  linkedin: 'https://www.linkedin.com/in/romakuch/',
-  github: 'https://github.com/RomanKucheryavyy',
-  email: 'kucheryavyyroman@gmail.com',
-} as const
+// In its own dependency-free module, so the chrome can read it alone (links.ts).
+export { LINKS } from './links'
 
 export interface Certification {
   id: string
@@ -49,6 +46,11 @@ export const PROJECTS = [
     title: 'Alongside Coffee',
     url: 'https://www.alongsidecoffee.com',
     image: '/images/projects/alongside-coffee.png',
+    // needs Roman: the live alongsidecoffee.com is a booking and inquiry site
+    // ("Book the Cart", "Inquire", a Salesforce Web-to-Lead form) with no shop,
+    // cart or checkout (fetched 2026-10-13), and the screenshot shows the same.
+    // "e-commerce" here and the "E-commerce" tag are his words, kept until he
+    // says what the site is now.
     description:
       'Brewed from scratch — a full-stack e-commerce experience that turns first-time visitors into repeat customers. Custom design system, responsive to the last pixel.',
     tags: ['Web Design', 'E-commerce', 'Branding'],
@@ -111,6 +113,11 @@ export const PROJECTS = [
     color: '#38BDF8',
   },
   {
+    // needs Roman: eminencerentals.com carries a fixed bar, "This site is
+    // currently under development and not yet live." (fetched 2026-10-13; the
+    // repo's own eminence-rentals.png shows it too), yet a url counts it in
+    // LIVE_CLIENT_WORK, the "8 live" on / and /works. His status, in his
+    // words, goes here; nothing is written for him.
     id: 'eminence-rentals',
     title: 'Eminence Rentals',
     url: 'https://eminencerentals.com',
@@ -175,6 +182,12 @@ export const COMPOSITIONS = [
     color: '#5ac8fa',
   },
   {
+    // needs Roman: alongsideevents.com is public (sign-in, pricing, "Your
+    // first event is free") and its JSON-LD names him and Anna Kucheryava as
+    // founders (fetched 2026-10-13), but with no `url` here the card says
+    // "Private build", and the Compositions intro's "most are private builds"
+    // counts it. Whether it may be linked as his, and his status and tagline
+    // for it, are his to give; nothing changes until he does.
     id: 'alongside-events',
     title: 'Alongside Events',
     tagline: 'The tech stack behind the family coffee cart',
