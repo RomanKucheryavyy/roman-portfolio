@@ -37,8 +37,13 @@ export default function ProjectModal({ index, onClose, notesHrefs }: ProjectModa
     if (!open) return
     const lenis = getLenis()
     lenis?.stop()
-    return () => lenis?.start()
-  }, [open])
+    return () => {
+      lenis?.start()
+      // Close unmounts under the pointer, so its mouseleave never fires and
+      // the cursor stayed the 40px ring it grew to over the button.
+      setCursorVariant('default')
+    }
+  }, [open, setCursorVariant])
 
   return (
     <Dialog open={open} onOpenChange={(next) => { if (!next) onClose() }}>
