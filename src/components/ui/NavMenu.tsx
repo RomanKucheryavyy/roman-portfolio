@@ -7,7 +7,7 @@ import { CopyButton } from '@/components/ui/CopyButton'
 import { Dialog, DialogClose, DialogContent, DialogTitle } from '@/components/ui/dialog'
 import { Bars, ICON, ICONS, MENU_ID, configOf, type Rect } from '@/components/ui/Nav'
 import { TerminalDots } from '@/components/ui/TerminalBar'
-import { LINKS } from '@/lib/constants'
+import { LINKS } from '@/lib/links'
 import { RESUME_HREF, ROUTES, sectionHref } from '@/lib/routes'
 import { NUMBERED, movementOf, type MovementId } from '@/lib/score'
 

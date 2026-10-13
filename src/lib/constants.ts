@@ -10,11 +10,8 @@ export const SITE = {
   url: 'https://romankucheryavyy.com',
 } as const
 
-export const LINKS = {
-  linkedin: 'https://www.linkedin.com/in/romakuch/',
-  github: 'https://github.com/RomanKucheryavyy',
-  email: 'kucheryavyyroman@gmail.com',
-} as const
+// In its own dependency-free module, so the chrome can read it alone (links.ts).
+export { LINKS } from './links'
 
 export interface Certification {
   id: string

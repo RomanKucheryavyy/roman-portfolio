@@ -1,4 +1,4 @@
-import { LINKS } from '@/lib/constants'
+import { LINKS } from '@/lib/links'
 
 /** The site's pages. Every internal link to one of these reads it from here. */
 export const ROUTES = {
