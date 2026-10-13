@@ -44,22 +44,24 @@ export default function AmbientBackground() {
   const focus = SECTION_FOCUS[activeSection] ?? SECTION_FOCUS.hero
 
   return (
+    // A size container, so the glow can be placed in its units (cqw / cqh).
     <div
       ref={ref}
-      className="fixed inset-0"
+      className="fixed inset-0 [container-type:size]"
       style={{ zIndex: 0, backgroundColor: '#000000' }}
       aria-hidden="true"
     >
       {isMobile && (
-        // A fixed-size glow moved by position — gradient strings themselves
-        // can't interpolate, so animating `background` just snapped.
+        // A fixed-size glow moved by a transform: gradient strings can't
+        // interpolate, so animating `background` just snapped, and moving it
+        // by left / top laid the page out on every frame of every section
+        // change (nine layout-shift entries per scroll at 390). A transform
+        // stays on the compositor.
         <div
-          className="absolute w-[150vw] h-[150vw] rounded-full"
+          className="absolute left-0 top-0 w-[150vw] h-[150vw] rounded-full"
           style={{
-            left: focus.x,
-            top: focus.y,
-            transform: 'translate(-50%, -50%)',
-            transition: 'left 1.2s ease-in-out, top 1.2s ease-in-out',
+            transform: `translate(calc(${parseFloat(focus.x)}cqw - 50%), calc(${parseFloat(focus.y)}cqh - 50%))`,
+            transition: 'transform 1.2s ease-in-out',
             background:
               'radial-gradient(circle, rgba(255,255,255,0.06) 0%, rgba(255,255,255,0.015) 40%, transparent 70%)',
           }}
