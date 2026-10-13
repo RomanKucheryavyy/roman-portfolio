@@ -1,7 +1,7 @@
 'use client'
 import { useEffect, useRef } from 'react'
 import { useStore } from '@/stores/useStore'
-import { useMediaQuery } from '@/hooks/useMediaQuery'
+import { useIsHydrated, useMediaQuery } from '@/hooks/useMediaQuery'
 
 const TRAIL_COUNT = 3
 /** How close counts as arrived: past this the loop stops asking for frames. */
@@ -31,7 +31,10 @@ export default function Cursor() {
   const isTouch = useMediaQuery('(pointer: coarse)')
   const wantsNative = useMediaQuery('(forced-colors: active), (prefers-contrast: more)')
   const reduced = useMediaQuery('(prefers-reduced-motion: reduce)')
-  const off = isTouch || wantsNative
+  // Not in the server HTML: its fixed dots were drawn at the top-left corner,
+  // over everything, until hydration (and for good with scripts off).
+  const hydrated = useIsHydrated()
+  const off = isTouch || wantsNative || !hydrated
   const mainRef = useRef<HTMLDivElement>(null)
   const glowRef = useRef<HTMLDivElement>(null)
   const trailRefs = useRef<(HTMLDivElement | null)[]>([])

@@ -93,12 +93,20 @@ export default function HomeClient({ notesHrefs }: { notesHrefs: NotesHrefs }) {
   const mounted = useIsHydrated()
 
   if (!mounted) {
+    // The outer box holds a screen's height in the flow. The screen itself is
+    // fixed, so without it nothing was in the flow but the site footer, which
+    // sat at y=0 under the screen and jumped to the bottom at hydration: the
+    // page's only layout shift on desktop (CLS 0.10 at 1440, 0.19 at 1024),
+    // and the hidden footer was the LCP element. data-boot-screen: with
+    // scripts off it never lifts, so page.tsx's <noscript> removes it.
     return (
-      <div className="fixed inset-0 z-[200] bg-black flex flex-col items-center justify-center" aria-hidden="true">
-        <div className="w-48 h-px bg-white/10 relative overflow-hidden">
-          <div className="absolute inset-0 bg-white origin-left animate-progress" />
+      <div data-boot-screen className="min-h-svh" aria-hidden="true">
+        <div className="fixed inset-0 z-[200] bg-black flex flex-col items-center justify-center">
+          <div className="w-48 h-px bg-white/10 relative overflow-hidden">
+            <div className="absolute inset-0 bg-white origin-left animate-progress" />
+          </div>
+          <p className="font-mono text-label text-ink-faint mt-4 tracking-wider">{'> initializing...'}</p>
         </div>
-        <p className="font-mono text-label text-ink-faint mt-4 tracking-wider">{'> initializing...'}</p>
       </div>
     )
   }
