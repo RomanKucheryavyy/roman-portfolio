@@ -41,7 +41,6 @@
   --color-paper-muted: #555;
   --color-paper-rule: #bbb;
 
-  --color-pure-white: #fff;
   --color-spectrum-red: #ff2d55;
   --color-spectrum-orange: #ff6b35;
   --color-spectrum-amber: #ffb800;
@@ -82,14 +81,12 @@
   }
 }
 
-/* The brand gradients are the only custom properties defined outside @theme.
-   --gradient-brand fills .text-gradient; --gradient-brand-line is the same
-   seven keys laid flat, for hairlines and rules. The 39-token "semantic" layer
-   that used to sit here had no consumers at all, so it was deleted rather than
-   revived. */
+/* The brand gradient is the only custom property defined outside @theme: it
+   fills .text-gradient. The 39-token "semantic" layer that used to sit here
+   had no consumers at all, so it was deleted rather than revived, and so were
+   --color-pure-white and --gradient-brand-line, which never got one. */
 :root {
   --gradient-brand: linear-gradient(135deg, var(--color-spectrum-red), var(--color-spectrum-orange), var(--color-spectrum-amber), var(--color-spectrum-green), var(--color-spectrum-teal), var(--color-spectrum-blue), var(--color-spectrum-purple), var(--color-spectrum-red));
-  --gradient-brand-line: linear-gradient(90deg, var(--color-spectrum-red), var(--color-spectrum-orange), var(--color-spectrum-amber), var(--color-spectrum-green), var(--color-spectrum-teal), var(--color-spectrum-blue), var(--color-spectrum-purple));
 }
 
 /* ── Base ── */
