@@ -1,26 +1,26 @@
 {
-  "note": "First-load JS per route, uncompressed bytes, from .next/diagnostics/route-bundle-stats.json. Each budget is the route as measured at W12 (measured.routes) +2%, rounded up: the ratchet the plan set for W12, down from abb0023's figures +2% (measured.before). Every built route has its own line; a route without one (a page added since) gets defaultRouteBudget, which is the largest page's line after the home page, and gets its own line in the next ratchet. A budget moves only in a commit that says why: a change that goes over reports it in its PR instead of raising its own line. fontsSelfHosted is W2's switch. Checked by scripts/check-bundle-budget.mjs (npm run budget).",
+  "note": "First-load JS per route, uncompressed bytes, from .next/diagnostics/route-bundle-stats.json. Each budget is the route as measured (measured.routes) +2%, rounded up, and never raised by a ratchet: a line only comes down. The home page's line is also capped at the plan's W12 ceiling, 1,448,816 B (under abb0023's 1,448,843), whichever is lower. Every built route has its own line; a route without one (a page added since) gets defaultRouteBudget, which is the largest page's line after the home page, and gets its own line in the next ratchet. A budget moves only in a commit that says why: a change that goes over reports it in its PR instead of raising its own line. fontsSelfHosted is W2's switch. Checked by scripts/check-bundle-budget.mjs (npm run budget).",
   "fontsSelfHosted": true,
   "defaultRouteBudget": 572496,
   "routes": {
-    "/": 1455182,
+    "/": 1448816,
     "/works": 572496,
     "/works/[slug]": 567197,
-    "/resume": 547851,
-    "/_not-found": 511799,
-    "/colophon": 511799
+    "/resume": 540114,
+    "/_not-found": 504042,
+    "/colophon": 504042
   },
   "measured": {
-    "date": "2026-10-11",
+    "date": "2026-10-13",
     "next": "16.4.0",
-    "commit": "ce391be",
+    "commit": "b19143f",
     "routes": {
-      "/": 1426649,
-      "/works": 561270,
-      "/works/[slug]": 556075,
-      "/resume": 537108,
-      "/_not-found": 501763,
-      "/colophon": 501763
+      "/": 1424921,
+      "/works": 562328,
+      "/works/[slug]": 557005,
+      "/resume": 529523,
+      "/_not-found": 494158,
+      "/colophon": 494158
     },
     "before": {
       "next": "16.2.0",
