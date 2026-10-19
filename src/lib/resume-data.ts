@@ -23,7 +23,7 @@ export const RESUME_DATA: ResumeData = {
   github: 'https://github.com/RomanKucheryavyy',
   website: 'https://romankucheryavyy.com',
   summary:
-    'Senior Technical Support Engineer at Salesforce (Signature Success) supporting Fortune 500 and strategic enterprise customers — 1,200+ cases at a 4.9/5.0 CSAT. 8x Salesforce certified with a BS in Computer Science, and a builder of AI-powered products — multi-agent systems on the Claude API. Deep expertise in Apex, Sales Cloud, and the Agentforce agentic AI stack.',
+    'Senior Technical Support Engineer at Salesforce (Signature Success) supporting Fortune 500 enterprise customers — 1,200+ cases at a 4.9/5.0 CSAT. 8x Salesforce certified, BS in Computer Science, and a builder of production AI products on the Claude API.',
   experience: [
     {
       company: 'Salesforce',
@@ -44,8 +44,7 @@ export const RESUME_DATA: ResumeData = {
       dates: 'November 2023 – April 2026',
       bullets: [
         'Delivered premier-level support for Salesforce Government Cloud customers within strict public-sector SLAs, covering 9 product areas including Security, Data Cloud, CRM Analytics, Developer Support, and Sales Engagement.',
-        'Escalated and remediated high-priority (SEV-1) incidents in partnership with engineering, security, and product teams.',
-        'Guided federal clients through platform best practices and compliance with federal data standards.',
+        'Escalated and remediated SEV-1 incidents with engineering, security, and product teams, and guided federal clients through platform best practices and compliance with federal data standards.',
       ],
     },
     {
@@ -54,8 +53,7 @@ export const RESUME_DATA: ResumeData = {
       title: 'Technical Support Engineer',
       dates: 'May 2021 – November 2023',
       bullets: [
-        'Supported federal government agencies using Microsoft products, creating and resolving support tickets within defined SLAs.',
-        'Partnered with internal Microsoft support and operations teams to identify and resolve systemic faults.',
+        'Supported federal government agencies on Microsoft products within defined SLAs, partnering with internal support and operations teams to identify and resolve systemic faults.',
       ],
     },
   ],
@@ -86,37 +84,37 @@ export const RESUME_DATA: ResumeData = {
     },
   ],
   skills: [
-    'Salesforce (Apex, LWC, SOQL, Flow)', 'Sales Cloud', 'Data Cloud', 'CRM Analytics', 'Agentforce',
-    'JavaScript', 'TypeScript', 'React', 'Next.js', 'Node.js', 'Python', 'Java', 'Swift', 'SQL',
-    'REST APIs', 'Claude API', 'Git', 'Firebase', 'Supabase',
+    'Salesforce (Apex, LWC, SOQL, Flow)', 'Sales Cloud', 'Data Cloud', 'Agentforce', 'Claude API',
+    'TypeScript', 'React', 'Next.js', 'Python', 'Java', 'Swift', 'SQL', 'REST APIs', 'Supabase',
   ],
   projects: [
     {
-      name: 'Praxis — AI-Augmented Trading Platform',
-      tech: 'Next.js, TypeScript, Claude API, Alpaca API',
+      name: 'Alongside Events — AI-Powered Event Operations SaaS',
+      tech: 'Next.js, TypeScript, Supabase (Postgres + RLS), Claude API, Stripe, Twilio',
       bullets: [
-        'Built a multi-agent investing platform where 18 rule-based and LLM-driven investor personas debate every position and an AI portfolio manager synthesizes sized trade proposals; runs daily in paper trading via the Alpaca API.',
+        'Multi-tenant SaaS running real weddings since June 2026 — QR ordering, networked thermal printing, SMS, Stripe. Claude Haiku powers the AI barista that designs each couple a signature drink, plus recap narratives and guest translation.',
+        'Every Claude call runs through a usage recorder a unit test enforces, under per-operator rate limits, a monthly spend cap, prompt caching, and cost attribution by feature, event, and day.',
       ],
     },
     {
       name: 'Alongside Brain — Personal AI Knowledge System',
       tech: 'Python, Claude API, Slack API, Obsidian',
       bullets: [
-        'Built an always-on AI system: a Slack bot captures natural-language notes, reminders, and expenses; Claude routes each capture into an Obsidian vault; runs 24/7 with scheduled digests, Gmail/Calendar sync, and pattern detection.',
+        'Built an always-on AI system: a Slack bot captures notes, reminders and expenses in plain language, Claude routes each into an Obsidian vault, and scheduled digests and pattern detection run 24/7.',
+      ],
+    },
+    {
+      name: 'Sembly — Worship Team Scheduling Platform',
+      tech: 'Next.js, TypeScript, Supabase, PWA',
+      bullets: [
+        'Live product (sembly.app): volunteers see their dates, position, running order with song keys, and sheet music on their phone. Postgres row-level security is the authorization boundary, not the UI.',
       ],
     },
     {
       name: 'FUBC Coffee iOS App',
       tech: 'Swift, SwiftUI, Firebase, Supabase',
       bullets: [
-        'Published a native ordering app with real-time orders, push notifications, and digital loyalty cards — 5.0-star App Store rating across 11 reviews.',
-      ],
-    },
-    {
-      name: 'Alongside Events — Event Operations Platform',
-      tech: 'Next.js, TypeScript, Tailwind CSS',
-      bullets: [
-        'Engineered the technical stack behind a working espresso cart: QR-code guest ordering, fully functional networked thermal label printing, and automated post-event recaps.',
+        'Published a native ordering app — real-time orders, push notifications, digital loyalty cards; 5.0 stars on the App Store.',
       ],
     },
   ],
