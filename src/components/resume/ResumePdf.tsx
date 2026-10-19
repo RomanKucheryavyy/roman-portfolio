@@ -10,7 +10,9 @@ const styles = StyleSheet.create({
   contact: { fontSize: 8, color: '#555', textAlign: 'center', marginBottom: 2, lineHeight: 1.35 },
   summary: { fontSize: 9, color: '#333', marginTop: 6, marginBottom: 2, lineHeight: 1.4 },
   sectionTitle: {
-    fontSize: 10, fontFamily: 'Helvetica-Bold', textTransform: 'uppercase', letterSpacing: 1,
+    // No letterSpacing: it makes PDF text extractors insert spaces mid-word,
+    // and resume parsers segment on these exact headings.
+    fontSize: 10, fontFamily: 'Helvetica-Bold', textTransform: 'uppercase',
     borderBottomWidth: 1, borderBottomColor: '#bbb', paddingBottom: 2, marginTop: 7, marginBottom: 4,
   },
   inlineList: { fontSize: 8.5, color: '#333', lineHeight: 1.4 },
@@ -31,7 +33,7 @@ const styles = StyleSheet.create({
 
 export default function ResumePDF({ resume }: { resume: ResumeData }) {
   return (
-    <Document title={`${resume.name} — Resume`} author={resume.name}>
+    <Document title={`${resume.name} Resume`} author={resume.name}>
       <Page size="LETTER" style={styles.page}>
         <Text style={styles.name}>{resume.name}</Text>
         <Text style={styles.contact}>
@@ -76,7 +78,7 @@ export default function ResumePDF({ resume }: { resume: ResumeData }) {
           <View key={i} style={[styles.rowBetween, { marginBottom: 3 }]}>
             <Text style={styles.eduDegree}>
               <Text style={{ fontFamily: 'Helvetica-Bold' }}>{edu.school}, {edu.location}</Text>
-              {' — '}
+              {', '}
               {edu.degree}
               {edu.gpa ? ` (${edu.gpa} GPA)` : ''}
             </Text>
