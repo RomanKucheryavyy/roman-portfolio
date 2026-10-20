@@ -252,9 +252,7 @@ export function ShowcaseCarousel({
         {items.map((item, i) => {
           const active = i === index;
           const Tag = (item.href ? "a" : "div") as React.ElementType;
-          const linkProps = item.href
-            ? { href: item.href, ...(/^https?:/.test(item.href) ? { target: "_blank", rel: "noopener noreferrer" } : {}) }
-            : {};
+          const linkProps = item.href ? { href: item.href } : {};
           return (
             <Tag
               key={item.id ?? i}

@@ -1,9 +1,19 @@
 'use client'
 
+import dynamic from 'next/dynamic'
 import { BadgeCheck } from 'lucide-react'
-import ToolchainMarquee, { type ToolchainItem } from '@/components/ui/toolchain-marquee'
+import type { ToolchainItem } from '@/components/ui/toolchain-marquee'
 import { CERTIFICATIONS } from '@/lib/content'
 import { Container, SectionHeader } from './section-header'
+
+// The marquee reads prefers-reduced-motion during its first render, so the
+// server's HTML and the browser's disagree for anyone who has it on. Rendering
+// it in the browser only avoids that hydration error; the empty box keeps the
+// rows' height so nothing moves when it arrives.
+const ToolchainMarquee = dynamic(() => import('@/components/ui/toolchain-marquee'), {
+  ssr: false,
+  loading: () => <div className="h-[92px] max-[600px]:h-[86px]" />,
+})
 
 // One accent for every badge: these are all the same kind of thing.
 const items: ToolchainItem[] = CERTIFICATIONS.map((c) => ({

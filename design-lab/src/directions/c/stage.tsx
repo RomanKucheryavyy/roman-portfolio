@@ -42,7 +42,7 @@ function Hero() {
           </div>
         </div>
         {/* The stage floor: the curtain's hem fades into the page. */}
-        <div aria-hidden="true" className="pointer-events-none absolute inset-x-0 bottom-0 h-40 bg-gradient-to-b from-transparent to-background" />
+        <div aria-hidden="true" className="pointer-events-none absolute inset-x-0 bottom-0 h-40 bg-linear-to-b from-transparent to-background" />
       </DrapeBackground>
     </section>
   )
