@@ -688,11 +688,23 @@ const FormDots = React.forwardRef<
 );
 FormDots.displayName = "FormDots";
 
+type ContactField = "name" | "company" | "email" | "message";
+
 interface ContactWithGlobeProps {
   title?: string;
   subtitle?: string;
   description?: string;
   className?: string;
+  /** Contact channels. Defaults to the demo's. */
+  links?: { icon: React.ComponentType<{ className?: string }>; label: string; href: string }[];
+  /** Line under "Get in touch". */
+  channelsNote?: string;
+  /** Line under "Send a message". */
+  formNote?: string;
+  placeholders?: Partial<Record<ContactField, string>>;
+  submitLabel?: string;
+  /** Receives the form's values. The form itself never posts anywhere. */
+  onSubmit?: (values: Record<ContactField, string>) => void;
 }
 
 export default function ContactWithGlobe({
@@ -700,7 +712,27 @@ export default function ContactWithGlobe({
   subtitle = "Contact",
   description = "We are always looking for ways to improve our products and services. Contact us and let us know how we can help you.",
   className,
+  links = CONTACT_LINKS,
+  channelsNote = "Reach out via any channel below. We typically reply within one business day.",
+  formNote = "Fill out the form and we'll get back to you promptly.",
+  placeholders,
+  submitLabel = "Submit",
+  onSubmit,
 }: ContactWithGlobeProps) {
+  const uid = React.useId();
+  const ph = {
+    name: "Ahdeetai",
+    company: "ScrollX UI",
+    email: "support@scrollxui.com",
+    message: "Type your message here",
+    ...placeholders,
+  };
+  const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    const data = new FormData(event.currentTarget);
+    const value = (key: ContactField) => String(data.get(key) ?? "");
+    onSubmit?.({ name: value("name"), company: value("company"), email: value("email"), message: value("message") });
+  };
   return (
     <section
       className={cn(
@@ -756,16 +788,16 @@ export default function ContactWithGlobe({
                 Get in touch
               </h3>
               <p className="text-sm text-zinc-500 dark:text-zinc-400 leading-relaxed max-w-xs">
-                Reach out via any channel below. We typically reply within one
-                business day.
+                {channelsNote}
               </p>
             </div>
 
             <div className="flex flex-col gap-3">
-              {CONTACT_LINKS.map(({ icon: Icon, label, href }, i) => (
+              {links.map(({ icon: Icon, label, href }, i) => (
                 <motion.a
                   key={label}
                   href={href}
+                  {...(/^https?:/.test(href) ? { target: "_blank", rel: "noopener noreferrer" } : {})}
                   initial={{ opacity: 0, x: -12 }}
                   whileInView={{ opacity: 1, x: 0 }}
                   viewport={{ once: true }}
@@ -797,7 +829,8 @@ export default function ContactWithGlobe({
             </div>
           </motion.div>
 
-          <motion.div
+          <motion.form
+            onSubmit={handleSubmit}
             initial={{ opacity: 0, y: 28 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
@@ -809,7 +842,7 @@ export default function ContactWithGlobe({
                 Send a message
               </h3>
               <p className="text-sm text-zinc-500 dark:text-zinc-400">
-                Fill out the form and we'll get back to you promptly.
+                {formNote}
               </p>
             </div>
 
@@ -817,54 +850,62 @@ export default function ContactWithGlobe({
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="flex flex-col gap-2">
-                <label className="text-xs font-semibold tracking-widest uppercase text-zinc-400 dark:text-zinc-500">
+                <label htmlFor={`${uid}-name`} className="text-xs font-semibold tracking-widest uppercase text-zinc-400 dark:text-zinc-500">
                   Full Name
                 </label>
                 <input
+                  id={`${uid}-name`}
+                  name="name"
                   type="text"
-                  placeholder="Ahdeetai"
+                  placeholder={ph.name}
                   className="w-full bg-zinc-50 dark:bg-zinc-800/60 border border-zinc-200 dark:border-zinc-700 rounded-xl px-4 py-2.5 text-sm text-zinc-800 dark:text-zinc-200 placeholder:text-zinc-400 dark:placeholder:text-zinc-600 outline-none focus:border-rose-400 dark:focus:border-rose-500/50 focus:ring-2 focus:ring-rose-500/10 transition-all duration-200"
                 />
               </div>
               <div className="flex flex-col gap-2">
-                <label className="text-xs font-semibold tracking-widest uppercase text-zinc-400 dark:text-zinc-500">
+                <label htmlFor={`${uid}-company`} className="text-xs font-semibold tracking-widest uppercase text-zinc-400 dark:text-zinc-500">
                   Company
                 </label>
                 <input
+                  id={`${uid}-company`}
+                  name="company"
                   type="text"
-                  placeholder="ScrollX UI"
+                  placeholder={ph.company}
                   className="w-full bg-zinc-50 dark:bg-zinc-800/60 border border-zinc-200 dark:border-zinc-700 rounded-xl px-4 py-2.5 text-sm text-zinc-800 dark:text-zinc-200 placeholder:text-zinc-400 dark:placeholder:text-zinc-600 outline-none focus:border-rose-400 dark:focus:border-rose-500/50 focus:ring-2 focus:ring-rose-500/10 transition-all duration-200"
                 />
               </div>
             </div>
 
             <div className="flex flex-col gap-2">
-              <label className="text-xs font-semibold tracking-widest uppercase text-zinc-400 dark:text-zinc-500">
+              <label htmlFor={`${uid}-email`} className="text-xs font-semibold tracking-widest uppercase text-zinc-400 dark:text-zinc-500">
                 Email Address
               </label>
               <input
+                id={`${uid}-email`}
+                name="email"
                 type="email"
-                placeholder="support@scrollxui.com"
+                placeholder={ph.email}
                 className="w-full bg-zinc-50 dark:bg-zinc-800/60 border border-zinc-200 dark:border-zinc-700 rounded-xl px-4 py-2.5 text-sm text-zinc-800 dark:text-zinc-200 placeholder:text-zinc-400 dark:placeholder:text-zinc-600 outline-none focus:border-rose-400 dark:focus:border-rose-500/50 focus:ring-2 focus:ring-rose-500/10 transition-all duration-200"
               />
             </div>
 
             <div className="flex flex-col gap-2">
-              <label className="text-xs font-semibold tracking-widest uppercase text-zinc-400 dark:text-zinc-500">
+              <label htmlFor={`${uid}-message`} className="text-xs font-semibold tracking-widest uppercase text-zinc-400 dark:text-zinc-500">
                 Message
               </label>
               <textarea
-                placeholder="Type your message here"
+                id={`${uid}-message`}
+                name="message"
+                placeholder={ph.message}
                 rows={4}
                 className="w-full bg-zinc-50 dark:bg-zinc-800/60 border border-zinc-200 dark:border-zinc-700 rounded-xl px-4 py-3 text-sm text-zinc-800 dark:text-zinc-200 placeholder:text-zinc-400 dark:placeholder:text-zinc-600 outline-none focus:border-rose-400 dark:focus:border-rose-500/50 focus:ring-2 focus:ring-rose-500/10 resize-none transition-all duration-200"
               />
             </div>
 
-            <Button className="w-fit h-11 px-8 rounded-xl font-semibold text-sm bg-zinc-900 hover:bg-zinc-800 dark:bg-white dark:hover:bg-zinc-100 text-white dark:text-zinc-900 group">
-              Submit
+            <Button type="submit" className="w-fit h-11 px-8 rounded-xl font-semibold text-sm bg-zinc-900 hover:bg-zinc-800 dark:bg-white dark:hover:bg-zinc-100 text-white dark:text-zinc-900 group">
+              {submitLabel}
               <ArrowRight className="w-4 h-4 transition-transform duration-200 group-hover:translate-x-1" />
             </Button>
-          </motion.div>
+          </motion.form>
         </div>
       </div>
     </section>

@@ -1,3 +1,10 @@
+import type { Metadata } from 'next'
+import { Stage } from '@/directions/c/stage'
+
+export const metadata: Metadata = {
+  title: 'C · Stage — Roman Kucheryavyy',
+}
+
 export default function Page() {
-  return <main className="grid min-h-svh place-items-center bg-background text-foreground">Direction C: in progress</main>
+  return <Stage />
 }

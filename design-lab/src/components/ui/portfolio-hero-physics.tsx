@@ -252,7 +252,9 @@ export function ShowcaseCarousel({
         {items.map((item, i) => {
           const active = i === index;
           const Tag = (item.href ? "a" : "div") as React.ElementType;
-          const linkProps = item.href ? { href: item.href } : {};
+          const linkProps = item.href
+            ? { href: item.href, ...(/^https?:/.test(item.href) ? { target: "_blank", rel: "noopener noreferrer" } : {}) }
+            : {};
           return (
             <Tag
               key={item.id ?? i}
@@ -448,6 +450,8 @@ export type PortfolioTemplateProps = {
   /** Case carousel auto-advance on mobile, ms. 0 turns it off. */
   autoplay?: number;
   className?: string;
+  /** Element for the name, so a host page that already has an h1 keeps one. */
+  nameAs?: "h1" | "h2" | "p";
 };
 
 export const DEFAULT_BADGES: PortfolioBadge[] = [
@@ -815,7 +819,7 @@ function useResolvedTheme(theme: "dark" | "light" | "auto"): "dark" | "light" {
 
 export function PortfolioTemplate(props: PortfolioTemplateProps) {
   const { name, role, bio, links, badges, cases } = { ...DEFAULTS, ...props };
-  const { avatar, theme: themeProp = "auto", dropKey = 0, dragHint = true, autoplay = 6000, className = "" } = props;
+  const { avatar, theme: themeProp = "auto", dropKey = 0, dragHint = true, autoplay = 6000, className = "", nameAs: NameTag = "h1" } = props;
   const theme = useResolvedTheme(themeProp);
   const t = THEMES[theme];
   const [hint, setHint] = React.useState<"hidden" | "shown" | "done">("hidden");
@@ -875,7 +879,7 @@ export function PortfolioTemplate(props: PortfolioTemplateProps) {
                 )}
               </div>
               <div>
-                <h1 className="m-0 text-[32px] font-normal leading-[42px]">{name}</h1>
+                <NameTag className="m-0 text-[32px] font-normal leading-[42px]">{name}</NameTag>
                 <p className="m-0 text-lg" style={{ color: t.muted }}>
                   {role}
                 </p>
@@ -891,7 +895,7 @@ export function PortfolioTemplate(props: PortfolioTemplateProps) {
 
             <div className="mt-8 flex flex-wrap gap-4 @6xl:col-start-1 @6xl:row-start-2 @6xl:mt-7">
               {links.map((l) => (
-                <a key={l.label} href={l.href} target="_blank" rel="noopener" className="flex items-center gap-1.5 text-lg leading-5" style={{ color: t.ink }}>
+                <a key={l.label} href={l.href} {...(/^https?:/.test(l.href) ? { target: "_blank", rel: "noopener noreferrer" } : {})} className="flex items-center gap-1.5 text-lg leading-5" style={{ color: t.ink }}>
                   {l.label} <ArrowUpRight color={t.muted} />
                 </a>
               ))}
@@ -900,9 +904,11 @@ export function PortfolioTemplate(props: PortfolioTemplateProps) {
         </section>
 
         {/* cases */}
-        <section className="mt-20 pb-24 @3xl:px-8 @6xl:mt-[120px] @6xl:px-12">
-          <ShowcaseCarousel items={cases} theme={theme} label="Cases" autoplay={autoplay} />
-        </section>
+        {cases.length > 0 && (
+          <section className="mt-20 pb-24 @3xl:px-8 @6xl:mt-[120px] @6xl:px-12">
+            <ShowcaseCarousel items={cases} theme={theme} label="Cases" autoplay={autoplay} />
+          </section>
+        )}
       </main>
     </div>
   );
