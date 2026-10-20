@@ -17,6 +17,8 @@ interface FooterWithSuiteProps {
   ctaUrl?: string;
   email?: string;
   copyright?: string;
+  /** [lab edit] The muted line above the CTA; it was a hard-coded literal. */
+  prompt?: string;
   className?: string;
 }
 
@@ -47,6 +49,7 @@ export default function FooterWithSuite({
   ctaUrl = "#",
   email = "hello@practicality.dev",
   copyright = "© 2026 Practicality, Inc.",
+  prompt = "Got a product idea? A hard problem? Just want to talk?",
   className,
 }: FooterWithSuiteProps) {
   return (
@@ -62,6 +65,7 @@ export default function FooterWithSuite({
             <a
               key={i}
               href={link.url}
+              {...(link.url.startsWith("http") ? { target: "_blank", rel: "noopener noreferrer" } : {}) /* [lab edit] */}
               className="py-0.75 text-[11px] tracking-[0.14em] uppercase text-neutral-900 dark:text-neutral-100 hover:text-neutral-400 dark:hover:text-neutral-500 transition-colors duration-200"
             >
               {link.text}
@@ -74,6 +78,7 @@ export default function FooterWithSuite({
             <a
               key={i}
               href={link.url}
+              {...(link.url.startsWith("http") ? { target: "_blank", rel: "noopener noreferrer" } : {}) /* [lab edit] */}
               className="py-0.75 text-[11px] tracking-[0.14em] uppercase text-neutral-900 dark:text-neutral-100 hover:text-neutral-400 dark:hover:text-neutral-500 transition-colors duration-200"
             >
               {link.text}
@@ -89,7 +94,7 @@ export default function FooterWithSuite({
           <div className="h-5" />
 
           <p className="text-[11px] tracking-[0.12em] uppercase text-neutral-400 dark:text-neutral-500 leading-relaxed">
-            Got a product idea? A hard problem? Just want to talk?
+            {prompt}
           </p>
 
           <div className="h-4" />

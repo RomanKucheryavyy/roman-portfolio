@@ -1,3 +1,10 @@
+import type { Metadata } from 'next'
+import DirectionB from '@/directions/b/DirectionB'
+
+export const metadata: Metadata = {
+  title: 'B · Editorial — Roman Kucheryavyy',
+}
+
 export default function Page() {
-  return <main className="grid min-h-svh place-items-center bg-background text-foreground">Direction B: in progress</main>
+  return <DirectionB />
 }

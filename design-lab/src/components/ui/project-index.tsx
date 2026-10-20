@@ -14,7 +14,8 @@ const SURFACE = 'var(--card)'
 const HAIRLINE = 'var(--border)'
 const TEXT_MUTED = 'var(--muted-foreground)'
 
-type Row = { title: string; tag: string; year: string; grad: string }
+// [lab edit] href (null: not a link, no arrow), image (a real cover) and imageAlt are optional additions.
+type Row = { title: string; tag: string; year: string; grad: string; href?: string | null; image?: string; imageAlt?: string }
 
 const ROWS: Row[] = [
   { title: 'Atlas Analytics', tag: 'Market intelligence', year: '2025', grad: 'radial-gradient(120% 140% at 20% 10%, rgba(90,170,255,0.55), transparent 60%), linear-gradient(150deg, #16233c, #0b1322)' },
@@ -23,7 +24,8 @@ const ROWS: Row[] = [
   { title: 'Northwind Pay', tag: 'Payments infrastructure', year: '2024', grad: 'radial-gradient(120% 140% at 70% 80%, rgba(167,139,250,0.5), transparent 60%), linear-gradient(150deg, #241a38, #130d1f)' },
 ]
 
-export default function ProjectIndexRows() {
+// [lab edit] rows defaults to the published demo rows.
+export default function ProjectIndexRows({ rows = ROWS }: { rows?: Row[] } = {}) {
   const reduced = useReducedMotion()
   const wrap = useRef<HTMLDivElement>(null)
   const [hover, setHover] = useState<number | null>(null)
@@ -36,11 +38,12 @@ export default function ProjectIndexRows() {
 
   return (
     <div ref={wrap} onPointerMove={onMove} className="relative w-full max-w-[560px]" style={{ fontFamily: SANS }}>
-      {ROWS.map((r, i) => (
+      {rows.map((r, i) => (
         <a
           key={r.title}
-          href="#"
-          onClick={(e) => e.preventDefault()}
+          href={r.href === null ? undefined : (r.href ?? "#")}
+          onClick={r.href === undefined ? (e) => e.preventDefault() : undefined}
+          {...(r.href?.startsWith("http") ? { target: "_blank", rel: "noopener noreferrer" } : {})}
           onPointerEnter={() => setHover(i)}
           onPointerLeave={() => setHover(null)}
           onFocus={(e) => {
@@ -64,6 +67,7 @@ export default function ProjectIndexRows() {
           <span className="tabular-nums text-[11px]" style={{ color: TEXT_MUTED }}>
             {r.year}
           </span>
+          {r.href !== null && (
           <span
             aria-hidden
             className="text-[13px] text-foreground/40 transition-transform duration-300 group-hover:translate-x-1 group-hover:text-foreground"
@@ -71,6 +75,7 @@ export default function ProjectIndexRows() {
           >
             →
           </span>
+          )}
         </a>
       ))}
 
@@ -87,17 +92,23 @@ export default function ProjectIndexRows() {
         }}
         transition={reduced ? { duration: 0 } : { type: 'spring', stiffness: 260, damping: 28, opacity: { duration: 0.2, ease: EASE } }}
       >
-        {ROWS.map((r, i) => (
+        {rows.map((r, i) => (
           <div
             key={r.title}
             aria-hidden
             className="relative aspect-[4/3] w-full"
             style={{ display: hover === i ? 'block' : 'none', background: r.grad }}
           >
+            {r.image ? (
+              <img src={r.image} alt={r.imageAlt ?? ''} className="absolute inset-0 size-full object-cover object-top" />
+            ) : (
+            <>
             {/* skeleton chrome so the gradient reads as a product cover */}
             <span className="absolute left-[8%] top-[10%] h-[6%] w-[34%] rounded-full bg-white/[0.16]" />
             <span className="absolute left-[8%] top-[24%] h-[5%] w-[52%] rounded-full bg-white/[0.08]" />
             <span className="absolute inset-x-[8%] bottom-[10%] top-[42%] rounded-md border border-white/[0.09] bg-black/25" />
+            </>
+            )}
           </div>
         ))}
       </motion.div>

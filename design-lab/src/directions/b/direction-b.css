@@ -1,0 +1,30 @@
+/*
+ * Direction B: the CSS that diceui/marquee ships in its registry item
+ * (`cssVars.theme` --animate-marquee-* and `css` @keyframes). The lab's shared
+ * globals.css does not carry it, so the marquee would not move without it.
+ * Copied as published, but scoped under .dirb-root and renamed so it can
+ * never collide with another direction's copy.
+ */
+.dirb-root .animate-marquee-left {
+  animation: dirb-marquee-left var(--marquee-duration) linear var(--marquee-loop-count);
+}
+.dirb-root .animate-marquee-right {
+  animation: dirb-marquee-right var(--marquee-duration) linear var(--marquee-loop-count);
+}
+@keyframes dirb-marquee-left {
+  0% { transform: translateX(0%); }
+  100% { transform: translateX(calc(-100% - var(--marquee-gap))); }
+}
+@keyframes dirb-marquee-right {
+  0% { transform: translateX(calc(-100% - var(--marquee-gap))); }
+  100% { transform: translateX(0%); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .dirb-root .animate-marquee-left,
+  .dirb-root .animate-marquee-right { animation: none; }
+}
+
+/* In-page anchors glide, unless the visitor asked for less motion. */
+@media (prefers-reduced-motion: no-preference) {
+  html:has(.dirb-root) { scroll-behavior: smooth; }
+}

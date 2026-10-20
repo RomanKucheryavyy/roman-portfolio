@@ -25,6 +25,7 @@ interface BlurTextProps {
   direction?: "top" | "bottom";
   className?: string;
   style?: React.CSSProperties;
+  as?: "p" | "span"; // [lab edit] the name lines render as spans inside an <h1>
 }
 
 const BlurText: React.FC<BlurTextProps> = ({
@@ -34,7 +35,9 @@ const BlurText: React.FC<BlurTextProps> = ({
   direction = "top",
   className = "",
   style,
+  as = "p",
 }) => {
+  const Tag = as as "p"; // [lab edit]
   const [inView, setInView] = useState(false);
   const ref = useRef<HTMLParagraphElement>(null);
 
@@ -64,7 +67,7 @@ const BlurText: React.FC<BlurTextProps> = ({
   }, [text, animateBy]);
 
   return (
-    <p ref={ref} className={`inline-flex flex-wrap ${className}`} style={style}>
+    <Tag ref={ref} className={`inline-flex flex-wrap ${className}`} style={style}>
       {segments.map((segment, i) => (
         <span
           key={i}
@@ -80,18 +83,54 @@ const BlurText: React.FC<BlurTextProps> = ({
           {animateBy === "words" && i < segments.length - 1 ? "\u00A0" : ""}
         </span>
       ))}
-    </p>
+    </Tag>
   );
 };
 
-export default function Component() {
-  const [isDark, setIsDark] = useState(true);
+// [lab edit] The published component takes no props: every string, the photo
+// and the theme were literals. These props default to those literals, so
+// <Component /> with no props renders exactly as published.
+export interface PortfolioHeroProps {
+  firstName?: string;
+  lastName?: string;
+  tagline?: string;
+  imageSrc?: string;
+  imageAlt?: string;
+  /** false: start light and leave <html> alone (the published version adds `dark` to it on mount). */
+  defaultDark?: boolean;
+  /** false: no menu, signature or theme toggle (the published menu items are demo links to "#"). */
+  showHeader?: boolean;
+  /** Merged over the name's inline style (published: lime Fira Code). */
+  nameStyle?: React.CSSProperties;
+  /** Merged over the tagline's inline style (published: Antic). */
+  taglineStyle?: React.CSSProperties;
+  /** The scroll-down chevron's action (published: none). */
+  onScrollDown?: () => void;
+  /** Rendered under the tagline, e.g. the hero's actions. */
+  children?: React.ReactNode;
+}
+
+export default function Component({
+  firstName = "ALEX",
+  lastName = "KANE",
+  tagline = "Designing human experiences in code.",
+  imageSrc = "https://cdn.21st.dev/assets/mirror/ab/ab446b6268e5c557c5ab42bea462c11ba3f817ad4db9d6cb70c412b829f53568.jpg",
+  imageAlt = "Profile",
+  defaultDark = true,
+  showHeader = true,
+  nameStyle,
+  taglineStyle,
+  onScrollDown,
+  children,
+}: PortfolioHeroProps = {}) {
+  const [isDark, setIsDark] = useState(defaultDark);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
   const buttonRef = useRef<HTMLButtonElement>(null);
 
   useEffect(() => {
-    document.documentElement.classList.add("dark");
+    if (defaultDark) document.documentElement.classList.add("dark"); // [lab edit] guarded
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
@@ -140,6 +179,7 @@ export default function Component() {
       }}
     >
       {/* Header */}
+      {showHeader && ( // [lab edit]
       <header className="fixed top-0 left-0 right-0 z-50 px-6 py-6">
         <nav className="flex items-center justify-between max-w-screen-2xl mx-auto">
           {/* Menu Button */}
@@ -212,39 +252,46 @@ export default function Component() {
           </button>
         </nav>
       </header>
+      )}
 
       {/* Hero Section */}
       <main className="relative min-h-screen flex flex-col">
         {/* Centered Main Name - Always Perfectly Centered */}
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full px-4">
           <div className="relative text-center">
-            <div>
+            {/* [lab edit] the name is the page's <h1>: one readable label, the animated letters hidden from AT */}
+            <h1>
+            <span className="sr-only">{`${firstName} ${lastName}`}</span>
+            <span className="block" aria-hidden="true">
               <BlurText
-                text="ALEX"
+                as="span"
+                text={firstName}
                 delay={100}
                 animateBy="letters"
                 direction="top"
                 className="font-bold text-[100px] sm:text-[140px] md:text-[180px] lg:text-[210px] leading-[0.75] tracking-tighter uppercase justify-center whitespace-nowrap"
-                style={{ color: "#C3E41D", fontFamily: "'Fira Code', monospace" }}
+                style={{ color: "#C3E41D", fontFamily: "'Fira Code', monospace", ...nameStyle }}
               />
-            </div>
-            <div>
+            </span>
+            <span className="block" aria-hidden="true">
               <BlurText
-                text="KANE"
+                as="span"
+                text={lastName}
                 delay={100}
                 animateBy="letters"
                 direction="top"
                 className="font-bold text-[100px] sm:text-[140px] md:text-[180px] lg:text-[210px] leading-[0.75] tracking-tighter uppercase justify-center whitespace-nowrap"
-                style={{ color: "#C3E41D", fontFamily: "'Fira Code', monospace" }}
+                style={{ color: "#C3E41D", fontFamily: "'Fira Code', monospace", ...nameStyle }}
               />
-            </div>
+            </span>
+            </h1>
 
             {/* Profile Picture */}
             <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-10">
               <div className="w-[65px] h-[110px] sm:w-[90px] sm:h-[152px] md:w-[110px] md:h-[185px] lg:w-[129px] lg:h-[218px] rounded-full overflow-hidden shadow-2xl transition-transform duration-300 hover:scale-110 cursor-pointer">
                 <img
-                  src="https://cdn.21st.dev/assets/mirror/ab/ab446b6268e5c557c5ab42bea462c11ba3f817ad4db9d6cb70c412b829f53568.jpg"
-                  alt="Profile"
+                  src={imageSrc}
+                  alt={imageAlt}
                   className="w-full h-full object-cover"
                 />
               </div>
@@ -256,14 +303,15 @@ export default function Component() {
         <div className="absolute bottom-16 sm:bottom-20 md:bottom-24 lg:bottom-32 xl:bottom-36 left-1/2 -translate-x-1/2 w-full px-6">
           <div className="flex justify-center">
             <BlurText
-              text="Designing human experiences in code."
+              text={tagline}
               delay={150}
               animateBy="words"
               direction="top"
               className="text-[15px] sm:text-[18px] md:text-[20px] lg:text-[22px] text-center transition-colors duration-300 text-neutral-500 hover:text-black dark:hover:text-white"
-              style={{ fontFamily: "'Antic', sans-serif" }}
+              style={{ fontFamily: "'Antic', sans-serif", ...taglineStyle }}
             />
           </div>
+          {children /* [lab edit] */}
         </div>
 
         {/* Scroll Indicator */}
@@ -271,6 +319,7 @@ export default function Component() {
           type="button"
           className="absolute bottom-6 md:bottom-10 left-1/2 -translate-x-1/2 transition-colors duration-300"
           aria-label="Scroll down"
+          onClick={onScrollDown}
         >
           <ChevronDown className="w-5 h-5 md:w-8 md:h-8 text-neutral-500 hover:text-black dark:hover:text-white transition-colors duration-300" />
         </button>
