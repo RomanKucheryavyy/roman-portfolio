@@ -66,7 +66,12 @@ function ProjectCard({ project, index }: { project: Project; index: number }) {
 /** Act I: the nine client projects as scroll-pinned cards that stack. */
 export function Work() {
   return (
-    <section id="work" aria-labelledby="work-title" className="relative scroll-mt-14 pt-20 md:pt-32">
+    <section
+      id="work"
+      aria-labelledby="work-title"
+      className="relative scroll-mt-14 pt-20 [--stack-step:9px] [--stack-top:4.25rem] md:pt-32 md:[--stack-step:12px] md:[--stack-top:6.5rem]"
+      style={{ '--n': PROJECTS.length - 1 } as React.CSSProperties}
+    >
       <Container>
         <SectionHeader
           id="work-title"
@@ -80,7 +85,7 @@ export function Work() {
       <StackingCards
         totalCards={PROJECTS.length}
         scaleMultiplier={0.018}
-        className="relative mt-10 px-4 [--stack-step:9px] [--stack-top:4.25rem] md:mt-20 md:px-12 md:[--stack-step:12px] md:[--stack-top:6.5rem]"
+        className="relative mt-10 px-4 md:mt-20 md:px-12"
       >
         {PROJECTS.map((project, index) => (
           <StackingCardItem
@@ -94,10 +99,14 @@ export function Work() {
             </div>
           </StackingCardItem>
         ))}
-        {/* Holds the finished stack for a beat, and is at least as tall as the
-            last card's offset so that card never paints over Act II. */}
-        <div aria-hidden="true" className="h-[9rem] md:h-[13rem]" />
+        {/* Desktop: hold the finished stack for a beat before it leaves. */}
+        <div aria-hidden="true" className="hidden md:block md:h-[13rem]" />
       </StackingCards>
+      {/* Phones: a card paints `top` px below its 64svh slot, so the finished
+          stack hangs past the end of the stack by up to
+          (top of the last card + card height - slot). This keeps that overhang
+          off Act II. */}
+      <div aria-hidden="true" className="h-[max(0px,calc(var(--stack-top)+var(--n)*var(--stack-step)+33rem-64svh))] md:hidden" />
     </section>
   )
 }
