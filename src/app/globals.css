@@ -1,4 +1,6 @@
 @import "tailwindcss";
+/* The redesign lab is a separate app; keep its classes out of this build. */
+@source not "../../design-lab";
 
 @theme {
   /* The families are self-hosted by next/font in layout.tsx, which sets these
