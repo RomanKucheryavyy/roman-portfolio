@@ -23,28 +23,21 @@ const REDIRECTS: Record<string, string> = {
  * The Content-Security-Policy, report-only: the browser enforces nothing and
  * logs what it would have blocked, so a gap shows up in the console (and in
  * the smoke suite, which fails on any report) before the policy is ever
- * enforced. What each source is for, measured on / with the ocean, every
- * section and the Spline card at the front, one source removed at a time
- * (W12; the counts are the reports each removal caused):
+ * enforced. What each source is for, measured on /, /resume and the 404 at
+ * 1440x900 and 390x844 with the whole home page scrolled through, starting
+ * from 'self' alone (the counts are the reports each source answers, on /):
  *
- * - script-src 'unsafe-inline': Next's inline scripts and the JSON-LD (3).
- *   'unsafe-eval' and 'wasm-unsafe-eval' are for the Spline phone alone: its
- *   runtime compiles WebAssembly (process.wasm, from unpkg), and that
- *   module's emscripten glue builds its function wrappers with
- *   new Function() (132 eval reports and 1 wasm-eval without them). Today's
- *   browsers let 'unsafe-eval' cover WebAssembly too; 'wasm-unsafe-eval'
- *   stays named so the need is visible. Retiring Spline (an owner question)
- *   is what would let both go.
+ * - script-src 'unsafe-inline': Next's inline scripts and the JSON-LD (4).
+ *   Nothing evaluates code or compiles WebAssembly: the Spline phone, which
+ *   needed 'unsafe-eval' and 'wasm-unsafe-eval', is gone.
  * - style-src 'unsafe-inline': style attributes in the markup (React style
- *   props, 32) and one inline <style> element (1).
- * - img-src data: blob:: images made in the page rather than fetched
- *   (16 data:, 3 blob:).
- * - font-src 'self': next/font self-hosts all three families.
- * - connect-src: the Spline scene (prod.spline.design, 2) and the runtime's
- *   WebAssembly (unpkg.com, 2). Every other fetch is this origin's /api.
- * - worker-src 'self' blob:: the Spline runtime has code to start blob:
- *   workers; this scene started none in testing, so it is the plan's
- *   allowance rather than a measured need.
+ *   props, 39) and inline <style> elements (3).
+ * - img-src data:: the paper shaders' 1x1 transparent pixel
+ *   (@paper-design/shaders-react, behind the curtain and the footer; 3).
+ * - font-src 'self': next/font self-hosts Geist and Geist Mono.
+ * - connect-src 'self': the globe's map (/countries-110m.json, shipped in
+ *   public/) and the message box's POST to /api/contact. Nothing leaves this
+ *   origin.
  * - frame-ancestors 'none': X-Frame-Options DENY, in CSP terms.
  * - base-uri, form-action, object-src: they don't fall back to default-src.
  *   No page sets a <base>, every form posts to this origin's /api (by fetch),
@@ -53,17 +46,19 @@ const REDIRECTS: Record<string, string> = {
  *   line each on the server, so a deploy preview has a log to read. Both, for
  *   browsers with and without the Reporting API.
  *
+ * No worker-src: nothing starts a worker, and without it workers fall back to
+ * script-src. No blob: anywhere: nothing on the site makes a blob: URL.
+ *
  * Enforcing it is a later, separate change: switch the header name once a
  * deploy preview has run report-only with nothing logged.
  */
 const CSP = [
   "default-src 'self'",
-  "script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval' 'unsafe-eval'",
+  "script-src 'self' 'unsafe-inline'",
   "style-src 'self' 'unsafe-inline'",
-  "img-src 'self' data: blob:",
+  "img-src 'self' data:",
   "font-src 'self'",
-  "connect-src 'self' https://prod.spline.design https://unpkg.com",
-  "worker-src 'self' blob:",
+  "connect-src 'self'",
   "frame-ancestors 'none'",
   "base-uri 'self'",
   "form-action 'self'",
@@ -86,9 +81,6 @@ const nextConfig: NextConfig = {
         headers: [
           { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
           { key: 'X-Frame-Options', value: 'DENY' },
-          // Never list accelerometer, gyroscope or magnetometer here: the hero
-          // and the Conductor photo tilt with the phone through
-          // deviceorientation, and an empty allowlist would switch that off.
           { key: 'Permissions-Policy', value: 'camera=(), microphone=(), geolocation=(), payment=(), usb=()' },
           { key: 'X-Content-Type-Options', value: 'nosniff' },
           { key: 'Reporting-Endpoints', value: 'csp="/api/csp-report"' },
