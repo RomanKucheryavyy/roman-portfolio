@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import { useEffect, useRef, useState, useCallback } from "react";
-import { motion } from "motion/react";
+import { motion, useReducedMotion } from "motion/react"; // [lab edit] useReducedMotion
 import { cn } from "@/lib/utils";
 import { ArrowRight, Mail, Phone, Headphones } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -720,6 +720,7 @@ export default function ContactWithGlobe({
   onSubmit,
 }: ContactWithGlobeProps) {
   const uid = React.useId();
+  const reduceMotion = useReducedMotion(); // [lab edit] the globe holds still under reduced motion
   const ph = {
     name: "Ahdeetai",
     company: "ScrollX UI",
@@ -816,11 +817,11 @@ export default function ContactWithGlobe({
               ))}
             </div>
 
-            <div className="relative overflow-hidden h-52">
+            <div className="relative overflow-hidden h-52" aria-hidden="true">{/* [lab edit] aria-hidden: decorative */}
               <GlobeWireframe
                 className="w-full aspect-square max-w-full absolute top-0 left-0"
                 variant="wireframesolid"
-                autoRotate
+                autoRotate={!reduceMotion} // [lab edit] published: autoRotate
                 autoRotateSpeed={0.45}
                 strokeWidth={0.6}
                 graticuleOpacity={0.12}

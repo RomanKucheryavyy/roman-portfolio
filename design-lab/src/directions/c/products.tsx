@@ -38,11 +38,11 @@ export function Products() {
                     {product.status}
                   </span>
                 </div>
-                <h3 className="mt-3 text-[2.75rem] font-bold leading-none tracking-[-0.05em] md:mt-5 md:text-7xl">{product.title}</h3>
+                <h3 className="mt-3 text-[2rem] font-bold leading-none tracking-[-0.05em] md:mt-5 md:text-5xl">{product.title}</h3>
                 <p className="mt-3 text-lg text-foreground/80 md:text-xl">{product.tagline}</p>
               </div>
 
-              <div className="flex flex-col items-start gap-4 md:gap-5 md:pt-11">
+              <div className="flex flex-col items-start gap-4 md:gap-5 md:pt-10">
                 <p className="max-w-2xl text-[15px] leading-relaxed text-muted-foreground md:text-base">{product.description}</p>
                 <p className="font-mono text-xs leading-relaxed text-muted-foreground">
                   <span className="sr-only">Stack: </span>

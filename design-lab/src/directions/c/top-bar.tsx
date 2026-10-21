@@ -5,19 +5,32 @@ import { Mail } from 'lucide-react'
 import { PERSON } from '@/lib/content'
 import { cn } from '@/lib/utils'
 
+/**
+ * Every section, in page order. `from` is the narrowest width that shows it
+ * in the top bar (the footer always lists all of them).
+ */
 export const SECTIONS = [
-  { id: 'work', label: 'Work', mobile: true },
-  { id: 'products', label: 'Products', mobile: true },
-  { id: 'experience', label: 'Experience', mobile: false },
-  { id: 'credentials', label: 'Credentials', mobile: false },
-  { id: 'contact', label: 'Contact', mobile: true },
+  { id: 'work', label: 'Work', from: 'base' },
+  { id: 'products', label: 'Products', from: 'xs' },
+  { id: 'experience', label: 'Experience', from: 'md' },
+  { id: 'credentials', label: 'Credentials', from: 'md' },
+  { id: 'about', label: 'About', from: 'lg' },
+  { id: 'contact', label: 'Contact', from: 'base' },
 ] as const
 
-/**
- * A fixed bar that is clear over the curtain and takes a dark glass once the
- * page moves. `data-site-nav-*` is Lifeline's own hook for lining its rail
- * up with the host page's chrome.
- */
+const SHOW = {
+  base: undefined,
+  // Below 375px the bar holds the name, Work, Contact and the mail icon.
+  xs: 'max-[374px]:hidden',
+  md: 'hidden md:block',
+  lg: 'hidden lg:block',
+} as const
+
+/** One focus ring for the bar: the page's violet ink, clear of the text. */
+const RING =
+  'rounded-sm focus-visible:outline-2 focus-visible:outline-solid focus-visible:outline-offset-4 focus-visible:outline-[var(--stage-accent-ink)]'
+
+/** A fixed bar that is clear over the curtain and takes a dark glass once the page moves. */
 export function TopBar() {
   const [scrolled, setScrolled] = useState(false)
 
@@ -35,15 +48,25 @@ export function TopBar() {
         scrolled ? 'border-white/10 bg-black/70 backdrop-blur-md' : 'border-transparent bg-transparent',
       )}
     >
-      <div data-site-nav-inner className="mx-auto flex h-14 max-w-[1280px] items-center justify-between gap-4 px-4 md:h-16 md:px-12">
-        <a data-site-nav-logo href="#top" className="shrink-0 text-sm font-semibold tracking-tight text-foreground">
+      <a
+        href="#main"
+        className="sr-only rounded-full bg-foreground px-4 py-2 text-sm font-medium text-background focus:not-sr-only focus:absolute focus:px-4 focus:py-2 focus:left-4 focus:top-3 focus:z-10 focus:outline-2 focus:outline-solid focus:outline-offset-2 focus:outline-[var(--stage-accent-ink)]"
+      >
+        Skip to content
+      </a>
+      <div className="mx-auto flex h-14 max-w-[1280px] items-center justify-between gap-3 px-4 md:h-16 md:gap-4 md:px-12">
+        <a href="#top" className={cn('shrink-0 text-sm font-semibold tracking-tight text-foreground', RING)}>
           {PERSON.name}
         </a>
-        <nav aria-label="Sections" className="flex items-center gap-4 md:gap-7">
-          <ul className="flex items-center gap-4 text-[13px] text-muted-foreground md:gap-7 md:text-sm">
+        <nav aria-label="Sections" className="flex items-center gap-3 md:gap-7">
+          <ul className="flex items-center gap-3 text-[13px] text-muted-foreground md:gap-7 md:text-sm">
             {SECTIONS.map((s) => (
-              <li key={s.id} className={s.mobile ? undefined : 'hidden md:block'}>
-                <a href={`#${s.id}`} className="transition-colors hover:text-foreground">
+              <li key={s.id} className={SHOW[s.from]}>
+                {/* The ::after pads the tap target to 44px tall without moving the layout or the focus ring. */}
+                <a
+                  href={`#${s.id}`}
+                  className={cn('relative block transition-colors after:absolute after:inset-x-0 after:-inset-y-3.5 hover:text-foreground', RING)}
+                >
                   {s.label}
                 </a>
               </li>
@@ -51,14 +74,14 @@ export function TopBar() {
           </ul>
           <a
             href={`mailto:${PERSON.links.email}`}
-            className="hidden text-sm text-foreground transition-colors hover:text-[var(--stage-accent-ink)] lg:inline"
+            className={cn('hidden text-sm text-foreground transition-colors hover:text-[var(--stage-accent-ink)] lg:inline', RING)}
           >
             {PERSON.links.email}
           </a>
           <a
             href={`mailto:${PERSON.links.email}`}
             aria-label={`Email ${PERSON.links.email}`}
-            className="-mr-2 grid size-9 place-items-center rounded-full text-foreground lg:hidden"
+            className={cn('-mr-2 grid size-9 shrink-0 place-items-center rounded-full text-foreground lg:hidden', RING, 'rounded-full')}
           >
             <Mail className="size-4" aria-hidden="true" />
           </a>

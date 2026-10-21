@@ -445,11 +445,15 @@ export type PortfolioTemplateProps = {
   dropKey?: number;
   /** Show a "grab & throw" hint until the visitor touches a badge. */
   dragHint?: boolean;
+  /** [lab edit] Drop the badges with a small tilt and little spin, so they land reading the right way up. Published: false. */
+  calmDrop?: boolean;
   /** Case carousel auto-advance on mobile, ms. 0 turns it off. */
   autoplay?: number;
   className?: string;
   /** Element for the name, so a host page that already has an h1 keeps one. */
   nameAs?: "h1" | "h2" | "p";
+  /** [lab edit] The template's own element (published: <main>); "div" when the page already has its <main>. */
+  mainElement?: "main" | "div";
 };
 
 export const DEFAULT_BADGES: PortfolioBadge[] = [
@@ -551,11 +555,13 @@ function FallingBadges({
   plain,
   onSettled,
   onGrab,
+  calm = false, // [lab edit]
 }: {
   badges: PortfolioBadge[];
   plain: { border: string; color: string };
   onSettled?: () => void;
   onGrab?: () => void;
+  calm?: boolean; // [lab edit]
 }) {
   const zoneRef = React.useRef<HTMLDivElement>(null);
   const elRefs = React.useRef<(HTMLDivElement | null)[]>([]);
@@ -613,6 +619,7 @@ function FallingBadges({
       b.el = el;
       b.w = w;
       b.h = h;
+      if (calm) Body.setInertia(b, b.inertia * 24); // [lab edit] calm: resists rolling over
       return b;
     });
 
@@ -659,10 +666,10 @@ function FallingBadges({
     };
     const place = (b: B, y: number) => {
       Body.setPosition(b, { x: b.position.x, y });
-      Body.setAngle(b, rnd(-0.7, 0.7));
+      Body.setAngle(b, calm ? rnd(-0.25, 0.25) : rnd(-0.7, 0.7)); // [lab edit] calm
       Composite.add(engine.world, b);
       Body.setVelocity(b, { x: rnd(-1.2, 1.2), y: rnd(3, 6) });
-      Body.setAngularVelocity(b, rnd(-0.04, 0.04));
+      Body.setAngularVelocity(b, calm ? rnd(-0.008, 0.008) : rnd(-0.04, 0.04)); // [lab edit] calm
     };
 
     const local = (e: PointerEvent) => {
@@ -742,10 +749,10 @@ function FallingBadges({
       Composite.clear(engine.world, false);
       Engine.clear(engine);
     };
-  }, [size, list]);
+  }, [size, list, calm]); // [lab edit] calm
 
   return (
-    <div ref={zoneRef} className="absolute inset-x-0 top-0 h-[424px] overflow-hidden @6xl:h-[456px]" aria-label="Keywords">
+    <div ref={zoneRef} className="absolute inset-x-0 top-0 h-[424px] overflow-hidden @6xl:h-[456px]" role="group" aria-label="Keywords">{/* [lab edit] role="group": aria-label is not allowed on a bare div */}
       {list.map((b, i) => (
         <div
           key={b.label + i}
@@ -817,7 +824,7 @@ function useResolvedTheme(theme: "dark" | "light" | "auto"): "dark" | "light" {
 
 export function PortfolioTemplate(props: PortfolioTemplateProps) {
   const { name, role, bio, links, badges, cases } = { ...DEFAULTS, ...props };
-  const { avatar, theme: themeProp = "auto", dropKey = 0, dragHint = true, autoplay = 6000, className = "", nameAs: NameTag = "h1" } = props;
+  const { avatar, theme: themeProp = "auto", dropKey = 0, dragHint = true, autoplay = 6000, className = "", nameAs: NameTag = "h1", mainElement: MainTag = "main", calmDrop = false } = props; // [lab edit] mainElement, calmDrop
   const theme = useResolvedTheme(themeProp);
   const t = THEMES[theme];
   const [hint, setHint] = React.useState<"hidden" | "shown" | "done">("hidden");
@@ -836,7 +843,7 @@ export function PortfolioTemplate(props: PortfolioTemplateProps) {
         letterSpacing: "-0.05em",
       }}
     >
-      <main className="relative mx-auto max-w-[450px] @3xl:max-w-[820px] @6xl:max-w-[1280px]">
+      <MainTag className="relative mx-auto max-w-[450px] @3xl:max-w-[820px] @6xl:max-w-[1280px]">{/* [lab edit] MainTag */}
         {/* hero */}
         <section className="relative pt-[440px] @6xl:pt-[480px]">
           <div
@@ -849,6 +856,7 @@ export function PortfolioTemplate(props: PortfolioTemplateProps) {
             plain={{ border: t.plainBorder, color: t.plainColor }}
             onSettled={() => dragHint && setHint((h) => (h === "done" ? h : "shown"))}
             onGrab={() => setHint("done")}
+            calm={calmDrop} // [lab edit]
           />
 
           {dragHint && (
@@ -907,7 +915,7 @@ export function PortfolioTemplate(props: PortfolioTemplateProps) {
             <ShowcaseCarousel items={cases} theme={theme} label="Cases" autoplay={autoplay} />
           </section>
         )}
-      </main>
+      </MainTag>
     </div>
   );
 }
