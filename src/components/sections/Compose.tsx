@@ -7,7 +7,7 @@ import { useStore } from '@/stores/useStore'
 import { useRevealOnScroll } from '@/hooks/useRevealOnScroll'
 import { SectionHeader } from '@/components/ui/SectionHeader'
 import { SectionShell } from '@/components/ui/SectionShell'
-import { Button } from '@/components/ui/Button'
+import { Button } from '@/app/resume/_ui/Button' // old design: deleted next stage
 import { CopyButton } from '@/components/ui/CopyButton'
 import { TAP_TEXT } from '@/components/ui/pill'
 import { Panel } from '@/components/ui/Panel'

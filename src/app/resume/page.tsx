@@ -6,8 +6,8 @@ import { Lock, LoaderCircle, CircleAlert } from 'lucide-react'
 // Type only: the data itself carries the phone number and the case metrics,
 // so it comes from /api/resume/data after the PIN, never from this bundle.
 import type { ResumeData } from '@/lib/resume-data'
-import { Button } from '@/components/ui/Button'
-import { TAP_TEXT } from '@/components/ui/pill'
+import { Button } from './_ui/Button'
+import { TAP_TEXT } from './_ui/pill'
 
 /**
  * The PIN, remembered across visits in localStorage. Read through

@@ -1,7 +1,7 @@
 'use client'
 import Link from 'next/link'
 import type { ComponentPropsWithoutRef, MouseEvent, ReactNode, Ref } from 'react'
-import { PILL_OUTLINE } from '@/components/ui/pill'
+import { PILL_OUTLINE } from './pill'
 import { cn } from '@/lib/utils'
 
 /**

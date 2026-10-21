@@ -3,11 +3,11 @@ import { useCallback, useState, type Dispatch, type SetStateAction } from 'react
 import Link from 'next/link'
 import { Mail, FileText, WandSparkles, Download, ArrowLeft, LoaderCircle, CircleAlert } from 'lucide-react'
 import type { ResumeData } from '@/lib/resume-data'
-import { Button } from '@/components/ui/Button'
-import { Field, FIELD_LABEL, Input, Textarea } from '@/components/ui/Field'
-import { Panel } from '@/components/ui/Panel'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { useCopyToClipboard, type CopyState } from '@/hooks/useCopyToClipboard'
+import { Button } from './_ui/Button'
+import { Field, FIELD_LABEL, Input, Textarea } from './_ui/Field'
+import { Panel } from './_ui/Panel'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from './_ui/tabs'
+import { useCopyToClipboard, type CopyState } from './_ui/useCopyToClipboard'
 import { cn } from '@/lib/utils'
 
 /**
