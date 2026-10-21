@@ -5,6 +5,7 @@ import { Github, Linkedin, Mail } from 'lucide-react'
 import DrapeBackground from '@/components/ui/kokonut-drape-background'
 import { PortfolioTemplate, type PortfolioBadge } from '@/components/ui/portfolio-hero-physics'
 import ContactWithGlobe from '@/components/ui/contact-with-globe'
+import { Composer } from './composer'
 import FooterSection5 from '@/components/ui/footer-section-5'
 import { Button } from '@/components/ui/button'
 import { PERSON, ROLES, SKILLS } from '@/lib/content'
@@ -173,8 +174,6 @@ const CONTACT_LOOK = cn(
 )
 
 function Contact() {
-  const [status, setStatus] = useState<'idle' | 'empty' | 'opening'>('idle')
-
   return (
     <section
       id="contact"
@@ -209,30 +208,13 @@ function Contact() {
         subtitle="Contact"
         title="Let’s talk"
         channelsNote="Each of these goes straight to me."
-        formNote="Sending opens your own mail app with the note addressed to me. Nothing is stored on this page."
         links={[
           { icon: Mail, label: PERSON.links.email, href: EMAIL_HREF },
           { icon: Linkedin, label: 'linkedin.com/in/romakuch', href: PERSON.links.linkedin },
           { icon: Github, label: 'github.com/RomanKucheryavyy', href: PERSON.links.github },
         ]}
-        placeholders={{
-          name: 'Your name',
-          company: 'Optional',
-          email: 'you@example.com',
-          message: 'What would you like to talk about?',
-        }}
-        submitLabel={status === 'opening' ? 'Opening your mail app…' : status === 'empty' ? 'Write a message first' : 'Send'}
-        onSubmit={({ name, company, email, message }) => {
-          if (!message.trim()) {
-            setStatus('empty')
-            return
-          }
-          const from = [name, company && `(${company})`].filter(Boolean).join(' ')
-          const subject = from ? `Hello from ${from}` : 'Hello'
-          const body = email ? `${message}\n\nReply to: ${email}` : message
-          window.location.href = `${EMAIL_HREF}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`
-          setStatus('opening')
-        }}
+        // Tactile's message box in place of the component's own form.
+        form={<Composer />}
       />
     </section>
   )

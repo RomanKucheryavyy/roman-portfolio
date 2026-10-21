@@ -705,6 +705,8 @@ interface ContactWithGlobeProps {
   submitLabel?: string;
   /** Receives the form's values. The form itself never posts anywhere. */
   onSubmit?: (values: Record<ContactField, string>) => void;
+  /** [lab edit] Rendered in place of the built-in form card, with the same entrance (published: the form). */
+  form?: React.ReactNode;
 }
 
 export default function ContactWithGlobe({
@@ -718,6 +720,7 @@ export default function ContactWithGlobe({
   placeholders,
   submitLabel = "Submit",
   onSubmit,
+  form,
 }: ContactWithGlobeProps) {
   const uid = React.useId();
   const reduceMotion = useReducedMotion(); // [lab edit] the globe holds still under reduced motion
@@ -830,6 +833,17 @@ export default function ContactWithGlobe({
             </div>
           </motion.div>
 
+          {form ? (
+            <motion.div
+              initial={{ opacity: 0, y: 28 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 1.0, delay: 0.35, ease: smoothEase }}
+              className="min-w-0"
+            >
+              {form}
+            </motion.div>
+          ) : (
           <motion.form
             onSubmit={handleSubmit}
             initial={{ opacity: 0, y: 28 }}
@@ -907,6 +921,7 @@ export default function ContactWithGlobe({
               <ArrowRight className="w-4 h-4 transition-transform duration-200 group-hover:translate-x-1" />
             </Button>
           </motion.form>
+          )}
         </div>
       </div>
     </section>
