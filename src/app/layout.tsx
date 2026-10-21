@@ -1,27 +1,20 @@
 import type { Metadata, Viewport } from 'next'
-import { Archivo, JetBrains_Mono, Space_Grotesk } from 'next/font/google'
+import { Geist, Geist_Mono } from 'next/font/google'
+import { ThemeProvider } from 'next-themes'
 import { SITE } from '@/lib/constants'
 import { TITLE_TEMPLATE } from '@/lib/seo'
-import { jsonLd, siteGraph } from '@/lib/structured-data'
-import SiteChrome from '@/components/ui/SiteChrome'
-import SiteFooter from '@/components/ui/SiteFooter'
 import './globals.css'
 
-// Self-hosted at build time, on each family's full variable weight axis (no
-// `weight` list). The Google Fonts @import this replaces was render-blocking,
-// went to two third-party origins on every visit, and asked for JetBrains Mono
-// only up to 600, so every font-bold mono line was silently drawn at 600.
-// globals.css points --font-display / --font-body / --font-mono at these.
-const archivo = Archivo({ subsets: ['latin'], display: 'swap', variable: '--font-archivo' })
-const spaceGrotesk = Space_Grotesk({ subsets: ['latin'], display: 'swap', variable: '--font-space-grotesk' })
-const jetbrainsMono = JetBrains_Mono({ subsets: ['latin'], display: 'swap', variable: '--font-jetbrains-mono' })
+// Self-hosted at build time, so no request leaves for Google Fonts.
+// globals.css points font-sans and font-mono at these variables.
+const geistSans = Geist({ subsets: ['latin'], variable: '--font-geist-sans' })
+const geistMono = Geist_Mono({ subsets: ['latin'], variable: '--font-geist-mono' })
 
 // No canonical, robots or manifest here: a canonical set in the root layout is
-// inherited by every route that doesn't set its own, so /resume and the 404
-// both told search engines they were the home page. Each page sets its own
+// inherited by every route that doesn't set its own. Each page sets its own
 // through pageMetadata() (src/lib/seo.ts). Indexing is the default without a
-// robots tag. The manifest link moves to app/manifest.ts, which Next links by
-// itself. The template names every other page "<title> — Roman Kucheryavyy".
+// robots tag; app/manifest.ts is linked by Next itself. The template names
+// every other page "<title> — Roman Kucheryavyy".
 export const metadata: Metadata = {
   title: { default: SITE.title, template: TITLE_TEMPLATE },
   description: SITE.description,
@@ -44,40 +37,40 @@ export const metadata: Metadata = {
 export const viewport: Viewport = {
   width: 'device-width',
   initialScale: 1,
-  // No maximumScale / userScalable: false. Blocking pinch-zoom fails WCAG 1.4.4
-  // and is not the fix for iOS auto-zooming on focus — a 16px field is, which is
-  // why every input on the site is text-base below md.
-  themeColor: '#000000',
+  // No maximumScale / userScalable: false. Blocking pinch-zoom fails WCAG
+  // 1.4.4; a 16px field is what stops iOS zooming in on focus.
+  themeColor: '#060606',
+  colorScheme: 'dark',
 }
 
+/**
+ * Dark only. `dark` is on <html> in the server HTML, so the first paint is
+ * dark with or without scripts; the ThemeProvider holds it there for the
+ * components that ask next-themes (lifeline's useTheme).
+ */
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html
-      lang="en"
-      className={`${archivo.variable} ${spaceGrotesk.variable} ${jetbrainsMono.variable} bg-black`}
-      suppressHydrationWarning
-    >
-      {/* Inline as well as in classes: Next's built-in 404 injects an
+    <html lang="en" className={`dark ${geistSans.variable} ${geistMono.variable}`} suppressHydrationWarning>
+      {/* Inline as well as in classes: Next's built-in error pages inject an
           unlayered body{background:#fff;color:#000}, which beats any
-          Tailwind utility, and left the nav and footer on white. */}
+          utility. */}
       <body
-        className="bg-black text-white antialiased"
-        style={{ background: '#000', color: '#fff' }}
+        className="bg-background font-sans text-foreground antialiased"
+        style={{ background: 'var(--background)', color: 'var(--foreground)' }}
         suppressHydrationWarning
       >
-        {/* First in the tab order on every route. Every page renders
-            <main id="main" tabIndex={-1}>, so following it moves focus, not
-            just the scroll position. Above the boot loader (z-200). */}
-        <a
-          href="#main"
-          className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-[210] focus:rounded-full focus:bg-white focus:px-4 focus:py-2 focus:font-mono focus:text-label focus:text-black"
-        >
-          Skip to content
-        </a>
-        <SiteChrome />
-        {children}
-        <SiteFooter />
-        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLd(siteGraph()) }} />
+        <ThemeProvider attribute="class" forcedTheme="dark" enableSystem={false} disableTransitionOnChange>
+          {/* First in the tab order on every route. Every page renders one
+              <main id="main" tabIndex={-1}>, so following it moves focus, not
+              just the scroll position. Above the Stage's fixed top bar. */}
+          <a
+            href="#main"
+            className="sr-only rounded-full bg-foreground px-4 py-2 text-sm font-medium text-background focus:not-sr-only focus:fixed focus:left-4 focus:top-3 focus:z-[60] focus:px-4 focus:py-2 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-solid focus-visible:outline-[var(--stage-accent-ink)]"
+          >
+            Skip to content
+          </a>
+          {children}
+        </ThemeProvider>
       </body>
     </html>
   )

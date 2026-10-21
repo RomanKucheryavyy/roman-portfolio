@@ -15,6 +15,10 @@ export const metadata: Metadata = {
   robots: { index: false, follow: false },
 }
 
+/**
+ * data-resume scopes the builder's focus ring (globals.css): its controls draw
+ * none of their own, and the rest of the site's components bring theirs.
+ */
 export default function ResumeLayout({ children }: { children: React.ReactNode }) {
-  return children
+  return <div data-resume>{children}</div>
 }

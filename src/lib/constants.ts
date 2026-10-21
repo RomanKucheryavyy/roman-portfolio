@@ -13,6 +13,30 @@ export const SITE = {
 // In its own dependency-free module, so the chrome can read it alone (links.ts).
 export { LINKS } from './links'
 
+/**
+ * Roman's own words, as the old design's components carried them, kept here
+ * when those components go so the Stage page says them from this record.
+ * Verbatim; each names the component it came from.
+ */
+export const HIS_WORDS = {
+  // Hero.tsx: the line under his name.
+  tagline: 'Salesforce engineer by day. Full-stack builder by nature. Conductor by calling.',
+  // Manifesto.tsx: the interlude line. It set the same words in capitals for
+  // its terminal readout; here they are in sentence case.
+  manifesto:
+    'Precision is not the opposite of art. The same ear that catches a flat trumpet catches a race condition. I ship both.',
+  // Conductor.tsx: the music card's two paragraphs.
+  about: [
+    'Music and code run on the same engine — structure, rhythm, and knowing exactly when to improvise. As head conductor of the FUBC Band, I shape sound the way I shape software: with intention and a little audacity.',
+    'Off the clock, my wife and daughter remind me why any of this matters. The best things I build serve people I love.',
+  ],
+  // Conductor.tsx LIFE_FACTS: the "Music" line.
+  music: 'FUBC Band — trumpet, arranger, director',
+} as const
+
+/** His photo, as the Conductor card showed it. */
+export const PHOTO = '/images/roman.jpg'
+
 export interface Certification {
   id: string
   name: string
