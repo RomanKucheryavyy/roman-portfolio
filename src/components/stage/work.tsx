@@ -71,6 +71,31 @@ function ProjectCard({ project, index }: { project: Project; index: number }) {
  * a pinned card taller than a phone's visible height would hide its own
  * bottom.
  */
+/**
+ * From lg the cards stack: each one sticks, and the next slides up over it.
+ * A link the keyboard lands on would sit under the card after it whenever
+ * the browser scrolled it into view mid-stack, so focus brings its card to
+ * the front instead: the page scrolls to where that card has just pinned and
+ * the next has not yet reached it (each slot leaves a 1.5rem breath). Only
+ * for keyboard focus, and only while the cards are sticky (below lg they are
+ * a plain list).
+ */
+function bringToFront(event: React.FocusEvent<HTMLDivElement>) {
+  const target = event.target as HTMLElement
+  if (!target.matches(':focus-visible')) return
+  const item = target.closest<HTMLElement>('[data-stack-item]')
+  const stack = event.currentTarget
+  if (!item || getComputedStyle(item).position !== 'sticky') return
+  // The slot's place in the page: the stack's own top plus every slot before it.
+  let top = stack.getBoundingClientRect().top + window.scrollY
+  for (const slot of Array.from(stack.children)) {
+    if (slot === item) break
+    top += (slot as HTMLElement).offsetHeight
+  }
+  // After the browser's own focus scroll.
+  requestAnimationFrame(() => window.scrollTo({ top, behavior: 'instant' }))
+}
+
 export function Work() {
   return (
     <section
@@ -93,15 +118,22 @@ export function Work() {
         totalCards={PROJECTS.length}
         scaleMultiplier={0.018}
         className="relative mt-10 flex flex-col gap-4 px-4 md:mt-16 md:grid md:grid-cols-2 md:gap-6 md:px-12 lg:mt-20 lg:block"
+        onFocus={bringToFront}
       >
         {PROJECTS.map((project, index) => (
           <StackingCardItem
             key={project.id}
             index={index}
+            data-stack-item=""
             topPosition={`calc(var(--stack-top) + ${index} * var(--stack-step))`}
-            className="max-lg:static max-lg:h-auto max-lg:[&>div]:transform-none! lg:h-[calc(min(29rem,100svh_-_14rem)_+_1.5rem)]"
+            // From lg each slot is a full-width sticky box whose top stretch,
+            // above its offset card, is clear: it lies over the card before
+            // it, so it lets the pointer through and only the card takes it
+            // (otherwise every link but the last card's sits under the next
+            // slot and cannot be clicked).
+            className="max-lg:static max-lg:h-auto max-lg:[&>div]:transform-none! lg:pointer-events-none lg:h-[calc(min(29rem,100svh_-_14rem)_+_1.5rem)]"
           >
-            <div className="md:h-full lg:h-[min(29rem,calc(100svh-14rem))]">
+            <div className="md:h-full lg:pointer-events-auto lg:h-[min(29rem,calc(100svh-14rem))]">
               <ProjectCard project={project} index={index} />
             </div>
           </StackingCardItem>
