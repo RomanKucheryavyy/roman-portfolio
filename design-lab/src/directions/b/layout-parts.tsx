@@ -29,19 +29,26 @@ export function SectionHead({
   title,
   intro,
   meta,
+  sticky = true,
+  introClassName,
 }: {
   id: string
   title: string
   intro?: ReactNode
   meta?: ReactNode
+  /** Hold the heading in view while a long right column scrolls past (desktop). */
+  sticky?: boolean
+  introClassName?: string
 }) {
   return (
-    <header className="lg:sticky lg:top-28 lg:self-start">
+    <header className={cn(sticky && 'lg:sticky lg:top-28 lg:self-start')}>
       {meta ? <p className={cn(META, 'mb-5 text-muted-foreground')}>{meta}</p> : null}
       <h2 id={id} className={H2}>
         {title}
       </h2>
-      {intro ? <p className="mt-4 max-w-[40ch] text-base leading-relaxed text-muted-foreground">{intro}</p> : null}
+      {intro ? (
+        <p className={cn('mt-4 max-w-[40ch] text-base leading-relaxed text-muted-foreground', introClassName)}>{intro}</p>
+      ) : null}
     </header>
   )
 }

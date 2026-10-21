@@ -24,8 +24,9 @@ const ROWS: Row[] = [
   { title: 'Northwind Pay', tag: 'Payments infrastructure', year: '2024', grad: 'radial-gradient(120% 140% at 70% 80%, rgba(167,139,250,0.5), transparent 60%), linear-gradient(150deg, #241a38, #130d1f)' },
 ]
 
-// [lab edit] rows defaults to the published demo rows.
-export default function ProjectIndexRows({ rows = ROWS }: { rows?: Row[] } = {}) {
+// [lab edit] rows defaults to the published demo rows. coverX pins the cover's left edge, in px from
+// the list's left edge (negative floats it beside the list); left out, the cover follows the pointer as published.
+export default function ProjectIndexRows({ rows = ROWS, coverX }: { rows?: Row[]; coverX?: number } = {}) {
   const reduced = useReducedMotion()
   const wrap = useRef<HTMLDivElement>(null)
   const [hover, setHover] = useState<number | null>(null)
@@ -85,7 +86,7 @@ export default function ProjectIndexRows({ rows = ROWS }: { rows?: Row[] } = {})
         className="pointer-events-none absolute z-10 w-[220px] overflow-hidden rounded-lg border border-foreground/[0.04]"
         style={{ left: 0, top: 0, background: SURFACE, boxShadow: '0 24px 60px -12px rgba(0,0,0,0.35)' }}
         animate={{
-          x: Math.min(pos.x + 24, 336),
+          x: coverX ?? Math.min(pos.x + 24, 336), // [lab edit] coverX
           y: pos.y - 70,
           opacity: hover !== null ? 1 : 0,
           scale: hover !== null ? 1 : 0.96,

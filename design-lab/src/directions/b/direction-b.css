@@ -28,3 +28,155 @@
 @media (prefers-reduced-motion: no-preference) {
   html:has(.dirb-root) { scroll-behavior: smooth; }
 }
+
+/* ------------------------------------------------------------------ chrome */
+
+/* The sticky top bar's height: two rows on phones (name and Email, then the
+   section links), one 4rem row from lg. Anchors and focus land below it. */
+.dirb-root { --dirb-bar: calc(5.5rem + 1px); }
+@media (min-width: 64rem) { .dirb-root { --dirb-bar: calc(4rem + 1px); } }
+html:has(.dirb-root) { scroll-padding-top: 5.5rem; }
+@media (min-width: 64rem) { html:has(.dirb-root) { scroll-padding-top: 4rem; } }
+
+/* The phone row of section links scrolls sideways without a scrollbar, and
+   fades at its right edge so the links past it read as more. */
+.dirb-root .dirb-navrow { scrollbar-width: none; }
+.dirb-root .dirb-navrow::-webkit-scrollbar { display: none; }
+@media (max-width: 63.99rem) {
+  .dirb-root .dirb-navrow {
+    -webkit-mask-image: linear-gradient(to right, #000 calc(100% - 2.5rem), transparent);
+    mask-image: linear-gradient(to right, #000 calc(100% - 2.5rem), transparent);
+  }
+}
+
+/* -------------------------------------------------------------------- hero
+   portfolio-hero-bold places the name at the screen's centre, the portrait on
+   top of the name's middle letters and the tagline pinned to the bottom, so on
+   any screen shorter than about 840px they collide and the portrait always
+   hides letters of the name. Here the same pieces stand in one centred
+   column instead: portrait, name, tagline, actions. Nothing overlaps at any
+   size; a screen too short for them makes the hero taller, not tighter.
+   #top > div is the component's root, > :last-child its hero element. */
+.dirb-root #top > div { min-height: 0; }
+.dirb-root #top > div > :last-child {
+  min-height: max(calc(100svh - var(--dirb-bar)), 32rem);
+  justify-content: center;
+  align-items: center;
+  padding: clamp(1.5rem, 5svh, 3.5rem) 0 clamp(4.5rem, 11svh, 7rem);
+}
+.dirb-root #top > div > :last-child > div {
+  position: relative;
+  inset: auto;
+  translate: none;
+}
+/* The name block: portrait above the name, both centred. */
+.dirb-root #top > div > :last-child > div:first-child > div {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+.dirb-root #top h1 { align-self: stretch; }
+.dirb-root #top h1 + div {
+  position: relative;
+  inset: auto;
+  translate: none;
+  order: -1;
+  margin-bottom: clamp(1rem, 3svh, 1.75rem);
+}
+.dirb-root #top h1 + div > div {
+  height: clamp(5.5rem, min(10.5vw, 16svh), 9.75rem);
+  width: auto;
+  aspect-ratio: 129 / 218;
+  /* The published portrait grows on hover and shows a pointer, but does nothing. */
+  cursor: auto;
+  scale: none;
+}
+/* The tagline and actions, a calm distance under the name's descenders. */
+.dirb-root #top > div > :last-child > div:nth-child(2) {
+  margin-top: clamp(2.25rem, 6svh, 3.75rem);
+}
+/* The tagline keeps its ink on hover (published: it turns black, as if it were a link). */
+.dirb-root #top > div > :last-child p { color: var(--muted-foreground); }
+
+/* BlurText staggers every letter by 100ms and every word by 150ms, so the
+   name assembled over 1.5s and the tagline over 2s, glyph by blurred glyph.
+   One transition with no delay settles each line as one piece in 0.6s. */
+.dirb-root #top h1 span span,
+.dirb-root #top > div > :last-child p > span {
+  transition: opacity 0.6s ease, filter 0.6s ease, transform 0.6s ease !important;
+}
+/* And from a light focus (published: 10px of blur and a 20px drop), so the
+   in-between frames read as soft type, not half-formed letters. */
+@media (prefers-reduced-motion: no-preference) {
+  .dirb-root #top span[style*='blur(10px)'] {
+    filter: blur(4px) !important;
+    transform: translateY(-6px) !important;
+  }
+}
+/* Reduced motion, and no script: the words are simply there. */
+@media (prefers-reduced-motion: reduce) {
+  .dirb-root #top h1 span span,
+  .dirb-root #top > div > :last-child p > span {
+    transition: none !important;
+    filter: none !important;
+    opacity: 1 !important;
+    transform: none !important;
+  }
+}
+@media (scripting: none) {
+  .dirb-root #top h1 span span,
+  .dirb-root #top > div > :last-child p > span {
+    filter: none !important;
+    opacity: 1 !important;
+    transform: none !important;
+  }
+}
+
+/* -------------------------------------------------------------- client work
+   project-index caps itself at 560px; here it takes its column, so every
+   right column on the page ends on the same edge. */
+.dirb-root .dirb-index .max-w-\[560px\] { max-width: none; }
+/* The cover shows a whole 16:10 screenshot (published: a 4:3 crop), and is
+   280px wide; DirectionB pins it in the empty column left of the list. */
+.dirb-root .dirb-index .pointer-events-none.absolute.z-10 { width: 280px; }
+.dirb-root .dirb-index [class*='aspect-[4/3]'] { aspect-ratio: 16 / 10; }
+/* Below xl there is no empty column beside the list, and on touch screens a
+   tap opens the site: no cover, and no dimming of the other rows. */
+@media (max-width: 79.99rem), (hover: none) {
+  .dirb-root .dirb-index .pointer-events-none.absolute.z-10 { display: none; }
+}
+@media (hover: none) {
+  .dirb-root .dirb-index a.group > span:first-child { color: var(--foreground); }
+}
+/* At 1280 the longest row (Nelectric Power Systems, two tags, its domain)
+   needs 6px more than the published 16px gaps leave it. */
+.dirb-root .dirb-index a.group { column-gap: 0.875rem; }
+/* Phones: a domain does not fit beside a long title at 320-390px, so each
+   row wraps onto two lines, the title and its arrow, then where it goes.
+   Row children: title, tag (empty here), domain, arrow. */
+.dirb-root .dirb-index-phone a.group { flex-wrap: wrap; row-gap: 0.3rem; }
+.dirb-root .dirb-index-phone a.group > span:nth-child(2) { display: none; }
+.dirb-root .dirb-index-phone a.group > span:nth-child(3) { order: 2; flex-basis: 100%; }
+.dirb-root .dirb-index-phone a.group > span:nth-child(4) { order: 1; margin-left: auto; }
+
+/* ------------------------------------------------------------------ ledger
+   The ledger's text sits on the page's column edges (published: inset by its
+   own --pel-pad) and its role line in the page's small-label type.
+   "Position" repeats the role printed under the name, so it is not repeated. */
+.dirb-root .pel-root { --pel-pad: 0px; }
+.dirb-root .pel-role {
+  font-family: var(--font-geist-mono), ui-monospace, monospace;
+  font-weight: 400;
+  font-size: 11px;
+  letter-spacing: 0.14em;
+}
+.dirb-root .pel-meta > dt:first-of-type,
+.dirb-root .pel-meta > dd:first-of-type { display: none; }
+/* An open row's facts (and MindTree's note under them) start where every
+   other right column on the page starts: half the column plus half the gap
+   (published: a third column at about x=350 that nothing else uses). */
+@container (min-width: 641px) {
+  .dirb-root .pel-body { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); column-gap: 3rem; }
+  .dirb-root .pel-meta,
+  .dirb-root .pel-copy { grid-column: 2; }
+}

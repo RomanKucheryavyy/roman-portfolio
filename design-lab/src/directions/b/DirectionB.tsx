@@ -49,10 +49,10 @@ const webCount = PROJECTS.length - appCount
 
 type IndexRows = NonNullable<NonNullable<ComponentProps<typeof ProjectIndex>>['rows']>
 
-/** Desktop rows: title · tags · where the link goes · arrow. */
+/** Desktop rows: title · two tags · where the link goes · arrow. Two tags fit every row at every width. */
 const WORK_ROWS: IndexRows = PROJECTS.map((p) => ({
   title: p.title,
-  tag: p.tags.join(' · '),
+  tag: p.tags.slice(0, 2).join(' · '),
   year: linkLabel(p),
   grad: 'var(--muted)',
   href: p.url ?? null,
@@ -61,16 +61,17 @@ const WORK_ROWS: IndexRows = PROJECTS.map((p) => ({
 }))
 
 /**
- * Phone rows: at 390px a domain and three tags do not fit beside a title, so
- * a phone row carries one right-aligned word on what it is: its first tag the
- * title does not already say, or where it goes when that is not a website
- * (the App Store), or why there is no link yet.
+ * Phone rows: no room for tags beside a title at 390px, so a phone row says
+ * only where a tap goes: the site's domain, the App Store, or "Launching soon".
  */
 const WORK_ROWS_PHONE: IndexRows = PROJECTS.map((p, i) => ({
   ...WORK_ROWS[i]!,
   tag: '',
-  year: !p.url || p.isApp ? linkLabel(p) : (p.tags.find((t) => !p.title.includes(t)) ?? p.tags[0]!),
+  year: linkLabel(p),
 }))
+
+/** The desktop cover floats in the empty column left of the list: its width (direction-b.css) plus a 24px gap. */
+const COVER_X = -(280 + 24)
 
 const yearsOf = (start: number, end?: number) => (end ? `${start}–${end}` : `${start}–now`)
 
@@ -88,7 +89,8 @@ const SCHOOLS: LedgerItem[] = EDUCATION.map((e) => ({
   company: e.short,
   role: e.degree,
   years: `${e.start}–${e.end}`,
-  summary: [e.school],
+  // The ledger's own field, relabelled below: "School".
+  location: e.school,
 }))
 
 const companyNames = [...new Set(ROLES.map((r) => r.company))].join(' and ')
@@ -132,29 +134,37 @@ function scrollToId(id: string) {
 }
 
 const linkInk =
-  'rounded-sm underline decoration-border decoration-1 underline-offset-[5px] transition-colors hover:decoration-foreground focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring'
+  'rounded-sm underline decoration-border decoration-1 underline-offset-[5px] transition-colors hover:decoration-foreground focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-foreground'
 
 /* ------------------------------------------------------------------ page */
 
+/** Focus ring for the shadcn Buttons and the marquee: near-black, like the ledger's (the published ring-ring/50 is about 1.6:1 here). */
+const RING = 'focus-visible:ring-2 focus-visible:ring-foreground focus-visible:ring-offset-2 focus-visible:ring-offset-background'
+
+/**
+ * One sticky bar at every size. Phones: the name and Email on one row, the six
+ * section links on a second row that scrolls sideways. Its height is
+ * --dirb-bar (direction-b.css), which the hero subtracts from the screen.
+ */
 function TopBar() {
   return (
-    <header className="absolute inset-x-0 top-0 z-40 lg:fixed lg:border-b lg:border-border/80 lg:bg-background/85 lg:backdrop-blur-md">
-      <Container className="flex flex-wrap items-center justify-between gap-x-10 gap-y-3 py-4 lg:h-16 lg:flex-nowrap lg:py-0">
-        <a href="#top" className="font-serif text-[1.35rem] leading-none tracking-[-0.01em]">
+    <header className="sticky top-0 z-40 border-b border-border/80 bg-background/85 backdrop-blur-md">
+      <Container className="flex flex-wrap items-center justify-between gap-x-10 lg:h-16 lg:flex-nowrap">
+        <a href="#top" className="flex h-12 items-center font-serif text-[1.35rem] leading-none tracking-[-0.01em] lg:h-auto">
           {PERSON.name}
         </a>
-        <nav aria-label="Sections" className="order-last w-full lg:order-none lg:ml-auto lg:w-auto">
-          <ul className={cn(META, '-my-2 flex flex-wrap gap-x-4 text-muted-foreground lg:my-0 lg:gap-x-7')}>
+        <nav aria-label="Sections" className="dirb-navrow order-last -mx-[clamp(1.25rem,5vw,5rem)] w-[calc(100%+2*clamp(1.25rem,5vw,5rem))] overflow-x-auto lg:order-none lg:mx-0 lg:ml-auto lg:w-auto lg:overflow-visible">
+          <ul className={cn(META, 'flex h-10 w-max items-center gap-x-6 px-[clamp(1.25rem,5vw,5rem)] text-muted-foreground lg:h-auto lg:gap-x-7 lg:px-0')}>
             {NAV.map((n) => (
               <li key={n.href}>
-                <a href={n.href} className="inline-block py-2 transition-colors hover:text-foreground">
+                <a href={n.href} className="inline-block py-3 transition-colors hover:text-foreground">
                   {n.label}
                 </a>
               </li>
             ))}
           </ul>
         </nav>
-        <a href={`mailto:${PERSON.links.email}`} className={cn(META, 'transition-colors hover:text-muted-foreground')}>
+        <a href={`mailto:${PERSON.links.email}`} className={cn(META, 'inline-block py-3 transition-colors hover:text-muted-foreground')}>
           Email
         </a>
       </Container>
@@ -173,12 +183,15 @@ function Hero() {
         imageAlt={`${PERSON.name}, in a black tuxedo and bow tie`}
         defaultDark={false}
         showHeader={false}
+        heroElement="div"
         onScrollDown={() => scrollToId('work')}
         nameStyle={{
           color: 'var(--foreground)',
           fontFamily: 'var(--font-instrument-serif), Georgia, serif',
           fontWeight: 400,
-          fontSize: 'clamp(3.6rem, 21vw, 11.25rem)',
+          // As wide as the screen allows, and short enough that the portrait,
+          // name, tagline and actions fit one screen (see direction-b.css).
+          fontSize: 'clamp(3.6rem, min(21vw, calc((100svh - 33rem) / 1.6)), 11.25rem)',
           lineHeight: 0.8,
           letterSpacing: '-0.035em',
           textTransform: 'none',
@@ -186,17 +199,17 @@ function Hero() {
         taglineStyle={{
           fontFamily: 'var(--font-instrument-serif), Georgia, serif',
           fontStyle: 'italic',
-          fontSize: 'clamp(1.3rem, 1.75vw, 1.6rem)',
+          fontSize: 'clamp(1.2rem, 0.9rem + 1.2vw, 1.6rem)',
           lineHeight: 1.25,
           justifyContent: 'center',
           maxWidth: '52rem',
         }}
       >
         <div className="mt-7 flex flex-wrap items-center justify-center gap-3">
-          <Button asChild size="lg">
+          <Button asChild size="lg" className={cn('px-5', RING)}>
             <a href="#work">See the work</a>
           </Button>
-          <Button asChild size="lg" variant="outline">
+          <Button asChild size="lg" variant="outline" className={cn('px-5', RING)}>
             <a href="#contact">Get in touch</a>
           </Button>
         </div>
@@ -207,21 +220,25 @@ function Hero() {
 
 function Work() {
   return (
-    <section id="work" aria-labelledby="work-h" className="scroll-mt-16 border-t">
-      <Container className={cn(SECTION_Y, 'grid gap-12 lg:grid-cols-2')}>
+    <section id="work" aria-labelledby="work-h" className="border-t">
+      {/* Side by side only from xl: below it the index needs the full width,
+          and the cover has no empty column to float in (direction-b.css hides it). */}
+      <Container className={cn(SECTION_Y, 'grid gap-12 xl:grid-cols-2')}>
         <SectionHead
           id="work-h"
           meta={`${String(PROJECTS.length).padStart(2, '0')} projects`}
           title="Client work"
           intro={`Built for clients: ${word(webCount)} for the web, ${word(appCount)} for iPhone.`}
+          sticky={false}
+          introClassName="xl:max-w-[17rem]"
         />
-        <div className="min-w-0">
+        <div className="dirb-index min-w-0 [&_a:focus-visible]:ring-foreground">
           <div className="hidden md:block">
-            <ProjectIndex rows={WORK_ROWS} />
+            <ProjectIndex rows={WORK_ROWS} coverX={COVER_X} />
           </div>
-          {/* Phones: the same index; a tap goes straight to the site. The
-              cover can float past the row on touch, so clip it sideways. */}
-          <div className="overflow-x-clip md:hidden">
+          {/* Phones: the same index, each row on two lines (direction-b.css):
+              the title and its arrow, then where a tap goes. */}
+          <div className="dirb-index-phone md:hidden">
             <ProjectIndex rows={WORK_ROWS_PHONE} />
           </div>
         </div>
@@ -232,7 +249,7 @@ function Work() {
 
 function Products() {
   return (
-    <section id="products" aria-labelledby="products-h" className="scroll-mt-16 border-t">
+    <section id="products" aria-labelledby="products-h" className="border-t">
       <Container className={cn(SECTION_Y, 'grid gap-12 lg:grid-cols-2')}>
         <SectionHead
           id="products-h"
@@ -240,15 +257,15 @@ function Products() {
           title="My own products"
           intro="Not client work: products I design, build and run myself."
         />
-        <ol className="w-full max-w-[560px]">
+        <ol className="w-full">
           {PRODUCTS.map((p) => (
             <li key={p.id} className="border-t py-6 last:border-b">
               <div className="flex items-baseline justify-between gap-4">
                 <h3 className="text-[19px] font-semibold leading-tight">{p.title}</h3>
-                <span className="shrink-0 text-right text-[11px] text-muted-foreground">{p.status}</span>
+                <span className={cn(META, 'shrink-0 text-right text-muted-foreground')}>{p.status}</span>
               </div>
               <p className="mt-1 text-[13px] text-muted-foreground">{p.tagline}</p>
-              <p className="mt-4 text-[15px] leading-relaxed text-foreground/80">{p.description}</p>
+              <p className="mt-4 max-w-[62ch] text-[15px] leading-relaxed text-foreground/80">{p.description}</p>
               <div className="mt-5 flex flex-wrap items-baseline justify-between gap-x-6 gap-y-2">
                 <p className={cn(META, 'leading-normal text-muted-foreground')}>{p.stack.join(' / ')}</p>
                 {p.url ? (
@@ -270,7 +287,8 @@ const LEDGER_SHARED = {
   // The pigment in the manifesto band's colours (peach, butter, lilac), kept light.
   colors: ['#F7A48B', '#F9D78E', '#BBA9EE'] as [string, string, string],
   strength: 0.5,
-  residue: 0.1,
+  // Pigment only where it means something: the open row and the one pointed at.
+  residue: 0,
   uppercase: false,
   cta: null,
   footnote: '',
@@ -294,7 +312,7 @@ function Experience() {
   // The ledger pads itself; it starts flush under the kicker and ends on this page's section rhythm.
   const pad = { paddingTop: 0, paddingBottom: 'clamp(4rem, 8vw, 7.5rem)' }
   return (
-    <div id="experience" className="scroll-mt-16 border-t pt-[clamp(4rem,8vw,7.5rem)]">
+    <div id="experience" className="border-t pt-[clamp(4rem,8vw,7.5rem)]">
       <LedgerKicker>{`${String(ROLES.length).padStart(2, '0')} roles`}</LedgerKicker>
       <PigmentExperienceLedger
         {...LEDGER_SHARED}
@@ -303,6 +321,7 @@ function Experience() {
         intro={`At ${companyNames}, newest first. Open a role for its dates and team.`}
         items={EXPERIENCE}
         defaultOpen={0}
+        // "Position" repeats the role printed under the name, so direction-b.css hides it.
         labels={{ position: 'Position', location: 'Dates', industry: 'Team' }}
       />
       <LedgerKicker>{`${String(EDUCATION.length).padStart(2, '0')} degrees`}</LedgerKicker>
@@ -310,10 +329,10 @@ function Experience() {
         {...LEDGER_SHARED}
         style={{ ...LEDGER_SHARED.style, ...pad }}
         heading="Education"
-        intro="Computer science, newest first."
+        intro="Computer science, newest first. Open one for the school's full name."
         items={SCHOOLS}
         defaultOpen={null}
-        labels={{ position: 'Degree' }}
+        labels={{ position: 'Degree', location: 'School' }}
       />
     </div>
   )
@@ -321,71 +340,50 @@ function Experience() {
 
 function Credentials() {
   return (
-    <section id="credentials" aria-labelledby="credentials-h" className="scroll-mt-16 border-t">
-      <Container className={cn(SECTION_Y, 'pb-10 md:pb-14')}>
+    <section id="credentials" aria-labelledby="credentials-h" className="border-t">
+      <Container className={cn(SECTION_Y, 'grid gap-12 lg:grid-cols-2')}>
         <SectionHead
           id="credentials-h"
           meta={`${String(CERTIFICATIONS.length).padStart(2, '0')} certifications`}
           title="Credentials"
           intro="Salesforce certifications, newest first, and the languages and platforms I work in."
         />
-      </Container>
-
-      {/* Moving strips, paused on hover and with Space; a still list for reduced motion. */}
-      <div className="motion-reduce:hidden">
-        <div className="border-y py-7 md:py-9">
-          <Marquee
-            pauseOnHover
-            pauseOnKeyboard
-            speed={34}
-            gap="3.5rem"
-            aria-label="Salesforce certifications, newest first. Press Space to pause."
-            className="rounded-none"
-          >
-            <MarqueeContent>
-              {CERTIFICATIONS.map((c) => (
-                <MarqueeItem key={c.id} className="flex items-baseline gap-3">
-                  <span className="font-serif text-[clamp(2rem,3.4vw,3rem)] leading-none tracking-[-0.01em]">{c.name}</span>
-                  <span className={cn(META, 'text-muted-foreground')}>{c.date}</span>
-                </MarqueeItem>
-              ))}
-            </MarqueeContent>
-            <MarqueeEdge side="left" size="sm" />
-            <MarqueeEdge side="right" size="sm" />
-          </Marquee>
-        </div>
-        <div className="py-5">
-          <Marquee
-            pauseOnHover
-            pauseOnKeyboard
-            speed={22}
-            gap="2.5rem"
-            aria-label="Skills. Press Space to pause."
-            className="rounded-none"
-          >
-            <MarqueeContent>
-              {SKILLS.map((s) => (
-                <MarqueeItem key={s} className={cn(META, 'text-[12px] text-muted-foreground')}>
-                  {s}
-                </MarqueeItem>
-              ))}
-            </MarqueeContent>
-            <MarqueeEdge side="left" size="sm" />
-            <MarqueeEdge side="right" size="sm" />
-          </Marquee>
-        </div>
-      </div>
-      <Container className="hidden pb-[clamp(4rem,8vw,7.5rem)] motion-reduce:block">
-        <ul className="grid gap-x-10 border-t sm:grid-cols-2">
+        <ol className="border-t">
           {CERTIFICATIONS.map((c) => (
-            <li key={c.id} className="flex items-baseline justify-between gap-4 border-b py-4">
-              <span className="font-serif text-2xl">{c.name}</span>
-              <span className={cn(META, 'text-muted-foreground')}>{c.date}</span>
+            <li key={c.id} className="flex items-baseline justify-between gap-6 border-b py-4">
+              <span className="font-serif text-[clamp(1.5rem,2.2vw,1.875rem)] leading-tight tracking-[-0.01em]">{c.name}</span>
+              <span className={cn(META, 'shrink-0 text-muted-foreground')}>{c.date}</span>
             </li>
           ))}
-        </ul>
-        <p className={cn(META, 'mt-6 leading-loose text-muted-foreground')}>{SKILLS.join(' · ')}</p>
+        </ol>
       </Container>
+
+      {/* Skills: one slow strip, paused on hover and with Space; a still line for reduced motion. */}
+      <div className="border-t py-6 motion-reduce:hidden">
+        <Marquee
+          pauseOnHover
+          pauseOnKeyboard
+          speed={22}
+          gap="2.5rem"
+          aria-label="Skills. Press Space to pause."
+          className={cn('rounded-none', RING, 'focus-visible:ring-inset focus-visible:ring-offset-0')}
+        >
+          <MarqueeContent>
+            {SKILLS.map((s) => (
+              <MarqueeItem key={s} className={cn(META, 'py-1 text-muted-foreground')}>
+                {s}
+              </MarqueeItem>
+            ))}
+          </MarqueeContent>
+          <MarqueeEdge side="left" size="sm" />
+          <MarqueeEdge side="right" size="sm" />
+        </Marquee>
+      </div>
+      <div className="hidden border-t motion-reduce:block">
+        <Container className="py-6">
+          <p className={cn(META, 'leading-loose text-muted-foreground')}>{SKILLS.join(' · ')}</p>
+        </Container>
+      </div>
     </section>
   )
 }
@@ -393,17 +391,17 @@ function Credentials() {
 function About() {
   const [quoteRef, quoteState] = useReplayInView<HTMLDivElement>()
   return (
-    <section id="about" aria-labelledby="about-h" className="scroll-mt-16 border-t">
+    <section id="about" aria-labelledby="about-h" className="border-t">
       <Container className={cn(SECTION_Y, 'grid gap-12 lg:grid-cols-2')}>
         <SectionHead id="about-h" meta="In my own words" title="About" />
-        <div className="max-w-[560px]">
+        <div>
           {PERSON.about.map((para, i) => (
             <p
               key={i}
               className={cn(
                 i === 0
                   ? 'font-serif text-[clamp(1.6rem,2.3vw,2rem)] leading-[1.22] tracking-[-0.01em]'
-                  : 'mt-6 text-[17px] leading-relaxed text-foreground/80',
+                  : 'mt-6 max-w-[62ch] text-[17px] leading-relaxed text-foreground/80',
               )}
             >
               {para}
@@ -451,7 +449,7 @@ function Contact() {
         id="contact"
         aria-label="Get in touch"
         className={cn(
-          'scroll-mt-16 px-[clamp(1.25rem,5vw,5rem)]',
+          'px-[clamp(1.25rem,5vw,5rem)]',
           SECTION_Y,
           // Hooks the component exposes as data-slots: put its column on this
           // page's grid and its title in this page's heading type.
@@ -460,6 +458,9 @@ function Contact() {
           '[&_[data-slot=contact-form-eyebrow]]:font-mono [&_[data-slot=contact-form-eyebrow]]:text-[11px] [&_[data-slot=contact-form-eyebrow]]:uppercase [&_[data-slot=contact-form-eyebrow]]:tracking-[0.14em] [&_[data-slot=contact-form-eyebrow]]:mb-5',
           '[&_[data-slot=contact-form-description]]:text-base [&_[data-slot=contact-form-description]]:max-w-[40ch]',
           '[&_[data-slot=contact-form-card]]:shadow-none',
+          // Focus as dark as the rest of the page (the published ring-ring/50 is about 1.6:1 here).
+          '[&_input:focus-visible]:border-foreground/60 [&_input:focus-visible]:ring-foreground/25 [&_textarea:focus-visible]:border-foreground/60 [&_textarea:focus-visible]:ring-foreground/25',
+          '[&_[data-slot=contact-form-submit]:focus-visible]:ring-2 [&_[data-slot=contact-form-submit]:focus-visible]:ring-foreground [&_[data-slot=contact-form-submit]:focus-visible]:ring-offset-2',
         )}
         eyebrow="Contact"
         title="Get in touch"
@@ -480,12 +481,15 @@ function Contact() {
           </dl>
         }
         labels={{
-          success: `Thanks. This preview does not send messages yet, so please email me at ${PERSON.links.email}.`,
+          success: `Your mail app should open with this message, addressed to ${PERSON.links.email}.`,
           error: 'That did not go through. Please email me instead.',
         }}
-        onSubmit={async () => {
-          // The lab has no backend: nothing is posted, the form only shows its states.
-          await new Promise((resolve) => setTimeout(resolve, 700))
+        onSubmit={(values) => {
+          // The lab has no backend and posts nothing: the message goes to the
+          // visitor's own mail app, so the form clearing itself loses nothing.
+          const subject = values.name ? `Hello from ${values.name}` : 'Hello'
+          const body = values.email ? `${values.message}\n\n${values.name} (${values.email})` : values.message
+          window.location.href = `mailto:${PERSON.links.email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`
         }}
       />
     </div>
@@ -497,11 +501,21 @@ function Footer() {
     <FooterWithSuite
       className={cn(
         'select-auto border-t bg-background',
-        '[&>div]:px-[clamp(1.25rem,5vw,5rem)] lg:[&>div:first-child]:gap-12',
+        // On this page's column: the gutter, and no wider than 84rem on big screens.
+        '[&>div]:px-[max(clamp(1.25rem,5vw,5rem),calc((100%-84rem)/2))] lg:[&>div:first-child]:gap-12',
+        // One column on phones, two from sm.
+        '[&>div:first-child]:grid-cols-1 sm:[&>div:first-child]:grid-cols-2',
+        // The page's small-label type (Geist Mono), its muted ink (about 4.6:1), and taller tap targets.
+        '[&>div_a]:font-mono [&>div_p]:font-mono [&_.text-neutral-400]:text-muted-foreground [&_a:hover]:text-muted-foreground [&>div_a]:py-1.5',
+        // No empty first line where the description would be.
+        '[&_p:empty]:hidden [&_p:empty+div]:hidden',
+        // The email in lower case, never broken mid-word.
+        '[&_.break-all]:normal-case [&_.break-all]:tracking-[0.06em] [&_.break-all]:break-normal',
         '[&>p]:font-serif [&>p]:font-normal [&>p]:leading-[0.9] [&>p]:tracking-[-0.03em] [&>p]:pt-10 [&>p]:pb-6',
       )}
       brandName={PERSON.last}
-      description={PERSON.tagline}
+      // The hero already says the tagline; the footer does not repeat it.
+      description=""
       prompt="Have something in mind? Write to me."
       ctaText="Get in touch"
       ctaUrl="#contact"

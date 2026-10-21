@@ -108,6 +108,8 @@ export interface PortfolioHeroProps {
   onScrollDown?: () => void;
   /** Rendered under the tagline, e.g. the hero's actions. */
   children?: React.ReactNode;
+  /** [lab edit] The hero's own element (published: <main>); "div" when the page already has its <main>. */
+  heroElement?: "main" | "div";
 }
 
 export default function Component({
@@ -122,7 +124,9 @@ export default function Component({
   taglineStyle,
   onScrollDown,
   children,
+  heroElement = "main",
 }: PortfolioHeroProps = {}) {
+  const HeroElement = heroElement; // [lab edit]
   const [isDark, setIsDark] = useState(defaultDark);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
@@ -255,7 +259,7 @@ export default function Component({
       )}
 
       {/* Hero Section */}
-      <main className="relative min-h-screen flex flex-col">
+      <HeroElement className="relative min-h-screen flex flex-col">{/* [lab edit] was <main> */}
         {/* Centered Main Name - Always Perfectly Centered */}
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full px-4">
           <div className="relative text-center">
@@ -323,7 +327,7 @@ export default function Component({
         >
           <ChevronDown className="w-5 h-5 md:w-8 md:h-8 text-neutral-500 hover:text-black dark:hover:text-white transition-colors duration-300" />
         </button>
-      </main>
+      </HeroElement>
     </div>
   );
 }
