@@ -63,7 +63,7 @@ export const CERTIFICATIONS: readonly Certification[] = (
   ] as const
 ).map((cert) => (CERT_VERIFY[cert.id] ? { ...cert, verifyUrl: CERT_VERIFY[cert.id] } : cert))
 
-/** Client work & shipped products — performed in The Symphony deck. */
+/** Client work, in the order the Stage's Act I shows it. */
 export const PROJECTS = [
   {
     id: 'alongside-coffee',
@@ -139,9 +139,9 @@ export const PROJECTS = [
   {
     // needs Roman: eminencerentals.com carries a fixed bar, "This site is
     // currently under development and not yet live." (fetched 2026-10-13; the
-    // repo's own eminence-rentals.png shows it too), yet a url counts it in
-    // LIVE_CLIENT_WORK, the "8 live" on / and /works. His status, in his
-    // words, goes here; nothing is written for him.
+    // repo's own eminence-rentals.png shows it too), yet with a url its card
+    // links out like a live site. His status, in his words, goes here;
+    // nothing is written for him.
     id: 'eminence-rentals',
     title: 'Eminence Rentals',
     url: 'https://eminencerentals.com',
@@ -178,15 +178,15 @@ export const PROJECTS = [
   },
 ] as const
 
-/** Original works — the products I compose, own, and operate.
- *  `url` is optional: most of these are private builds, so the card tells the
- *  story instead of linking out. Where one is public, the card links to it. */
+/** His own products, in the order the Stage's Act II shows them.
+ *  `url` is optional: most of these are private builds, so the entry tells the
+ *  story instead of linking out. Where one is public, it links to it. */
 export const COMPOSITIONS = [
   {
     id: 'sembly',
     title: 'Sembly',
     tagline: 'Scheduling for worship teams',
-    // The card's link pill already reads "sembly.app"; the status no longer repeats it.
+    // Its link already reads "sembly.app"; the status does not repeat it.
     // needs Roman: confirm.
     status: 'Live',
     url: 'https://sembly.app',
@@ -208,9 +208,8 @@ export const COMPOSITIONS = [
   {
     // needs Roman: alongsideevents.com is public (sign-in, pricing, "Your
     // first event is free") and its JSON-LD names him and Anna Kucheryava as
-    // founders (fetched 2026-10-13), but with no `url` here the card says
-    // "Private build", and the Compositions intro's "most are private builds"
-    // counts it. Whether it may be linked as his, and his status and tagline
+    // founders (fetched 2026-10-13), but with no `url` here it is not
+    // linked. Whether it may be linked as his, and his status and tagline
     // for it, are his to give; nothing changes until he does.
     id: 'alongside-events',
     title: 'Alongside Events',

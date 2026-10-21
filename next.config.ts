@@ -1,17 +1,22 @@
 import type { NextConfig } from 'next'
 
 /**
- * Plain URLs a recruiter can type. The mobile menu prints `cd /credentials`
- * and the like, so these make its paths true. Temporary (307), not permanent:
- * if a real page ever lives at one of these paths, browsers must not have
- * cached the hop.
+ * Old addresses, kept working. Every one lands on the one page there is:
+ * the section paths of the old design and the retired pages (/works and its
+ * program notes, all unpublished, and /colophon). The section ids are the
+ * Stage's own (SECTIONS in src/components/stage/top-bar.tsx; the smoke suite
+ * checks each target exists). Temporary (307), not permanent: if a real page
+ * ever lives at one of these paths, browsers must not have cached the hop.
  */
-const SECTION_PATHS: Record<string, string> = {
-  '/credentials': '/#measures',
-  '/work': '/#symphony',
-  '/products': '/#compositions',
-  '/about': '/#conductor',
-  '/contact': '/#compose',
+const REDIRECTS: Record<string, string> = {
+  '/credentials': '/#credentials',
+  '/work': '/#work',
+  '/products': '/#products',
+  '/about': '/#about',
+  '/contact': '/#contact',
+  '/works': '/#work',
+  '/works/:slug': '/#work',
+  '/colophon': '/',
 }
 
 /**
@@ -74,13 +79,6 @@ const nextConfig: NextConfig = {
     // AVIF first: next/image negotiates on Accept and falls back to WebP.
     formats: ['image/avif', 'image/webp'],
   },
-  // Read by the build stamp (SiteFooter, /colophon). COMMIT_REF and CONTEXT
-  // are set by Netlify; anywhere else the stamp says "local build".
-  env: {
-    BUILD_SHA: process.env.COMMIT_REF ?? '',
-    BUILD_TIME: new Date().toISOString(),
-    BUILD_CONTEXT: process.env.CONTEXT ?? 'local',
-  },
   async headers() {
     return [
       {
@@ -100,7 +98,7 @@ const nextConfig: NextConfig = {
     ]
   },
   async redirects() {
-    return Object.entries(SECTION_PATHS).map(([source, destination]) => ({
+    return Object.entries(REDIRECTS).map(([source, destination]) => ({
       source,
       destination,
       permanent: false,

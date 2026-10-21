@@ -3,7 +3,7 @@ import { CURRENT_ROLE } from '@/lib/site-facts'
 
 /**
  * The site's JSON-LD: who Roman is and which site is his, for search engines
- * and link unfurlers. One @graph, rendered once by the root layout.
+ * and link unfurlers. One @graph, rendered once by the home page (app/page.tsx).
  *
  * Only what the repo states. There are no ratings anywhere (a Person or a
  * WebSite with an aggregateRating is a claim nobody can check), no contact
@@ -29,7 +29,7 @@ export function siteGraph() {
         sameAs: [LINKS.linkedin, LINKS.github],
         ...(JOB_TITLE ? { jobTitle: JOB_TITLE } : {}),
         worksFor: { '@type': 'Organization', name: CURRENT_ROLE.company },
-        // source: resume-data.ts:34 ("Auburn, WA 98092"); Compose.tsx shows "Auburn, WA (PT)".
+        // source: resume-data.ts ("Auburn, WA 98092") and public/humans.txt ("Auburn, WA").
         address: { '@type': 'PostalAddress', addressLocality: 'Auburn', addressRegion: 'WA' },
         knowsAbout: [...TECH_SKILLS],
         hasCredential: CERTIFICATIONS.map((cert) => ({
