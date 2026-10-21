@@ -1,7 +1,7 @@
 import type { Metadata } from 'next'
-import { SITE } from '@/lib/constants'
+import { HIS_WORDS, SITE } from '@/lib/constants'
 
-/** How a page title reads in the tab: "The setlist — Roman Kucheryavyy". */
+/** How a page title reads in the tab: "Résumé builder — Roman Kucheryavyy". */
 export const TITLE_TEMPLATE = `%s — ${SITE.name}`
 
 /** A page's full title; the site title when it has none of its own. */
@@ -17,7 +17,7 @@ export function fullTitle(title?: string): string {
  */
 export const SITE_CARD = {
   url: '/opengraph-image',
-  alt: `${SITE.name} — Orchestrating Logic & Art`,
+  alt: `${SITE.name}: ${HIS_WORDS.tagline}`,
   width: 1200,
   height: 630,
   type: 'image/png',
@@ -25,15 +25,14 @@ export const SITE_CARD = {
 const SITE_TWITTER_CARD = { ...SITE_CARD, url: '/twitter-image' } as const
 
 export interface PageMetaInput {
-  /** The page's own path, which becomes its canonical URL ("/works"). */
+  /** The page's own path, which becomes its canonical URL ("/resume"). */
   path: string
   title?: string
   description?: string
   /**
    * OG images. By default the site card, with its size, type and alt.
    * `false` names none, and Next's file convention supplies the card with
-   * all of that plus its cache-busting hash: right for a segment with its own
-   * opengraph-image file (/works, program notes) and for the home page, whose
+   * all of that plus its cache-busting hash: right for the home page, whose
    * segment holds the site card's file.
    */
   images?: string[] | false

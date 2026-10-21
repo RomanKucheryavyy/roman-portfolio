@@ -10,12 +10,6 @@ The FUBC Band, for teaching me that structure and improvisation
 are the same skill.
 
 /* SITE */
-Stack: Next.js, TypeScript, three.js, GSAP, framer-motion,
-       Tailwind CSS, Netlify
-Score: a Tessendorf FFT ocean on the GPU (WebGL2, a
-       Phillips spectrum through an inverse FFT every frame),
-       spotlights in pure CSS, a starfield on a 2D canvas,
-       and a scroll bar that reads like sheet music.
-Last performance: 2026
-
-         𝄞═══♩═══♪═══♫═══♪═══♬═══
+Stack: Next.js, TypeScript, Tailwind CSS, shadcn/ui, Netlify
+Built from: 21st.dev components, used as their authors published them
+Type: Geist and Geist Mono

@@ -1,65 +1,50 @@
-import { CERTIFICATIONS, LINKS, SITE } from '@/lib/constants'
-import { publishedStudies } from '@/lib/case-studies'
-import { ROUTES } from '@/lib/routes'
-import { CLIENT_WORK, PRODUCTS, actionOf, type Work } from '@/lib/work'
+import { CERTIFICATIONS, EDUCATION, PERSON, PRODUCTS, PROJECTS, ROLES, linkLabel, type Product, type Project } from '@/lib/content'
 
 /**
- * /llms.txt (llmstxt.org): what the site says, as markdown, for agents that
- * don't run JavaScript. The home page's server HTML is an empty boot shell,
- * so without this an agent reading the site learns nothing.
- *
- * Built at build time from the same data every card renders, so it can say
- * nothing the site doesn't. No phone number, ever.
- *
- * needs Roman: there is no role line. One goes under the summary only once
- * JOB_TITLE (src/lib/structured-data.ts, from the chrome stream) holds a title
- * he has confirmed; until then it is null and nothing is printed.
+ * /llms.txt (llmstxt.org): what the home page says, as markdown, for agents
+ * that would rather not parse it. Built at build time from the same records
+ * the page draws (src/lib/content.ts), so it can say nothing the page
+ * doesn't. Public facts only: no phone number, ever.
  */
 export const dynamic = 'force-static'
 
-const url = (path: string) => (path === ROUTES.home ? SITE.url : `${SITE.url}${path}`)
-
 /** "[Title](url)" for a piece with a public address, the bare title otherwise. */
-const titled = (work: Work) => (work.url ? `[${work.title}](${work.url})` : work.title)
+const titled = (item: { title: string; url?: string }) => (item.url ? `[${item.title}](${item.url})` : item.title)
 
-/** The card's own action label: the domain, "App Store", or where an unlaunched piece stands. */
-const workLine = (work: Work) => `- ${titled(work)} (${actionOf(work).label}): ${work.description}`
+/** The card's own link label: the domain, "App Store", or where an unlaunched piece stands. */
+const workLine = (p: Project) => `- ${titled(p)} (${linkLabel(p)}): ${p.description}`
 
-function productLine(work: Work): string {
-  const parts = [work.tagline, work.status ? `Status: ${work.status}` : null, work.url ? null : 'Private build']
-  return `- ${titled(work)}: ${parts.filter(Boolean).join('. ')}. ${work.description}`
-}
+const productLine = (p: Product) => `- ${titled(p)}: ${p.tagline}. Status: ${p.status}. ${p.description}`
 
 export function GET() {
-  const notes = publishedStudies()
   const lines = [
-    `# ${SITE.name}`,
+    `# ${PERSON.name}`,
     '',
-    `> ${SITE.description}`,
+    `> ${PERSON.tagline}`,
     '',
-    '## Work',
+    '## Client work',
     '',
-    ...CLIENT_WORK.map(workLine),
+    ...PROJECTS.map(workLine),
     '',
-    '## Products',
+    '## My own products',
     '',
     ...PRODUCTS.map(productLine),
+    '',
+    '## Experience',
+    '',
+    ...ROLES.map((r) => `- ${r.title}, ${[r.company, r.team].filter(Boolean).join(', ')} (${r.dates})`),
+    ...EDUCATION.map((e) => `- ${e.degree}, ${e.school} (${e.start} – ${e.end})`),
     '',
     '## Certifications',
     '',
     ...CERTIFICATIONS.map((cert) => `- Salesforce Certified ${cert.name} (${cert.date})`),
     '',
-    ...(notes.length
-      ? ['## Program notes', '', ...notes.map((s) => `- [${s.title}](${url(`${ROUTES.works}/${s.slug}`)})`), '']
-      : []),
     '## Links',
     '',
-    `- [Home](${url(ROUTES.home)})`,
-    `- [All work](${url(ROUTES.works)})`,
-    `- [Liner notes: how this site is built](${url(ROUTES.colophon)})`,
-    `- [GitHub](${LINKS.github})`,
-    `- [LinkedIn](${LINKS.linkedin})`,
-    `- [Email](mailto:${LINKS.email})`,
+    `- [Home](${PERSON.url})`,
+    `- [GitHub](${PERSON.links.github})`,
+    `- [LinkedIn](${PERSON.links.linkedin})`,
+    `- [Email](mailto:${PERSON.links.email})`,
     '',
   ]
   return new Response(lines.join('\n'), {
