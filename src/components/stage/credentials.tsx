@@ -29,19 +29,34 @@ const chunk = (size: number) =>
  * rows hold still and must show every badge without sideways scrolling, so
  * they sit in the page column with fewer badges per row.
  *
- * `height` is the marquee's rendered height for that layout (rows of 44px,
- * 42px at 600px and under, the module's row gaps, and the pause control's
- * row), held while the browser-only marquee loads so nothing moves when it
- * arrives.
+ * RESERVE holds each layout's rendered height (rows of 44px, 42px at 600px
+ * and under, the module's row gaps, and the pause control's row) while the
+ * browser-only marquee loads, so nothing moves when it arrives. It says them
+ * in media queries, so the server's HTML already holds the right one for the
+ * visitor's width and motion setting (the layout itself is only known once
+ * the page runs). Literal numbers, so Tailwind finds the classes.
  */
 const LAYOUTS = {
-  wide: { stacks: [items.slice(0, 3), items.slice(3, 6), items.slice(6)], height: 3 * 44 + 2 * 4 + 12 + 32 },
-  narrow: { stacks: chunk(2), height: 4 * 42 + 3 * 2 + 12 + 32 },
-  stillWide: { stacks: chunk(2), height: 4 * 44 + 3 * 8 },
-  stillNarrow: { stacks: chunk(1), height: 8 * 42 + 7 * 8 },
-  stillMid: { stacks: chunk(1), height: 8 * 44 + 7 * 8 },
+  wide: { stacks: [items.slice(0, 3), items.slice(3, 6), items.slice(6)] },
+  narrow: { stacks: chunk(2) },
+  stillWide: { stacks: chunk(2) },
+  stillNarrow: { stacks: chunk(1) },
+  stillMid: { stacks: chunk(1) },
 } as const
 type Layout = keyof typeof LAYOUTS
+
+const RESERVE = [
+  // wide: 3 * 44 + 2 * 4 + 12 + 32
+  '[@media(prefers-reduced-motion:no-preference)_and_(min-width:601px)]:min-h-[184px]',
+  // narrow: 4 * 42 + 3 * 2 + 12 + 32
+  '[@media(prefers-reduced-motion:no-preference)_and_(max-width:600px)]:min-h-[218px]',
+  // stillWide: 4 * 44 + 3 * 8
+  '[@media(prefers-reduced-motion:reduce)_and_(min-width:768px)]:min-h-[200px]',
+  // stillMid: 8 * 44 + 7 * 8
+  '[@media(prefers-reduced-motion:reduce)_and_(min-width:601px)_and_(max-width:767.98px)]:min-h-[408px]',
+  // stillNarrow: 8 * 42 + 7 * 8
+  '[@media(prefers-reduced-motion:reduce)_and_(max-width:600px)]:min-h-[392px]',
+].join(' ')
 
 function useLayout(): Layout {
   const [layout, setLayout] = useState<Layout>('wide')
@@ -73,7 +88,7 @@ function useLayout(): Layout {
 /** Act IV: the eight Salesforce certifications, newest first. */
 export function Credentials() {
   const layout = useLayout()
-  const { stacks, height } = LAYOUTS[layout]
+  const { stacks } = LAYOUTS[layout]
   const still = layout.startsWith('still')
   const newest = CERTIFICATIONS[0]
   const oldest = CERTIFICATIONS[CERTIFICATIONS.length - 1]
@@ -125,12 +140,12 @@ export function Credentials() {
         {still ? (
           // The still rows' own 22px inset, pulled back so the badges start on the column.
           <Container>
-            <div className="-mx-[22px]" style={{ minHeight: height }}>
+            <div className={cn('-mx-[22px]', RESERVE)}>
               {marquee}
             </div>
           </Container>
         ) : (
-          <div style={{ minHeight: height }}>{marquee}</div>
+          <div className={RESERVE}>{marquee}</div>
         )}
       </div>
     </section>

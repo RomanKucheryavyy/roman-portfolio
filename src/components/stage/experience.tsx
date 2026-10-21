@@ -1,10 +1,21 @@
 'use client'
 
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
-import Lifeline from '@/components/ui/lifeline'
+import dynamic from 'next/dynamic'
 import type { LifelineMarker } from '@/components/ui/lifeline-utils/types'
 import { EDUCATION, ROLES } from '@/lib/content'
 import { Container, SectionHeader } from './section-header'
+
+// Lifeline loads after the page, like the other heavy pieces below the first
+// screen (see "lazy parts" in stage.tsx). The rail's box already has its
+// height from md up (h-[19rem], below); on a phone the placeholder is the
+// five-year list's own height.
+const Lifeline = dynamic(() => import('@/components/ui/lifeline'), {
+  ssr: false,
+  loading: function Holding() {
+    return <div aria-hidden="true" className="h-[827px] md:h-full" />
+  },
+})
 
 /**
  * One marker per year something started, each with two lines: what it was,

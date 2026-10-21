@@ -1,12 +1,11 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
+import dynamic from 'next/dynamic'
 import { Github, Linkedin, Mail } from 'lucide-react'
 import DrapeBackground from '@/components/ui/kokonut-drape-background'
-import { PortfolioTemplate, type PortfolioBadge } from '@/components/ui/portfolio-hero-physics'
-import ContactWithGlobe from '@/components/ui/contact-with-globe'
+import type { PortfolioBadge } from '@/components/ui/portfolio-hero-physics'
 import { Composer } from './composer'
-import FooterSection5 from '@/components/ui/footer-section-5'
 import { Button } from '@/components/ui/button'
 import { PERSON, ROLES, SKILLS } from '@/lib/content'
 import { cn } from '@/lib/utils'
@@ -19,6 +18,41 @@ import { Credentials } from './credentials'
 import { STAGE_FOCUS, STAGE_STYLE } from './look'
 
 const EMAIL_HREF = `mailto:${PERSON.links.email}`
+
+/* ---------------------------------------------------------- lazy parts -- */
+
+/**
+ * The heavy pieces below the first screen load after the page is up, not
+ * before it: the About template (matter-js), the contact card (d3 and
+ * topojson for the globe) and the footer (the paper shaders' fluted glass).
+ * Experience's Lifeline is the fourth (experience.tsx). Each is fetched as
+ * soon as the page hydrates, so it is in place long before anyone scrolls or
+ * Tabs to it; until then a block of the same height holds its place, so
+ * nothing below moves when it lands. The heights are the components' own,
+ * measured at 390, 640, 768, 1024, 1280 and 1440 wide (exact there, and
+ * within a few lines of text between), so a visitor who arrives at
+ * /#contact stays on it.
+ * Visitors without scripts get the page's <noscript> summary (app/page.tsx).
+ */
+const hold = (className: string) =>
+  function Holding() {
+    return <div aria-hidden="true" className={className} />
+  }
+
+const PortfolioTemplate = dynamic(() => import('@/components/ui/portfolio-hero-physics').then((m) => m.PortfolioTemplate), {
+  ssr: false,
+  loading: hold('h-[834px] sm:h-[634px] md:h-[606px] lg:h-[578px] xl:h-[640px]'),
+})
+const ContactWithGlobe = dynamic(() => import('@/components/ui/contact-with-globe'), {
+  ssr: false,
+  // Its own height plus the mt-12 / md:mt-16 CONTACT_LOOK gives it.
+  loading: hold('h-[1169px] sm:h-[1043px] md:h-[1075px] lg:h-[636px] xl:h-[604px]'),
+})
+const FooterSection5 = dynamic(() => import('@/components/ui/footer-section-5'), {
+  ssr: false,
+  // Its wordmark scales with the width, so from md the height does too.
+  loading: hold('h-[816px] bg-background md:h-[calc(867px+11.2vw)] lg:h-[calc(592px+11.2vw)]'),
+})
 
 /* ---------------------------------------------------------------- hero -- */
 
@@ -88,6 +122,38 @@ const ABOUT_LOOK = [
   '[&_p.m-0.text-lg]:text-muted-foreground!',
 ].join(' ')
 
+/**
+ * Calls `drop` once, when the badge zone is in place; returns what stops
+ * watching. Normally that is once the zone's top is in the upper part of the
+ * screen, so the badges fall out from under the heading rather than
+ * appearing at a line low on the screen. A visitor who stops with the whole
+ * zone in view (say, after the About link) gets the drop after a beat rather
+ * than an empty glow.
+ */
+function watchZone(zone: Element, drop: () => void): () => void {
+  let timer = 0
+  const stop = () => {
+    near.disconnect()
+    whole.disconnect()
+    window.clearTimeout(timer)
+  }
+  const fire = () => {
+    stop()
+    drop()
+  }
+  const near = new IntersectionObserver(([e]) => e.isIntersecting && fire(), { rootMargin: '-56px 0px -55% 0px' })
+  const whole = new IntersectionObserver(
+    ([e]) => {
+      window.clearTimeout(timer)
+      if (e.isIntersecting) timer = window.setTimeout(fire, 1200)
+    },
+    { threshold: 1 },
+  )
+  near.observe(zone)
+  whole.observe(zone)
+  return stop
+}
+
 function About() {
   const ref = useRef<HTMLElement>(null)
   // The badges are shuffled on the client, so they mount empty (no server /
@@ -95,34 +161,25 @@ function About() {
   const [badges, setBadges] = useState<PortfolioBadge[]>([])
 
   useEffect(() => {
-    const zone = ref.current?.querySelector('[aria-label="Keywords"]')
-    if (!zone) return
-    let timer = 0
-    const drop = () => {
-      setBadges(BADGES)
-      near.disconnect()
-      whole.disconnect()
-      window.clearTimeout(timer)
-    }
-    // Normally: once the zone's top is in the upper part of the screen, so
-    // the badges fall out from under the heading rather than appearing at a
-    // line low on the screen.
-    const near = new IntersectionObserver(([e]) => e.isIntersecting && drop(), { rootMargin: '-56px 0px -55% 0px' })
-    // A visitor who stops with the whole zone in view (say, after the
-    // About link) gets the drop after a beat rather than an empty glow.
-    const whole = new IntersectionObserver(
-      ([e]) => {
-        window.clearTimeout(timer)
-        if (e.isIntersecting) timer = window.setTimeout(drop, 1200)
-      },
-      { threshold: 1 },
-    )
-    near.observe(zone)
-    whole.observe(zone)
+    const root = ref.current
+    if (!root) return
+    const drop = () => setBadges(BADGES)
+    // The template loads after the page (see "lazy parts"), so its zone may
+    // not be there yet: wait for it, then watch it.
+    const zoneOf = () => root.querySelector('[aria-label="Keywords"]')
+    const zone = zoneOf()
+    if (zone) return watchZone(zone, drop)
+    let unwatch = () => {}
+    const appear = new MutationObserver(() => {
+      const found = zoneOf()
+      if (!found) return
+      appear.disconnect()
+      unwatch = watchZone(found, drop)
+    })
+    appear.observe(root, { childList: true, subtree: true })
     return () => {
-      near.disconnect()
-      whole.disconnect()
-      window.clearTimeout(timer)
+      appear.disconnect()
+      unwatch()
     }
   }, [])
 

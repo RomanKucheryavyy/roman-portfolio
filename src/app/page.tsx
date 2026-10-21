@@ -15,11 +15,12 @@ const LINK = 'text-foreground underline underline-offset-4'
 
 /**
  * Without scripts the Stage still renders its server HTML, but the pieces
- * that only exist in the browser (the certification badges, the About
- * badges, the contact card's entrance) stay empty or hidden. This is the
- * whole page in plain text for that visitor, and for anything that reads
- * the HTML without running it. Every line comes from the same records the
- * page draws.
+ * that only exist in the browser stay out: the certification badges, the
+ * Experience timeline, the About block, the contact card and the footer
+ * (the last four load after the page; see "lazy parts" in stage.tsx). This
+ * is the whole page in plain text for that visitor, and for anything that
+ * reads the HTML without running it. Every line comes from the same records
+ * the page draws.
  */
 function Summary() {
   return (
@@ -80,6 +81,14 @@ function Summary() {
               </li>
             ))}
           </ul>
+
+          <h3 className={H3}>In my own words</h3>
+          {PERSON.about.map((paragraph) => (
+            <p key={paragraph.slice(0, 24)} className={`mt-3 max-w-2xl ${ITEM}`}>
+              {paragraph}
+            </p>
+          ))}
+          <p className={`mt-3 max-w-2xl ${ITEM}`}>{PERSON.manifesto}</p>
 
           <p className="mt-10 flex flex-wrap gap-x-6 gap-y-2 text-sm">
             <a href={`mailto:${PERSON.links.email}`} className={LINK}>
