@@ -248,7 +248,7 @@ function GlobeWireframe({
     const loadWorldData = async () => {
       try {
         const response = await fetch(
-          "https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json",
+          "/countries-110m.json", // [site edit] world-atlas@2's file, served from public/ (published: from cdn.jsdelivr.net), so connect-src stays 'self'
         );
         const world = (await response.json()) as WorldAtlasTopology;
         const countries = feature(world, world.objects.countries)
