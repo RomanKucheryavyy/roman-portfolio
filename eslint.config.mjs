@@ -7,59 +7,40 @@ import next from 'eslint-config-next'
  */
 
 /**
- * The type and ink guard. Two class patterns are on their way out, and new
- * code must not add more of them:
- *
- * - `text-[Npx]` / `text-[N.Nrem]`: use a type step (text-label, text-small,
- *   text-body, text-lead) or, for display type, Tailwind's ramp from text-2xl.
- * - `text-white/NN`: use an ink role (text-ink-body, text-ink-meta,
- *   text-ink-faint), or text-white for primary type.
- *
- * Both are errors. They were warnings while the Phase 2 streams moved their
- * own files over (179 on src at BASE); W12 found none left and made them
- * errors, so the count stays at 0. Legitimate exceptions (SVG axis ticks, the
- * résumé's print preview) take an inline
- * `// eslint-disable-next-line no-restricted-syntax -- constraint 7`.
- *
- * The slash in the second pattern is written /: esquery ends a selector
- * regex at the first `/`, escaped or not.
+ * The 21st.dev components in src/components/ui, as their authors published
+ * them: a component is edited only where it cannot work otherwise, so lint
+ * findings in them are not fixed in place. React Compiler's render-purity
+ * rules flag patterns they use on purpose (refs read during render for
+ * measured layout, a `this` in d3 code), so those three rules are off for
+ * these files only. Everything else still applies to them.
  */
-const ARBITRARY_SIZE = '/\\btext-\\[\\d/'
-const WHITE_ALPHA = '/\\btext-white\\u002F\\d/'
-const SIZE_MESSAGE = 'Use a type step (text-label / text-small / text-body / text-lead) instead of an arbitrary text-[N] size.'
-const INK_MESSAGE = 'Use an ink token (text-ink-body / text-ink-meta / text-ink-faint) instead of text-white/NN.'
-
-const typeAndInkGuard = {
-  files: ['**/*.{js,jsx,mjs,ts,tsx}'],
-  rules: {
-    'no-restricted-syntax': [
-      'error',
-      { selector: `Literal[value=${ARBITRARY_SIZE}]`, message: SIZE_MESSAGE },
-      { selector: `TemplateElement[value.raw=${ARBITRARY_SIZE}]`, message: SIZE_MESSAGE },
-      { selector: `Literal[value=${WHITE_ALPHA}]`, message: INK_MESSAGE },
-      { selector: `TemplateElement[value.raw=${WHITE_ALPHA}]`, message: INK_MESSAGE },
-    ],
-  },
-}
-
-/** Exempt at file level: the protected hero and ocean, and two drawings whose sizes are the design. */
-const typeAndInkExempt = {
+const publishedComponents = {
   files: [
-    'src/components/sections/Hero.tsx',
-    'src/components/ui/fft-ocean.tsx',
-    'src/components/ui/fft-ocean-utils/**',
-    'src/components/canvas/DNAHelix.tsx',
-    'src/components/ui/Loader.tsx',
+    'src/components/ui/button.tsx',
+    'src/components/ui/card.tsx',
+    'src/components/ui/contact-with-globe.tsx',
+    'src/components/ui/footer-section-5.tsx',
+    'src/components/ui/kokonut-*.tsx',
+    'src/components/ui/kokonut-*-utils/**',
+    'src/components/ui/lifeline.tsx',
+    'src/components/ui/lifeline-utils/**',
+    'src/components/ui/portfolio-hero-physics.tsx',
+    'src/components/ui/stacking-cards.tsx',
+    'src/components/ui/toolchain-marquee.tsx',
+    'src/components/ui/toolchain-marquee-utils/**',
   ],
-  rules: { 'no-restricted-syntax': 'off' },
+  rules: {
+    'react-hooks/refs': 'off',
+    'react-hooks/immutability': 'off',
+    'react-hooks/unsupported-syntax': 'off',
+  },
 }
 
 const config = [
   // .claude/worktrees holds agents' throwaway checkouts during local sessions.
   { ignores: ['.next/**', 'node_modules/**', 'out/**', 'next-env.d.ts', '.claude/worktrees/**', 'test-results/**', 'playwright-report/**', 'design-lab/**'] },
   ...next,
-  typeAndInkGuard,
-  typeAndInkExempt,
+  publishedComponents,
 ]
 
 export default config

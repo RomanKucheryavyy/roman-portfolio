@@ -35,17 +35,14 @@ function ResumePreview({ resume }: { resume: ResumeData }) {
   return (
     <div className="text-paper-ink text-xs leading-relaxed">
       <h1 className="text-2xl font-bold text-center mb-1">{resume.name}</h1>
-      {/* eslint-disable-next-line no-restricted-syntax -- constraint 7: the print preview mirrors the PDF's sizes */}
       <p className="text-center text-paper-muted text-[10px] mb-1">
         {resume.location} | {resume.phone} | {resume.email}
       </p>
-      {/* eslint-disable-next-line no-restricted-syntax -- constraint 7: the print preview mirrors the PDF's sizes */}
       <p className="text-center text-paper-muted text-[10px] mb-4">
         {resume.linkedin} | {resume.github}
         {resume.website ? ` | ${resume.website}` : ''}
       </p>
       {resume.summary && (
-        // eslint-disable-next-line no-restricted-syntax -- constraint 7: the print preview mirrors the PDF's sizes
         <p className="text-[11px] text-paper-body mb-4 leading-relaxed">{resume.summary}</p>
       )}
 
@@ -53,18 +50,14 @@ function ResumePreview({ resume }: { resume: ResumeData }) {
       {resume.experience.map((exp, i) => (
         <div key={i} className="mb-4">
           <div className="flex justify-between items-baseline">
-            {/* eslint-disable-next-line no-restricted-syntax -- constraint 7: the print preview mirrors the PDF's sizes */}
             <h3 className="font-bold text-[11px]">{exp.company}, {exp.location}</h3>
           </div>
           <div className="flex justify-between items-baseline">
-            {/* eslint-disable-next-line no-restricted-syntax -- constraint 7: the print preview mirrors the PDF's sizes */}
             <p className="font-semibold text-[10px]">{exp.title}</p>
-            {/* eslint-disable-next-line no-restricted-syntax -- constraint 7: the print preview mirrors the PDF's sizes */}
             <p className="text-paper-muted text-[10px]">{exp.dates}</p>
           </div>
           <ul className="list-disc ml-4 mt-1 space-y-0.5">
             {exp.bullets.map((b, j) => (
-              // eslint-disable-next-line no-restricted-syntax -- constraint 7: the print preview mirrors the PDF's sizes
               <li key={j} className="text-[10px] text-paper-body leading-relaxed">{b}</li>
             ))}
           </ul>
@@ -72,7 +65,6 @@ function ResumePreview({ resume }: { resume: ResumeData }) {
       ))}
 
       <h2 className={headingClass}>Certifications</h2>
-      {/* eslint-disable-next-line no-restricted-syntax -- constraint 7: the print preview mirrors the PDF's sizes */}
       <p className="text-[10px] text-paper-body mb-4 leading-relaxed">
         <span className="font-bold">{resume.certifications.length}x Salesforce Certified:</span>{' '}
         {resume.certifications.map((cert) => `${cert.name} (${cert.date})`).join('  ·  ')}
@@ -81,20 +73,17 @@ function ResumePreview({ resume }: { resume: ResumeData }) {
       <h2 className={headingClass}>Education</h2>
       {resume.education.map((edu, i) => (
         <div key={i} className="flex justify-between items-baseline mb-1">
-          {/* eslint-disable-next-line no-restricted-syntax -- constraint 7: the print preview mirrors the PDF's sizes */}
           <p className="text-[10px] text-paper-body">
             <span className="font-bold">{edu.school}, {edu.location}</span>
             {' — '}
             {edu.degree}
             {edu.gpa ? ` (${edu.gpa} GPA)` : ''}
           </p>
-          {/* eslint-disable-next-line no-restricted-syntax -- constraint 7: the print preview mirrors the PDF's sizes */}
           <p className="text-paper-muted text-[10px]">{edu.dates}</p>
         </div>
       ))}
 
       <h2 className={`${headingClass} mt-4`}>Technical Skills</h2>
-      {/* eslint-disable-next-line no-restricted-syntax -- constraint 7: the print preview mirrors the PDF's sizes */}
       <p className="text-[10px] text-paper-body">{resume.skills.join(', ')}</p>
 
       {resume.projects.length > 0 && (
@@ -102,13 +91,11 @@ function ResumePreview({ resume }: { resume: ResumeData }) {
           <h2 className={`${headingClass} mt-4`}>Projects</h2>
           {resume.projects.map((project, i) => (
             <div key={i} className="mb-3">
-              {/* eslint-disable-next-line no-restricted-syntax -- constraint 7: the print preview mirrors the PDF's sizes */}
               <p className="font-bold text-[11px]">
                 {project.name} <span className="font-normal text-paper-muted">({project.tech})</span>
               </p>
               <ul className="list-disc ml-4 space-y-0.5">
                 {project.bullets.map((b, j) => (
-                  // eslint-disable-next-line no-restricted-syntax -- constraint 7: the print preview mirrors the PDF's sizes
                   <li key={j} className="text-[10px] text-paper-body">{b}</li>
                 ))}
               </ul>
