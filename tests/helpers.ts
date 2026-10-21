@@ -1,57 +1,32 @@
-import { mkdirSync } from 'node:fs'
-import path from 'node:path'
 import { expect, test, type ConsoleMessage, type Page } from '@playwright/test'
 
 /**
  * Shared harness helpers. Two rules the whole suite leans on:
  *
- * - Never wait for `networkidle`. The ocean's rAF loop, Lenis and the deck
- *   keep the page busy forever; wait for a known element plus a short settle.
+ * - Never wait for `networkidle`. The curtain, the marquee and the globe
+ *   animate for as long as the page is open; wait for a known element plus a
+ *   short settle.
  * - Console noise is allow-listed, not ignored. Anything new fails the test.
  */
 
-const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms))
+export const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms))
+
+/** The Stage's sections, in page order (src/components/stage/top-bar.tsx SECTIONS). */
+export const SECTION_IDS = ['work', 'products', 'experience', 'credentials', 'about', 'contact'] as const
 
 /**
- * Opens the home page. The boot animation runs once per session and takes
- * about three seconds, so by default the session is marked as already booted
- * (the Loader's own fast path). Pass `{ boot: true }` to watch the boot.
+ * Opens the home page and waits for it to be up: the hero's name drawn, and
+ * the pieces that load after the page (the Experience timeline, the About
+ * block, the contact card and the footer) in place.
  */
-export async function gotoHome(page: Page, { boot = false }: { boot?: boolean } = {}) {
-  if (!boot) {
-    await page.addInitScript(() => {
-      try {
-        sessionStorage.setItem('booted', '1')
-      } catch {
-        // Storage blocked: the Loader will just run its full boot.
-      }
-    })
-  }
-  const response = await page.goto('/')
-  await expect(page.locator('#hero h1')).toBeVisible({ timeout: 30_000 })
-  await sleep(800)
+export async function gotoHome(page: Page, path = '/') {
+  const response = await page.goto(path)
+  await expect(page.locator('#hero-title')).toBeVisible({ timeout: 30_000 })
+  await expect(page.locator('footer')).toBeAttached({ timeout: 30_000 })
+  await expect(page.locator('#contact form')).toBeAttached()
+  await expect(page.locator('#about [aria-label="Keywords"]')).toBeAttached()
+  await sleep(500)
   return response
-}
-
-/**
- * Resolves once the site nav has finished dropping in. Off the home page it
- * fades in from opacity 0 as soon as the page hydrates (a 300ms delay, then
- * 693ms); on / it waits for the boot. An axe pass that lands mid-fade samples
- * half-transparent labels and files them as colour-contrast failures (six
- * nodes on /colophon in the no-webgl project), which is one frame of a
- * transition, not the page. Audit the page at rest.
- */
-export async function waitForChrome(page: Page) {
-  await page.waitForFunction(
-    () => {
-      // The first <nav> is the site nav: SiteChrome renders before any page.
-      const bar = document.querySelector('nav')?.parentElement
-      if (!bar) return false
-      return getComputedStyle(bar).opacity === '1' && bar.getAnimations().every((a) => a.playState !== 'running')
-    },
-    undefined,
-    { timeout: 15_000 },
-  )
 }
 
 export interface CspLog {
@@ -92,9 +67,13 @@ export async function collectCspReports(page: Page): Promise<CspLog> {
 /** Software WebGL in headless Chromium: noise from the GPU stack, not the site. */
 const ALWAYS_ALLOWED: RegExp[] = [/Automatic fallback to software WebGL/, /GL Driver Message/]
 
-/** Only on the project with WebGL switched off: three.js says it has no context,
- *  and the ocean falls back to its static frame. */
-const NO_WEBGL_ALLOWED: RegExp[] = [/THREE\.WebGLRenderer.*context/]
+/**
+ * Only on the project with WebGL switched off: the paper shaders behind the
+ * footer's glass say they have no WebGL (an unhandled rejection from their
+ * own mount, @paper-design/shaders-react), and the panel shows its plain
+ * colour instead. smoke.spec checks the page still reads in full there.
+ */
+const NO_WEBGL_ALLOWED: RegExp[] = [/^Error: Paper Shaders: WebGL is not supported in this browser$/]
 
 export interface ConsoleLog {
   /** console.error and console.warning lines and page errors that no allow rule matched. */
@@ -109,8 +88,7 @@ export interface ConsoleLog {
  * default allowlist.
  */
 export function collectConsole(page: Page, allow: RegExp[] = []): ConsoleLog {
-  const projectName = test.info().project.name
-  const rules = [...ALWAYS_ALLOWED, ...(projectName === 'no-webgl' ? NO_WEBGL_ALLOWED : []), ...allow]
+  const rules = [...ALWAYS_ALLOWED, ...(test.info().project.name === 'no-webgl' ? NO_WEBGL_ALLOWED : []), ...allow]
   const unexpected: string[] = []
   const allowed = (text: string) => rules.some((rule) => rule.test(text))
 
@@ -133,13 +111,14 @@ export function collectConsole(page: Page, allow: RegExp[] = []): ConsoleLog {
   }
 }
 
-/** Scrolls the whole page with wheel events so every lazy section mounts,
- *  then waits for Lenis's smoothing to come to rest. */
-export async function wheelThrough(page: Page, step = 700, pause = 250) {
-  const height = await page.evaluate(() => document.documentElement.scrollHeight)
+/** Scrolls the whole page with wheel events, a screen at a time, then waits for it to rest. */
+export async function scrollThrough(page: Page, pause = 250) {
+  const step = Math.round((page.viewportSize()?.height ?? 900) * 0.8)
+  let height = await page.evaluate(() => document.documentElement.scrollHeight)
   for (let y = 0; y < height; y += step) {
     await page.mouse.wheel(0, step)
     await sleep(pause)
+    height = await page.evaluate(() => document.documentElement.scrollHeight)
   }
   await waitForScrollIdle(page)
 }
@@ -155,9 +134,10 @@ export async function waitForScrollIdle(page: Page, timeout = 5000) {
     still = now === last ? still + 1 : 0
     last = now
   }
-  // ScrollTrigger scrubs trail the scroll by up to half a second.
-  await sleep(600)
 }
+
+/** The project this test runs in: desktop (1440x900), mobile (390x844) or no-webgl (1440x900). */
+export const project = () => test.info().project.name
 
 type RGBA = [number, number, number, number]
 
@@ -176,44 +156,4 @@ export function parseColor(input: string): RGBA {
   const channel = (s: string) => (s.endsWith('%') ? (parseFloat(s) / 100) * 255 : parseFloat(s))
   const alpha = parts[3] === undefined ? 1 : parts[3].endsWith('%') ? parseFloat(parts[3]) / 100 : parseFloat(parts[3])
   return [channel(parts[0]), channel(parts[1]), channel(parts[2]), alpha]
-}
-
-const luminance = ([r, g, b]: RGBA) => {
-  const lin = (c: number) => {
-    const s = c / 255
-    return s <= 0.03928 ? s / 12.92 : ((s + 0.055) / 1.055) ** 2.4
-  }
-  return 0.2126 * lin(r) + 0.7152 * lin(g) + 0.0722 * lin(b)
-}
-
-/**
- * WCAG 2 contrast ratio of `fg` drawn over an opaque `bg`. A translucent
- * foreground (white/50 and friends) is composited onto the background first,
- * which is how the browser paints it.
- */
-export function contrast(fg: string, bg: string): number {
-  const back = parseColor(bg)
-  const front = parseColor(fg)
-  const a = front[3]
-  const painted: RGBA = [
-    front[0] * a + back[0] * (1 - a),
-    front[1] * a + back[1] * (1 - a),
-    front[2] * a + back[2] * (1 - a),
-    1,
-  ]
-  const [hi, lo] = [luminance(painted), luminance(back)].sort((x, y) => y - x)
-  return (hi + 0.05) / (lo + 0.05)
-}
-
-/**
- * Saves a screenshot as `<CAPTURE_DIR>/<name>-<project>.png` (default
- * `test-results/captures`). This is how the 1440x900 / 390x844 before-and-after
- * sets are taken.
- */
-export async function capture(page: Page, name: string, { fullPage = false }: { fullPage?: boolean } = {}) {
-  const dir = process.env.CAPTURE_DIR ?? path.join('test-results', 'captures')
-  mkdirSync(dir, { recursive: true })
-  const file = path.join(dir, `${name}-${test.info().project.name}.png`)
-  await page.screenshot({ path: file, fullPage })
-  return file
 }

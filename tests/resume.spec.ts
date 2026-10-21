@@ -7,7 +7,7 @@ import { PAPER } from '@/components/resume/paper'
 import { collectConsole, parseColor } from './helpers'
 
 /**
- * The résumé builder and the server routes behind it (W9).
+ * The résumé builder and the server routes behind it.
  *
  * The e2e server runs with no RESUME_PIN, so nothing here can unlock the real
  * builder: the UI tests mock /api/resume/* with a fixture (never the real
@@ -96,7 +96,7 @@ test.describe('PIN gate', () => {
     const pin = page.getByLabel('PIN')
     await expect(pin).toBeVisible()
     // The gate does not take focus on arrival: the first Tab is the skip
-    // link, as on every route (chrome.spec walks Skip, main, then this field).
+    // link, as on every route (keyboard-walk.spec walks it from there).
     await expect(pin).not.toBeFocused()
     expect(await pin.evaluate((el) => parseFloat(getComputedStyle(el).fontSize))).toBeGreaterThanOrEqual(16)
     await expect(page.locator('main#main')).toHaveCount(1)

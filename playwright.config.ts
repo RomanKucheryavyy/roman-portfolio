@@ -14,8 +14,9 @@ const baseURL = `http://localhost:${PORT}`
 
 export default defineConfig({
   testDir: './tests',
-  // The home page boots a WebGL ocean under software rendering in CI, so give
-  // each test room; a hang still fails, just not instantly.
+  // The home page draws its curtain and its footer glass in WebGL, under
+  // software rendering in CI, so give each test room; a hang still fails,
+  // just not instantly.
   timeout: 90_000,
   expect: { timeout: 10_000 },
   fullyParallel: false,
@@ -57,8 +58,9 @@ export default defineConfig({
       },
     },
     {
-      // The hero ocean and the Spline phone both need WebGL. This project is
-      // the machine that has none: an old laptop, a locked-down browser.
+      // The curtain (kokonut's Drape Background) and the footer's fluted
+      // glass are WebGL. This project is the machine that has none: an old
+      // laptop, a locked-down browser. The page must still read in full.
       name: 'no-webgl',
       use: {
         ...devices['Desktop Chrome'],

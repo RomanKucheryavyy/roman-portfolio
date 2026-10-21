@@ -1,8 +1,10 @@
 import { test, expect } from '@playwright/test'
-import { readFileSync, readdirSync } from 'node:fs'
+import { existsSync, readFileSync, readdirSync, statSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
 import path from 'node:path'
-import { CERTIFICATIONS } from '@/lib/constants'
+import { CERTIFICATIONS, COMPOSITIONS, HIS_WORDS, PROJECTS as WORK, SITE, TECH_SKILLS } from '@/lib/constants'
+import { LINKS } from '@/lib/links'
+import * as content from '@/lib/content'
 import { RESUME_DATA } from '@/lib/resume-data'
 import {
   CURRENT_ROLE,
@@ -18,7 +20,9 @@ import { SITE_CARD, pageMetadata } from '@/lib/seo'
 import { RESUME_HREF, RESUME_PUBLIC } from '@/lib/routes'
 
 /**
- * The data layer, tested in Node alone: no browser, no server.
+ * The data layer, tested in Node alone: no browser, no server. The last
+ * block reads the build's output (run `npm run build` first, as the suite
+ * already requires) for anything private.
  */
 
 const ROOT = fileURLToPath(new URL('..', import.meta.url))
@@ -95,5 +99,97 @@ test.describe('links and head', () => {
   test('the résumé stays private by default', () => {
     expect(RESUME_PUBLIC).toBe(false)
     expect(RESUME_HREF).toBeNull()
+  })
+})
+
+test.describe('the Stage reads the records', () => {
+  test('content.ts is built from constants, site-facts and links, not typed again', () => {
+    expect(content.PROJECTS.map((p) => p.id)).toEqual(WORK.map((w) => w.id))
+    for (const [i, p] of content.PROJECTS.entries()) expect(p).toEqual({ ...WORK[i] })
+    expect(content.PRODUCTS).toEqual(COMPOSITIONS.map((c) => ({ ...c })))
+    expect(content.CERTIFICATIONS).toBe(CERTIFICATIONS)
+    expect(content.SKILLS).toBe(TECH_SKILLS)
+    expect(content.PERSON).toMatchObject({
+      name: SITE.name,
+      first: 'Roman',
+      last: 'Kucheryavyy',
+      tagline: HIS_WORDS.tagline,
+      manifesto: HIS_WORDS.manifesto,
+      about: HIS_WORDS.about,
+      links: LINKS,
+    })
+    expect(content.ROLES.map((r) => `${r.title} · ${r.company} · ${r.dates}`)).toEqual([
+      'Senior Technical Support Engineer · Salesforce · Apr 2026 – Present',
+      'Premier Technical Support Engineer · Salesforce · Nov 2023 – Apr 2026',
+      'Technical Support Engineer · MindTree · May 2021 – Nov 2023',
+    ])
+    const source = readFileSync(path.join(LIB, 'content.ts'), 'utf8')
+    expect(source, 'no description is typed into content.ts').not.toMatch(/Native Swift|licensed electrician|Platform Developer/)
+  })
+
+  test('linkLabel: the domain, "App Store", or the status of a piece with no link', () => {
+    const label = (id: string) => content.linkLabel(content.PROJECTS.find((p) => p.id === id)!)
+    expect(label('alongside-coffee')).toBe('alongsidecoffee.com')
+    expect(label('fubc-coffee-ios')).toBe('App Store')
+    expect(label('dtm-plumbing')).toBe('Launching soon')
+  })
+})
+
+test.describe('owner-fixed copy', () => {
+  // The same two descriptions scripts/check-protected.mjs guards in history.
+  test('the FUBC Coffee iOS description keeps "Apple Pay", and the Nelectric description is word for word', () => {
+    const description = (id: string) => WORK.find((w) => w.id === id)!.description
+    expect(description('fubc-coffee-ios')).toContain('Apple Pay')
+    expect(description('nelectric')).toBe(
+      'A licensed electrician in three languages. English, Ukrainian, and Russian side by side, a 60-second quote form wired to a real lead pipeline, and a private dashboard that tells the owner which calls the site actually earned.',
+    )
+  })
+})
+
+test.describe('the résumé stays private', () => {
+  /** Everything a visitor's browser can be sent: client chunks, prerendered pages and their payloads, public/. */
+  function publicFiles(): string[] {
+    const files: string[] = []
+    const walk = (dir: string, skip: (rel: string) => boolean = () => false) => {
+      if (!existsSync(dir)) return
+      for (const entry of readdirSync(dir)) {
+        const file = path.join(dir, entry)
+        const rel = path.relative(ROOT, file)
+        if (skip(rel)) continue
+        if (statSync(file).isDirectory()) walk(file, skip)
+        else files.push(file)
+      }
+    }
+    walk(path.join(ROOT, '.next', 'static'))
+    // The prerendered routes: their HTML, RSC payloads and bodies. Not the
+    // server's own code (page.js, the API routes), which never leaves it.
+    walk(path.join(ROOT, '.next', 'server', 'app'), (rel) => /[\\/]api([\\/]|$)|\.js(\.map)?$|\.nft\.json$/.test(rel))
+    walk(path.join(ROOT, 'public'))
+    return files
+  }
+
+  test('no public file carries the phone number, the support metrics or a résumé bullet', () => {
+    const files = publicFiles()
+    expect(files.length, 'the build has run').toBeGreaterThan(20)
+    const secrets = [
+      RESUME_DATA.phone,
+      RESUME_DATA.phone.replace(/\D/g, ''),
+      '802-6464',
+      'CSAT',
+      // With their words: the bare numbers turn up in the globe's map data.
+      '1,214 cases',
+      '4.9/5.0',
+      '119% of productivity',
+      RESUME_DATA.summary.slice(0, 60),
+      ...RESUME_DATA.experience.flatMap((job) => job.bullets.map((b) => b.slice(0, 60))),
+      ...RESUME_DATA.projects.flatMap((p) => p.bullets.map((b) => b.slice(0, 60))),
+    ]
+    const hits: string[] = []
+    for (const file of files) {
+      if (/\.(png|jpe?g|webp|avif|ico|woff2?|ttf)$/.test(file)) continue
+      const text = readFileSync(file, 'utf8')
+      for (const secret of secrets) if (text.includes(secret)) hits.push(`${path.relative(ROOT, file)}: ${secret.slice(0, 40)}`)
+    }
+    expect(hits).toEqual([])
   })
 })

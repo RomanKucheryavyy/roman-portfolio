@@ -1,10 +1,9 @@
 import { expect, test, type Page } from '@playwright/test'
-import { LINKS } from '@/lib/constants'
-import { collectConsole, gotoHome, waitForChrome } from './helpers'
+import { collectConsole, gotoHome } from './helpers'
 
 /**
- * The keyboard-only pass, as a test (W12). Tab through each page from the top
- * the way a keyboard user does, and at every stop check what they would see:
+ * The keyboard-only pass, as a test. Tab through each page from the top the
+ * way a keyboard user does, and at every stop check what they would see:
  *
  * - the first stop is "Skip to content";
  * - the focused element is not transparent (no ancestor at opacity 0) and
@@ -15,24 +14,15 @@ import { collectConsole, gotoHome, waitForChrome } from './helpers'
  *   indicator is actually drawn;
  * - it has a non-empty accessible name;
  * - once the page has scrolled to it, it is inside the viewport and not
- *   under the fixed nav, nor painted over by anything else on the page.
+ *   under the Stage's fixed top bar, nor painted over by anything else.
  *
- * On the home page the walk must reach Send ("Send message"), the end of the
- * page's one job. Every other route is walked until focus leaves the page.
- * It runs in all three projects: desktop and no-webgl at 1440, mobile at 390.
+ * On the home page the walk must pass Send, the end of the page's one job,
+ * and goes on to the end of the footer. Every route is walked until focus
+ * leaves the page. It runs in all three projects: desktop and no-webgl at
+ * 1440, mobile at 390.
  */
 
 const MAX_STOPS = 250
-
-/**
- * The one known gap, and it is not ours to close: the hero's GitHub and
- * LinkedIn icon links have no accessible name. Naming them is two attributes
- * in Hero.tsx, which is frozen until Roman approves W10 item 4a (the same two
- * nodes are the only entries left in tests/a11y-baseline.json). Every other
- * check still applies to them; only the name is reported instead of failed.
- * Delete this the day they get their names.
- */
-const OWNER_GATED_UNNAMED = `#hero a[href="${LINKS.github}"], #hero a[href="${LINKS.linkedin}"]`
 
 interface Look {
   outlineStyle: string
@@ -106,25 +96,23 @@ async function readStop(page: Page, n: number): Promise<Stop | null> {
     for (let node: Element | null = el; node; node = node.parentElement) opacity *= parseFloat(getComputedStyle(node).opacity)
     const r = el.getBoundingClientRect()
     const inViewport = r.width > 0 && r.height > 0 && r.bottom > 0 && r.right > 0 && r.top < innerHeight && r.left < innerWidth
-    // Under the fixed nav: the middle of the element's part inside the
-    // viewport belongs to the nav. (The nav's own items are, of course, fine.)
-    const nav = document.querySelector('nav')
+    // Under the fixed top bar: the middle of the element's part inside the
+    // viewport belongs to the bar. (The bar's own items are, of course, fine.)
+    const nav = Array.from(document.querySelectorAll('header')).find((h) => getComputedStyle(h).position === 'fixed') ?? null
     const [left, right] = [Math.max(r.left, 0), Math.min(r.right, innerWidth)]
     const [top0, bottom] = [Math.max(r.top, 0), Math.min(r.bottom, innerHeight)]
     const hit = document.elementFromPoint(Math.min((left + right) / 2, innerWidth - 1), Math.min((top0 + bottom) / 2, innerHeight - 1))
     const underNav = !!nav && !nav.contains(el) && !!hit && nav.contains(hit)
-    // Painted over. elementFromPoint skips inert subtrees, so the hit above
-    // goes straight through the deck's inert back cards to whatever they
-    // cover: the deck's Previous button sat under them, unseen, and passed.
-    // For this one read the page is not inert anywhere, so the hit is what is
-    // drawn on top. The attribute goes back before the frame ends.
+    // Painted over. elementFromPoint skips inert subtrees, so for this one
+    // read the page is not inert anywhere and the hit is what is drawn on
+    // top. The attribute goes back before the frame ends.
     const inert = Array.from(document.querySelectorAll<HTMLElement>('[inert]'))
     for (const node of inert) node.inert = false
     const top = document.elementFromPoint(Math.min((left + right) / 2, innerWidth - 1), Math.min((top0 + bottom) / 2, innerHeight - 1))
     for (const node of inert) node.inert = true
     const coveredBy =
       top && !el.contains(top) && !top.contains(el) && !(nav && nav.contains(top))
-        ? `${top.tagName.toLowerCase()}${top.closest('[data-work]') ? ` in [data-work="${top.closest('[data-work]')!.getAttribute('data-work')}"]` : ''}`
+        ? `${top.tagName.toLowerCase()}${top.closest('section[id]') ? ` in #${top.closest('section[id]')!.id}` : ''}`
         : null
     const name = el.getAttribute('aria-label') || (el.textContent ?? '').trim().replace(/\s+/g, ' ').slice(0, 40)
     return {
@@ -192,17 +180,13 @@ async function walk(page: Page, done: (stop: Stop) => boolean = () => false) {
     await page.keyboard.press('Tab')
     let stop = await readStop(page, n)
     if (!stop) break // focus left the document: the walk is over
-    // Give the page (Lenis, a reveal) a moment to bring the element into view.
+    // Give the page (a smooth scroll, an entrance) a moment to bring the element into view.
     for (let tries = 0; tries < 15 && stop && (!stop.inViewport || stop.underNav || stop.coveredBy || stop.opacity === 0); tries++) {
       await page.waitForTimeout(100)
       stop = await readStop(page, n)
     }
     if (!stop) break
-    if (await page.locator(':focus').evaluate((el, gated) => el.matches(gated), OWNER_GATED_UNNAMED)) {
-      test.info().annotations.push({ type: 'owner-gated', description: `stop ${n}: ${stop.what} has no name (W10 item 4a)` })
-    } else {
-      await expect(page.locator(':focus'), `stop ${n}: ${stop.what}`).toHaveAccessibleName(/\S/)
-    }
+    await expect(page.locator(':focus'), `stop ${n}: ${stop.what}`).toHaveAccessibleName(/\S/)
     stops.push(stop)
     if (n > 1 && stop.what.startsWith('a "Skip to content"')) break // wrapped round
     if (done(stop)) break
@@ -210,17 +194,17 @@ async function walk(page: Page, done: (stop: Stop) => boolean = () => false) {
   return stops
 }
 
-function check(stops: Stop[], unfocused: Record<string, Look>) {
+function check(stops: Stop[], unfocused: Record<string, Look>, { fromTop = true }: { fromTop?: boolean } = {}) {
   expect(stops.length, 'the walk found something to focus').toBeGreaterThan(0)
   test.info().annotations.push({ type: 'stops', description: `${stops.length}: ${stops.at(-1)!.what}` })
-  expect(stops[0].what, 'the first stop').toBe('a "Skip to content"')
+  if (fromTop) expect(stops[0].what, 'the first stop').toBe('a "Skip to content"')
   const problems: string[] = []
   for (const stop of stops) {
     const where = `stop ${stop.n}: ${stop.what}`
     if (!(stop.opacity > 0)) problems.push(`${where} is transparent (opacity ${stop.opacity})`)
     if (stop.visibility === 'hidden') problems.push(`${where} is visibility:hidden`)
     if (!stop.inViewport) problems.push(`${where} is outside the viewport`)
-    if (stop.underNav) problems.push(`${where} is under the fixed nav`)
+    if (stop.underNav) problems.push(`${where} is under the fixed top bar`)
     if (stop.coveredBy) problems.push(`${where} is painted over by ${stop.coveredBy}`)
     if (indicatorOf(stop.focused, unfocused[String(stop.n)]).length === 0) problems.push(`${where} has no visible focus indicator`)
   }
@@ -228,23 +212,44 @@ function check(stops: Stop[], unfocused: Record<string, Look>) {
 }
 
 test.describe('keyboard walk', () => {
-  test('home: from the skip link to Send, every stop visible, named and in view', async ({ page }) => {
+  test('home: from the skip link to the end of the footer, then Send, every stop visible, named and in view', async ({ page }) => {
+    test.setTimeout(240_000)
     const log = collectConsole(page)
     await gotoHome(page)
-    await waitForChrome(page)
-    const stops = await walk(page, (stop) => stop.what.endsWith('"Send message"'))
+    const stops = await walk(page)
     const unfocused = await readUnfocused(page)
     check(stops, unfocused)
-    expect(stops.at(-1)!.what, 'the walk reaches Send').toMatch(/"Send message"$/)
+    expect(stops.at(-1)!.what, 'the walk ends in the footer').toBe('a "Email"')
+    // The message box's three fields are on the way.
+    for (const field of [/^input#c-name /, /^input#c-email /, /^textarea.* "Message"$/]) {
+      expect(stops.some((s) => field.test(s.what)), String(field)).toBe(true)
+    }
+
+    // Send is disabled until the box holds a name, an address and a message,
+    // so the empty page's walk passes it by. Filled in, it is the stop after
+    // the message. (A message the box has no suggestion for, so Tab moves on
+    // rather than accepting one.)
+    const box = page.locator('#contact form')
+    await box.getByLabel('Name', { exact: true }).fill('Keyboard')
+    await box.getByLabel('Email', { exact: true }).fill('keys@example.com')
+    const message = box.getByRole('textbox', { name: 'Message', exact: true })
+    await message.fill('Hello there. I have a question about a project.')
+    await page.waitForTimeout(800)
+    await message.focus()
+    await page.keyboard.press('Tab')
+    const send = await readStop(page, 900)
+    expect(send?.what).toBe('button "Send"')
+    await expect(page.locator(':focus')).toHaveAccessibleName('Send')
+    check([send!], await readUnfocused(page), { fromTop: false })
     log.expectClean()
   })
 
-  for (const route of ['/works', '/colophon', '/resume', '/does-not-exist']) {
+  for (const route of ['/resume', '/does-not-exist']) {
     test(`${route}: every stop visible, named and in view`, async ({ page }) => {
       const log = collectConsole(page, route === '/does-not-exist' ? [/status of 404/] : [])
       await page.goto(route)
       await expect(page.locator('main#main')).toHaveCount(1)
-      await waitForChrome(page)
+      await page.waitForTimeout(500)
       const stops = await walk(page)
       const unfocused = await readUnfocused(page)
       check(stops, unfocused)
