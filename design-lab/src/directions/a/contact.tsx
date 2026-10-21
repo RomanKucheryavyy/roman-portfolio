@@ -54,7 +54,9 @@ function suggest(text: string): string | null {
 }
 
 const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-const ROW = 'flex items-center gap-3 px-4 transition-colors focus-within:bg-white/[0.025]'
+// The field being typed in shows a tint and a bar down its left edge.
+const FOCUS = 'transition-colors focus-within:bg-white/[0.05] focus-within:shadow-[inset_2px_0_0_var(--color-zinc-300)]'
+const ROW = `flex items-center gap-3 px-4 ${FOCUS}`
 const FIELD = 'h-11 border-0 bg-transparent px-0 shadow-none focus-visible:ring-0 dark:bg-transparent'
 
 export function Contact() {
@@ -97,7 +99,12 @@ export function Contact() {
       index={6}
       kicker="Say hello"
       title="Contact"
-      intro="Write a note below, or reach me directly. Start typing and the message box offers how your sentence could go on; Tab takes it."
+      intro="Write a note below, or reach me directly. Start typing and the message box suggests how your sentence could go on; press Tab, or tap Accept, to take it."
+      aside
+      // Where the rail shows, the last section is a screen tall, so the rail
+      // can bring its heading up like every other's (and its tick does not
+      // crowd About's at the end of the rail).
+      className="lg:pointer-fine:min-h-svh"
     >
       <ul className="mb-10 grid border-t sm:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)_minmax(0,1fr)] sm:gap-3 sm:border-t-0">
         {links.map((l) => {
@@ -161,7 +168,8 @@ export function Contact() {
           </div>
         </fieldset>
 
-        <div inert={sent} className={sent ? 'opacity-60' : undefined}>
+        {/* The accept bar the box keeps faded out while there is no suggestion is taken out of the accessibility tree too. */}
+        <div inert={sent} className={`${FOCUS} [&_.opacity-0]:invisible ${sent ? 'opacity-60' : ''}`}>
           <AIAutocomplete
             key={sent ? 'sent' : 'draft'}
             label="Message"
