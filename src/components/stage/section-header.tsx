@@ -1,4 +1,5 @@
 import { cn } from '@/lib/utils'
+import { DISPLAY, INTRO, KICKER } from './look'
 
 /** The one section header: a small act line, an h2, an optional intro. */
 export function SectionHeader({
@@ -18,17 +19,17 @@ export function SectionHeader({
 }) {
   return (
     <div className={cn('max-w-3xl', className)}>
-      <p className="text-xs font-medium uppercase tracking-[0.22em] text-muted-foreground">
+      <p className={KICKER}>
         <span className="text-[var(--stage-accent-ink)]">{act}</span>
         <span aria-hidden="true" className="mx-2">
           ·
         </span>
         {kicker}
       </p>
-      <h2 id={id} className="mt-5 text-[2.5rem] font-bold leading-[0.95] tracking-[-0.045em] text-balance md:text-7xl">
+      <h2 id={id} className={`mt-5 ${DISPLAY}`}>
         {title}
       </h2>
-      {intro ? <p className="mt-6 max-w-xl text-base leading-relaxed text-muted-foreground md:text-lg">{intro}</p> : null}
+      {intro ? <p className={`mt-6 ${INTRO}`}>{intro}</p> : null}
     </div>
   )
 }

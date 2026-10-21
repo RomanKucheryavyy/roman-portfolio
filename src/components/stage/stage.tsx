@@ -16,6 +16,7 @@ import { Work } from './work'
 import { Products } from './products'
 import { Experience } from './experience'
 import { Credentials } from './credentials'
+import { STAGE_FOCUS, STAGE_STYLE } from './look'
 
 const EMAIL_HREF = `mailto:${PERSON.links.email}`
 
@@ -257,10 +258,6 @@ function Footer() {
 
 /* --------------------------------------------------------------- stage -- */
 
-/** One focus ring for every link and button on the page: the violet ink, clear of the shape. */
-const FOCUS =
-  '[&_:is(a,button):focus-visible]:outline-2 [&_:is(a,button):focus-visible]:outline-solid [&_:is(a,button):focus-visible]:outline-offset-4 [&_:is(a,button):focus-visible]:outline-[var(--stage-accent-ink)]'
-
 /**
  * Direction C, "Stage": the page opens on a curtain, then the programme
  * (client work, own products), the career, the credentials, the performer in
@@ -270,19 +267,9 @@ const FOCUS =
 export function Stage({ children }: { children?: React.ReactNode }) {
   return (
     <div
-      className={cn('relative min-h-svh overflow-x-clip bg-background font-sans text-foreground antialiased', FOCUS)}
-      style={
-        {
-          // Stage black for the page (the About block's own #060606, so the
-          // sections meet without a seam), and the one accent (the violet
-          // wash that block's glow already uses), as a fill and a legible ink.
-          // --ring lifts shadcn's focus ring from dark grey to near white.
-          '--background': '#060606',
-          '--stage-accent': '#16106d',
-          '--stage-accent-ink': '#9d94ff',
-          '--ring': 'oklch(0.95 0 0)',
-        } as React.CSSProperties
-      }
+      // Stage black, the violet accent and the page's one focus ring (look.ts).
+      className={cn('relative min-h-svh overflow-x-clip bg-background font-sans text-foreground antialiased', STAGE_FOCUS)}
+      style={STAGE_STYLE}
     >
       <TopBar />
       <main id="main" tabIndex={-1} className="outline-none">

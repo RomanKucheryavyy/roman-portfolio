@@ -1,29 +1,36 @@
 'use client'
 
 import type { CSSProperties } from 'react'
+import { Geist } from 'next/font/google'
 
 /**
  * The last resort, when the root layout itself throws. It replaces the whole
- * document, so globals.css, the fonts and the tokens may not be there: every
- * style is inline, in the same values (ink-meta is white at 0.5, the outline
- * pill is a 0.25 white border, the accent runs from spectrum purple to red).
+ * document, so globals.css and the layout's fonts may not be there: it loads
+ * Geist itself (next/font, self-hosted like the layout's), and every style is
+ * inline, in the Stage's values (look.ts and the shadcn dark theme): the
+ * #060606 black, the violet ink, the muted grey, the hero's two pill buttons
+ * and the page's violet focus ring.
  */
+const geist = Geist({ subsets: ['latin'] })
 
-const MONO = 'ui-monospace, SFMono-Regular, Menlo, Consolas, monospace'
+const INK = 'oklch(0.985 0 0)'
+const MUTED = 'oklch(0.708 0 0)'
+const VIOLET = '#9d94ff'
 
 const PILL: CSSProperties = {
   display: 'inline-flex',
   alignItems: 'center',
-  gap: 6,
+  justifyContent: 'center',
+  height: 44,
+  padding: '0 24px',
   borderRadius: 9999,
-  border: '1px solid rgba(255,255,255,0.25)',
-  background: 'transparent',
-  color: 'rgba(255,255,255,0.7)',
-  padding: '8px 16px',
-  font: `12px/16px ${MONO}`,
+  font: `500 14px/20px ${geist.style.fontFamily}`,
   textDecoration: 'none',
   cursor: 'pointer',
+  whiteSpace: 'nowrap',
 }
+const SOLID: CSSProperties = { ...PILL, border: '1px solid transparent', background: 'oklch(0.922 0 0)', color: 'oklch(0.205 0 0)' }
+const OUTLINE: CSSProperties = { ...PILL, border: '1px solid oklch(1 0 0 / 15%)', background: 'oklch(1 0 0 / 4.5%)', color: INK }
 
 export default function GlobalError({
   retry,
@@ -34,56 +41,54 @@ export default function GlobalError({
   reset: () => void
 }) {
   return (
-    <html lang="en" style={{ background: '#000', colorScheme: 'dark' }}>
+    <html lang="en" style={{ background: '#060606', colorScheme: 'dark' }}>
       <body
-        className="bg-black text-white"
         style={{
           margin: 0,
           minHeight: '100svh',
           display: 'flex',
           alignItems: 'center',
-          background: '#000',
-          color: '#fff',
-          fontFamily: 'system-ui, -apple-system, "Segoe UI", sans-serif',
+          background: '#060606',
+          color: INK,
+          fontFamily: geist.style.fontFamily,
+          WebkitFontSmoothing: 'antialiased',
         }}
       >
         <title>Something broke — Roman Kucheryavyy</title>
-        <main id="main" style={{ width: '100%', maxWidth: '72rem', margin: '0 auto', padding: '0 clamp(1.5rem, 5vw, 4rem)' }}>
-          <p
+        {/* The one rule inline styles cannot say: the focus ring. */}
+        <style>{`a:focus-visible,button:focus-visible{outline:2px solid ${VIOLET};outline-offset:4px}`}</style>
+        <main id="main" style={{ width: '100%', maxWidth: 1280, margin: '0 auto', padding: '96px clamp(16px, 4vw, 48px)', boxSizing: 'border-box' }}>
+          <p style={{ margin: 0, fontSize: 12, lineHeight: '16px', fontWeight: 500, letterSpacing: '0.22em', textTransform: 'uppercase', color: MUTED }}>
+            <span style={{ color: VIOLET }}>Error</span>
+            <span aria-hidden="true" style={{ margin: '0 8px' }}>
+              ·
+            </span>
+            Something broke
+          </p>
+          <h1
             style={{
-              margin: '0 0 12px',
-              font: `12px/16px ${MONO}`,
-              letterSpacing: '0.3em',
-              textTransform: 'uppercase',
-              color: 'rgba(255,255,255,0.5)',
+              margin: '20px 0 0',
+              maxWidth: '48rem',
+              fontSize: 'clamp(2.5rem, 7vw, 4.5rem)',
+              lineHeight: 0.95,
+              fontWeight: 700,
+              letterSpacing: '-0.045em',
+              textWrap: 'balance',
             }}
           >
-            {'// error'}
-          </p>
-          <h1 style={{ margin: 0, fontSize: 'clamp(2.25rem, 6vw, 3.75rem)', lineHeight: 1.1, fontWeight: 700, letterSpacing: '-0.025em' }}>
-            Something{' '}
-            <span
-              style={{
-                background: 'linear-gradient(90deg, #af52de, #ff2d55)',
-                WebkitBackgroundClip: 'text',
-                backgroundClip: 'text',
-                color: 'transparent',
-              }}
-            >
-              broke.
-            </span>
+            The page failed to load.
           </h1>
-          <p role="alert" style={{ margin: '16px 0 0', maxWidth: '32rem', fontSize: 16, lineHeight: '26px', color: 'rgba(255,255,255,0.5)' }}>
-            The page failed to load. Try it again, or head back to the top.
+          <p role="alert" style={{ margin: '24px 0 0', maxWidth: '36rem', fontSize: 18, lineHeight: 1.625, color: MUTED }}>
+            Try it again, or head back to the home page.
           </p>
-          <div style={{ marginTop: 32, display: 'flex', flexWrap: 'wrap', gap: 12 }}>
-            <button type="button" style={PILL} onClick={() => (retry ?? reset)()}>
+          <div style={{ marginTop: 44, display: 'flex', flexWrap: 'wrap', gap: 12 }}>
+            <button type="button" style={SOLID} onClick={() => (retry ?? reset)()}>
               Try again
             </button>
             {/* A full page load on purpose: the app around this page is what failed. */}
             {/* eslint-disable-next-line @next/next/no-html-link-for-pages */}
-            <a href="/" style={PILL}>
-              <span aria-hidden="true">←</span> Back to the top
+            <a href="/" style={OUTLINE}>
+              Back to the home page
             </a>
           </div>
         </main>
