@@ -1,17 +1,18 @@
 'use client'
 
 import type { CSSProperties } from 'react'
-import { Geist } from 'next/font/google'
 
 /**
  * The last resort, when the root layout itself throws. It replaces the whole
- * document, so globals.css and the layout's fonts may not be there: it loads
- * Geist itself (next/font, self-hosted like the layout's), and every style is
- * inline, in the Stage's values (look.ts and the shadcn dark theme): the
- * #060606 black, the violet ink, the muted grey, the hero's two pill buttons
- * and the page's violet focus ring.
+ * document, so globals.css may not be there: every style is inline, in the
+ * Stage's values (look.ts and the shadcn dark theme): the #060606 black, the
+ * violet ink, the muted grey, the hero's two pill buttons and the page's
+ * violet focus ring. The type asks for the layout's Geist by name and falls
+ * back to the platform's sans. (Loading Geist here through next/font would
+ * preload its stylesheet on every page, unused, for a page that almost never
+ * renders.)
  */
-const geist = Geist({ subsets: ['latin'] })
+const SANS = 'Geist, "Geist Fallback", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif'
 
 const INK = 'oklch(0.985 0 0)'
 const MUTED = 'oklch(0.708 0 0)'
@@ -24,7 +25,7 @@ const PILL: CSSProperties = {
   height: 44,
   padding: '0 24px',
   borderRadius: 9999,
-  font: `500 14px/20px ${geist.style.fontFamily}`,
+  font: `500 14px/20px ${SANS}`,
   textDecoration: 'none',
   cursor: 'pointer',
   whiteSpace: 'nowrap',
@@ -50,7 +51,7 @@ export default function GlobalError({
           alignItems: 'center',
           background: '#060606',
           color: INK,
-          fontFamily: geist.style.fontFamily,
+          fontFamily: SANS,
           WebkitFontSmoothing: 'antialiased',
         }}
       >
