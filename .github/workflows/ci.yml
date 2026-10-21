@@ -26,7 +26,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          # Full history: build-SHA and commit-citation checks resolve real commits.
+          # Full history: check:protected walks every commit since abb0023.
           fetch-depth: 0
 
       - uses: actions/setup-node@v4
@@ -45,7 +45,7 @@ jobs:
       - run: npm ci
       - run: npm run typecheck
       - run: npm run lint
-      - name: Protected files (hero, ocean, deck physics, wheel geometry)
+      - name: Owner-fixed copy (the FUBC Coffee iOS and Nelectric descriptions)
         run: npm run check:protected
       - run: npm run build
       - name: Bundle budget
