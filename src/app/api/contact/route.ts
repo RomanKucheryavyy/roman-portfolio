@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
-import { SITE } from '@/lib/constants'
-import { contactFrom, contactTo, netlifyOrigin, resendApiKey } from '@/lib/env'
+import { oneLine, ownerEmail, receiptEmail, type ContactMessage, type Email } from '@/lib/contact-email'
+import { contactFrom, contactTo, netlifyOrigin, ownerAddress, receiptsEnabled, resendApiKey } from '@/lib/env'
 import { clientIp, rateLimited, LIMITS } from '@/lib/rate-limit'
 
 /**
@@ -25,6 +25,29 @@ import { clientIp, rateLimited, LIMITS } from '@/lib/rate-limit'
  * If neither delivers, the route returns a 502 rather than a false success, and
  * the client falls back to opening the visitor's mail app with the message
  * pre-filled. Nothing pretends to have succeeded.
+ *
+ * Once Resend has emailed the message to Roman, the visitor gets a receipt
+ * by Resend, when receipts are on (src/lib/env.ts receiptsEnabled(): Resend
+ * configured, and CONTACT_FROM on a domain of Roman's own, not resend.dev).
+ * Only then: the receipt says the message reached him, and a message that
+ * only Netlify Forms took sits in the dashboard until he looks. It repeats
+ * nothing they typed but a first name (src/lib/contact-email.ts and
+ * src/lib/first-name.ts say why), replies to it reach Roman, and it is
+ * marked as automatic, so out-of-office replies don't answer it. Each
+ * address gets at most one receipt an hour (LIMITS.receipt), so the form
+ * can't be used to fill a stranger's inbox from Roman's domain. A receipt
+ * that fails or is skipped is logged and never fails the request: the
+ * message itself went.
+ *
+ * The contract:
+ *   200 {ok: true, delivered: ('email' | 'forms')[], receipt: boolean}
+ *       delivered names the channels that took the message, never empty;
+ *       receipt is true only when Resend accepted the visitor's receipt
+ *       (so never without 'email' in delivered).
+ *   200 {ok: true, delivered: []}   honeypot or too fast: binned, unsent
+ *   400 {error: 'invalid_body' | 'missing_fields' | 'invalid_email'}
+ *   429 {error: 'rate_limited'}
+ *   502 {error: 'delivery_failed'}  no channel delivered
  */
 
 export const runtime = 'nodejs'
@@ -33,53 +56,84 @@ export const dynamic = 'force-dynamic'
 const MAX = { name: 100, email: 200, message: 5000 } as const
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/
 
-const esc = (s: string) =>
-  s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;')
+/**
+ * How long each outside call may take. Resend and Netlify answer in well
+ * under a second; these only stop a hung call from holding the request until
+ * the function itself times out, which would fail a message that had already
+ * gone. The two channels run side by side on the longer wait, the receipt
+ * follows on the shorter, and the whole stays under ten seconds.
+ */
+const TIMEOUT = { channel: 6000, receipt: 3000 } as const
 
-/** Strips CR/LF so a crafted name can't inject extra mail headers. */
-const oneLine = (s: string) => s.replace(/[\r\n]+/g, ' ').trim()
-
-interface Payload {
-  name: string
-  email: string
-  message: string
-}
-
-/** A real email, via Resend's REST API — no SDK, same as the other sites. */
-async function sendViaResend({ name, email, message }: Payload): Promise<boolean> {
-  const key = resendApiKey()
-  if (!key) return false
-
-  // CONTACT_FROM: Resend's shared sender only delivers to the account owner's
-  // own address. Verify romankucheryavyy.com in Resend to use the domain.
-  const from = contactFrom()
-
+/**
+ * One email through Resend's REST API (no SDK, same as the other sites).
+ * True when Resend accepted it. `what` names it in the logs.
+ */
+async function resend(
+  what: string,
+  key: string,
+  email: Email & { to: string[]; replyTo: string; headers?: Record<string, string> },
+  timeoutMs: number,
+): Promise<boolean> {
   try {
     const res = await fetch('https://api.resend.com/emails', {
       method: 'POST',
       headers: { Authorization: `Bearer ${key}`, 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        from,
-        to: contactTo(),
-        reply_to: email,
-        subject: `Portfolio — ${oneLine(name)}`,
-        text: `${message}\n\n— ${name} <${email}>\nSent from ${SITE.url}`,
-        html: `<div style="font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:14px;line-height:1.6;color:#111">
-  <p style="margin:0 0 4px"><strong>${esc(name)}</strong> &lt;<a href="mailto:${esc(email)}">${esc(email)}</a>&gt;</p>
-  <p style="margin:0 0 16px;color:#666;font-size:12px">via ${esc(SITE.url)}</p>
-  <div style="white-space:pre-wrap;border-left:3px solid #ddd;padding-left:14px">${esc(message)}</div>
-</div>`,
+        from: contactFrom(),
+        to: email.to,
+        reply_to: email.replyTo,
+        subject: oneLine(email.subject),
+        html: email.html,
+        text: email.text,
+        ...(email.headers ? { headers: email.headers } : {}),
       }),
+      signal: AbortSignal.timeout(timeoutMs),
     })
     if (!res.ok) {
-      console.error('resend rejected the message:', res.status, await res.text().catch(() => ''))
+      console.error(`resend rejected the ${what}:`, res.status, await res.text().catch(() => ''))
       return false
     }
     return true
   } catch (err) {
-    console.error('resend request failed:', err)
+    console.error(`resend request for the ${what} failed:`, err)
     return false
   }
+}
+
+/** The message, to Roman, with the visitor as reply-to. */
+async function sendViaResend(payload: ContactMessage, sentAt: Date): Promise<boolean> {
+  const key = resendApiKey()
+  if (!key) return false
+  // CONTACT_FROM: Resend's shared sender only delivers to the account owner's
+  // own address. Verify romankucheryavyy.com in Resend to use the domain.
+  return resend('message', key, { ...ownerEmail(payload, sentAt), to: contactTo(), replyTo: payload.email }, TIMEOUT.channel)
+}
+
+/**
+ * Marks the receipt as sent by a program (RFC 3834), so autoresponders and
+ * Exchange's out-of-office replies leave it alone instead of answering it to
+ * Roman's reply-to. The email to Roman goes without: it is a person's message.
+ */
+const AUTOMATIC = { 'Auto-Submitted': 'auto-generated', 'X-Auto-Response-Suppress': 'OOF, AutoReply' }
+
+/**
+ * The visitor's receipt, with Roman as reply-to. Only the name goes into it
+ * (receiptEmail takes nothing else, and keeps only a first name that passes
+ * firstName()'s rule), so the form can't be used to send a stranger someone
+ * else's words. One an hour per address, counted only for receipts that would
+ * actually go: the per-IP limit alone starts over with every new IP. Like
+ * every limit in src/lib/rate-limit.ts it is kept per server instance, so it
+ * trims a burst rather than promising a hard cap.
+ */
+async function sendReceipt({ name, email }: ContactMessage): Promise<boolean> {
+  const key = resendApiKey()
+  if (!key || !receiptsEnabled()) return false
+  if (rateLimited(email.toLowerCase(), LIMITS.receipt)) {
+    console.warn('contact: receipt skipped, this address had one within the hour')
+    return false
+  }
+  return resend('receipt', key, { ...receiptEmail(name), to: [email], replyTo: ownerAddress(), headers: AUTOMATIC }, TIMEOUT.receipt)
 }
 
 /**
@@ -94,7 +148,7 @@ async function sendViaResend({ name, email, message }: Payload): Promise<boolean
  * is enabled, or the parser never sees __forms.html and this POST falls
  * through to the Next handler as a 404.
  */
-async function recordInNetlifyForms({ name, email, message }: Payload): Promise<boolean> {
+async function recordInNetlifyForms({ name, email, message }: ContactMessage): Promise<boolean> {
   // Netlify sets URL/DEPLOY_PRIME_URL; nothing else does. Without one of them we
   // are not on Netlify, and there is no form handler to post to — posting to a
   // local /__forms.html would just get the static file back and read as success.
@@ -106,6 +160,7 @@ async function recordInNetlifyForms({ name, email, message }: Payload): Promise<
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
       body: new URLSearchParams({ 'form-name': 'contact', name, email, message }).toString(),
       redirect: 'manual',
+      signal: AbortSignal.timeout(TIMEOUT.channel),
     })
     // Netlify answers a handled submission with a 2xx or a redirect to the
     // success page. A 405 means the form was never registered at build time.
@@ -125,12 +180,15 @@ export async function POST(req: Request) {
   }
 
   const str = (v: unknown) => (typeof v === 'string' ? v.trim() : '')
-  const name = str(body.name).slice(0, MAX.name)
-  const email = str(body.email).slice(0, MAX.email)
+  const name = oneLine(str(body.name)).slice(0, MAX.name)
+  const email = oneLine(str(body.email)).slice(0, MAX.email)
   const message = str(body.message).slice(0, MAX.message)
 
   // Honeypot and too-fast submissions get a 200 and go in the bin. A 4xx would
-  // tell a bot exactly which check it tripped.
+  // tell a bot exactly which check it tripped. elapsedMs is the client's own
+  // word, so the timing check only stops a bot that reports how fast it was:
+  // one that leaves it out, or sends a plausible number, gets through. That is
+  // one reason the receipt has a limit of its own, per address.
   const elapsedMs = typeof body.elapsedMs === 'number' ? body.elapsedMs : Number.POSITIVE_INFINITY
   if (str(body.botField) || elapsedMs < 1500) {
     return NextResponse.json({ ok: true, delivered: [] })
@@ -147,11 +205,12 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: 'rate_limited' }, { status: 429 })
   }
 
-  const payload: Payload = { name: oneLine(name), email: oneLine(email), message }
+  const payload: ContactMessage = { name, email, message }
+  const sentAt = new Date()
 
   // Both channels run together — one failing must not delay or block the other.
   const [emailed, recorded] = await Promise.all([
-    sendViaResend(payload),
+    sendViaResend(payload, sentAt),
     recordInNetlifyForms(payload),
   ])
 
@@ -168,5 +227,9 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: 'delivery_failed' }, { status: 502 })
   }
 
-  return NextResponse.json({ ok: true, delivered })
+  // Only once Resend has taken the message to Roman: a receipt for a message
+  // that went nowhere, or only into the Netlify dashboard, would overstate it.
+  const receipt = emailed ? await sendReceipt(payload) : false
+
+  return NextResponse.json({ ok: true, delivered, receipt })
 }

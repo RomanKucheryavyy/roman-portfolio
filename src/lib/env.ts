@@ -90,11 +90,42 @@ export function contactTo(): string[] {
 }
 
 /**
- * CONTACT_FROM. Resend's shared sender only delivers to the Resend account's
- * own address; verify romankucheryavyy.com in Resend to send from the domain.
+ * CONTACT_FROM, the sender of both emails: the message to Roman and the
+ * visitor's receipt. Resend's shared sender only delivers to the Resend
+ * account's own address, so it can carry the message to Roman but not a
+ * receipt; verify romankucheryavyy.com in Resend and set an address on it.
  */
 export function contactFrom(): string {
   return read('CONTACT_FROM') ?? 'Portfolio <onboarding@resend.dev>'
+}
+
+/** The address in a `Name <address>` entry, or the entry itself when it is bare. */
+const bareAddress = (entry: string) => entry.match(/<([^<>]+)>\s*$/)?.[1].trim() ?? entry.trim()
+const ADDRESS_RULE = new RegExp(`^${ADDRESS}$`)
+/** Resend's shared sender, which delivers only to the Resend account's own address. */
+const SHARED_SENDER = /(^|\.)resend\.dev$/i
+
+/**
+ * Roman's own address, bare: CONTACT_TO's first entry, or the site's address
+ * when CONTACT_TO is unset or malformed. The visitor's receipt sets it as
+ * reply_to, so answering the receipt reaches him.
+ */
+export function ownerAddress(): string {
+  return bareAddress(contactTo()[0])
+}
+
+/**
+ * Whether a visitor gets a receipt for their message: Resend is configured
+ * and CONTACT_FROM is an address on a domain of Roman's own (one verified in
+ * Resend). From Resend's shared sender (anything @resend.dev) a receipt to
+ * anyone but the Resend account's owner would be refused, so there are none
+ * until the domain is verified and CONTACT_FROM moves onto it.
+ */
+export function receiptsEnabled(): boolean {
+  if (!resendApiKey()) return false
+  const from = bareAddress(contactFrom())
+  if (!ADDRESS_RULE.test(from)) return false
+  return !SHARED_SENDER.test(from.slice(from.lastIndexOf('@') + 1))
 }
 
 /**
@@ -112,6 +143,8 @@ export interface FeatureReport {
   /** The contact form's working delivery channels. None: every visitor gets the mailto fallback. */
   contact: ('resend' | 'netlify-forms')[]
   resend: EnvState
+  /** Whether visitors get a receipt (receiptsEnabled()). */
+  receipts: boolean
   /** Missing is fine (mail goes to the site's address); invalid means a setting is being ignored. */
   contactTo: EnvState
   resumePin: EnvState
@@ -125,6 +158,7 @@ export function featureReport(): FeatureReport {
   return {
     contact,
     resend: resendState(),
+    receipts: receiptsEnabled(),
     contactTo: contactToState(),
     resumePin: pinState(),
     resumeAi: anthropicApiKey() !== null,
@@ -133,12 +167,12 @@ export function featureReport(): FeatureReport {
 
 /** True when some feature is off or some setting is being ignored. */
 export function hasDisabledFeatures(r: FeatureReport): boolean {
-  return r.contact.length === 0 || r.resend !== 'ok' || r.contactTo === 'invalid' || r.resumePin !== 'ok' || !r.resumeAi
+  return r.contact.length === 0 || r.resend !== 'ok' || !r.receipts || r.contactTo === 'invalid' || r.resumePin !== 'ok' || !r.resumeAi
 }
 
 /**
  * The report as one log line, e.g.
- * `[env] contact: netlify-forms (resend: missing) · resumePin: invalid · resumeAi: off`.
+ * `[env] contact: netlify-forms (resend: missing) · receipts: off · resumePin: invalid · resumeAi: off`.
  * Names states only, never a value.
  */
 export function describeFeatures(r: FeatureReport): string {
@@ -148,6 +182,7 @@ export function describeFeatures(r: FeatureReport): string {
     .join(', ')
   return [
     `[env] contact: ${contact}${notes ? ` (${notes})` : ''}`,
+    `receipts: ${r.receipts ? 'on' : 'off'}`,
     `resumePin: ${r.resumePin}`,
     `resumeAi: ${r.resumeAi ? 'on' : 'off'}`,
   ].join(' · ')

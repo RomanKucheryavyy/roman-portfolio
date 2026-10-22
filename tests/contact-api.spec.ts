@@ -3,17 +3,23 @@ import path from 'node:path'
 import { expect, test } from '@playwright/test'
 
 /**
- * The contact route's contract, with no delivery channel configured (the
- * webServer blanks RESEND_API_KEY, URL and DEPLOY_PRIME_URL), so nothing here
- * can reach Roman's inbox or the Netlify dashboard.
+ * The contact route's contract, with no Resend key (the webServer blanks
+ * RESEND_API_KEY) and the Netlify Forms channel pointed at the stand-in in
+ * tests/stubs/netlify-forms.mjs, so nothing here can reach Roman's inbox or
+ * the Netlify dashboard. The stand-in records a message only when it carries
+ * RECORD, so one run sees both a message no channel takes and one that
+ * Netlify Forms records: the site in production until Resend is set up.
  *
- * Four POSTs per project, never more than five: the route allows five per IP
- * per ten minutes. Each run also sends its own x-forwarded-for, which is the
- * header the limiter keys on, so a reused local server never carries one run's
- * count into the next.
+ * The route allows five valid posts per IP per ten minutes, and the limiter
+ * keys on x-forwarded-for, so each run sends its own address (a reused local
+ * server never carries one run's count into the next), and the 429 test has
+ * an address of its own.
  */
 
-const ip = `198.51.100.${Math.floor(Math.random() * 250) + 1}`
+const RECORD = '[forms-stub: record]'
+// Documentation addresses (RFC 3849), random enough that no two runs or projects share one.
+const randomIp = () => `2001:db8::${Math.random().toString(16).slice(2, 6)}:${Math.random().toString(16).slice(2, 6)}`
+const ip = randomIp()
 const headers = { 'x-forwarded-for': ip }
 const valid = { name: 'Playwright', email: 'e2e@example.com', message: 'Contract test, not a lead.', elapsedMs: 5000 }
 
@@ -30,16 +36,46 @@ test.describe('POST /api/contact', () => {
     expect(await res.json()).toEqual({ error: 'invalid_email' })
   })
 
+  test('a body that is not JSON answers 400', async ({ request }) => {
+    // A Buffer goes as it is; a string would be sent JSON-encoded, which parses.
+    const res = await request.post('/api/contact', { headers: { ...headers, 'content-type': 'application/json' }, data: Buffer.from('{"name":') })
+    expect(res.status()).toBe(400)
+    expect(await res.json()).toEqual({ error: 'invalid_body' })
+  })
+
   test('the honeypot answers 200 and delivers nothing', async ({ request }) => {
-    const res = await request.post('/api/contact', { headers, data: { ...valid, botField: 'https://spam.example' } })
+    const res = await request.post('/api/contact', { headers, data: { ...valid, botField: 'https://spam.example', message: RECORD } })
     expect(res.status()).toBe(200)
     expect(await res.json()).toEqual({ ok: true, delivered: [] })
   })
 
-  test('a valid message with no channel answers 502, never a false success', async ({ request }) => {
+  test('a post sooner than 1.5s after the form opened answers 200 and delivers nothing', async ({ request }) => {
+    const res = await request.post('/api/contact', { headers, data: { ...valid, elapsedMs: 400, message: RECORD } })
+    expect(res.status()).toBe(200)
+    expect(await res.json()).toEqual({ ok: true, delivered: [] })
+  })
+
+  test('a valid message no channel takes answers 502, never a false success', async ({ request }) => {
     const res = await request.post('/api/contact', { headers, data: valid })
     expect(res.status()).toBe(502)
     expect(await res.json()).toEqual({ error: 'delivery_failed' })
+  })
+
+  test('a message Netlify Forms records answers 200 with delivered ["forms"], and no receipt without Resend', async ({ request }) => {
+    const res = await request.post('/api/contact', { headers, data: { ...valid, message: `${valid.message} ${RECORD}` } })
+    expect(res.status()).toBe(200)
+    expect(await res.json()).toEqual({ ok: true, delivered: ['forms'], receipt: false })
+  })
+
+  test('the sixth valid post from one address in ten minutes answers 429', async ({ request }) => {
+    const own = { 'x-forwarded-for': randomIp() }
+    for (let i = 0; i < 5; i++) {
+      const res = await request.post('/api/contact', { headers: own, data: valid })
+      expect(res.status(), `post ${i + 1}`).toBe(502)
+    }
+    const res = await request.post('/api/contact', { headers: own, data: valid })
+    expect(res.status()).toBe(429)
+    expect(await res.json()).toEqual({ error: 'rate_limited' })
   })
 })
 
