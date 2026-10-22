@@ -1,7 +1,7 @@
 'use client'
 
 import { Check, CircleAlert, Copy, Mail, PenLine, RotateCw, Send } from 'lucide-react'
-import { useCallback, useEffect, useRef, useState, type ReactNode, type RefObject } from 'react'
+import { useCallback, useEffect, useLayoutEffect, useRef, useState, type ReactNode, type RefObject } from 'react'
 import { Button } from '@/components/ui/button'
 import { AIAutocomplete } from '@/components/ui/kokonut-ai-autocomplete'
 import UndoButton from '@/components/ui/kokonut-undo-button'
@@ -20,10 +20,11 @@ import { firstName } from '@/lib/first-name'
  * a confirmation panel takes the fields' place, naming the address Roman will
  * reply to, and, when the route says Resend took one, the receipt on its way.
  * On a failure (a 502 when no channel delivered, a network error, a refusal)
- * a panel in the same place says so, keeps the message for Try again, and
- * offers his address and the visitor's own mail app instead: nothing
- * pretends to have gone. Either panel takes focus as it appears, so a
- * keyboard or screen-reader visitor hears the outcome.
+ * a panel in the same place says so, keeps the message for Try again or for
+ * Edit message (the form again, everything as they left it), and offers his
+ * address and the visitor's own mail app instead: nothing pretends to have
+ * gone. Either panel takes focus as it appears, so a keyboard or
+ * screen-reader visitor hears the outcome.
  */
 const GREETINGS = ['Hi Roman,', 'Hello Roman,', 'Hey Roman,']
 const OPENERS = [
@@ -69,16 +70,22 @@ export function suggest(text: string): string | null {
 const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/
 // The card and fields in contact-with-globe's own dress, so the swap is seamless.
 const LABEL = 'text-xs font-semibold tracking-widest uppercase text-zinc-400'
+/**
+ * iOS Safari zooms the page into any field under 16px when it takes focus,
+ * and a phone held sideways is wider than sm, so the fields drop to 14px
+ * only from sm up with a mouse or trackpad (pointer: fine); on touch they
+ * stay 16px at any width.
+ */
 const INPUT =
-  'w-full rounded-xl border border-zinc-700 bg-zinc-800/60 px-4 py-2.5 text-base text-zinc-200 outline-none transition-all duration-200 placeholder:text-zinc-500 focus:border-[var(--stage-accent-ink)] focus:ring-2 focus:ring-[color-mix(in_oklab,var(--stage-accent-ink)_20%,transparent)] sm:text-sm'
+  'w-full rounded-xl border border-zinc-700 bg-zinc-800/60 px-4 py-2.5 text-base text-zinc-200 outline-none transition-all duration-200 placeholder:text-zinc-500 focus:border-[var(--stage-accent-ink)] focus:ring-2 focus:ring-[color-mix(in_oklab,var(--stage-accent-ink)_20%,transparent)] sm:pointer-fine:text-sm'
 /**
  * The kokonut box draws its text at 15px, in two layers: the textarea and
- * the mirror under it that carries the grey suggestion. iOS Safari zooms
- * the page into any field under 16px when it takes focus, so on phones both
- * layers go to 16px together (the suggestion stays on the caret's line);
- * from sm up they stay as published.
+ * the mirror under it that carries the grey suggestion. For the same iOS
+ * zoom, below sm and on any touch screen (pointer: coarse, so a phone in
+ * landscape too) both layers go to 16px together, so the suggestion stays on
+ * the caret's line; with a mouse from sm up they stay as published.
  */
-const BOX_TEXT = 'max-sm:[&_div:has(>textarea)>*]:text-[16px]'
+const BOX_TEXT = 'max-sm:[&_div:has(>textarea)>*]:text-[16px] pointer-coarse:[&_div:has(>textarea)>*]:text-[16px]'
 /** The panels' pill buttons, the hero's shape (rounded-full, h-10). */
 const PILL = 'h-10 rounded-full px-5'
 /** A panel's heading takes focus when the panel appears; it is not a control, so no ring. */
@@ -111,6 +118,9 @@ export function Composer() {
   // Bumped each time a panel appears, or a Try again comes back: focus goes
   // to the panel's heading.
   const [shown, setShown] = useState(0)
+  // Bumped by the failure panel's Edit message: the form comes back as it
+  // was, with the cursor at the end of the message.
+  const [edits, setEdits] = useState(0)
 
   const locked = phase === 'sending' || phase === 'sent'
   const ready = name.trim().length > 0 && EMAIL.test(email.trim()) && message.trim().length > 0
@@ -137,6 +147,24 @@ export function Composer() {
     if (shown) headingRef.current?.focus()
   }, [shown])
   const showPanel = () => setShown((n) => n + 1)
+
+  const boxRef = useRef<HTMLDivElement>(null)
+  useEffect(() => {
+    if (!edits) return
+    const area = boxRef.current?.querySelector('textarea')
+    if (!area) return
+    area.focus({ preventScroll: true })
+    area.setSelectionRange(area.value.length, area.value.length)
+    // Into view clear of the top bar (the box's scroll margin).
+    boxRef.current?.scrollIntoView({ block: 'nearest' })
+  }, [edits])
+  // Back to the form with the name, address and message as they were, to
+  // fix a typo in the address, copy the message, or send it again.
+  const edit = () => {
+    setRetrying(false)
+    setPhase('draft')
+    setEdits((n) => n + 1)
+  }
 
   // Once it is on its way, the box shows the message as it went, with no
   // suggestion hanging off its end. (The box remounts when `locked` flips, so
@@ -236,6 +264,7 @@ export function Composer() {
           onRetry={() => {
             if (!retrying) void send(true)
           }}
+          onEdit={edit}
         />
       ) : (
         <form
@@ -313,8 +342,9 @@ export function Composer() {
             </span>
             {/* The accept bar the box fades out while there is no suggestion is taken out of the accessibility tree too. */}
             <div
+              ref={boxRef}
               inert={locked}
-              className={`overflow-hidden rounded-xl border border-zinc-700 bg-zinc-800/60 transition-colors focus-within:border-[var(--stage-accent-ink)] [&_.opacity-0]:invisible ${BOX_TEXT} ${locked ? 'opacity-60' : ''}`}
+              className={`scroll-my-24 overflow-hidden rounded-xl border border-zinc-700 bg-zinc-800/60 transition-colors focus-within:border-[var(--stage-accent-ink)] [&_.opacity-0]:invisible ${BOX_TEXT} ${locked ? 'opacity-60' : ''}`}
             >
               <AIAutocomplete
                 key={locked ? 'locked' : 'draft'}
@@ -328,9 +358,10 @@ export function Composer() {
           </div>
 
           <div className="flex flex-wrap items-center justify-between gap-3">
+            {/* While the request is out the Send button says "Sending…" (and announces it), so this line says nothing. */}
             <p aria-live="polite" className="text-sm text-zinc-400">
               {phase === 'sending'
-                ? 'Sending…'
+                ? ''
                 : ready || phase === 'pending'
                   ? 'You get five seconds to take it back.'
                   : 'Add your name, email and a message to send.'}
@@ -383,12 +414,35 @@ function PanelIcon({ tone, children }: { tone: 'ok' | 'error'; children: ReactNo
   )
 }
 
-/** What they wrote, quietly: a few lines of it, as a reminder rather than a record. */
+/**
+ * What they wrote, quietly: four lines of it, as a reminder rather than a
+ * record (the failure panel's Edit message brings back all of it). Blank
+ * lines between paragraphs are dropped, so they don't use up the four, and a
+ * longer message fades out at the bottom rather than ending in an ellipsis
+ * glued to its own full stop ("pickup.…").
+ */
 function Quote({ message }: { message: string }) {
+  const text = message.trim().replace(/\n(?:[^\S\n]*\n)+/g, '\n')
+  const ref = useRef<HTMLQuoteElement>(null)
+  const [clipped, setClipped] = useState(false)
+  useLayoutEffect(() => {
+    const node = ref.current
+    if (!node) return
+    const measure = () => setClipped(node.scrollHeight > node.clientHeight + 1)
+    measure()
+    const observer = new ResizeObserver(measure)
+    observer.observe(node)
+    return () => observer.disconnect()
+  }, [text])
   return (
     <figure className="w-full rounded-xl border border-zinc-800 bg-zinc-950/50 p-4 text-left">
       <figcaption className={LABEL}>Your message</figcaption>
-      <blockquote className="mt-2 line-clamp-4 whitespace-pre-line break-words text-sm leading-relaxed text-zinc-500">{message.trim()}</blockquote>
+      <blockquote
+        ref={ref}
+        className={`mt-2 max-h-[4lh] overflow-hidden whitespace-pre-line break-words text-sm leading-relaxed text-zinc-500 ${clipped ? '[mask-image:linear-gradient(to_bottom,#000_calc(100%_-_1.25lh),transparent)]' : ''}`}
+      >
+        {text}
+      </blockquote>
     </figure>
   )
 }
@@ -445,6 +499,7 @@ function FailedPanel({
   message,
   mailto,
   onRetry,
+  onEdit,
 }: {
   headingRef: RefObject<HTMLHeadingElement | null>
   failure: Failure
@@ -455,7 +510,10 @@ function FailedPanel({
   message: string
   mailto: string
   onRetry: () => void
+  /** Back to the form, with everything as it was. */
+  onEdit: () => void
 }) {
+  const limited = failure === 'rate_limited'
   const [copied, setCopied] = useState(false)
   const addressRef = useRef<HTMLSpanElement>(null)
   useEffect(() => {
@@ -486,16 +544,25 @@ function FailedPanel({
           {again ? 'Your message still didn’t go through' : 'Your message didn’t go through'}
         </h3>
         <p id="c-failed-note" className="text-sm leading-relaxed text-zinc-400 sm:text-base">
-          {failure === 'rate_limited'
-            ? 'That’s a few messages in a row, so the box is pausing for ten minutes. Your message is still here: try again after that, or write to me directly.'
-            : 'It’s still here. Try again, or write to me directly.'}
+          {limited
+            ? 'That’s a few messages in a row, so the box is pausing for ten minutes. Your message is kept here: try again after that, or write to me directly.'
+            : again
+              ? 'It’s kept here. Try again in a moment, or write to me directly.'
+              : 'It’s still here. Try again, or write to me directly.'}
         </p>
       </div>
 
-      <Button type="button" className={PILL} aria-disabled={busy || undefined} onClick={onRetry}>
-        <RotateCw aria-hidden="true" className={busy ? 'motion-safe:animate-spin' : undefined} />
-        {busy ? 'Trying again…' : 'Try again'}
-      </Button>
+      {/* While the box is pausing, Try again would only fail again, so writing directly leads instead. */}
+      <div className="flex flex-wrap items-center justify-center gap-3">
+        <Button type="button" variant={limited ? 'outline' : 'default'} className={PILL} aria-disabled={busy || undefined} onClick={onRetry}>
+          <RotateCw aria-hidden="true" className={busy ? 'motion-safe:animate-spin' : undefined} />
+          {busy ? 'Trying again…' : 'Try again'}
+        </Button>
+        <Button type="button" variant="outline" className={PILL} aria-disabled={busy || undefined} onClick={busy ? undefined : onEdit}>
+          <PenLine aria-hidden="true" />
+          Edit message
+        </Button>
+      </div>
 
       <div className="flex w-full flex-col items-center gap-3 rounded-xl border border-zinc-700 bg-zinc-800/60 p-4">
         <span ref={addressRef} className="select-all break-words text-base font-medium text-white">
@@ -506,7 +573,7 @@ function FailedPanel({
             {copied ? <Check aria-hidden="true" /> : <Copy aria-hidden="true" />}
             {copied ? 'Copied' : 'Copy email'}
           </Button>
-          <Button asChild variant="outline" size="sm" className="h-9 rounded-full px-4">
+          <Button asChild variant={limited ? 'default' : 'outline'} size="sm" className="h-9 rounded-full px-4">
             <a href={mailto}>
               <Mail aria-hidden="true" />
               Open in your mail app
