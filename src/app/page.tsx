@@ -1,130 +1,124 @@
-'use client'
-import { useEffect } from 'react'
-import Lenis from 'lenis'
-import { gsap, ScrollTrigger } from '@/hooks/useGSAP'
-import { useMouseTracking } from '@/hooks/useMouseVelocity'
-import { useIsHydrated } from '@/hooks/useMediaQuery'
-import { useStore } from '@/stores/useStore'
-import DynamicFavicon from '@/components/effects/DynamicFavicon'
-import AmbientBackground from '@/components/effects/AmbientBackground'
-import ScrollProgress from '@/components/effects/ScrollProgress'
-import SectionTransition from '@/components/effects/SectionTransition'
-import SectionFade from '@/components/effects/SectionFade'
-import CodePeek from '@/components/effects/CodePeek'
-import ConsoleSignature from '@/components/effects/ConsoleSignature'
-import Loader from '@/components/ui/Loader'
-import Cursor from '@/components/ui/Cursor'
-import Nav from '@/components/ui/Nav'
-import Hero from '@/components/sections/Hero'
-import Measures from '@/components/sections/Measures'
-import Projects from '@/components/sections/Projects'
-import Compositions from '@/components/sections/Compositions'
-import Manifesto from '@/components/sections/Manifesto'
-import Conductor from '@/components/sections/Conductor'
-import Compose from '@/components/sections/Compose'
+import { Stage } from '@/components/stage/stage'
+import { Container } from '@/components/stage/section-header'
+import { CERTIFICATIONS, EDUCATION, PERSON, PRODUCTS, PROJECTS, ROLES, linkLabel } from '@/lib/content'
+import { ROUTES } from '@/lib/routes'
+import { pageMetadata } from '@/lib/seo'
+import { jsonLd, siteGraph } from '@/lib/structured-data'
 
-const SECTIONS = ['hero', 'measures', 'symphony', 'compositions', 'interlude', 'conductor', 'compose']
+// images: false, so the root segment's own opengraph-image / twitter-image
+// files supply the card with its hash, size and alt.
+export const metadata = pageMetadata({ path: ROUTES.home, images: false })
 
-function AppContent() {
-  useMouseTracking()
-  const setActiveSection = useStore((s) => s.setActiveSection)
-  const setScrollVelocity = useStore((s) => s.setScrollVelocity)
-  const setScrollProgress = useStore((s) => s.setScrollProgress)
+const H3 = 'mt-10 text-lg font-semibold tracking-tight text-foreground'
+const ITEM = 'text-sm leading-relaxed text-muted-foreground'
+const LINK = 'text-foreground underline underline-offset-4'
 
-  // Lenis smooth scroll wired into GSAP's ticker + ScrollTrigger
-  useEffect(() => {
-    const lenis = new Lenis({
-      duration: 1.2,
-      easing: (t: number) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
-      touchMultiplier: 2,
-    })
-    let smoothed = 0
-    lenis.on('scroll', (e: { velocity: number; progress: number }) => {
-      ScrollTrigger.update()
-      const v = Math.min(Math.abs(e.velocity) / 2000, 1)
-      smoothed += (v - smoothed) * 0.1
-      setScrollVelocity(smoothed)
-      setScrollProgress(e.progress)
-    })
-    const raf = (time: number) => lenis.raf(time * 1000)
-    gsap.ticker.add(raf)
-    gsap.ticker.lagSmoothing(0)
-    return () => {
-      gsap.ticker.remove(raf)
-      lenis.destroy()
-    }
-  }, [setScrollVelocity, setScrollProgress])
-
-  // Active-section tracking
-  useEffect(() => {
-    const observers = SECTIONS.map((id) => {
-      const el = document.getElementById(id)
-      if (!el) return null
-      const io = new IntersectionObserver(
-        ([entry]) => { if (entry.isIntersecting) setActiveSection(id) },
-        { threshold: 0.15, rootMargin: '-5% 0px -5% 0px' }
-      )
-      io.observe(el)
-      return io
-    })
-    return () => observers.forEach((io) => io?.disconnect())
-  }, [setActiveSection])
-
+/**
+ * Without scripts the Stage still renders its server HTML, but the pieces
+ * that only exist in the browser stay out: the certification badges, the
+ * Experience timeline, the About block, the contact card and the footer
+ * (the last four load after the page; see "lazy parts" in stage.tsx). This
+ * is the whole page in plain text for that visitor, and for anything that
+ * reads the HTML without running it. Every line comes from the same records
+ * the page draws.
+ */
+function Summary() {
   return (
-    <>
-      <ConsoleSignature />
-      <DynamicFavicon />
-      <AmbientBackground />
-      <ScrollProgress />
-      <div className="noise-overlay" aria-hidden="true" />
-      <Loader />
-      <Cursor />
-      <Nav />
-      <CodePeek />
-      <main className="relative z-[1]">
-        <Hero />
-        <SectionTransition commentText="// end of hero" />
-        <SectionFade transition="slide-right">
-          <Measures />
-        </SectionFade>
-        <SectionTransition commentText="/* loading arsenal */" />
-        <SectionFade transition="stack-up">
-          <Projects />
-        </SectionFade>
-        <SectionTransition commentText="// compiling projects..." />
-        <SectionFade transition="fade-center">
-          <Compositions />
-        </SectionFade>
-        <SectionTransition commentText="/* premiering original works */" />
-        <SectionFade transition="slide-right">
-          <Manifesto />
-        </SectionFade>
-        <SectionTransition commentText="// decoding signal..." />
-        <SectionFade transition="fade-center">
-          <Conductor />
-        </SectionFade>
-        <SectionTransition commentText="/* the conductor speaks */" />
-        <SectionFade transition="slide-up">
-          <Compose />
-        </SectionFade>
-      </main>
-    </>
+    <noscript>
+      <section aria-labelledby="summary-title" className="border-t border-white/[0.06] py-16 md:py-24">
+        <Container>
+          <h2 id="summary-title" className="text-[2.5rem] font-bold leading-[0.95] tracking-[-0.045em] md:text-7xl">
+            At a glance
+          </h2>
+          <p className="mt-6 max-w-xl text-base leading-relaxed text-muted-foreground md:text-lg">{PERSON.tagline}</p>
+
+          <h3 className={H3}>Client work</h3>
+          <ul className="mt-3 space-y-1.5">
+            {PROJECTS.map((project) => (
+              <li key={project.id} className={ITEM}>
+                <span className="text-foreground">{project.title}</span>
+                {' · '}
+                {project.url ? (
+                  <a href={project.url} className={LINK}>
+                    {linkLabel(project)}
+                  </a>
+                ) : (
+                  linkLabel(project)
+                )}
+              </li>
+            ))}
+          </ul>
+
+          <h3 className={H3}>My own products</h3>
+          <ul className="mt-3 space-y-1.5">
+            {PRODUCTS.map((product) => (
+              <li key={product.id} className={ITEM}>
+                <span className="text-foreground">{product.title}</span> · {product.tagline} · {product.status}
+              </li>
+            ))}
+          </ul>
+
+          <h3 className={H3}>Experience</h3>
+          <ul className="mt-3 space-y-1.5">
+            {ROLES.map((role) => (
+              <li key={`${role.company}-${role.start}`} className={ITEM}>
+                <span className="text-foreground">{role.title}</span> · {[role.company, role.team].filter(Boolean).join(', ')} ·{' '}
+                {role.dates}
+              </li>
+            ))}
+            {EDUCATION.map((school) => (
+              <li key={school.school} className={ITEM}>
+                <span className="text-foreground">{school.degree}</span> · {school.school} · {school.start} – {school.end}
+              </li>
+            ))}
+          </ul>
+
+          <h3 className={H3}>Salesforce certifications</h3>
+          <ul className="mt-3 space-y-1.5">
+            {CERTIFICATIONS.map((cert) => (
+              <li key={cert.id} className={ITEM}>
+                {cert.name} · {cert.date}
+              </li>
+            ))}
+          </ul>
+
+          <h3 className={H3}>In my own words</h3>
+          {PERSON.about.map((paragraph) => (
+            <p key={paragraph.slice(0, 24)} className={`mt-3 max-w-2xl ${ITEM}`}>
+              {paragraph}
+            </p>
+          ))}
+          <p className={`mt-3 max-w-2xl ${ITEM}`}>{PERSON.manifesto}</p>
+
+          <p className="mt-10 flex flex-wrap gap-x-6 gap-y-2 text-sm">
+            <a href={`mailto:${PERSON.links.email}`} className={LINK}>
+              {PERSON.links.email}
+            </a>
+            <a href={PERSON.links.linkedin} className={LINK}>
+              LinkedIn
+            </a>
+            <a href={PERSON.links.github} className={LINK}>
+              GitHub
+            </a>
+          </p>
+        </Container>
+      </section>
+    </noscript>
   )
 }
 
+/**
+ * The home page: the Stage (client components, rendered on the server as
+ * well), the site's JSON-LD, and the summary above for visitors without
+ * scripts.
+ */
 export default function Home() {
-  const mounted = useIsHydrated()
-
-  if (!mounted) {
-    return (
-      <div className="fixed inset-0 z-[200] bg-black flex flex-col items-center justify-center">
-        <div className="w-48 h-px bg-white/10 relative overflow-hidden">
-          <div className="absolute inset-0 bg-white origin-left animate-progress" />
-        </div>
-        <p className="font-mono text-[10px] text-white/20 mt-4 tracking-wider">{'> initializing...'}</p>
-      </div>
-    )
-  }
-
-  return <AppContent />
+  return (
+    <>
+      <Stage>
+        <Summary />
+      </Stage>
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLd(siteGraph()) }} />
+    </>
+  )
 }

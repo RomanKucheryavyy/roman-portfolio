@@ -1,0 +1,33 @@
+{
+  "note": "First-load JS per route, uncompressed bytes, from .next/diagnostics/route-bundle-stats.json. Each budget is the route as measured (measured.routes) +2%, rounded up. Re-measured for the Stage redesign: a new design (the 21st.dev components, with the heavy ones below the first screen loading after the page) and a new route set (/works, /works/[slug] and /colophon retired). Every built route has its own line; a route without one (a page added since) gets defaultRouteBudget, which is the largest line after the home page, and gets its own line in the next re-measure. A budget moves only in a commit that says why: a change that goes over reports it in its PR instead of raising its own line. fontsSelfHosted: no built stylesheet may reference fonts.googleapis.com. Checked by scripts/check-bundle-budget.mjs (npm run budget).",
+  "fontsSelfHosted": true,
+  "defaultRouteBudget": 530071,
+  "routes": {
+    "/": 724745,
+    "/resume": 530071,
+    "/_not-found": 509218
+  },
+  "measured": {
+    "date": "2026-10-21",
+    "next": "16.4.0",
+    "commit": "cc6e615",
+    "routes": {
+      "/": 710534,
+      "/resume": 519677,
+      "/_not-found": 499233
+    },
+    "before": {
+      "note": "The old design, at its last measure (W12).",
+      "next": "16.4.0",
+      "commit": "b19143f",
+      "routes": {
+        "/": 1424921,
+        "/works": 562328,
+        "/works/[slug]": 557005,
+        "/resume": 529523,
+        "/_not-found": 494158,
+        "/colophon": 494158
+      }
+    }
+  }
+}

@@ -1,0 +1,3 @@
+
+# Static export for the hosted previews (LAB_EXPORT=1 next build)
+.next-export/

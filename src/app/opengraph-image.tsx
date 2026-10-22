@@ -1,13 +1,21 @@
 import { ImageResponse } from 'next/og'
+import { HIS_WORDS, SITE } from '@/lib/constants'
+import { SITE_CARD } from '@/lib/seo'
+import { FONT, OG_CONTENT_TYPE, OG_SIZE, STAGE, ogFonts } from './_og/frame'
 
-export const alt = 'Roman Kucheryavyy — Orchestrating Logic & Art'
-export const size = { width: 1200, height: 630 }
-export const contentType = 'image/png'
+/** One alt for the card, wherever it is named (seo.ts SITE_CARD). */
+export const alt = SITE_CARD.alt
+export const size = OG_SIZE
+export const contentType = OG_CONTENT_TYPE
 
-const GRADIENT =
-  'linear-gradient(135deg, #ff2d55, #ff6b35, #ffb800, #30d158, #00c7be, #5ac8fa, #af52de)'
+const [first, ...rest] = SITE.name.split(' ')
 
-export default function OpengraphImage() {
+/**
+ * The site card, drawn like the Stage's first screen: his name in heavy
+ * Geist on the black, his tagline under it, the violet accent glowing up from
+ * the stage floor, and the address at the foot.
+ */
+export default async function OpengraphImage() {
   return new ImageResponse(
     (
       <div
@@ -16,98 +24,57 @@ export default function OpengraphImage() {
           height: '100%',
           display: 'flex',
           flexDirection: 'column',
-          justifyContent: 'center',
           alignItems: 'center',
-          backgroundColor: '#000010',
+          justifyContent: 'center',
           position: 'relative',
-          fontFamily: 'sans-serif',
+          backgroundColor: STAGE.black,
+          color: STAGE.ink,
+          fontFamily: FONT.sans,
         }}
       >
-        {/* staff lines */}
-        {[170, 210, 250, 290, 330].map((top) => (
-          <div
-            key={top}
-            style={{
-              position: 'absolute',
-              top,
-              left: 80,
-              right: 80,
-              height: 1,
-              backgroundColor: 'rgba(255,255,255,0.07)',
-            }}
-          />
-        ))}
-        {/* spotlight glow */}
+        {/* The violet wash, rising from the floor. */}
         <div
           style={{
             position: 'absolute',
-            top: -200,
-            left: 400,
-            width: 400,
-            height: 500,
-            background: 'radial-gradient(ellipse, rgba(124,145,182,0.25) 0%, transparent 70%)',
+            left: 0,
+            right: 0,
+            bottom: 0,
+            height: 420,
+            background: `radial-gradient(ellipse 60% 100% at 50% 100%, ${STAGE.accent} 0%, rgba(22,16,109,0.35) 45%, rgba(6,6,6,0) 80%)`,
           }}
         />
-        {/* notes */}
-        <div style={{ position: 'absolute', top: 150, left: 200, color: 'rgba(255,255,255,0.25)', fontSize: 44 }}>♪</div>
-        <div style={{ position: 'absolute', top: 230, right: 220, color: 'rgba(255,255,255,0.2)', fontSize: 36 }}>♫</div>
-        <div style={{ position: 'absolute', top: 120, right: 380, color: 'rgba(255,255,255,0.14)', fontSize: 30 }}>♩</div>
-
         <div
           style={{
-            fontSize: 34,
-            letterSpacing: 10,
-            color: 'rgba(255,255,255,0.45)',
-            marginBottom: 18,
-            textTransform: 'uppercase',
-          }}
-        >
-          {'// Orchestrating Logic & Art'}
-        </div>
-        <div
-          style={{
-            fontSize: 96,
-            fontWeight: 800,
-            color: '#ffffff',
-            letterSpacing: -2,
             display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            fontSize: 150,
+            fontWeight: 700,
+            lineHeight: 0.86,
+            letterSpacing: -9,
           }}
         >
-          Roman
-          <span
-            style={{
-              marginLeft: 28,
-              backgroundImage: GRADIENT,
-              backgroundClip: 'text',
-              color: 'transparent',
-            }}
-          >
-            Kucheryavyy
-          </span>
+          <div style={{ display: 'flex' }}>{first}</div>
+          <div style={{ display: 'flex' }}>{rest.join(' ')}</div>
         </div>
-        <div
-          style={{
-            fontSize: 30,
-            color: 'rgba(255,255,255,0.55)',
-            marginTop: 26,
-            display: 'flex',
-          }}
-        >
-          Salesforce engineer by day. Full-stack builder by nature. Conductor by calling.
+        <div style={{ display: 'flex', marginTop: 44, fontSize: 28, color: 'rgba(250,250,250,0.75)' }}>
+          {HIS_WORDS.tagline}
         </div>
         <div
           style={{
             position: 'absolute',
-            bottom: 44,
-            fontSize: 24,
+            bottom: 40,
+            display: 'flex',
+            fontFamily: FONT.mono,
+            fontSize: 22,
             letterSpacing: 4,
-            color: 'rgba(255,255,255,0.3)',
+            color: STAGE.accentInk,
           }}
         >
-          romankucheryavyy.com
+          {SITE.url.replace(/^https?:\/\//, '')}
         </div>
       </div>
     ),
-    { ...size }
+    { ...OG_SIZE, fonts: await ogFonts() },
   )
 }

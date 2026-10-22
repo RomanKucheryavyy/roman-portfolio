@@ -1,9 +1,15 @@
 import { NextResponse } from 'next/server'
+import { anthropicApiKey, pinMatches } from '@/lib/env'
+import { clientIp, rateLimited, LIMITS } from '@/lib/rate-limit'
 import Anthropic from '@anthropic-ai/sdk'
 
 export const maxDuration = 60
 
 export async function POST(req: Request) {
+  if (rateLimited(clientIp(req), LIMITS.ai)) {
+    return NextResponse.json({ error: 'rate_limited' }, { status: 429 })
+  }
+
   let body: { resumeData?: unknown; jobDescription?: string; pin?: string }
   try {
     body = await req.json()
@@ -12,18 +18,19 @@ export async function POST(req: Request) {
   }
 
   const { resumeData, jobDescription, pin } = body
-  if (!pin || !process.env.RESUME_PIN || pin !== process.env.RESUME_PIN) {
+  if (!pinMatches(pin)) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
   if (!resumeData || !jobDescription?.trim()) {
     return NextResponse.json({ error: 'Missing resume data or job description' }, { status: 400 })
   }
-  if (!process.env.ANTHROPIC_API_KEY) {
+  const apiKey = anthropicApiKey()
+  if (!apiKey) {
     return NextResponse.json({ error: 'AI is not configured on the server' }, { status: 500 })
   }
 
   try {
-    const anthropic = new Anthropic()
+    const anthropic = new Anthropic({ apiKey })
     const message = await anthropic.messages.create({
       model: 'claude-sonnet-4-6',
       max_tokens: 8000,

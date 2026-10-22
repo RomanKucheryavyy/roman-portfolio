@@ -1,0 +1,67 @@
+# Checks every branch and every pull request. It never deploys: main deploys
+# itself through Netlify on push, so this only gates production when changes
+# arrive by PR (make it a required check on main in branch protection).
+# No secrets are used or needed: the build and the suite run with no env.
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: ['**']
+
+concurrency:
+  # One group per branch for both events: a push to a PR branch fires `push`
+  # (refs/heads/<branch>) and `pull_request` (refs/pull/<n>/merge), which
+  # used to land in two groups, so every PR push ran the whole suite twice.
+  group: ci-${{ github.head_ref || github.ref_name }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # Full history: check:protected walks every commit since abb0023.
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+
+      - name: Cache the Next build cache
+        uses: actions/cache@v4
+        with:
+          path: .next/cache
+          key: next-${{ runner.os }}-${{ hashFiles('package-lock.json') }}-${{ hashFiles('src/**') }}
+          restore-keys: |
+            next-${{ runner.os }}-${{ hashFiles('package-lock.json') }}-
+
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm run lint
+      - name: Owner-fixed copy (the FUBC Coffee iOS and Nelectric descriptions)
+        run: npm run check:protected
+      - run: npm run build
+      - name: Bundle budget
+        run: npm run budget
+
+      - name: Install Chromium for Playwright
+        run: npx playwright install --with-deps chromium
+
+      - run: npm run test:e2e
+
+      - name: Upload the Playwright report
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: |
+            playwright-report/
+            test-results/
+          retention-days: 14
