@@ -107,6 +107,32 @@ for (const route of ROUTES) {
   })
 }
 
+/**
+ * The message box's two outcomes, which only appear after a send: each
+ * panel audited in place (the POSTs faked), any violation of any impact
+ * failing, as for the routes above.
+ */
+for (const [outcome, answer, heading] of [
+  ['sent, with a receipt', { status: 200, json: { ok: true, delivered: ['email', 'forms'], receipt: true } }, 'Message sent'],
+  ['failed', { status: 502, json: { error: 'delivery_failed' } }, 'Your message didn’t go through'],
+] as const) {
+  test(`axe: the message box's ${outcome} panel has no violations`, async ({ page }) => {
+    await page.route('**/api/contact', (route) => route.fulfill(answer))
+    await gotoHome(page, '/#contact')
+    const box = page.locator('#contact form')
+    await box.getByLabel('Name', { exact: true }).fill('Axe')
+    await box.getByLabel('Email', { exact: true }).fill('axe@example.com')
+    await box.getByRole('textbox', { name: 'Message', exact: true }).fill('Hello there. I have a question about a project.')
+    await page.waitForTimeout(800)
+    await page.locator('#contact form button[aria-label="Send"]').focus()
+    await page.keyboard.press('Enter')
+    await expect(page.locator('#contact').getByRole('heading', { name: heading })).toBeFocused({ timeout: 15_000 })
+    await page.waitForTimeout(500)
+    const results = await new AxeBuilder({ page }).include('#contact').options({ rules: { 'target-size': { enabled: true } } }).analyze()
+    expect(results.violations.map((v) => `${v.id} (${v.impact}): ${v.nodes.map((n) => n.target.join(' ')).join(' | ')}`)).toEqual([])
+  })
+}
+
 test('the baseline is empty', () => {
   const baseline = readBaseline()
   const entries = Object.values(baseline).flatMap((routes) => Object.values(routes).flatMap((counts) => Object.entries(counts)))
