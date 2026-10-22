@@ -3,7 +3,8 @@
   "compilerOptions": {
     "paths": {
       "@/*": ["../src/*"],
-      "server-only": ["./stubs/server-only.ts"]
+      "server-only": ["./stubs/server-only.ts"],
+      "next/server": ["../node_modules/next/server"]
     }
   }
 }

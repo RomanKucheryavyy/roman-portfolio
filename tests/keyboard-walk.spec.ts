@@ -266,11 +266,11 @@ test.describe('keyboard walk', () => {
     const contact = page.locator('#contact')
     await expect(contact.getByRole('heading', { name: 'Your message didn’t go through' })).toBeFocused({ timeout: 15_000 })
     const failed: Stop[] = []
-    for (let n = 1; n <= 3; n++) {
+    for (let n = 1; n <= 4; n++) {
       await page.keyboard.press('Tab')
       failed.push((await readStop(page, 1000 + n))!)
     }
-    expect(failed.map((s) => s.what)).toEqual(['button "Try again"', 'button "Copy email"', 'a "Open in your mail app"'])
+    expect(failed.map((s) => s.what)).toEqual(['button "Try again"', 'button "Edit message"', 'button "Copy email"', 'a "Open in your mail app"'])
     check(failed, await readUnfocused(page), { fromTop: false })
 
     await contact.getByRole('button', { name: 'Try again' }).focus()

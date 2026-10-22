@@ -12,8 +12,10 @@ import { defineConfig, devices } from '@playwright/test'
  * listens on the port after it, or on E2E_FORMS_PORT.
  *
  * tests/tsconfig.json is the run's tsconfig: the root one, plus a stub for
- * `import 'server-only'`, which Next resolves in the app and Node can't, so
- * the specs can unit-test the server-only modules.
+ * `import 'server-only'`, which Next resolves in the app and Node can't, and
+ * `next/server` pointed at its file (the package has no exports map, so
+ * Node's ESM loader can't find it by name), so the specs can unit-test the
+ * server-only modules and call a route handler directly.
  */
 const PORT = Number(process.env.E2E_PORT ?? 3100)
 const FORMS_PORT = Number(process.env.E2E_FORMS_PORT ?? PORT + 1)

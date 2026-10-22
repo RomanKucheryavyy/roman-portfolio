@@ -15,7 +15,7 @@ import { collectConsole, gotoHome } from './helpers'
  * Once the route answers, a panel takes the fields' place: "Message sent"
  * only for a 2xx that delivered something, with the receipt line only when
  * the route says receipt: true; otherwise the failure panel, which keeps the
- * message for Try again. Either takes focus as it appears.
+ * message for Try again and Edit message. Either takes focus as it appears.
  */
 
 const EMAIL = 'kucheryavyyroman@gmail.com'
@@ -79,6 +79,7 @@ const refused: Answer = (route) => route.fulfill({ status: 502, json: { error: '
 const THANKS = 'Thanks, Playwright. Your message reached me, and I’ll reply to e2e@example.com.'
 const RECEIPT = 'A confirmation is on its way to your inbox.'
 const FAILED = 'Your message didn’t go through'
+const KEPT = 'It’s still here. Try again, or write to me directly.'
 
 /** The panel that took the fields' place, found by its heading. */
 const panelHeading = (page: Page, name: string) => page.locator('#contact').getByRole('heading', { name, exact: true })
@@ -124,6 +125,23 @@ test.describe('sending', () => {
     await f.email.fill('e2e@example.com')
     await expect(f.send).toBeEnabled()
     await expect(f.status).toHaveText('You get five seconds to take it back.')
+  })
+
+  test('while the message is out, "Sending…" is said once, by the button', async ({ page }) => {
+    let release!: () => void
+    const held = new Promise<void>((resolve) => (release = resolve))
+    await interceptContact(page, async (route) => {
+      await held
+      await route.fulfill({ json: { ok: true, delivered: ['forms'], receipt: false } })
+    })
+    const f = await fill(page)
+    await pressSend(page, f.send)
+    await expect(f.send).toHaveAttribute('aria-label', 'Sending…', { timeout: 15_000 })
+    await expect(f.status).toHaveText('')
+    const said = await page.locator('#contact [aria-live]').evaluateAll((nodes) => nodes.map((n) => n.textContent?.trim()).filter(Boolean))
+    expect(said).toEqual(['Sending…'])
+    release()
+    await expect(panelHeading(page, 'Message sent')).toBeFocused()
   })
 
   test('Send opens a five-second undo window, and Undo sends nothing', async ({ page }) => {
@@ -228,7 +246,7 @@ test.describe('sending', () => {
       await pressSend(page, f.send)
       const heading = panelHeading(page, FAILED)
       await expect(heading).toBeFocused({ timeout: 15_000 })
-      await expect(heading).toHaveAccessibleDescription('It’s still here. Try again, or write to me directly.')
+      await expect(heading).toHaveAccessibleDescription(KEPT)
       const contact = page.locator('#contact')
       await expect(contact).toContainText(EMAIL)
       await expect(contact.getByRole('button', { name: 'Copy email' })).toBeVisible()
@@ -237,6 +255,7 @@ test.describe('sending', () => {
       expect(decodeURIComponent((await mailto.getAttribute('href'))!.split('&body=')[1])).toContain(MESSAGE)
       await expect(contact.locator('blockquote')).toHaveText(MESSAGE)
       await expect(contact.getByRole('button', { name: 'Try again' })).toBeVisible()
+      await expect(contact.getByRole('button', { name: 'Edit message' })).toBeVisible()
       expect(posts).toHaveLength(1)
       await expect(contact).not.toContainText(/sent/i)
       log.expectClean()
@@ -267,13 +286,75 @@ test.describe('sending', () => {
     await pressSend(page, f.send)
     await expect(panelHeading(page, FAILED)).toBeFocused({ timeout: 15_000 })
     await page.locator('#contact').getByRole('button', { name: 'Try again' }).click()
-    await expect(panelHeading(page, 'Your message still didn’t go through')).toBeFocused({ timeout: 10_000 })
+    const again = panelHeading(page, 'Your message still didn’t go through')
+    await expect(again).toBeFocused({ timeout: 10_000 })
+    // "still" once, not twice.
+    await expect(again).toHaveAccessibleDescription('It’s kept here. Try again in a moment, or write to me directly.')
     expect(posts).toHaveLength(2)
     await expect(page.locator('#contact blockquote')).toHaveText(MESSAGE)
     log.expectClean()
   })
 
-  test('a 429 says the box is pausing, and offers his address', async ({ page }) => {
+  test('Edit message brings the form back as it was, and the fixed message sends', async ({ page }) => {
+    const log = collectConsole(page, [/status of 502/])
+    const posts = await interceptContact(page, [refused, delivered(false)])
+    const f = await fill(page)
+    // A long letter: the panel quotes four lines of it; the form has all of it.
+    const letter = Array.from({ length: 10 }, (_, i) => `Paragraph ${i + 1} of a longer letter.`).join('\n\n')
+    await f.message.fill(letter)
+    await pressSend(page, f.send)
+    await expect(panelHeading(page, FAILED)).toBeFocused({ timeout: 15_000 })
+    const edit = page.locator('#contact').getByRole('button', { name: 'Edit message' })
+    await edit.focus()
+    await page.keyboard.press('Enter')
+
+    const back = boxOf(page)
+    await expect(back.message).toBeFocused()
+    await expect(back.message).toHaveValue(letter)
+    expect(await back.message.evaluate((area: HTMLTextAreaElement) => [area.selectionStart, area.selectionEnd])).toEqual([letter.length, letter.length])
+    await expect(back.name).toHaveValue('Playwright')
+    await expect(back.email).toHaveValue('e2e@example.com')
+    await expect(panelHeading(page, FAILED)).toHaveCount(0)
+
+    // Fix the address and send again.
+    await back.email.fill('e2e+fixed@example.com')
+    await pressSend(page, back.send)
+    await expect(panelHeading(page, 'Message sent')).toBeFocused({ timeout: 15_000 })
+    expect(posts).toHaveLength(2)
+    expect(posts[1].request.postDataJSON()).toMatchObject({ name: 'Playwright', email: 'e2e+fixed@example.com', message: letter })
+    log.expectClean()
+  })
+
+  test('the quote drops blank lines and fades a long message out instead of an ellipsis', async ({ page }) => {
+    await interceptContact(page, delivered(false))
+    const f = await fill(page)
+    const letter = Array.from({ length: 10 }, (_, i) => `Paragraph ${i + 1}.`).join('\n\n')
+    await f.message.fill(letter)
+    await pressSend(page, f.send)
+    await expect(panelHeading(page, 'Message sent')).toBeFocused({ timeout: 15_000 })
+    const quote = page.locator('#contact blockquote')
+    await expect(quote).toHaveText(letter.replace(/\n\n/g, '\n'))
+    const look = await quote.evaluate((node) => ({
+      clipped: node.scrollHeight > node.clientHeight,
+      lines: Math.round(node.clientHeight / parseFloat(getComputedStyle(node).lineHeight)),
+      clamp: getComputedStyle(node).webkitLineClamp,
+      mask: getComputedStyle(node).maskImage,
+    }))
+    expect(look).toMatchObject({ clipped: true, lines: 4, clamp: 'none' })
+    expect(look.mask).toContain('linear-gradient')
+  })
+
+  test('a short message is quoted whole, with no fade', async ({ page }) => {
+    await interceptContact(page, delivered(false))
+    const f = await fill(page)
+    await pressSend(page, f.send)
+    await expect(panelHeading(page, 'Message sent')).toBeFocused({ timeout: 15_000 })
+    const quote = page.locator('#contact blockquote')
+    await expect(quote).toHaveText(MESSAGE)
+    expect(await quote.evaluate((node) => getComputedStyle(node).maskImage)).toBe('none')
+  })
+
+  test('a 429 says the box is pausing, offers his address, and leads with the mail app rather than Try again', async ({ page }) => {
     const log = collectConsole(page, [/status of 429/])
     await interceptContact(page, (route) => route.fulfill({ status: 429, json: { error: 'rate_limited' } }))
     const f = await fill(page)
@@ -281,9 +362,12 @@ test.describe('sending', () => {
     const heading = panelHeading(page, FAILED)
     await expect(heading).toBeFocused({ timeout: 15_000 })
     await expect(heading).toHaveAccessibleDescription(
-      'That’s a few messages in a row, so the box is pausing for ten minutes. Your message is still here: try again after that, or write to me directly.',
+      'That’s a few messages in a row, so the box is pausing for ten minutes. Your message is kept here: try again after that, or write to me directly.',
     )
-    await expect(page.locator('#contact')).toContainText(EMAIL)
+    const contact = page.locator('#contact')
+    await expect(contact).toContainText(EMAIL)
+    await expect(contact.getByRole('button', { name: 'Try again' })).toHaveAttribute('data-variant', 'outline')
+    await expect(contact.getByRole('link', { name: 'Open in your mail app' })).toHaveAttribute('data-variant', 'default')
     log.expectClean()
   })
 })
@@ -304,7 +388,14 @@ test.describe('Copy email', () => {
   })
 })
 
-test('the message box text is 16px on phones (iOS zooms into anything smaller) and its suggestion layer matches', async ({ page }) => {
+/**
+ * iOS Safari zooms into any field under 16px. Below sm, and on a touch screen
+ * at any width (a phone in landscape is wider than sm), the fields and both
+ * layers of the message box are 16px; with a mouse from sm up the box keeps
+ * its published 15px. The two layers stay the same, so the suggestion stays
+ * on the caret's line.
+ */
+async function expectPhoneText(page: Page) {
   const f = await openBox(page)
   const sizes = await f.message.evaluate((area) => ({
     area: getComputedStyle(area).fontSize,
@@ -312,11 +403,24 @@ test('the message box text is 16px on phones (iOS zooms into anything smaller) a
     areaLine: getComputedStyle(area).lineHeight,
     mirrorLine: getComputedStyle(area.previousElementSibling!).lineHeight,
   }))
-  // Phones get 16px; from the sm breakpoint up the box keeps its published 15px.
-  const want = (page.viewportSize()?.width ?? 0) < 640 ? '16px' : '15px'
+  const touch = await page.evaluate(() => matchMedia('(pointer: coarse)').matches)
+  const want = touch || (page.viewportSize()?.width ?? 0) < 640 ? '16px' : '15px'
   expect(sizes).toEqual({ area: want, mirror: want, areaLine: '24px', mirrorLine: '24px' })
   for (const field of [f.name, f.email]) {
     const size = await field.evaluate((el) => parseFloat(getComputedStyle(el).fontSize))
     if (want === '16px') expect(size).toBeGreaterThanOrEqual(16)
   }
+  return want
+}
+
+test('the message box text is 16px on phones (iOS zooms into anything smaller) and its suggestion layer matches', async ({ page }) => {
+  await expectPhoneText(page)
+})
+
+test.describe('a phone held sideways', () => {
+  test.use({ viewport: { width: 844, height: 390 } })
+  test('still gets 16px text, though it is wider than sm', async ({ page }, testInfo) => {
+    test.skip(!testInfo.project.use.hasTouch, 'a touch screen only')
+    expect(await expectPhoneText(page)).toBe('16px')
+  })
 })
