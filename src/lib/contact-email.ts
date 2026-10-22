@@ -24,9 +24,25 @@ import { firstName } from '@/lib/first-name'
  * reads on white, and its light ink for the rule and the quote's edge only,
  * since it is too pale for text on white.
  *
- * Every value from the form is HTML-escaped here. Headers (the subject) are
- * the route's to keep on one line.
+ * Every value from the form is HTML-escaped here. The route passes the name
+ * and the address through oneLine() first, which also keeps the subject on
+ * one line.
  */
+
+/**
+ * For the name and the address, which go into the subject and into the
+ * emails' sentences. Line breaks and every other control character become a
+ * space, so a crafted name can't inject extra mail headers; format
+ * characters go (bidi overrides and isolates, zero-width spaces and joiners),
+ * so a name can't turn the rest of a line around ("exe.png") or hide text.
+ */
+export function oneLine(s: string): string {
+  return s
+    .replace(/[\p{Cc}\p{Zl}\p{Zp}]+/gu, ' ')
+    .replace(/\p{Cf}/gu, '')
+    .replace(/ {2,}/g, ' ')
+    .trim()
+}
 
 export interface ContactMessage {
   name: string
@@ -53,6 +69,12 @@ const TEXT = '#18181b'
 const BODY = '#3f3f46'
 const MUTED = '#71717a'
 const FONT = "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif"
+/**
+ * On everything that carries the visitor's name, address or message: a long
+ * address or a name with no spaces breaks wherever it must instead of
+ * pushing the column wider than a phone.
+ */
+const WRAP = 'word-break:break-word;overflow-wrap:anywhere;'
 
 const HOST = new URL(SITE.url).host
 
@@ -137,7 +159,7 @@ ${card}
 
 const detail = (label: string, value: string, first = false) => `<tr>
 <td width="72" valign="top" style="width:72px;padding:${first ? '0' : '10px'} 16px 0 0;font-family:${FONT};font-size:13px;line-height:20px;color:${MUTED};">${label}</td>
-<td valign="top" style="padding:${first ? '0' : '10px'} 0 0;font-family:${FONT};font-size:14px;line-height:20px;color:${TEXT};word-break:break-word;overflow-wrap:anywhere;">${value}</td>
+<td valign="top" style="padding:${first ? '0' : '10px'} 0 0;font-family:${FONT};font-size:14px;line-height:20px;color:${TEXT};${WRAP}">${value}</td>
 </tr>`
 
 /** The visitor's message, for Roman. `sentAt` is when the route received it. */
@@ -147,7 +169,7 @@ export function ownerEmail({ name, email, message }: ContactMessage, sentAt: Dat
   const reply = `Replying to this email answers ${name} at ${email}.`
 
   const card = `<p style="margin:0 0 8px;font-size:12px;line-height:16px;font-weight:600;letter-spacing:0.12em;text-transform:uppercase;color:${INK};">Contact form</p>
-<h1 style="margin:0 0 24px;font-size:22px;line-height:30px;font-weight:700;color:${TEXT};word-break:break-word;">New message from ${esc(name)}</h1>
+<h1 style="margin:0 0 24px;font-size:22px;line-height:30px;font-weight:700;color:${TEXT};${WRAP}">New message from ${esc(name)}</h1>
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin:0 0 28px;">
 ${detail('Name', esc(name), true)}
 ${detail('Email', link(mailto(email), esc(email)))}
@@ -157,10 +179,10 @@ ${detail('Via', `the contact form at ${siteLink()}`)}
 <p style="margin:0 0 10px;font-size:12px;line-height:16px;font-weight:600;letter-spacing:0.12em;text-transform:uppercase;color:${MUTED};">Message</p>
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
 <tr>
-<td bgcolor="${QUOTE}" style="padding:16px 20px;background-color:${QUOTE};border-left:3px solid ${TINT};font-family:${FONT};font-size:15px;line-height:24px;color:${BODY};word-break:break-word;overflow-wrap:anywhere;">${paragraphs(message)}</td>
+<td bgcolor="${QUOTE}" style="padding:16px 20px;background-color:${QUOTE};border-left:3px solid ${TINT};font-family:${FONT};font-size:15px;line-height:24px;color:${BODY};${WRAP}">${paragraphs(message)}</td>
 </tr>
 </table>
-<p style="margin:24px 0 0;font-size:14px;line-height:22px;color:${BODY};">Replying to this email answers ${esc(name)} at ${link(mailto(email), esc(email))}.</p>`
+<p style="margin:24px 0 0;font-size:14px;line-height:22px;color:${BODY};${WRAP}">Replying to this email answers ${esc(name)} at ${link(mailto(email), esc(email))}.</p>`
 
   const html = layout({
     title: subject,

@@ -7,6 +7,9 @@
  * all three were wide open. Every route that throttles, the contact route
  * included, now uses this one copy, each with its own bucket in LIMITS.
  *
+ * The key is usually the caller's IP; the contact form's receipt keys on the
+ * address it goes to instead (LIMITS.receipt).
+ *
  * Serverless instances are short-lived and not shared, so this trims bursts
  * rather than promising a hard limit. That is the right trade for a portfolio:
  * it stops a script, not a determined attacker, and it costs no infrastructure.
@@ -64,4 +67,9 @@ export const LIMITS = {
   pin: { name: 'pin', windowMs: 10 * 60_000, max: 8 },
   /** Each call is an 8k-token Claude completion on Roman's account. */
   ai: { name: 'ai', windowMs: 60 * 60_000, max: 10 },
+  /**
+   * The contact form's receipt, keyed by the recipient's address rather than
+   * an IP: one an hour to any one inbox, whoever sends the form.
+   */
+  receipt: { name: 'receipt', windowMs: 60 * 60_000, max: 1 },
 } as const
