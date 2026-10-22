@@ -59,8 +59,13 @@ it, never change it.
 | `npm run test:e2e` | Playwright against the production build: desktop 1440x900, mobile 390x844, no-WebGL |
 
 e2e: build first; the suite starts `npm run start` on 3100 itself
-(`E2E_PORT=<port>` for another). Outside CI it reuses whatever already
-listens there, so stop a stale `next start` after rebuilding.
+(`E2E_PORT=<port>` for another), with no Resend key and the Netlify Forms
+channel pointed at a stand-in for Netlify's form handler
+(`tests/stubs/netlify-forms.mjs`, on the next port, or `E2E_FORMS_PORT`), so
+no test message reaches anyone. Outside CI it reuses whatever already
+listens there, so stop a stale `next start` after rebuilding. The run's
+tsconfig is `tests/tsconfig.json`: the root one plus a stub for
+`import 'server-only'`, so specs can unit-test server-only modules.
 `@playwright/test` is pinned to 1.56.1 (chromium-1194); where those browsers
 are installed, set `PLAYWRIGHT_BROWSERS_PATH` (e.g. `/opt/pw-browsers`)
 instead of running `playwright install`. Wait on elements, never
@@ -72,10 +77,11 @@ report-only; `next.config.ts` says what each source is for).
 | Spec | Covers |
 |---|---|
 | `smoke` | Every route and head file, the redirects, a clean console, no request off-origin, the CSP, the server HTML, the page without WebGL |
-| `a11y` | axe, any impact, on `/`, `/resume` and the 404 |
-| `keyboard-walk` | Every Tab stop visible, named, ringed, on screen, not under the top bar |
-| `contact-ui` | The suggestion, the undo window, the POST (intercepted), Sent and the failure line |
-| `contact-api` | The `/api/contact` contract with no delivery channel |
+| `a11y` | axe, any impact, on `/`, `/resume`, the 404 and the message box's sent and failure panels |
+| `keyboard-walk` | Every Tab stop visible, named, ringed, on screen, not under the top bar, the message box's panels included |
+| `contact-ui` | The suggestion, the undo window, the POST (intercepted), the sent panel (with and without a receipt), Send another, the failure panel, Try again, Copy email, 16px text on phones |
+| `contact-api` | The `/api/contact` contract with no Resend key: 400s, the honeypot, 502 when nothing delivered, 200 `delivered: ['forms']` with `receipt: false`, 429 |
+| `contact-email` | The email to Roman and the visitor's receipt (content, escaping, plain text, layout at 600 and 375), the first-name rule, when receipts are on |
 | `touch` | Phone swipes that start on the badges, the cards or the timeline scroll the page |
 | `resume` | The PIN gate, the builder (mocked data) and its routes |
 | `data` | The records, the owner-fixed copy, nothing private in the build |
@@ -94,7 +100,7 @@ move only in a commit that says why.
 |---|---|
 | `/` | The Stage: `page.tsx` (server: metadata, JSON-LD, a `<noscript>` summary of the whole page) renders `<Stage>` (client) |
 | `/resume`, `/api/resume/*` | Roman's PIN-gated builder; its UI lives in `src/app/resume/_ui/` |
-| `/api/contact` | The message box's POST: Resend and Netlify Forms together, 502 when neither delivered |
+| `/api/contact` | The message box's POST: Resend (an HTML and text email to `CONTACT_TO`, reply-to the visitor) and Netlify Forms together; then, when receipts are on, a receipt to the visitor that repeats nothing they typed but a first name. 200 `{ok, delivered, receipt}`, 502 when neither channel delivered (contract at the top of `route.ts`) |
 | `/api/csp-report` | Where CSP reports go (logged, 204) |
 | 404, `error.tsx`, `global-error.tsx` | The Stage's black, violet and type, each with a way home |
 | `/sitemap.xml`, `/robots.txt`, `/manifest.webmanifest`, `/llms.txt`, `/icon.svg`, `/apple-icon`, `/opengraph-image`, `/twitter-image`, `/humans.txt` | Generated from the same records |
@@ -112,6 +118,7 @@ move only in a commit that says why.
 | Head and JSON-LD | `src/lib/seo.ts` (`pageMetadata`), `src/lib/structured-data.ts` |
 | API settings (server only) | `src/lib/env.ts`; routes never read `process.env` directly |
 | The page: sections, top bar, message box | `src/components/stage/` (`look.ts` holds the black, the violet and the header type the 404 and error pages share) |
+| The contact emails (to Roman, and the visitor's receipt), server only | `src/lib/contact-email.ts`; the first-name rule they share with the message box is `src/lib/first-name.ts` |
 | The 21st.dev components and their `-utils` folders | `src/components/ui/` |
 | Theme | `src/app/globals.css`: shadcn's theme unmodified, then the résumé's own tokens |
 | Share-card fonts | `src/app/_og/fonts/` (Geist, OFL) |
@@ -139,5 +146,16 @@ See `.env.local.example`. `RESEND_API_KEY` / `CONTACT_TO` / `CONTACT_FROM`
 (the message box), `RESUME_PIN` (the builder), `ANTHROPIC_API_KEY` (its AI
 tools). Netlify provides `URL` and `DEPLOY_PRIME_URL`. A build with no env at
 all succeeds; `src/instrumentation.ts` logs which features are off.
+
+The message box today (October 2026): no `RESEND_API_KEY` on Netlify, so
+messages are archived in Netlify Forms only (`delivered: ['forms']`) and
+nobody is emailed; the domain has no records for Resend yet. With
+`RESEND_API_KEY` set, Roman gets each message as an email. Receipts
+(`receiptsEnabled()` in `src/lib/env.ts`) need that key and a
+`CONTACT_FROM` on a domain other than resend.dev, whose shared sender only
+delivers to the Resend account's own address; until then the route answers
+`receipt: false` and the box doesn't promise one. Roman's setup steps
+(Resend key, verifying romankucheryavyy.com with DNS records in Netlify,
+the three variables) are in `.env.local.example`.
 
 `docs/` holds the old design's briefs and audit, as history.
