@@ -56,7 +56,7 @@ it, never change it.
 | `npm run start -- -p <port>` | Serve the build |
 | `npm run budget` | First-load JS per route against `scripts/budget.json` (after a build) |
 | `npm run check:protected` | Fails on an unapproved change to the owner-fixed copy |
-| `node scripts/capture-products.mjs [id]` | Re-captures the public products' previews from their live sites (below) |
+| `node scripts/capture-products.mjs [id] [desktop\|phone]` | Re-captures the public products' previews from their live sites (below) |
 | `npm run test:e2e` | Playwright against the production build: desktop 1440x900, mobile 390x844, no-WebGL |
 
 e2e: build first; the suite starts `npm run start` on 3100 itself
@@ -81,13 +81,13 @@ report-only; `next.config.ts` says what each source is for).
 | `smoke` | Every route and head file, the redirects, a clean console, no request off-origin, the CSP, the server HTML, the page without WebGL |
 | `a11y` | axe, any impact, on `/`, `/resume`, the 404 and the message box's sent and failure panels |
 | `keyboard-walk` | Every Tab stop visible, named, ringed, on screen, not under the top bar, the message box's panels and every product's preview, link and Pause included |
-| `products` | Act II: Roman's order, each public product's real screenshots loading (`naturalWidth`) with alt text naming the site, the preview scrolling only while on screen, holding still on hover, focus and Pause, the private products' diagrams (their own parts, the beams running and pausing), nothing below moving when the previews land, no sideways scroll and no diagram overflowing from 320 to 1920 wide, and nothing moving under reduced motion |
+| `products` | Act II: Roman's order, each public product's real screenshots loading (`naturalWidth`) with alt text naming the site, the preview playing only while most of it is in view (also when it arrives in view as it mounts), back to the top after leaving, its two shots on one loop, holding still on hover, focus and Pause, the private products' diagrams (the product at the centre, its own parts, the links listed for screen readers, the beams running and pausing), nothing below moving when the previews land, no sideways scroll, no diagram overflowing and every beam long enough and out from under the cards from 320 to 1920 wide, and nothing moving under reduced motion |
 | `contact-ui` | The suggestion, the undo window, the POST (intercepted), the sent panel (with and without a receipt), Send another, the failure panel, Try again, Edit message, Copy email, the 429 panel, the quote, 16px text on phones (landscape too) |
 | `contact-api` | The `/api/contact` contract with no Resend key: 400s, the honeypot, 502 when nothing delivered, 200 `delivered: ['forms']` with `receipt: false`, 429 |
 | `contact-email` | The email to Roman and the visitor's receipt (content, escaping, plain text, layout at 600 and 375 with long names and addresses), the first-name rule, `oneLine`, when receipts are on, and the route in Node with `fetch` faked: what it hands Resend, the receipt's headers, its per-address limit, no receipt without the email |
 | `touch` | Phone swipes that start on the badges, the cards, a product's preview or diagram, or the timeline scroll the page |
 | `resume` | The PIN gate, the builder (mocked data) and its routes |
-| `data` | The records (the products' order, previews and flows included), the preview files' sizes, the owner-fixed copy, nothing private in the build |
+| `data` | The records (the products' order, previews and flows included: a flow's words are its description's, its links only the stated ones), the preview files' sizes, the owner-fixed copy, nothing private in the build |
 
 CI (`.github/workflows/ci.yml`) runs typecheck, lint, check:protected,
 build, budget and test:e2e on every PR and branch push. It never deploys and
@@ -144,20 +144,29 @@ Alongside Brain):
 
 - The public ones show their live sites: a real full-page screenshot in a
   browser frame (dillionverma/safari) and on a phone (designali-in/
-  iphone-16-pro), scrolling by itself (one Web Animations transform) only
-  while on screen; it holds still on hover, while its link has focus, after
-  Pause, and always under reduced motion. Below md the phone shows alone.
-- The private ones (no public screens) show "how it works": the parts their
-  description names, in its words (`flow` in constants.ts; `data.spec`
-  checks every label and note is in the description), wired with
-  klyv-ui/klyv-animated-beam. No screenshots and no made-up screens.
+  iphone-16-pro), scrolling by itself (one Web Animations transform per
+  shot, both on one loop so they reach each end of the page together). It
+  plays only while most of the preview is in view, and starts again from
+  the top of the page after it has left the screen; it holds still on
+  hover, while its link has focus, after Pause, and always under reduced
+  motion. Below md the phone shows alone.
+- The private ones (no public screens) show their parts around them: the
+  product at the centre (its title and the description's opening line),
+  the parts the description names in its words, and only the links it
+  states (`flow` in constants.ts; `data.spec` checks the words and pins the
+  links), drawn with klyv-ui/klyv-animated-beam between dots on the cards'
+  edges so each beam shows whole. Which part feeds which beyond that is a
+  `// needs Roman:` there. No screenshots and no made-up screens.
 - To refresh the screenshots: `PLAYWRIGHT_BROWSERS_PATH=/opt/pw-browsers
-  node scripts/capture-products.mjs` (or one id). It loads each site at
-  1280 and at 390 wide, scrolls it once so everything that reveals on
-  scroll has, crops to the first screens and writes WebP at the sizes the
-  page declares. Then set `captured` in constants.ts, look at the files,
-  and commit them. A page that changes height enough to want a new crop
-  changes the crop in the script and the sizes in constants.ts together.
+  node scripts/capture-products.mjs` (or an id, `desktop` or `phone`). It
+  loads each site at 1280 and at 390 wide, scrolls it once so everything
+  that reveals on scroll has, crops to the first screens (less where a
+  page pins a stretch that a still shows blank), puts a status-bar band
+  above each phone shot for the frame's Dynamic Island, and writes WebP at
+  the sizes the page declares. Then set `captured` in constants.ts to the
+  year and month it prints, look at the files, and commit them. A page that
+  changes height enough to want a new crop changes the crop in the script
+  and the sizes in constants.ts together.
 
 ## Definition of done
 
