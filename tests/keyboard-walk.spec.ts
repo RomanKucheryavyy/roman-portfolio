@@ -1,5 +1,8 @@
 import { expect, test, type Page } from '@playwright/test'
+import { PRODUCTS } from '@/lib/content'
 import { collectConsole, gotoHome } from './helpers'
+
+const domain = (url: string) => url.replace(/^https?:\/\//, '').replace(/\/$/, '')
 
 /**
  * The keyboard-only pass, as a test. Tab through each page from the top the
@@ -224,6 +227,13 @@ test.describe('keyboard walk', () => {
     for (const field of [/^input#c-name /, /^input#c-email /, /^textarea.* "Message"$/]) {
       expect(stops.some((s) => field.test(s.what)), String(field)).toBe(true)
     }
+    // So is every product's control: each public one's preview and link,
+    // and every preview's and diagram's Pause.
+    const productStops = PRODUCTS.flatMap((p) => [
+      ...(p.url ? [`a "Visit ${domain(p.url)}"`, `a "${domain(p.url)}"`] : []),
+      `button "Pause the ${p.title} ${p.url ? 'preview' : 'diagram'}"`,
+    ])
+    for (const stop of productStops) expect(stops.map((s) => s.what), stop).toContain(stop)
 
     // Send is disabled until the box holds a name, an address and a message,
     // so the empty page's walk passes it by. Filled in, it is the stop after

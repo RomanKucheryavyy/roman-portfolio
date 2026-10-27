@@ -16,8 +16,9 @@ export const SECTION_IDS = ['work', 'products', 'experience', 'credentials', 'ab
 
 /**
  * Opens the home page and waits for it to be up: the hero's name drawn, and
- * the pieces that load after the page (the Experience timeline, the About
- * block, the contact card and the footer) in place.
+ * the pieces that load after the page (the products' previews, the
+ * Experience timeline, the About block, the contact card and the footer) in
+ * place.
  */
 export async function gotoHome(page: Page, path = '/') {
   const response = await page.goto(path)
@@ -25,6 +26,7 @@ export async function gotoHome(page: Page, path = '/') {
   await expect(page.locator('footer')).toBeAttached({ timeout: 30_000 })
   await expect(page.locator('#contact form')).toBeAttached()
   await expect(page.locator('#about [aria-label="Keywords"]')).toBeAttached()
+  await expect(page.locator('#products [data-preview]')).toHaveCount(4)
   await sleep(500)
   return response
 }

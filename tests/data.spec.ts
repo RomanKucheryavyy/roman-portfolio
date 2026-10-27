@@ -135,6 +135,73 @@ test.describe('the Stage reads the records', () => {
   })
 })
 
+/** A WebP file's width and height, from its header (lossy, lossless or extended). */
+function webpSize(file: string): { width: number; height: number } {
+  const b = readFileSync(file)
+  if (b.toString('ascii', 0, 4) !== 'RIFF' || b.toString('ascii', 8, 12) !== 'WEBP') throw new Error(`${file} is not a WebP`)
+  const chunk = b.toString('ascii', 12, 16)
+  if (chunk === 'VP8 ') return { width: b.readUInt16LE(26) & 0x3fff, height: b.readUInt16LE(28) & 0x3fff }
+  if (chunk === 'VP8L') {
+    const bits = b.readUInt32LE(21)
+    return { width: (bits & 0x3fff) + 1, height: ((bits >> 14) & 0x3fff) + 1 }
+  }
+  if (chunk === 'VP8X') return { width: 1 + b.readUIntLE(24, 3), height: 1 + b.readUIntLE(27, 3) }
+  throw new Error(`${file}: unknown WebP chunk ${chunk}`)
+}
+
+test.describe('his products', () => {
+  test('in his order, Alongside Events first, linked to its public site', () => {
+    expect(COMPOSITIONS.map((c) => c.id)).toEqual(['alongside-events', 'sembly', 'praxis', 'alongside-brain'])
+    const events = content.PRODUCTS.find((p) => p.id === 'alongside-events')!
+    expect(events.url).toBe('https://alongsideevents.com')
+    // His tagline and status, unchanged by the link.
+    expect(events.tagline).toBe('The tech stack behind the family coffee cart')
+    expect(events.status).toBe('Runs the family cart')
+  })
+
+  test('the public ones have a preview, the private ones a flow, and none has both', () => {
+    for (const product of content.PRODUCTS) {
+      expect(!!product.preview, product.id).toBe(!!product.url)
+      expect(!!product.flow, product.id).toBe(!product.url)
+    }
+  })
+
+  test('each preview is a real, small WebP of the size the page declares', () => {
+    for (const product of content.PRODUCTS) {
+      if (!product.preview) continue
+      expect(product.preview.captured).toMatch(/^20\d\d-\d\d$/)
+      for (const shot of [product.preview.desktop, product.preview.phone]) {
+        expect(shot.src).toMatch(new RegExp(`^/images/products/${product.id}-(desktop|phone)\\.webp$`))
+        const file = path.join(ROOT, 'public', shot.src)
+        expect(existsSync(file), shot.src).toBe(true)
+        expect(webpSize(file), shot.src).toEqual({ width: shot.width, height: shot.height })
+        expect(statSync(file).size, `${shot.src} stays well under 400 KB`).toBeLessThan(400 * 1024)
+      }
+      // The desktop shot is 1280 CSS px wide at 1x, the phone's 390 at 1.5x.
+      expect(product.preview.desktop.width).toBe(1280)
+      expect(product.preview.phone.width).toBe(585)
+    }
+  })
+
+  test("a flow names only what the description names, in the description's words", () => {
+    const words = (text: string) => text.toLowerCase().replace(/\s+/g, ' ')
+    for (const product of content.PRODUCTS) {
+      if (!product.flow) continue
+      const description = words(product.description)
+      const ids = product.flow.nodes.map((n) => n.id)
+      for (const node of product.flow.nodes) {
+        expect(description, `${product.id}: "${node.label}"`).toContain(words(node.label))
+        expect(description, `${product.id}: "${node.note}"`).toContain(words(node.note))
+      }
+      for (const [from, to] of product.flow.links) {
+        expect(ids, `${product.id}: link ${from} -> ${to}`).toEqual(expect.arrayContaining([from, to]))
+      }
+      // Every part is wired in.
+      for (const id of ids) expect(product.flow.links.some((link) => link.includes(id)), `${product.id}: ${id}`).toBe(true)
+    }
+  })
+})
+
 test.describe('owner-fixed copy', () => {
   // The same two descriptions scripts/check-protected.mjs guards in history.
   test('the FUBC Coffee iOS description keeps "Apple Pay", and the Nelectric description is word for word', () => {
