@@ -191,9 +191,11 @@ export const PROJECTS = [
  *  sizes are the files' own (tests/data.spec.ts checks them).
  *
  *  `flow` (the private ones, which have no public screens to show): the
- *  "how it works" the act draws instead. Every node is a thing the
- *  description names, its label and note the description's own words; the
- *  links follow what the description says each part does. */
+ *  diagram the act draws instead, the product at its centre (`hub`: its
+ *  title, and the description's opening line) and its parts around it. Every
+ *  part is a thing the description names, its label and note the
+ *  description's own words; `links` ([from, to], the product's own `id`
+ *  standing for the centre) are only the ones the description states. */
 export const COMPOSITIONS = [
   {
     // Linked since Roman's request of 2026-10-27, which asks for a preview of
@@ -252,9 +254,17 @@ export const COMPOSITIONS = [
       'An investment desk that argues with itself. Eighteen investor personas — each with its own rules and an LLM-written thesis — debate every position, an AI portfolio manager sizes the trades, and a Discovery Engine hunts spinoffs, activist stakes, and cyclical bottoms. Executing through Alpaca on paper until it earns the right to real money.',
     stack: ['Next.js', 'TypeScript', 'Claude API', 'Alpaca'],
     color: '#5ac8fa',
-    // The personas' debate and the Discovery Engine's finds go to the
-    // portfolio manager, which sizes the trades; Alpaca executes them.
+    // The parts the description names, around the desk itself (the
+    // product, at the centre), and only the links it states: the personas,
+    // the portfolio manager and the Discovery Engine are the desk's own
+    // parts, each working into it, and the desk executes through Alpaca.
+    // needs Roman: which part feeds which inside the desk. An earlier draft
+    // drew the personas and the Discovery Engine feeding the portfolio
+    // manager, and the manager feeding Alpaca; the description does not say
+    // so, so it is not drawn. If that is how it runs, say so and the beams
+    // can show it.
     flow: {
+      hub: 'An investment desk that argues with itself',
       nodes: [
         { id: 'personas', label: 'Eighteen investor personas', note: 'debate every position' },
         { id: 'discovery', label: 'Discovery Engine', note: 'hunts spinoffs, activist stakes, and cyclical bottoms' },
@@ -262,9 +272,10 @@ export const COMPOSITIONS = [
         { id: 'alpaca', label: 'Alpaca', note: 'on paper' },
       ],
       links: [
-        ['personas', 'manager'],
-        ['discovery', 'manager'],
-        ['manager', 'alpaca'],
+        ['personas', 'praxis'],
+        ['discovery', 'praxis'],
+        ['manager', 'praxis'],
+        ['praxis', 'alpaca'],
       ],
     },
   },
@@ -277,19 +288,25 @@ export const COMPOSITIONS = [
       'An Obsidian vault with a pulse. A Slack bot captures notes, reminders, journal entries, and expenses in plain language; Claude routes every capture where it belongs; scheduled digests and pattern detection keep me honest. Conducting my life around the clock from a desktop in my office.',
     stack: ['Python', 'Claude API', 'Slack API', 'Obsidian'],
     color: '#30d158',
-    // The Slack bot's captures go to Claude, which routes each into the
-    // vault; the digests come out of what the vault holds.
+    // The parts the description names, around the vault itself (the
+    // product, at the centre), and only the links it states: the Slack bot's
+    // captures go to Claude, which routes every capture where it belongs, in
+    // the vault; the product's scheduled digests and pattern detection go out
+    // to keep him honest.
+    // needs Roman: what the digests are made from. An earlier draft drew
+    // them coming out of the notes the vault holds; the description does not
+    // say so, so it is not drawn.
     flow: {
+      hub: 'An Obsidian vault with a pulse',
       nodes: [
         { id: 'slack', label: 'Slack bot', note: 'captures notes, reminders, journal entries, and expenses' },
         { id: 'claude', label: 'Claude', note: 'routes every capture where it belongs' },
-        { id: 'vault', label: 'Obsidian vault', note: 'with a pulse' },
         { id: 'digests', label: 'Scheduled digests', note: 'and pattern detection' },
       ],
       links: [
         ['slack', 'claude'],
-        ['claude', 'vault'],
-        ['vault', 'digests'],
+        ['claude', 'alongside-brain'],
+        ['alongside-brain', 'digests'],
       ],
     },
   },

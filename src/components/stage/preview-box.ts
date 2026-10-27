@@ -15,13 +15,12 @@
 export const LIVE_BOX = 'mx-auto aspect-[1/2] w-[min(62vw,15.5rem)] md:mx-0 md:aspect-[3/2] md:w-full'
 
 /**
- * A "how it works" panel: a fixed height per layout that holds the longer
- * diagram at that layout's narrowest width (320px below md, where it needs
- * 552px; 1024px for lg, 495px; 1280px for xl, 418px), close to the live
- * previews' own height from md. tests/products.spec.ts checks that nothing
- * overflows.
+ * A private product's diagram panel: from md the live previews' own 3:2
+ * stage, so the rows keep one rhythm; below md, a fixed height that holds
+ * the taller diagram at 320px wide. tests/products.spec.ts checks that
+ * nothing overflows at any width.
  */
-export const FLOW_BOX = 'h-[36rem] md:h-[28rem] lg:h-[32rem] xl:h-[28rem]'
+export const FLOW_BOX = 'h-[36rem] md:h-auto md:aspect-[3/2]'
 
 /** The line under either: a caption and the Pause / Play button, two lines of text at most. */
 export const CAPTION_ROW = 'mt-5 flex h-8 items-center justify-between gap-4 text-xs leading-4 text-muted-foreground md:mt-6'

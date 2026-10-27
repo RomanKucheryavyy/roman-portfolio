@@ -33,7 +33,7 @@ const LivePreview = dynamic(() => import('./product-previews').then((m) => m.Liv
   ssr: false,
   loading: holder(LIVE_BOX),
 })
-const HowItWorks = dynamic(() => import('./product-previews').then((m) => m.HowItWorks), {
+const ProductParts = dynamic(() => import('./product-previews').then((m) => m.ProductParts), {
   ssr: false,
   loading: holder(FLOW_BOX),
 })
@@ -66,7 +66,7 @@ function ProductRow({ product, index }: { product: Product; index: number }) {
         </div>
 
         <div className={cn('lg:row-span-2 lg:row-start-1 lg:self-center', flip ? 'lg:col-start-1' : 'lg:col-start-2')}>
-          {product.preview ? <LivePreview product={product} flip={flip} /> : product.flow ? <HowItWorks product={product} /> : null}
+          {product.preview ? <LivePreview product={product} flip={flip} /> : product.flow ? <ProductParts product={product} /> : null}
         </div>
 
         <div className={cn('flex flex-col items-start gap-5 lg:row-start-2 lg:self-start', text)}>
@@ -97,12 +97,13 @@ function ProductRow({ product, index }: { product: Product; index: number }) {
  * split tour, alternating sides from lg: what it is on one side, a look at
  * it on the other. The public ones show their live sites, scrolling in a
  * browser and on a phone; the private ones, which have no public screens,
- * show how they work in the description's own words. Nothing takes over the
- * scroll: the previews move by themselves, and only while on screen.
+ * show their parts around them, in the description's own words. Nothing
+ * takes over the scroll: the previews move by themselves, and only while in
+ * view. The section clips sideways, for the violet behind the previews.
  */
 export function Products() {
   return (
-    <section id="products" aria-labelledby="products-title" className="relative isolate scroll-mt-14 pt-20 md:pt-32">
+    <section id="products" aria-labelledby="products-title" className="relative isolate scroll-mt-14 overflow-x-clip pt-20 md:pt-32">
       <div
         aria-hidden="true"
         className="pointer-events-none absolute inset-x-0 top-0 -z-10 h-[40rem] bg-[radial-gradient(60%_50%_at_50%_0%,color-mix(in_oklab,var(--stage-accent)_70%,transparent),transparent)]"

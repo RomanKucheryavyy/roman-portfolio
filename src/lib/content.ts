@@ -115,8 +115,13 @@ export interface Product {
   color: string
   /** A public product's live site, captured (YearMonth) on a desktop and a phone. */
   preview?: { captured: YearMonth; desktop: Shot; phone: Shot }
-  /** A private product's "how it works": its parts, and which feeds which. */
-  flow?: { nodes: readonly FlowNode[]; links: readonly (readonly [string, string])[] }
+  /**
+   * A private product's diagram: the product at the centre (`hub`, the
+   * description's opening line under its title), the parts its description
+   * names, and the links it states ([from, to]; the product's `id` is the
+   * centre).
+   */
+  flow?: { hub: string; nodes: readonly FlowNode[]; links: readonly (readonly [string, string])[] }
 }
 
 export const PRODUCTS: readonly Product[] = COMPOSITIONS.map((c): Product => ({ ...c }))
