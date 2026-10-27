@@ -212,12 +212,14 @@ export const COMPOSITIONS = [
     stack: ['Next.js', 'TypeScript', 'QR ordering', 'Thermal print server'],
     color: '#ffb800',
     // Captured from https://alongsideevents.com on 2026-10-27: its first
-    // 2900 CSS px at 1280 wide (below that the page pins a phone for several
-    // screens, blank in a still), and its first 3000 at 390 wide.
+    // 2900 CSS px at 1280 wide, and its first 2180 at 390 wide (below those
+    // the page pins its "How the night runs" steps for several screens,
+    // blank or greyed out in a still), the phone's under a 52px status-bar
+    // band (scripts/capture-products.mjs).
     preview: {
       captured: '2026-10',
       desktop: { src: '/images/products/alongside-events-desktop.webp', width: 1280, height: 2900 },
-      phone: { src: '/images/products/alongside-events-phone.webp', width: 585, height: 4500 },
+      phone: { src: '/images/products/alongside-events-phone.webp', width: 585, height: 3348 },
     },
   },
   {
@@ -233,11 +235,12 @@ export const COMPOSITIONS = [
     stack: ['Next.js', 'Supabase', 'Tailwind', 'PWA'],
     color: '#af52de',
     // Captured from https://sembly.app on 2026-10-27: its first 4000 CSS px
-    // at 1280 wide and its first 3000 at 390 wide.
+    // at 1280 wide and its first 3000 at 390 wide, the phone's under a 52px
+    // status-bar band (scripts/capture-products.mjs).
     preview: {
       captured: '2026-10',
       desktop: { src: '/images/products/sembly-desktop.webp', width: 1280, height: 4000 },
-      phone: { src: '/images/products/sembly-phone.webp', width: 585, height: 4500 },
+      phone: { src: '/images/products/sembly-phone.webp', width: 585, height: 4578 },
     },
   },
   {

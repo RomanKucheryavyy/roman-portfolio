@@ -6,11 +6,20 @@
  *
  * - desktop: 1280px wide, saved at 1x;
  * - phone: 390px wide at a phone's deviceScaleFactor of 2, saved at 1.5x (the
- *   frame shows it under 300px wide, so 2x would only add weight);
+ *   frame shows it under 300px wide, so 2x would only add weight), under a
+ *   52px band for the phone's status bar (below);
  *
  * each cropped to the page's first few screens (`desktop` and `phone` below,
  * in CSS px: up to 4000 and 3000, less where a page turns into a long
  * scroll-pinned stretch that a still shot shows as blank).
+ *
+ * The status bar: on an iPhone the top of a page sits below the status bar
+ * and its Dynamic Island. The iPhone 16 Pro frame the act uses draws its
+ * island over the top of the screen, so each phone shot starts with that
+ * band (54pt of the 16 Pro's 874pt screen: 52px of the 849px tall screen the
+ * frame has at 390 wide), filled by repeating the page's first row of pixels
+ * upward, and the island sits over the band instead of over the site's own
+ * top bar.
  *
  * Each page is loaded, scrolled through once (so anything that appears on
  * scroll has appeared), returned to the top and left to settle before the
@@ -19,11 +28,13 @@
  * the page declares for them (`preview` on the product in
  * src/lib/constants.ts COMPOSITIONS; tests/data.spec.ts checks the files
  * match), so a re-capture never changes the layout. After one, set
- * `captured` there to the date this prints, and look at the files before
- * committing them.
+ * `captured` there to the year and month this prints, and look at the files
+ * before committing them.
  *
- *   node scripts/capture-products.mjs            # every product with a preview
- *   node scripts/capture-products.mjs sembly     # just one
+ *   node scripts/capture-products.mjs                   # every product, both shots
+ *   node scripts/capture-products.mjs sembly            # one product
+ *   node scripts/capture-products.mjs phone             # every product's phone shot
+ *   node scripts/capture-products.mjs sembly desktop    # one shot
  *
  * Needs Playwright's Chromium (set PLAYWRIGHT_BROWSERS_PATH where it is
  * installed, or run `npx playwright install chromium`) and sharp, which Next
@@ -44,8 +55,11 @@ const OUT = path.join(ROOT, 'public', 'images', 'products')
  */
 const PRODUCTS = [
   // From about 2900px down, the desktop page pins its "How the night runs"
-  // phone for several screens, which a full-page shot draws as empty space.
-  { id: 'alongside-events', url: 'https://alongsideevents.com', desktop: 2900, phone: 3000 },
+  // phone for several screens, which a full-page shot draws as empty space;
+  // at 390 wide the same stretch starts about 2150px down, after its first
+  // step ("Guests order from their table"), its later steps greyed out until
+  // a scroll reaches them.
+  { id: 'alongside-events', url: 'https://alongsideevents.com', desktop: 2900, phone: 2180 },
   { id: 'sembly', url: 'https://sembly.app', desktop: 4000, phone: 3000 },
 ]
 
@@ -66,6 +80,8 @@ const SHOTS = {
     },
     save: 1.5,
     quality: 74,
+    // The status bar's band, in CSS px (see the top of this file).
+    bar: 52,
   },
 }
 
@@ -88,15 +104,20 @@ async function main() {
   const { default: sharp } = await import('sharp').catch(() => {
     throw new Error('sharp is missing: it comes with Next (npm install), or add it with npm i -D sharp')
   })
-  const only = process.argv.slice(2)
-  const products = only.length ? PRODUCTS.filter((p) => only.includes(p.id)) : PRODUCTS
-  if (!products.length) throw new Error(`no product called ${only.join(', ')}; known: ${PRODUCTS.map((p) => p.id).join(', ')}`)
+  const args = process.argv.slice(2)
+  const ids = PRODUCTS.map((p) => p.id)
+  const unknown = args.filter((a) => !ids.includes(a) && !(a in SHOTS))
+  if (unknown.length) throw new Error(`unknown ${unknown.join(', ')}; products: ${ids.join(', ')}; shots: ${Object.keys(SHOTS).join(', ')}`)
+  const pickedIds = args.filter((a) => ids.includes(a))
+  const pickedKinds = args.filter((a) => a in SHOTS)
+  const products = pickedIds.length ? PRODUCTS.filter((p) => pickedIds.includes(p.id)) : PRODUCTS
+  const kinds = Object.entries(SHOTS).filter(([kind]) => !pickedKinds.length || pickedKinds.includes(kind))
 
   mkdirSync(OUT, { recursive: true })
   const browser = await chromium.launch()
   try {
     for (const product of products) {
-      for (const [kind, shot] of Object.entries(SHOTS)) {
+      for (const [kind, shot] of kinds) {
         const context = await browser.newContext({ ...shot.context, reducedMotion: 'no-preference' })
         const page = await context.newPage()
         await page.goto(product.url, { waitUntil: 'load', timeout: 60_000 })
@@ -111,15 +132,20 @@ async function main() {
         await context.close()
 
         const file = path.join(OUT, `${product.id}-${kind}.webp`)
-        const size = { width: Math.round(width * shot.save), height: Math.round(height * shot.save) }
-        await sharp(png).resize(size).webp({ quality: shot.quality, effort: 6, smartSubsample: true }).toFile(file)
+        const bar = shot.bar ?? 0
+        const size = { width: Math.round(width * shot.save), height: Math.round((height + bar) * shot.save) }
+        // The status bar's band: the page's first row of pixels, repeated upward.
+        const framed = bar
+          ? await sharp(png).extend({ top: bar * shot.context.deviceScaleFactor, extendWith: 'copy' }).png().toBuffer()
+          : png
+        await sharp(framed).resize(size).webp({ quality: shot.quality, effort: 6, smartSubsample: true }).toFile(file)
         console.log(`${path.relative(ROOT, file)}  ${size.width}x${size.height}  ${(statSync(file).size / 1024).toFixed(0)} KB  from ${product.url}`)
       }
     }
   } finally {
     await browser.close()
   }
-  console.log(`captured: '${new Date().toISOString().slice(0, 10)}'`)
+  console.log(`captured: '${new Date().toISOString().slice(0, 7)}'  (on ${new Date().toISOString().slice(0, 10)})`)
 }
 
 main().catch((error) => {
