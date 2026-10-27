@@ -19,7 +19,7 @@ import {
   TECH_SKILLS,
 } from '@/lib/constants'
 import { LINKS } from '@/lib/links'
-import { CURRENT_ROLE, EDUCATION as SCHOOLS, PREVIOUS_ROLES, monthYear, yearOf, type Role as Fact } from '@/lib/site-facts'
+import { CURRENT_ROLE, EDUCATION as SCHOOLS, PREVIOUS_ROLES, monthYear, yearOf, type Role as Fact, type YearMonth } from '@/lib/site-facts'
 
 const [first, ...rest] = SITE.name.split(' ')
 
@@ -89,6 +89,20 @@ export interface Project {
 /** The client work, in the site's order. */
 export const PROJECTS: readonly Project[] = WORK.map((w): Project => ({ ...w }))
 
+/** A screenshot file and its size in pixels. */
+export interface Shot {
+  src: string
+  width: number
+  height: number
+}
+
+/** One of the things a private product's description names, in its words. */
+export interface FlowNode {
+  id: string
+  label: string
+  note: string
+}
+
 /** His own products. */
 export interface Product {
   id: string
@@ -99,6 +113,10 @@ export interface Product {
   description: string
   stack: readonly string[]
   color: string
+  /** A public product's live site, captured (YearMonth) on a desktop and a phone. */
+  preview?: { captured: YearMonth; desktop: Shot; phone: Shot }
+  /** A private product's "how it works": its parts, and which feeds which. */
+  flow?: { nodes: readonly FlowNode[]; links: readonly (readonly [string, string])[] }
 }
 
 export const PRODUCTS: readonly Product[] = COMPOSITIONS.map((c): Product => ({ ...c }))

@@ -178,10 +178,48 @@ export const PROJECTS = [
   },
 ] as const
 
-/** His own products, in the order the Stage's Act II shows them.
- *  `url` is optional: most of these are private builds, so the entry tells the
- *  story instead of linking out. Where one is public, it links to it. */
+/** His own products, in the order the Stage's Act II shows them: Alongside
+ *  Events first, which Roman calls one of his biggest projects (his request
+ *  of 2026-10-27, "alongside events which are like my biggest projects ...
+ *  should be a preview of it"), then Sembly, Praxis and Alongside Brain.
+ *  `url` is optional: two of these are private builds, so the entry tells the
+ *  story instead of linking out. Where one is public, it links to it.
+ *
+ *  `preview` (the public ones): screenshots of the live site, desktop and
+ *  phone, that the act scrolls inside its browser and phone frames. Taken
+ *  from `url` by scripts/capture-products.mjs, on the `captured` date; the
+ *  sizes are the files' own (tests/data.spec.ts checks them).
+ *
+ *  `flow` (the private ones, which have no public screens to show): the
+ *  "how it works" the act draws instead. Every node is a thing the
+ *  description names, its label and note the description's own words; the
+ *  links follow what the description says each part does. */
 export const COMPOSITIONS = [
+  {
+    // Linked since Roman's request of 2026-10-27, which asks for a preview of
+    // it as one of his biggest projects: alongsideevents.com is public
+    // ("All-in-one software for coffee carts": sign-in, pricing, "Your first
+    // event is free") and its JSON-LD names him and Anna Kucheryava as
+    // founders (fetched 2026-10-13). The status and tagline are his, as they
+    // were.
+    id: 'alongside-events',
+    title: 'Alongside Events',
+    tagline: 'The tech stack behind the family coffee cart',
+    status: 'Runs the family cart',
+    url: 'https://alongsideevents.com',
+    description:
+      'QR-code ordering guests scan right at the cart, automated post-event recaps, and fully functional networked thermal label printing — every technical piece a mobile espresso bar needs, composed from scratch and battle-tested at real weddings.',
+    stack: ['Next.js', 'TypeScript', 'QR ordering', 'Thermal print server'],
+    color: '#ffb800',
+    // Captured from https://alongsideevents.com on 2026-10-27: its first
+    // 2900 CSS px at 1280 wide (below that the page pins a phone for several
+    // screens, blank in a still), and its first 3000 at 390 wide.
+    preview: {
+      captured: '2026-10',
+      desktop: { src: '/images/products/alongside-events-desktop.webp', width: 1280, height: 2900 },
+      phone: { src: '/images/products/alongside-events-phone.webp', width: 585, height: 4500 },
+    },
+  },
   {
     id: 'sembly',
     title: 'Sembly',
@@ -194,6 +232,13 @@ export const COMPOSITIONS = [
       'The answer to "am I playing this Sunday?" — on the phone that gets asked. Volunteers see the dates they serve, their position, the running order with every song key, and the sheet music; leaders plan a whole month from the same screen. Row-level security in Postgres is the actual boundary, so a volunteer only ever sees the services they are on.',
     stack: ['Next.js', 'Supabase', 'Tailwind', 'PWA'],
     color: '#af52de',
+    // Captured from https://sembly.app on 2026-10-27: its first 4000 CSS px
+    // at 1280 wide and its first 3000 at 390 wide.
+    preview: {
+      captured: '2026-10',
+      desktop: { src: '/images/products/sembly-desktop.webp', width: 1280, height: 4000 },
+      phone: { src: '/images/products/sembly-phone.webp', width: 585, height: 4500 },
+    },
   },
   {
     id: 'praxis',
@@ -204,21 +249,21 @@ export const COMPOSITIONS = [
       'An investment desk that argues with itself. Eighteen investor personas — each with its own rules and an LLM-written thesis — debate every position, an AI portfolio manager sizes the trades, and a Discovery Engine hunts spinoffs, activist stakes, and cyclical bottoms. Executing through Alpaca on paper until it earns the right to real money.',
     stack: ['Next.js', 'TypeScript', 'Claude API', 'Alpaca'],
     color: '#5ac8fa',
-  },
-  {
-    // needs Roman: alongsideevents.com is public (sign-in, pricing, "Your
-    // first event is free") and its JSON-LD names him and Anna Kucheryava as
-    // founders (fetched 2026-10-13), but with no `url` here it is not
-    // linked. Whether it may be linked as his, and his status and tagline
-    // for it, are his to give; nothing changes until he does.
-    id: 'alongside-events',
-    title: 'Alongside Events',
-    tagline: 'The tech stack behind the family coffee cart',
-    status: 'Runs the family cart',
-    description:
-      'QR-code ordering guests scan right at the cart, automated post-event recaps, and fully functional networked thermal label printing — every technical piece a mobile espresso bar needs, composed from scratch and battle-tested at real weddings.',
-    stack: ['Next.js', 'TypeScript', 'QR ordering', 'Thermal print server'],
-    color: '#ffb800',
+    // The personas' debate and the Discovery Engine's finds go to the
+    // portfolio manager, which sizes the trades; Alpaca executes them.
+    flow: {
+      nodes: [
+        { id: 'personas', label: 'Eighteen investor personas', note: 'debate every position' },
+        { id: 'discovery', label: 'Discovery Engine', note: 'hunts spinoffs, activist stakes, and cyclical bottoms' },
+        { id: 'manager', label: 'AI portfolio manager', note: 'sizes the trades' },
+        { id: 'alpaca', label: 'Alpaca', note: 'on paper' },
+      ],
+      links: [
+        ['personas', 'manager'],
+        ['discovery', 'manager'],
+        ['manager', 'alpaca'],
+      ],
+    },
   },
   {
     id: 'alongside-brain',
@@ -229,6 +274,21 @@ export const COMPOSITIONS = [
       'An Obsidian vault with a pulse. A Slack bot captures notes, reminders, journal entries, and expenses in plain language; Claude routes every capture where it belongs; scheduled digests and pattern detection keep me honest. Conducting my life around the clock from a desktop in my office.',
     stack: ['Python', 'Claude API', 'Slack API', 'Obsidian'],
     color: '#30d158',
+    // The Slack bot's captures go to Claude, which routes each into the
+    // vault; the digests come out of what the vault holds.
+    flow: {
+      nodes: [
+        { id: 'slack', label: 'Slack bot', note: 'captures notes, reminders, journal entries, and expenses' },
+        { id: 'claude', label: 'Claude', note: 'routes every capture where it belongs' },
+        { id: 'vault', label: 'Obsidian vault', note: 'with a pulse' },
+        { id: 'digests', label: 'Scheduled digests', note: 'and pattern detection' },
+      ],
+      links: [
+        ['slack', 'claude'],
+        ['claude', 'vault'],
+        ['vault', 'digests'],
+      ],
+    },
   },
 ] as const
 
