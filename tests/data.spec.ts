@@ -188,17 +188,32 @@ test.describe('his products', () => {
     for (const product of content.PRODUCTS) {
       if (!product.flow) continue
       const description = words(product.description)
+      // The centre: the product, under the description's opening line.
+      expect(description.startsWith(words(product.flow.hub)), `${product.id}: hub "${product.flow.hub}"`).toBe(true)
       const ids = product.flow.nodes.map((n) => n.id)
+      expect(ids, `${product.id}: a part named like the product`).not.toContain(product.id)
       for (const node of product.flow.nodes) {
         expect(description, `${product.id}: "${node.label}"`).toContain(words(node.label))
         expect(description, `${product.id}: "${node.note}"`).toContain(words(node.note))
       }
       for (const [from, to] of product.flow.links) {
-        expect(ids, `${product.id}: link ${from} -> ${to}`).toEqual(expect.arrayContaining([from, to]))
+        expect([...ids, product.id], `${product.id}: link ${from} -> ${to}`).toEqual(expect.arrayContaining([from, to]))
+        expect(from, `${product.id}: a link from ${from} to itself`).not.toBe(to)
       }
-      // Every part is wired in.
-      for (const id of ids) expect(product.flow.links.some((link) => link.includes(id)), `${product.id}: ${id}`).toBe(true)
+      // Every part is wired in, and the centre too.
+      for (const id of [...ids, product.id]) expect(product.flow.links.some((link) => link.includes(id)), `${product.id}: ${id}`).toBe(true)
     }
+  })
+
+  test("a flow's links are only the ones its description states", () => {
+    // Each part to or from the product at the centre, and the one hand-off
+    // between parts a description states (the Slack bot's captures, routed
+    // by Claude). Which part feeds which beyond that is Roman's to say
+    // (`needs Roman` in constants.ts): a link added for it is added here too.
+    expect(Object.fromEntries(content.PRODUCTS.filter((p) => p.flow).map((p) => [p.id, p.flow!.links.map(([a, b]) => `${a} -> ${b}`)]))).toEqual({
+      praxis: ['personas -> praxis', 'discovery -> praxis', 'manager -> praxis', 'praxis -> alpaca'],
+      'alongside-brain': ['slack -> claude', 'claude -> alongside-brain', 'alongside-brain -> digests'],
+    })
   })
 })
 
