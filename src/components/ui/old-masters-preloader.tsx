@@ -152,6 +152,9 @@ export interface OldMastersPreloaderProps {
   holdMs?: number
   /** With children: a wheel or a swipe lifts the stage. */
   scrollToEnter?: boolean
+  // [site edit] lift: a nav link, Escape or a scroll during the load must reach the page without waiting for the unveil.
+  /** With children: when it turns true, the stage lifts off at once from any phase, through the exit and onComplete. */
+  lift?: boolean
   tone?: OldMastersTone
   /** Partial overrides of the tone's palette. */
   palette?: OldMastersPaletteOverride
@@ -679,6 +682,7 @@ export default function OldMastersPreloader({
   children,
   holdMs = 0,
   scrollToEnter = true,
+  lift: liftNow = false,
   tone = "carmine",
   palette,
   fontHref = FONT_HREF,
@@ -914,7 +918,8 @@ export default function OldMastersPreloader({
           done = true
           setPct(100)
           if (wordRef.current) wordRef.current.style.setProperty("--om-fill", "102%")
-          setPhase("unveil")
+          // [site edit] lift: a stage lifted during the load stays lifted.
+          setPhase((p) => (p === "load" ? "unveil" : p))
         }
       }
       // the parallax, the spotlight, the nearest figure
@@ -1047,6 +1052,11 @@ export default function OldMastersPreloader({
       return () => clearTimeout(t)
     }
   }, [phase, hasChildren, holdMs, wordmark, tagline])
+
+  // [site edit] lift: from the load, the unveil or the landing, straight into the exit.
+  React.useEffect(() => {
+    if (liftNow && hasChildren) setPhase((p) => (p === "exit" || p === "done" ? p : "exit"))
+  }, [liftNow, hasChildren])
 
   // With children: a wheel or a swipe lifts the stage.
   React.useEffect(() => {
