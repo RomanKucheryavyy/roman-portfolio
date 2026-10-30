@@ -113,6 +113,9 @@ export interface OldMastersPreloaderProps {
   tilt?: number
   /** The large word. Fitted to the width of the stage. */
   wordmark?: string
+  // [site edit] wordAs: the page already has its h1, and a product's real heading is its row's h3.
+  /** The wordmark's element. "p" carries the word as visually hidden text (a p takes no aria-label). */
+  wordAs?: "h1" | "h2" | "h3" | "p"
   face?: OldMastersFace
   /** Set the first letter in a script face, overlapping the rest. */
   scriptInitial?: boolean
@@ -653,6 +656,7 @@ export default function OldMastersPreloader({
   dust = true,
   tilt = 2.5,
   wordmark = "Arcadia",
+  wordAs = "h1",
   face = "didone",
   scriptInitial = false,
   tagline = "Your craft. Your name. Your rules.",
@@ -679,6 +683,8 @@ export default function OldMastersPreloader({
   className = "",
 }: OldMastersPreloaderProps) {
   const pal = { ...TONES[tone], ...(palette || {}) }
+  // [site edit] wordAs: typed as the published h1 (same ref and props), rendered as the element asked for.
+  const WordTag = wordAs as "h1"
   // [site edit] fonts: the given face over the built-in one (memoised: the fit effect depends on it).
   const faceFamily = fonts?.face?.family ?? FACES[face].family
   const faceWeight = fonts?.face?.weight ?? FACES[face].weight
@@ -1239,7 +1245,9 @@ export default function OldMastersPreloader({
 
         <div className="om-wordlayer">
           <div className="om-wordclip">
-            <h1 ref={wordRef} className="om-word" aria-label={wordmark} style={{ "--om-fill": skipIntro ? "102%" : "0%" } as React.CSSProperties}>
+            {/* [site edit] wordAs: the element is the page's to choose; "p" names nothing with aria-label (axe: aria-prohibited-attr), so it holds the word as hidden text. */}
+            <WordTag ref={wordRef} className="om-word" aria-label={wordAs === "p" ? undefined : wordmark} style={{ "--om-fill": skipIntro ? "102%" : "0%" } as React.CSSProperties}>
+              {wordAs === "p" && <span className="om-live" style={{ textTransform: "none" }}>{wordmark}</span>}
               {chars.initial && (
                 <span className="om-init" style={{ "--i": 0 } as React.CSSProperties} aria-hidden="true">
                   {chars.initial}
@@ -1254,7 +1262,7 @@ export default function OldMastersPreloader({
                   </span>
                 ),
               )}
-            </h1>
+            </WordTag>
           </div>
           <div className="om-sheen" aria-hidden="true" />
         </div>
