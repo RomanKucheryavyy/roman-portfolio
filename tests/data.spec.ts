@@ -18,6 +18,7 @@ import {
 } from '@/lib/site-facts'
 import { SITE_CARD, pageMetadata } from '@/lib/seo'
 import { RESUME_HREF, RESUME_PUBLIC } from '@/lib/routes'
+import { toRoman } from '@/lib/roman'
 
 /**
  * The data layer, tested in Node alone: no browser, no server. The last
@@ -132,6 +133,44 @@ test.describe('the Stage reads the records', () => {
     expect(label('alongside-coffee')).toBe('alongsidecoffee.com')
     expect(label('fubc-coffee-ios')).toBe('App Store')
     expect(label('dtm-plumbing')).toBe('Launching soon')
+  })
+})
+
+test.describe('Roman numerals', () => {
+  test('toRoman writes 1 to 3999, subtractive forms included, and a dot for nothing', () => {
+    const cases: [number, string][] = [
+      [0, '·'],
+      [1, 'I'],
+      [4, 'IV'],
+      [8, 'VIII'],
+      [9, 'IX'],
+      [14, 'XIV'],
+      [40, 'XL'],
+      [49, 'XLIX'],
+      [88, 'LXXXVIII'],
+      [90, 'XC'],
+      [99, 'XCIX'],
+      [100, 'C'],
+      [400, 'CD'],
+      [944, 'CMXLIV'],
+      [1994, 'MCMXCIV'],
+      [2026, 'MMXXVI'],
+      [3999, 'MMMCMXCIX'],
+    ]
+    for (const [n, roman] of cases) expect(toRoman(n), String(n)).toBe(roman)
+    // Every value up to 3999 reads back to itself (a letter before a larger
+    // one is subtracted), and no two share a numeral.
+    const value: Record<string, number> = { I: 1, V: 5, X: 10, L: 50, C: 100, D: 500, M: 1000 }
+    const read = (r: string) => [...r].reduce((sum, c, i) => sum + (value[c] < (value[r[i + 1]] ?? 0) ? -value[c] : value[c]), 0)
+    const seen = new Set<string>()
+    for (let n = 1; n <= 3999; n++) {
+      const roman = toRoman(n)
+      expect(roman).toMatch(/^M{0,3}(CM|CD|D?C{0,3})(XC|XL|L?X{0,3})(IX|IV|V?I{0,3})$/)
+      if (read(roman) !== n) expect(read(roman), roman).toBe(n)
+      seen.add(roman)
+    }
+    expect(seen.size).toBe(3999)
+    for (const bad of [-1, 1.5, 4000, Number.NaN]) expect(() => toRoman(bad), String(bad)).toThrow(RangeError)
   })
 })
 
