@@ -136,6 +136,9 @@ export interface OldMastersPreloaderProps {
   plate?: string
   /** Beside the counter while it loads. */
   loadingLabel?: string
+  // [site edit] formatCount: the site counts in Roman numerals.
+  /** How the big counter writes the load, the first value included. */
+  formatCount?: (n: number) => string
   cta?: OldMastersLink
   /** Fired when the call to action is pressed. */
   onEnter?: () => void
@@ -668,6 +671,7 @@ export default function OldMastersPreloader({
   annotations = DEFAULT_ANNOTATIONS,
   plate = "Pl. I",
   loadingLabel = "Loading",
+  formatCount = String,
   cta = { label: "Enter" },
   onEnter,
   onLoaded,
@@ -742,6 +746,9 @@ export default function OldMastersPreloader({
   onCompleteRef.current = onComplete
   const onEnterRef = React.useRef(onEnter)
   onEnterRef.current = onEnter
+  // [site edit] formatCount: read by the frame loop, like the callbacks above.
+  const formatCountRef = React.useRef(formatCount)
+  formatCountRef.current = formatCount
 
   const chars = React.useMemo(() => omSplit(wordmark, scriptInitial), [wordmark, scriptInitial])
   const hasChildren = children !== undefined && children !== null
@@ -898,7 +905,8 @@ export default function OldMastersPreloader({
         const p = Math.round(s * 100)
         if (p !== pctRef.current) {
           pctRef.current = p
-          if (numRef.current) numRef.current.textContent = String(p)
+          // [site edit] formatCount
+          if (numRef.current) numRef.current.textContent = formatCountRef.current(p)
           if (ratioRef.current) ratioRef.current.textContent = omRatio(s)
           if (p % 10 === 0 || p === 100) setPct(p)
         }
@@ -1356,7 +1364,8 @@ export default function OldMastersPreloader({
 
           <div className="om-counter" role="progressbar" aria-valuemin={0} aria-valuemax={100} aria-valuenow={pct} aria-label={loadingLabel}>
             <p className="om-num" aria-hidden="true">
-              <span ref={numRef}>{skipIntro ? 100 : 0}</span>
+              {/* [site edit] formatCount: the first value too. */}
+              <span ref={numRef}>{formatCount(skipIntro ? 100 : 0)}</span>
             </p>
             <div className="om-ratio om-ui" aria-hidden="true">
               <span ref={ratioRef}>{skipIntro ? "1.0000" : "0.0000"}</span>
