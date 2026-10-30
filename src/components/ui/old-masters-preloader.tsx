@@ -151,6 +151,9 @@ export interface OldMastersPreloaderProps {
   palette?: OldMastersPaletteOverride
   /** Stylesheet for the faces. null loads nothing. */
   fontHref?: string | null
+  // [site edit] fonts: the site serves its own faces (CSP font-src 'self'); these replace the built-in families, waited for even with fontHref null.
+  /** Families in place of the built-in ones, in CSS and in the fit. Loaded by the page; the component waits for them and re-fits. */
+  fonts?: { face?: { family: string; weight?: number; tracking?: number }; script?: string; ui?: string; serif?: string }
   /** Root height. A definite length, never a percentage. */
   height?: string
   className?: string
@@ -671,11 +674,30 @@ export default function OldMastersPreloader({
   tone = "carmine",
   palette,
   fontHref = FONT_HREF,
+  fonts,
   height = "100svh",
   className = "",
 }: OldMastersPreloaderProps) {
   const pal = { ...TONES[tone], ...(palette || {}) }
-  const faceDef = FACES[face]
+  // [site edit] fonts: the given face over the built-in one (memoised: the fit effect depends on it).
+  const faceFamily = fonts?.face?.family ?? FACES[face].family
+  const faceWeight = fonts?.face?.weight ?? FACES[face].weight
+  const faceTracking = fonts?.face?.tracking ?? FACES[face].tracking
+  const faceDef = React.useMemo(() => ({ family: faceFamily, weight: faceWeight, tracking: faceTracking }), [faceFamily, faceWeight, faceTracking])
+  const scriptFamily = fonts?.script ?? SCRIPT_FAMILY
+  const uiFamily = fonts?.ui ?? UI_FAMILY
+  const serifFamily = fonts?.serif ?? SERIF_FAMILY
+  const fontProbes = fonts
+    ? [
+        fonts.face ? faceWeight + " 1em " + faceFamily : "",
+        fonts.serif ? "400 1em " + fonts.serif : "",
+        fonts.serif ? "italic 400 1em " + fonts.serif : "",
+        fonts.ui ? "500 1em " + fonts.ui : "",
+        fonts.script ? "400 1em " + fonts.script : "",
+      ]
+        .filter(Boolean)
+        .join("\n")
+    : ""
   const isDuotone = duotone === undefined ? tone === "carmine" : duotone
 
   const rootRef = React.useRef(null as HTMLDivElement | null)
@@ -724,11 +746,12 @@ export default function OldMastersPreloader({
 
   // Fonts: one injected <link>, then wait for the faces (or a short timeout).
   React.useEffect(() => {
-    if (!fontHref) {
+    // [site edit] fonts: with faces of its own and no stylesheet, still wait for them and re-fit when they land.
+    if (!fontHref && !fontProbes) {
       setFontsReady(1)
       return
     }
-    if (!document.querySelector('link[data-om-fonts="' + fontHref + '"]')) {
+    if (fontHref && !document.querySelector('link[data-om-fonts="' + fontHref + '"]')) {
       const link = document.createElement("link")
       link.rel = "stylesheet"
       link.href = fontHref
@@ -742,7 +765,14 @@ export default function OldMastersPreloader({
     const timer = setTimeout(go, 2500)
     const fonts = (document as Document & { fonts?: FontFaceSet }).fonts
     if (fonts && fonts.load) {
-      Promise.all(FONT_PROBES.map((f) => fonts.load(f).catch(() => null))).then(go, go)
+      const probe = (f: string) => {
+        try {
+          return fonts.load(f).catch(() => null)
+        } catch {
+          return Promise.resolve(null)
+        }
+      }
+      Promise.all((fontProbes ? fontProbes.split("\n") : FONT_PROBES).map(probe)).then(go, go)
       fonts.addEventListener("loadingdone", go)
     } else go()
     return () => {
@@ -750,7 +780,7 @@ export default function OldMastersPreloader({
       clearTimeout(timer)
       if (fonts && fonts.removeEventListener) fonts.removeEventListener("loadingdone", go)
     }
-  }, [fontHref])
+  }, [fontHref, fontProbes])
 
   // The stage's size, for the cast, the masks and the fit.
   React.useEffect(() => {
@@ -803,13 +833,13 @@ export default function OldMastersPreloader({
     setMetrics({ base, cap: Math.round(cap * 100) / 100 })
     let w100 = ctx.measureText(rest).width + Math.max(0, chars.rest.length - 1) * faceDef.tracking * 100
     if (chars.initial) {
-      ctx.font = "400 132px " + SCRIPT_FAMILY
+      ctx.font = "400 132px " + scriptFamily
       w100 += ctx.measureText(chars.initial).width - 14
     }
     const pad = Math.max(10, size.w * 0.025)
     const maxFs = (size.h * 0.34) / cap
     setFs(Math.round(omFit(w100, size.w - pad * 2, maxFs, 36)))
-  }, [size, chars, faceDef, fontsReady])
+  }, [size, chars, faceDef, scriptFamily, fontsReady])
 
   // The rule leaves a gap round the eyebrow.
   React.useEffect(() => {
@@ -1114,9 +1144,9 @@ export default function OldMastersPreloader({
     "--om-tracking": String(faceDef.tracking),
     "--om-base": String(metrics.base + (chars.initial ? 0.1 : 0)),
     "--om-cap": String(metrics.cap),
-    "--om-script": SCRIPT_FAMILY,
-    "--om-ui": UI_FAMILY,
-    "--om-serif": SERIF_FAMILY,
+    "--om-script": scriptFamily,
+    "--om-ui": uiFamily,
+    "--om-serif": serifFamily,
     "--om-fs": fs + "px",
     "--om-lift": Math.round(lift) + "px",
     "--om-exposure": String(Math.max(0.2, exposure)),
