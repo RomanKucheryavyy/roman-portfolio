@@ -96,6 +96,38 @@ test.describe('the home page', () => {
     }
   })
 
+  test('the hero painting is decoration that lands after the name: hidden, inert, nothing to focus, the name the largest paint', async ({ page }) => {
+    await page.addInitScript(() => {
+      const seen: string[] = []
+      ;(window as unknown as { __lcp: string[] }).__lcp = seen
+      new PerformanceObserver((list) => {
+        for (const entry of list.getEntries()) {
+          const el = (entry as PerformanceEntry & { element?: Element | null }).element
+          seen.push(el?.closest('#hero-title') ? 'name' : (el?.tagName.toLowerCase() ?? 'gone'))
+        }
+      }).observe({ type: 'largest-contentful-paint', buffered: true })
+    })
+    await gotoHome(page)
+    const painting = page.locator('[data-hero-painting]')
+    await expect(painting).toHaveAttribute('aria-hidden', 'true')
+    await expect(painting).toHaveAttribute('inert', '')
+    // It mounts (after the page) and fades in: Apollo, and its one light.
+    await expect(painting.locator('[data-shown="true"] .om-fig img')).toHaveAttribute('src', '/images/cast/apollo.webp', { timeout: 30_000 })
+    await expect(painting.locator('canvas')).toHaveCount(1)
+    // None of the component's own interface shows, and nothing in it is reachable.
+    for (const part of ['.om-chrome', '.om-wordlayer', '.om-flood']) await expect(painting.locator(part)).toBeHidden()
+    const focusable = await painting.evaluate((box) =>
+      [...box.querySelectorAll<HTMLElement>('*')].filter((el) => {
+        el.focus({ preventScroll: true })
+        return document.activeElement === el
+      }).length,
+    )
+    expect(focusable, 'elements in the painting that took focus').toBe(0)
+    await page.waitForTimeout(1500)
+    const lcp = await page.evaluate(() => (window as unknown as { __lcp: string[] }).__lcp)
+    expect(lcp.at(-1), `largest paints: ${lcp.join(', ')}`).toBe('name')
+  })
+
   test('no request leaves this origin', async ({ page, baseURL }) => {
     const outside: string[] = []
     page.on('request', (req) => {

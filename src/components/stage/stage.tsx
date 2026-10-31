@@ -14,6 +14,7 @@ import { Products } from './products'
 import { Experience } from './experience'
 import { Credentials } from './credentials'
 import { STAGE_FOCUS, STAGE_STYLE, stageButton } from './look'
+import { HeroPainting } from './hero-painting'
 
 const EMAIL_HREF = `mailto:${PERSON.links.email}`
 
@@ -75,7 +76,23 @@ const DRAPE_LOOK = cn(
  * out beneath to the same measure, as an inscription; the tagline in
  * Cormorant italic, as the intro sets it; and its ENTER button's style for
  * the two ways in.
+ *
+ * And the intro's painting (Roman, 2026-10-31: "the hero can still have the
+ * painting thingy", "make it epic"): Apollo, a colossal marble head painted
+ * as the intro paints its cast, rising out of the dark between the name and
+ * the tagline, his face turned up to the name and to the gold light falling
+ * on both (hero-painting.tsx). So the name stands at the top of the stage
+ * and the tagline and the buttons at its foot, with his room between. The
+ * name keeps a dark halo, a few px wide and invisible on the curtain, so the
+ * surname reads where his curls rise behind it (every letter at least
+ * 5.4:1 on what is behind it, measured from 320 to 2560 wide); the tagline
+ * and the buttons stand on the curtain, where he has faded out. On a short
+ * screen the name is capped by the height as well as the width (in vh,
+ * which every browser knows), so name, room and buttons still fit one
+ * screen 768 tall.
  */
+const NAME_HALO = '[text-shadow:0_0_1px_#07050f,0_0_2px_#07050f,0_0_4px_rgb(7_5_15/0.9),0_0_18px_rgb(7_5_15/0.55)]'
+
 function Hero() {
   return (
     <section id="top" aria-labelledby="hero-title">
@@ -85,26 +102,31 @@ function Hero() {
           aria-hidden="true"
           className="pointer-events-none absolute inset-0 bg-[radial-gradient(50%_44%_at_50%_42%,color-mix(in_oklab,var(--stage-glow)_17%,transparent),color-mix(in_oklab,var(--stage-accent-ink)_6%,transparent)_45%,transparent_76%)] mix-blend-screen"
         />
-        <div className="relative z-[1] mx-auto flex w-full max-w-[1280px] flex-col items-center px-4 pb-10 pt-24 text-center md:px-12">
+        <HeroPainting />
+        <div className="relative z-[1] mx-auto flex min-h-svh w-full max-w-[1280px] flex-col items-center px-4 pb-8 pt-20 text-center md:px-12">
           <Ornament />
-          <h1 id="hero-title" className="mt-7 font-roman font-medium uppercase text-foreground md:mt-9">
-            <span className="block text-[clamp(3.5rem,18.5vw,12rem)] leading-[0.92] tracking-[0.05em] [padding-left:0.05em]">
+          <h1 id="hero-title" className={cn('mt-6 font-roman font-medium uppercase text-foreground', NAME_HALO)}>
+            <span className="block text-[clamp(3.5rem,min(18.5vw,22vh),12rem)] leading-[0.92] tracking-[0.05em] [padding-left:0.05em]">
               {PERSON.first}
             </span>{' '}
-            <span className="mt-[0.45em] block text-[clamp(1.25rem,7.1vw,4.6rem)] leading-none tracking-[0.32em] [padding-left:0.32em] text-(--stage-text)">
+            <span className="mt-[0.45em] block text-[clamp(1.25rem,min(7.1vw,8.5vh),4.6rem)] leading-none tracking-[0.32em] [padding-left:0.32em] text-(--stage-text)">
               {PERSON.last}
             </span>
           </h1>
-          <p className="mt-9 max-w-[24ch] font-serif text-[clamp(1.375rem,6vw,1.75rem)] italic leading-[1.18] text-(--stage-text) text-balance sm:max-w-[34ch] md:mt-11 md:max-w-[40ch] md:text-[clamp(1.75rem,2.7vw,2.5rem)]">
-            {PERSON.tagline}
-          </p>
-          <div className="mt-9 flex flex-wrap items-center justify-center gap-3 md:mt-11 md:gap-4">
-            <a href="#work" className={cn(stageButton('primary'), 'min-w-40')}>
-              See the work
-            </a>
-            <a href="#contact" className={cn(stageButton('secondary'), 'min-w-40 backdrop-blur-sm')}>
-              Get in touch
-            </a>
+          {/* Apollo's room (hero-painting-stage.tsx): the words below stand at the foot of the stage. */}
+          <div aria-hidden="true" className="min-h-[clamp(8rem,22svh,22rem)] flex-1" />
+          <div data-hero-copy="" className="flex flex-col items-center">
+            <p className="max-w-[24ch] font-serif text-[clamp(1.375rem,6vw,1.75rem)] italic leading-[1.18] text-(--stage-text) text-balance sm:max-w-[34ch] md:max-w-[40ch] md:text-[clamp(1.75rem,2.7vw,2.5rem)]">
+              {PERSON.tagline}
+            </p>
+            <div className="mt-7 flex flex-wrap items-center justify-center gap-3 md:mt-8 md:gap-4">
+              <a href="#work" className={cn(stageButton('primary'), 'min-w-40')}>
+                See the work
+              </a>
+              <a href="#contact" className={cn(stageButton('secondary'), 'min-w-40 backdrop-blur-sm')}>
+                Get in touch
+              </a>
+            </div>
           </div>
         </div>
         {/* The stage floor: the curtain's hem fades into the page (under the words, which stay on top). */}
