@@ -78,7 +78,9 @@ export function Intro() {
     if (document.documentElement.getAttribute('data-intro') !== '') return
     // The faces' @font-face rules come with this import (preload is off; see
     // roman-type.ts), so a visit without the intro loads neither.
-    import('./roman-type').then((m) => m.loadRomanFaces())
+    import('./roman-type')
+      .then((m) => m.loadRomanFaces())
+      .catch(() => {})
     setCast(fetchCast(INTRO_FAILSAFE_MS))
   }, [])
 

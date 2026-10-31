@@ -61,6 +61,9 @@ export function ProductStage({ product, index }: { product: Product; index: numb
       data-live={live ? 'true' : 'false'}
       className={`relative overflow-hidden ${TITLE_CARD_BOX}`}
       style={{ background: IMPERIAL.ground }}
+      // The stage's root can take focus (tabIndex -1), and a click would put
+      // focus inside this aria-hidden card; the pointer still tilts it.
+      onMouseDown={(e) => e.preventDefault()}
     >
       {live ? <ProductStageCard product={product} index={index} /> : null}
     </div>

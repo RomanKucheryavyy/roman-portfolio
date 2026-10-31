@@ -152,8 +152,29 @@
    undo visibility. The intro's own layer ([data-intro-layer], a portal on
    <body>) is the one thing drawn. At "lift" the stage is lifting off, so
    the page shows beneath it. Until the attribute is gone the document does
-   not scroll. */
-html[data-intro] { overflow: hidden; }
+   not scroll; the scrollbar's gutter stays, so the page does not shift
+   sideways when it comes back. */
+html[data-intro] { overflow: hidden; scrollbar-gutter: stable; }
+/* Until the stage mounts (a phone on a slow network can take seconds), a
+   gold ring breathes where its meander will draw, so the wait reads as a
+   start, not a blank screen. */
+html[data-intro=""]::after {
+  content: "";
+  position: fixed;
+  left: 50%;
+  top: 50%;
+  z-index: 101;
+  width: 64px;
+  height: 64px;
+  margin: -32px 0 0 -32px;
+  border: 1px solid #d6b25e;
+  border-radius: 50%;
+  animation: rk-intro-wait 1.6s ease-in-out infinite;
+}
+@keyframes rk-intro-wait {
+  0%, 100% { opacity: 0.55; transform: scale(1); }
+  50% { opacity: 0.2; transform: scale(0.84); }
+}
 html[data-intro]:not([data-intro="lift"]),
 html[data-intro]:not([data-intro="lift"]) body { background: #07050f !important; }
 html[data-intro]:not([data-intro="lift"]) body > :not([data-intro-layer]) { visibility: hidden; opacity: 0; }

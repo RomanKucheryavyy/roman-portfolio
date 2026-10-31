@@ -1,6 +1,14 @@
 import type { OldMastersPalette } from '@/components/ui/old-masters-preloader'
 
 /**
+ * The word's halo, set from outside on both stages: a tight dark edge round
+ * each letter, then a soft one, so the marble word reads where it crosses a
+ * lit statue (marble on marble had no edge at all).
+ */
+export const WORD_HALO =
+  '[&_.om-word]:[filter:drop-shadow(0_0_1.5px_rgba(7,5,15,0.95))_drop-shadow(0_0_10px_rgba(7,5,15,0.6))_drop-shadow(0_4px_22px_rgba(7,5,15,0.6))]'
+
+/**
  * The imperial look of the old-masters stages (the intro, and the products'
  * title cards): Roman purple and gold over marble, in the Stage's own
  * family (its black, its deep violet --stage-accent #16106d and its ink

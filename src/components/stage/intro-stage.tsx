@@ -5,8 +5,8 @@ import { createPortal } from 'react-dom'
 import OldMastersPreloader, { omSimulated } from '@/components/ui/old-masters-preloader'
 import { CERTIFICATIONS, PERSON, PROJECTS, ROLES } from '@/lib/content'
 import { toRoman } from '@/lib/roman'
-import { CAST } from './cast'
-import { IMPERIAL } from './imperial'
+import { CAST, pastEdge } from './cast'
+import { IMPERIAL, WORD_HALO } from './imperial'
 import { INTRO_FIGURES, INTRO_KEY, TALL_QUERY } from './intro-gate'
 import { ROMAN_FONTS } from './roman-type'
 import { SECTIONS } from './top-bar'
@@ -65,7 +65,11 @@ const year = toRoman(new Date().getFullYear())
  * - the plate, small type that lands on marble, sits on a dark label (a
  *   museum plate), and the hint keeps a firmer dark halo than its own;
  * - the word keeps a dark halo, so it reads over the marble behind it;
- * - the tagline's lines are balanced.
+ * - the tagline's lines are balanced;
+ * - on phones the component hides its nav's links but keeps the two <nav>s,
+ *   empty landmarks: they go too;
+ * - its root, a Tab stop while it loads, shows a gold ring when it has
+ *   keyboard focus (the component rings only what is inside it).
  */
 const LOOK = [
   'bg-transparent!',
@@ -76,9 +80,16 @@ const LOOK = [
   'max-sm:[&_.om-star:not(.om-star-s)]:top-[max(15.5%,124px)]!',
   '[&_.om-plate]:rounded-[2px] [&_.om-plate]:bg-[var(--om-ground-b)] [&_.om-plate]:px-2 [&_.om-plate]:py-1',
   '[&_.om-hint]:[text-shadow:0_0_1px_var(--om-ground),0_0_4px_var(--om-ground),0_0_12px_var(--om-ground)]!',
-  '[&_.om-word]:[filter:drop-shadow(0_4px_22px_rgba(7,5,15,0.6))]',
+  WORD_HALO,
   '[&_.om-tagline]:text-balance',
+  'max-sm:[&_.om-top_nav]:hidden!',
+  'focus-visible:outline focus-visible:outline-1 focus-visible:-outline-offset-8 focus-visible:outline-[#d6b25e]',
 ].join(' ')
+
+/** The wide cast, Apollo's cut-off arm past the edge of a screen this size. */
+function wideFigures(w: number, h: number) {
+  return INTRO_FIGURES.wide.map((f) => (f.src === CAST.apollo.src ? { ...f, x: Math.max(f.x, pastEdge(CAST.apollo, f.h, w, h)) } : f))
+}
 
 /** Watches a media query; false on the server. */
 function useMedia(query: string): boolean {
@@ -91,6 +102,20 @@ function useMedia(query: string): boolean {
     () => window.matchMedia(query).matches,
     () => false,
   )
+}
+
+/** The window's size, "w h"; "0 0" on the server. */
+function useWindowSize(): [number, number] {
+  const size = useSyncExternalStore(
+    (change) => {
+      window.addEventListener('resize', change)
+      return () => window.removeEventListener('resize', change)
+    },
+    () => `${window.innerWidth} ${window.innerHeight}`,
+    () => '0 0',
+  )
+  const [w, h] = size.split(' ').map(Number)
+  return [w, h]
 }
 
 /** Focuses an element without scrolling to it; a section that takes no focus takes it once. */
@@ -124,6 +149,7 @@ export default function IntroStage({ cast, onDone }: { cast: Promise<void>; onDo
   const tall = useMedia(TALL_QUERY)
   const wide = useMedia('(min-width: 768px)')
   const roomy = useMedia('(min-width: 360px)')
+  const [winW, winH] = useWindowSize()
 
   // Up: the page beneath goes inert, the intro is remembered, focus comes in.
   useEffect(() => {
@@ -165,6 +191,8 @@ export default function IntroStage({ cast, onDone }: { cast: Promise<void>; onDo
     return () => {
       added.disconnect()
       for (const el of made.splice(0)) el.removeAttribute('inert')
+      // Gone without lifting (an error took it down): give the page back.
+      html.removeAttribute('data-intro')
     }
     // Once: the intro mounts once and leaves through onDone.
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -261,12 +289,17 @@ export default function IntroStage({ cast, onDone }: { cast: Promise<void>; onDo
     const root = layerRef.current?.querySelector('.om-root')
     if (!mine || !root || !html) return
     const watch = new MutationObserver(() => {
+      // Skip leaves with the load, and focus with it: bring it back in.
+      const focus = document.activeElement
+      if (!focus || focus === document.body) (root as HTMLElement).focus({ preventScroll: true })
       if (root.getAttribute('data-phase') !== 'exit' || html.getAttribute('data-intro') !== 'up') return
       html.setAttribute('data-intro', 'lift')
       const id = target.current
       if (id) {
         document.getElementById(id)?.scrollIntoView({ block: 'start' })
-        history.pushState(history.state, '', `#${id}`)
+        // In place of the address, not after it: Back leaves the site, as it
+        // would have before the intro.
+        history.replaceState(history.state, '', `#${id}`)
       }
     })
     watch.observe(root, { attributes: true, attributeFilter: ['data-phase'] })
@@ -311,7 +344,7 @@ export default function IntroStage({ cast, onDone }: { cast: Promise<void>; onDo
         holdMs={0}
         lift={lift}
         onComplete={complete}
-        figures={tall ? INTRO_FIGURES.tall : INTRO_FIGURES.wide}
+        figures={tall ? INTRO_FIGURES.tall : wideFigures(winW, winH)}
         backdrop={CAST.david.src}
         duotone
         tone="noir"

@@ -154,6 +154,8 @@ test.describe('what it says', () => {
     // Left alone the load takes 3.6 s at least (its count follows the
     // component's surge and stall to the end); rushed, it is over sooner.
     await expect.poll(() => phase(page), { timeout: 3000 }).not.toBe('load')
+    // Skip goes with the load; focus must not fall out of the dialog with it.
+    await expect.poll(() => page.evaluate((sel) => !!document.activeElement?.closest(sel), LAYER)).toBe(true)
   })
 })
 

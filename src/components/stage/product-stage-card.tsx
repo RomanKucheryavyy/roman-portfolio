@@ -1,11 +1,11 @@
 'use client'
 
-import { useSyncExternalStore } from 'react'
+import { useEffect, useRef, useState, useSyncExternalStore } from 'react'
 import OldMastersPreloader, { type OldMastersFigure } from '@/components/ui/old-masters-preloader'
 import { PRODUCTS, type Product } from '@/lib/content'
 import { toRoman } from '@/lib/roman'
-import { CAST, type CastPhoto } from './cast'
-import { IMPERIAL } from './imperial'
+import { CAST, pastEdge, type CastPhoto } from './cast'
+import { IMPERIAL, WORD_HALO } from './imperial'
 import { ROMAN_FONTS } from './roman-type'
 
 /**
@@ -45,12 +45,12 @@ const KEY = { threshold: 0.08, softness: 0.08 } as const
  * Each product's statue, as it stands on the right; on the left it is
  * mirrored. `flip` turns it in where it can, and out where the photograph
  * cuts the statue off: Apollo's frame cuts his arm, so the arm reaches out
- * past the card's edge, where the cut never shows (x and h keep it past the
- * edge from 1024 to 2560 wide, and on phones).
+ * past the card's edge (`reach`: x is the least, and a wider card moves him
+ * further out, pastEdge), where the cut never shows.
  */
-const STATUES: Record<string, { photo: CastPhoto; x: number; y: number; h: number; flip: boolean }> = {
-  'alongside-events': { photo: CAST.apollo, x: 84, y: 100, h: 74, flip: false },
-  sembly: { photo: CAST.apollo, x: 84, y: 100, h: 74, flip: false },
+const STATUES: Record<string, { photo: CastPhoto; x: number; y: number; h: number; flip: boolean; reach?: boolean }> = {
+  'alongside-events': { photo: CAST.apollo, x: 84, y: 100, h: 74, flip: false, reach: true },
+  sembly: { photo: CAST.apollo, x: 84, y: 100, h: 74, flip: false, reach: true },
   praxis: { photo: CAST.hercules, x: 78, y: 104, h: 74, flip: false },
   'alongside-brain': { photo: CAST.hercules, x: 78, y: 104, h: 74, flip: false },
 }
@@ -67,7 +67,9 @@ const domain = (url: string) => url.replace(/^https?:\/\/(www\.)?/, '').replace(
  * covers a word of it; the copy below the pills (on a 1024 screen it ran
  * between them); on phones no barcode, which stood on the statue's base;
  * the plate on a dark label, as in the intro; the word keeps the intro's
- * dark halo; the tagline's lines are balanced.
+ * dark halo; the tagline's lines are balanced; the backdrop darker than the
+ * component's (a light site's screenshot, Sembly's, showed its headings
+ * through and dimmed the chrome).
  */
 const LOOK = [
   '[&_.om-cta]:hidden! [&_.om-hint]:hidden!',
@@ -75,8 +77,9 @@ const LOOK = [
   'max-sm:[&_.om-copy]:top-[148px]! sm:[&_.om-copy]:top-[max(16.5%,138px)]!',
   'max-sm:[&_.om-bars]:hidden! max-sm:[&_.om-foot]:justify-end!',
   '[&_.om-plate]:rounded-[2px] [&_.om-plate]:bg-[var(--om-ground-b)] [&_.om-plate]:px-2 [&_.om-plate]:py-1',
-  '[&_.om-word]:[filter:drop-shadow(0_4px_22px_rgba(7,5,15,0.6))]',
+  WORD_HALO,
   '[&_.om-tagline]:text-balance',
+  '[&_.om-backdrop]:[filter:grayscale(1)_contrast(1.1)_brightness(0.32)_blur(6px)]!',
 ].join(' ')
 
 /** Watches a media query; false on the server. */
@@ -95,17 +98,19 @@ function useMedia(query: string): boolean {
 /** On a phone's card the statue stands shorter, its head below the copy. */
 const PHONE_SCALE = 0.7
 
-export function titleCardFigure(product: Product, index: number, phone = false): OldMastersFigure | null {
+export function titleCardFigure(product: Product, index: number, phone = false, stage = { w: 0, h: 0 }): OldMastersFigure | null {
   const statue = STATUES[product.id]
   if (!statue) return null
   // From lg an even row has its text on the left, so its statue stands on the right.
   const right = index % 2 === 0
+  const h = phone ? Math.round(statue.h * PHONE_SCALE) : statue.h
+  const x = statue.reach ? Math.max(statue.x, pastEdge(statue.photo, h, stage.w, stage.h)) : statue.x
   return {
     src: statue.photo.src,
     alt: statue.photo.alt,
-    x: right ? statue.x : 100 - statue.x,
+    x: right ? x : 100 - x,
     y: statue.y,
-    h: phone ? Math.round(statue.h * PHONE_SCALE) : statue.h,
+    h,
     depth: 0.8,
     flip: right ? statue.flip : !statue.flip,
     ...KEY,
@@ -115,37 +120,49 @@ export function titleCardFigure(product: Product, index: number, phone = false):
 export default function ProductStageCard({ product, index }: { product: Product; index: number }) {
   const still = useMedia('(prefers-reduced-motion: reduce)')
   const phone = useMedia('(max-width: 639px)')
-  const figure = titleCardFigure(product, index, phone)
+  // The card's size, for where a statue that reaches out must stand.
+  const box = useRef<HTMLDivElement>(null)
+  const [stage, setStage] = useState({ w: 0, h: 0 })
+  useEffect(() => {
+    const el = box.current
+    if (!el) return
+    const watch = new ResizeObserver(([entry]) => setStage({ w: Math.round(entry.contentRect.width), h: Math.round(entry.contentRect.height) }))
+    watch.observe(el)
+    return () => watch.disconnect()
+  }, [])
+  const figure = titleCardFigure(product, index, phone, stage)
   const n = toRoman(index + 1)
   return (
-    <OldMastersPreloader
-      durationMs={DURATION_MS}
-      minLoadMs={MIN_LOAD_MS}
-      skippable={false}
-      skipIntro={still}
-      figures={figure ? [figure] : []}
-      backdrop={product.preview?.desktop.src ?? null}
-      duotone
-      tone="noir"
-      palette={IMPERIAL}
-      fontHref={null}
-      fonts={ROMAN_FONTS}
-      wordmark={product.title}
-      wordAs="p"
-      tagline={product.tagline}
-      eyebrow={product.url ? domain(product.url) : 'Private'}
-      brand={n}
-      nav={[]}
-      labels={[product.status, `${n} / ${toRoman(PRODUCTS.length)}`]}
-      asides={[]}
-      annotations={[]}
-      plate={`Tab. ${toRoman(index + 2)}`}
-      loadingLabel="Loading"
-      formatCount={toRoman}
-      height="100%"
-      // The word fits the card's width down to 36px; a long title on a phone
-      // needs less, and the word's size is a CSS variable, so it is set here.
-      className={product.title.length > LONG_TITLE ? `${LOOK} max-sm:[--om-fs:7.2vw]!` : LOOK}
-    />
+    <div ref={box} className="h-full">
+      <OldMastersPreloader
+        durationMs={DURATION_MS}
+        minLoadMs={MIN_LOAD_MS}
+        skippable={false}
+        skipIntro={still}
+        figures={figure ? [figure] : []}
+        backdrop={product.preview?.desktop.src ?? null}
+        duotone
+        tone="noir"
+        palette={IMPERIAL}
+        fontHref={null}
+        fonts={ROMAN_FONTS}
+        wordmark={product.title}
+        wordAs="p"
+        tagline={product.tagline}
+        eyebrow={product.url ? domain(product.url) : 'Private'}
+        brand={n}
+        nav={[]}
+        labels={[product.status, `${n} / ${toRoman(PRODUCTS.length)}`]}
+        asides={[]}
+        annotations={[]}
+        plate={`Tab. ${toRoman(index + 2)}`}
+        loadingLabel="Loading"
+        formatCount={toRoman}
+        height="100%"
+        // The word fits the card's width down to 36px; a long title on a phone
+        // needs less, and the word's size is a CSS variable, so it is set here.
+        className={product.title.length > LONG_TITLE ? `${LOOK} max-sm:[--om-fs:7.2vw]!` : LOOK}
+      />
+    </div>
   )
 }

@@ -17,9 +17,12 @@ export const INTRO_FAILSAFE_MS = 8000
 /**
  * The inline gate. Plain ES5 in a string: it runs while the body is parsed,
  * before React or any chunk. Any error leaves the attribute off, so the page
- * shows.
+ * shows. Besides the rules in intro.tsx it stands aside for a browser that
+ * asks to save data or reports a 2G or 3G connection (Network Information
+ * API; Safari has none, so it is never asked there): the stage and its
+ * statues are about a megabyte, and the page would wait for them.
  */
-export const INTRO_GATE = `(function(){var d=document.documentElement;try{if(location.hash||matchMedia('(prefers-reduced-motion: reduce)').matches)return;var force=/[?&]intro(?:[=&]|$)/.test(location.search),last=0,now=Date.now();try{last=Number(localStorage.getItem('${INTRO_KEY}'))||0}catch(e){}if(!force&&last<=now&&now-last<${INTRO_WINDOW_MS})return;d.setAttribute('data-intro','');setTimeout(function(){if(d.getAttribute('data-intro')==='')d.removeAttribute('data-intro')},${INTRO_FAILSAFE_MS})}catch(e){d.removeAttribute('data-intro')}})();`
+export const INTRO_GATE = `(function(){var d=document.documentElement;try{var c=navigator.connection;if(location.hash||matchMedia('(prefers-reduced-motion: reduce)').matches||(c&&(c.saveData||/(^|-)2g|3g/.test(c.effectiveType||''))))return;var force=/[?&]intro(?:[=&]|$)/.test(location.search),last=0,now=Date.now();try{last=Number(localStorage.getItem('${INTRO_KEY}'))||0}catch(e){}if(!force&&last<=now&&now-last<${INTRO_WINDOW_MS})return;d.setAttribute('data-intro','');setTimeout(function(){if(d.getAttribute('data-intro')==='')d.removeAttribute('data-intro')},${INTRO_FAILSAFE_MS})}catch(e){d.removeAttribute('data-intro')}})();`
 
 /**
  * Phones (the component drops its `phone: false` figures below 640px) and
@@ -48,6 +51,7 @@ export const INTRO_FIGURES: { wide: OldMastersFigure[]; tall: OldMastersFigure[]
   wide: [
     // Cut at the belly in the file itself, and stood 4% below the floor.
     { src: CAST.hercules.src, alt: CAST.hercules.alt, x: 19, y: 104, h: 56, depth: 0.8, ...KEY },
+    // x is the least: intro-stage.tsx moves him further out on a wider screen (pastEdge).
     { src: CAST.apollo.src, alt: CAST.apollo.alt, x: 82, y: 100, h: 62, depth: 0.85, ...KEY },
   ],
   tall: [{ src: CAST.apollo.src, alt: CAST.apollo.alt, x: 80, y: 100, h: 56, depth: 0.85, ...KEY }],

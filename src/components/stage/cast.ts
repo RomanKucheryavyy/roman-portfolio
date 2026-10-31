@@ -57,3 +57,16 @@ export const CAST = {
     height: 2133,
   },
 } as const satisfies Record<string, CastPhoto>
+
+/**
+ * Where to stand a figure (its centre, in percent of the stage's width, as
+ * old-masters-preloader places it) `h` percent of the stage's height tall so
+ * that its right edge falls just past the stage's: for a photograph that
+ * cuts its statue off at that side (Apollo's arm), so the cut never shows.
+ * Mirror it (100 - x) for the left.
+ */
+export function pastEdge(photo: CastPhoto, h: number, stageW: number, stageH: number): number {
+  if (!(stageW > 0) || !(stageH > 0)) return 0
+  const half = ((h / 100) * stageH * (photo.width / photo.height)) / 2
+  return Math.ceil(((stageW - half) / stageW) * 100) + 1
+}
