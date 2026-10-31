@@ -104,7 +104,10 @@ function useView(ref: RefObject<Element | null>) {
 /**
  * The visitor's own Pause / Play, which every moving preview has (WCAG 2.2.2:
  * anything that moves by itself for more than five seconds can be stopped).
- * Its name says what it will do, as the WAI carousel pattern's does.
+ * Its name says what it will do, as the WAI carousel pattern's does. Drawn as
+ * the Stage's buttons are (look.ts: rectangular, Geist capitals), but quiet:
+ * a violet rule that turns gold on hover, so it never competes with the
+ * row's own link.
  */
 function Toggle({ stopped, onToggle, what }: { stopped: boolean; onToggle: () => void; what: string }) {
   const Icon = stopped ? Play : Pause
@@ -114,9 +117,9 @@ function Toggle({ stopped, onToggle, what }: { stopped: boolean; onToggle: () =>
       type="button"
       onClick={onToggle}
       aria-label={`${verb} the ${what}`}
-      className="inline-flex h-8 shrink-0 items-center gap-1.5 rounded-full border border-white/10 px-3 text-xs font-medium text-muted-foreground transition-colors hover:border-white/25 hover:text-foreground"
+      className="inline-flex h-8 shrink-0 items-center gap-2 rounded-[2px] border border-border px-3 font-sans text-[10.5px] font-medium uppercase tracking-[0.2em] text-muted-foreground transition-colors duration-300 hover:border-gold/70 hover:text-foreground"
     >
-      <Icon aria-hidden="true" className="size-3.5" />
+      <Icon aria-hidden="true" className="size-3" />
       {verb}
     </button>
   )
@@ -137,6 +140,14 @@ function Glow({ className }: { className?: string }) {
     />
   )
 }
+
+/**
+ * A caption's words, after a short gold hairline (the section headers' own,
+ * look.ts HAIRLINE, in small): from sm, where the line has room for it
+ * beside Pause without the words taking a third line.
+ */
+const CAPTION_TEXT = 'flex min-w-0 items-center gap-3'
+const CAPTION_RULE = 'hidden h-px w-6 shrink-0 bg-gold/65 sm:block'
 
 /* ------------------------------------------------------------ screens -- */
 
@@ -333,7 +344,7 @@ export function LivePreview({ product, flip }: { product: Product; flip: boolean
         target="_blank"
         rel="noopener noreferrer"
         aria-label={`Visit ${site}`}
-        className={cn('group relative isolate block rounded-[1.25rem]', LIVE_BOX)}
+        className={cn('group relative isolate block rounded-[4px]', LIVE_BOX)}
         onPointerEnter={(e) => e.pointerType === 'mouse' && setHovered(true)}
         onPointerLeave={() => setHovered(false)}
         onFocus={() => setFocused(true)}
@@ -366,13 +377,16 @@ export function LivePreview({ product, flip }: { product: Product; flip: boolean
           <Iphone16Pro
             aria-hidden="true"
             focusable="false"
-            className="absolute inset-0 size-full text-transparent drop-shadow-[0_24px_40px_rgba(0,0,0,0.7)]"
+            className="absolute inset-0 size-full text-transparent drop-shadow-[0_24px_40px_rgba(7,5,15,0.75)]"
           />
         </div>
       </a>
       <figcaption className={CAPTION_ROW}>
-        <span className="text-pretty">
-          Screenshots from {site} <span className="whitespace-nowrap">· {monthYear(preview.captured)}</span>
+        <span className={CAPTION_TEXT}>
+          <span aria-hidden="true" className={CAPTION_RULE} />
+          <span className="text-pretty">
+            Screenshots from {site} <span className="whitespace-nowrap">· {monthYear(preview.captured)}</span>
+          </span>
         </span>
         {calm ? null : <Toggle stopped={stopped} onToggle={() => setStopped((s) => !s)} what={`${product.title} preview`} />}
       </figcaption>
@@ -493,7 +507,7 @@ function Ports({ list, refs }: { list: Port[] | undefined; refs: Map<string, Ref
       aria-hidden="true"
       data-port=""
       className={cn(
-        'absolute z-20 size-2 -translate-x-1/2 -translate-y-1/2 rounded-full border border-[color-mix(in_oklab,var(--stage-accent-ink)_60%,transparent)] bg-[#09090b]',
+        'absolute z-20 size-2 -translate-x-1/2 -translate-y-1/2 rounded-full border border-gold/75 bg-background',
         AT[port.narrow],
         MD_AT[port.wide],
       )}
@@ -520,12 +534,12 @@ function Part({
     <div
       data-flow-node=""
       className={cn(
-        'relative z-10 rounded-2xl border border-white/10 bg-[#0e0e12] p-3 shadow-[0_12px_30px_-12px_rgba(0,0,0,0.9)] md:w-full md:max-w-none',
+        'relative z-10 rounded-[4px] border border-border bg-[color-mix(in_oklab,var(--stage-accent)_45%,var(--background))] p-3 shadow-[0_14px_30px_-14px_rgba(7,5,15,0.95)] md:w-full md:max-w-none',
         className,
       )}
     >
       {Icon ? (
-        <span className="flex size-7 items-center justify-center rounded-lg bg-[color-mix(in_oklab,var(--stage-accent-ink)_14%,transparent)] text-[var(--stage-accent-ink)] ring-1 ring-inset ring-[color-mix(in_oklab,var(--stage-accent-ink)_28%,transparent)]">
+        <span className="flex size-7 items-center justify-center rounded-[2px] bg-gold/12 text-gold ring-1 ring-inset ring-gold/35">
           <Icon aria-hidden="true" className="size-3.5" />
         </span>
       ) : null}
@@ -577,11 +591,16 @@ export function ProductParts({ product }: { product: Product }) {
           role="group"
           aria-label={`The parts of ${product.title}`}
           className={cn(
-            'relative flex flex-col overflow-hidden rounded-[1.25rem] border border-white/10 bg-[#09090b] bg-[radial-gradient(rgba(255,255,255,0.06)_1px,transparent_1px)] [background-size:18px_18px] px-5 py-6',
+            'relative flex flex-col overflow-hidden rounded-[4px] border border-border bg-[color-mix(in_oklab,var(--stage-accent)_24%,var(--background))] bg-[radial-gradient(color-mix(in_oklab,var(--stage-accent-ink)_16%,transparent)_1px,transparent_1px)] [background-size:18px_18px] px-5 py-6',
             roomy ? 'md:p-8' : 'md:p-5',
             FLOW_BOX,
           )}
         >
+          {/* The drawing's border line, inside the panel's edge, as on a plan. */}
+          <span
+            aria-hidden="true"
+            className="pointer-events-none absolute inset-2 rounded-[2px] border border-gold/16"
+          />
           <div
             ref={diagram}
             data-flow-diagram=""
@@ -596,13 +615,13 @@ export function ProductParts({ product }: { product: Product }) {
               data-flow-node=""
               data-flow-hub=""
               className={cn(
-                'relative z-10 mx-auto w-full max-w-[15rem] rounded-2xl border border-[color-mix(in_oklab,var(--stage-accent-ink)_40%,transparent)] bg-[#0e0e12] p-4 text-center shadow-[0_0_48px_-10px_color-mix(in_oklab,var(--stage-accent-ink)_45%,transparent)] md:mx-0',
+                'relative z-10 mx-auto w-full max-w-[15rem] rounded-[4px] border border-gold/60 bg-[color-mix(in_oklab,var(--stage-accent)_75%,var(--background))] p-4 text-center shadow-[0_0_56px_-12px_color-mix(in_oklab,var(--stage-accent-ink)_40%,transparent)] outline outline-1 outline-offset-[3px] outline-gold/22 md:mx-0',
                 'md:w-[27%]',
                 roomy ? null : 'md:p-3',
               )}
             >
-              <p className="text-base font-semibold leading-tight tracking-[-0.02em] text-foreground">{product.title}</p>
-              <p className="mt-1.5 text-xs leading-snug text-muted-foreground">{flow.hub}</p>
+              <p className="font-roman text-lg font-medium leading-tight tracking-[0.04em] text-foreground">{product.title}</p>
+              <p className="mt-1.5 font-serif text-[15px] italic leading-snug text-(--stage-text) text-balance">{flow.hub}</p>
               <Ports list={layout.ports.get(product.id)} refs={refs} />
             </div>
             <div className={cn(group, 'items-start md:items-stretch')}>
@@ -619,8 +638,9 @@ export function ProductParts({ product }: { product: Product }) {
                 curvature={!wide ? link.bow[0] : roomy ? link.bow[1] : (link.bow[1] / BOW) * TIGHT_BOW}
                 duration={2.6}
                 delay={i * 0.65}
-                pathColor="rgba(255,255,255,0.16)"
-                beamColor="var(--stage-accent-ink)"
+                pathColor="var(--stage-accent-ink)"
+                pathOpacity={0.3}
+                beamColor="var(--stage-glow)"
                 beamLength={40}
                 paused={view === 'off' || stopped}
                 // Some links run straight across or straight down, which the
@@ -640,9 +660,12 @@ export function ProductParts({ product }: { product: Product }) {
         </div>
       </div>
       <figcaption className={CAPTION_ROW}>
-        <span className="text-pretty">
-          <span className="whitespace-nowrap">Private, so no screenshots.</span>{' '}
-          <span className="whitespace-nowrap">Its parts, in its own words.</span>
+        <span className={CAPTION_TEXT}>
+          <span aria-hidden="true" className={CAPTION_RULE} />
+          <span className="text-pretty">
+            <span className="whitespace-nowrap">Private, so no screenshots.</span>{' '}
+            <span className="whitespace-nowrap">Its parts, in its own words.</span>
+          </span>
         </span>
         {calm ? null : <Toggle stopped={stopped} onToggle={() => setStopped((s) => !s)} what={`${product.title} diagram`} />}
       </figcaption>

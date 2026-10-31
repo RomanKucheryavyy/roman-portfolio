@@ -2,15 +2,33 @@
 
 import dynamic from 'next/dynamic'
 import { ArrowUpRight } from 'lucide-react'
-import { Button } from '@/components/ui/button'
 import { PRODUCTS, type Product } from '@/lib/content'
+import { toRoman } from '@/lib/roman'
 import { cn } from '@/lib/utils'
+import { stageButton } from './look'
 import { CAPTION_ROW, FLOW_BOX, LIVE_BOX } from './preview-box'
 import { ProductStage } from './product-stage'
 import { Container, SectionHeader } from './section-header'
 
 const pad = (n: number) => String(n).padStart(2, '0')
 const domain = (url: string) => url.replace(/^https?:\/\//, '').replace(/\/$/, '')
+
+/**
+ * A row's catalogue line, in the Imperial Stage's type (look.ts): its number
+ * of the whole as Roman numerals in gold Cinzel ("II / IV", as on its title
+ * card; screen readers still get "02 / 04"), and its status on a gold-edged
+ * pill in Geist capitals, the title cards' own pill. Under it the title in
+ * Cinzel and the tagline in Cormorant italic: quieter than the card above,
+ * which already shouts the name.
+ */
+const NUMBER = 'font-roman text-lg font-medium leading-none tracking-[0.14em] text-gold md:text-xl'
+const STATUS =
+  'inline-flex items-center gap-2.5 rounded-full border border-gold/60 px-3 py-1.5 font-sans text-[10.5px] font-medium uppercase leading-none tracking-[0.22em] text-(--stage-text)'
+const TITLE = 'font-roman text-[1.875rem] font-medium leading-[1.06] tracking-[0.02em] text-balance text-foreground md:text-5xl lg:text-[3.25rem]'
+const TAGLINE = 'font-serif text-[1.375rem] italic leading-snug text-pretty text-(--stage-text) md:text-[1.625rem]'
+/** The stack: an inscribed line rather than boxes, each name after a small gold lozenge. */
+const STACK = 'flex flex-wrap items-center gap-x-5 gap-y-2.5 font-sans text-[11px] font-medium uppercase leading-4 tracking-[0.18em] text-muted-foreground'
+const LOZENGE = 'size-[5px] shrink-0 rotate-45 bg-gold/80'
 
 /**
  * The previews (the browser and phone frames, the screenshots that scroll in
@@ -53,40 +71,48 @@ function ProductRow({ product, index }: { product: Product; index: number }) {
         )}
       >
         <div className={cn('lg:row-start-1 lg:self-end', text)}>
-          <div className="flex flex-wrap items-center gap-3">
-            <span className="font-mono text-xs tabular-nums text-muted-foreground">
-              {pad(index + 1)} / {pad(PRODUCTS.length)}
+          {/* On a phone the title card just above already shows the number,
+              the status and the tagline, so there they are for screen
+              readers only, and the row opens on its title. */}
+          <div className="flex flex-wrap items-center gap-x-4 gap-y-3 max-md:sr-only">
+            <span className={NUMBER}>
+              <span aria-hidden="true">
+                {toRoman(index + 1)} <span className="text-gold/55">/</span>{' '}
+                {toRoman(PRODUCTS.length)}
+              </span>
+              <span className="sr-only">
+                {pad(index + 1)} / {pad(PRODUCTS.length)}
+              </span>
             </span>
-            <span className="inline-flex items-center gap-2 rounded-full border border-white/10 px-2.5 py-0.5 text-xs font-medium text-foreground">
-              <span aria-hidden="true" className="size-1.5 rounded-full bg-[var(--stage-accent-ink)]" />
+            <span className={STATUS}>
+              <span aria-hidden="true" className="size-1.5 shrink-0 rounded-full bg-gold" />
               <span className="sr-only">Status: </span>
               {product.status}
             </span>
           </div>
-          <h3 className="mt-4 text-[2.5rem] font-bold leading-[0.95] tracking-[-0.05em] md:mt-5 md:text-6xl">{product.title}</h3>
-          <p className="mt-4 text-lg text-foreground/80 md:text-xl">{product.tagline}</p>
+          <h3 className={cn('md:mt-6', TITLE)}>{product.title}</h3>
+          <p className={cn('mt-3 max-md:sr-only md:mt-4', TAGLINE)}>{product.tagline}</p>
         </div>
 
         <div className={cn('lg:row-span-2 lg:row-start-1 lg:self-center', flip ? 'lg:col-start-1' : 'lg:col-start-2')}>
           {product.preview ? <LivePreview product={product} flip={flip} /> : product.flow ? <ProductParts product={product} /> : null}
         </div>
 
-        <div className={cn('flex flex-col items-start gap-5 lg:row-start-2 lg:self-start', text)}>
+        <div className={cn('flex flex-col items-start gap-6 lg:row-start-2 lg:self-start', text)}>
           <p className="max-w-xl text-[15px] leading-relaxed text-muted-foreground md:text-base">{product.description}</p>
-          <ul aria-label="Stack" className="flex flex-wrap gap-1.5">
+          <ul aria-label="Stack" className={cn('w-full max-w-xl border-t border-border pt-5', STACK)}>
             {product.stack.map((item) => (
-              <li key={item} className="rounded-full border border-white/10 px-2.5 py-0.5 font-mono text-xs text-muted-foreground">
+              <li key={item} className="inline-flex items-center gap-2.5">
+                <span aria-hidden="true" className={LOZENGE} />
                 {item}
               </li>
             ))}
           </ul>
           {product.url ? (
-            <Button asChild variant="outline" size="sm" className="rounded-full">
-              <a href={product.url} target="_blank" rel="noopener noreferrer">
-                {domain(product.url)}
-                <ArrowUpRight aria-hidden="true" />
-              </a>
-            </Button>
+            <a href={product.url} target="_blank" rel="noopener noreferrer" className={stageButton('secondary', 'sm')}>
+              {domain(product.url)}
+              <ArrowUpRight aria-hidden="true" />
+            </a>
           ) : null}
         </div>
       </Container>

@@ -69,10 +69,11 @@ const domain = (url: string) => url.replace(/^https?:\/\/(www\.)?/, '').replace(
  * the plate on a dark label, as in the intro; the word keeps the intro's
  * dark halo; the tagline's lines are balanced; the backdrop darker than the
  * component's (a light site's screenshot, Sembly's, showed its headings
- * through and dimmed the chrome).
+ * through and dimmed the chrome); and no meander ring while it loads: the
+ * ring is the intro's alone, so a card opens on its own word and count.
  */
 const LOOK = [
-  '[&_.om-cta]:hidden! [&_.om-hint]:hidden!',
+  '[&_.om-cta]:hidden! [&_.om-hint]:hidden! [&_.om-ring]:hidden!',
   '[&_.om-chrome]:z-[6]!',
   'max-sm:[&_.om-copy]:top-[148px]! sm:[&_.om-copy]:top-[max(16.5%,138px)]!',
   'max-sm:[&_.om-bars]:hidden! max-sm:[&_.om-foot]:justify-end!',
