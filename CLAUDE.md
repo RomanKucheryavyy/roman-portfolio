@@ -18,6 +18,12 @@ site's hero, FFT ocean, drag deck, `/works` wheel or musical framing; those
 are gone (925af16). `design-lab/` is the record of the three directions: read
 it, never change it.
 
+On 2026-10-30 he added the Roman intro, from kedhareswer's Old Masters
+Preloader on 21st.dev: "this for my porfolio woudl be sick, redesign it to
+like roman theme since my name is roman", and then, of his products: "this
+also cool for my featured projects like alongside events". So the page opens
+on a prologue, and each product in Act II on a title card (below).
+
 ## Rules
 
 - **Never push, merge or force-push `main`.** It auto-deploys production on
@@ -59,6 +65,11 @@ it, never change it.
 | `node scripts/capture-products.mjs [id] [desktop\|phone]` | Re-captures the public products' previews from their live sites (below) |
 | `npm run test:e2e` | Playwright against the production build: desktop 1440x900, mobile 390x844, no-WebGL |
 
+Every spec starts as a browser that saw the intro a moment ago (a
+`storageState` in `playwright.config.ts` holding `rk:intro`), so the page
+opens straight on the Stage; `intro.spec` starts from nothing or loads
+`/?intro`.
+
 e2e: build first; the suite starts `npm run start` on 3100 itself
 (`E2E_PORT=<port>` for another), with no Resend key and the Netlify Forms
 channel pointed at a stand-in for Netlify's form handler
@@ -81,13 +92,14 @@ report-only; `next.config.ts` says what each source is for).
 | `smoke` | Every route and head file, the redirects, a clean console, no request off-origin, the CSP, the server HTML, the page without WebGL |
 | `a11y` | axe, any impact, on `/`, `/resume`, the 404 and the message box's sent and failure panels |
 | `keyboard-walk` | Every Tab stop visible, named, ringed, on screen, not under the top bar, the message box's panels and every product's preview, link and Pause included |
-| `products` | Act II: Roman's order, each public product's real screenshots loading (`naturalWidth`) with alt text naming the site, the preview playing only while most of it is in view (also when it arrives in view as it mounts), back to the top after leaving, its two shots on one loop, holding still on hover, focus and Pause, the private products' diagrams (the product at the centre, its own parts, the links listed for screen readers, the beams running and pausing), nothing below moving when the previews land, no sideways scroll, no diagram overflowing and every beam long enough and out from under the cards from 320 to 1920 wide, and nothing moving under reduced motion |
+| `intro` | The Roman intro: shows on a first visit, not again within 12 hours, with `?intro`, never with a hash, under reduced motion or without scripts; the count in Roman numerals; Skip; the landing's words from the records; Enter, Escape, a wheel or swipe during the load and a nav link each lift it onto the page (focus on main, or the section); Tab stays inside; axe during the load and at the landing; a clean console, no CSP report, nothing off-origin; no sideways scroll and no overlapping pills from 320 to 1920 |
+| `products` | Act II: each product's title card (its own words, aria-hidden, nothing to focus, images from this origin, mounting in view and unmounting after, nothing below moving, the still landing under reduced motion), Roman's order, each public product's real screenshots loading (`naturalWidth`) with alt text naming the site, the preview playing only while most of it is in view (also when it arrives in view as it mounts), back to the top after leaving, its two shots on one loop, holding still on hover, focus and Pause, the private products' diagrams (the product at the centre, its own parts, the links listed for screen readers, the beams running and pausing), nothing below moving when the previews land, no sideways scroll, no diagram overflowing and every beam long enough and out from under the cards from 320 to 1920 wide, and nothing moving under reduced motion |
 | `contact-ui` | The suggestion, the undo window, the POST (intercepted), the sent panel (with and without a receipt), Send another, the failure panel, Try again, Edit message, Copy email, the 429 panel, the quote, 16px text on phones (landscape too) |
 | `contact-api` | The `/api/contact` contract with no Resend key: 400s, the honeypot, 502 when nothing delivered, 200 `delivered: ['forms']` with `receipt: false`, 429 |
 | `contact-email` | The email to Roman and the visitor's receipt (content, escaping, plain text, layout at 600 and 375 with long names and addresses), the first-name rule, `oneLine`, when receipts are on, and the route in Node with `fetch` faked: what it hands Resend, the receipt's headers, its per-address limit, no receipt without the email |
-| `touch` | Phone swipes that start on the badges, the cards, a product's preview or diagram, or the timeline scroll the page |
+| `touch` | Phone swipes that start on the badges, the cards, a product's preview, diagram or title card, or the timeline scroll the page |
 | `resume` | The PIN gate, the builder (mocked data) and its routes |
-| `data` | The records (the products' order, previews and flows included: a flow's words are its description's, its links only the stated ones), the preview files' sizes, the owner-fixed copy, nothing private in the build |
+| `data` | `toRoman`; the intro's and cards' words read from the records; the cast's files (present, their declared sizes, small, credited in humans.txt); the records (the products' order, previews and flows included: a flow's words are its description's, its links only the stated ones), the preview files' sizes, the owner-fixed copy, nothing private in the build |
 
 CI (`.github/workflows/ci.yml`) runs typecheck, lint, check:protected,
 build, budget and test:e2e on every PR and branch push. It never deploys and
@@ -101,7 +113,7 @@ move only in a commit that says why.
 
 | Route | What it is |
 |---|---|
-| `/` | The Stage: `page.tsx` (server: metadata, JSON-LD, a `<noscript>` summary of the whole page) renders `<Stage>` (client) |
+| `/` | The Stage: `page.tsx` (server: metadata, JSON-LD, a `<noscript>` summary of the whole page, the intro's inline gate) renders `<Intro>` and `<Stage>` (client) |
 | `/resume`, `/api/resume/*` | Roman's PIN-gated builder; its UI lives in `src/app/resume/_ui/` |
 | `/api/contact` | The message box's POST: Resend (an HTML and text email to `CONTACT_TO`, reply-to the visitor) and Netlify Forms together; then, when receipts are on and Resend took the email, a receipt to the visitor (marked automatic, one an hour per address) that repeats nothing they typed but a first name passing `src/lib/first-name.ts`. 200 `{ok, delivered, receipt}`, 502 when neither channel delivered (contract at the top of `route.ts`) |
 | `/api/csp-report` | Where CSP reports go (logged, 204) |
@@ -124,6 +136,10 @@ move only in a commit that says why.
 | Act II, his products: the rows, then the previews that load after the page, and the sizes both share | `src/components/stage/products.tsx`, `product-previews.tsx`, `preview-box.ts` |
 | The products' screenshots (WebP, desktop at 1280 wide, phone at 390 wide saved at 1.5x) and the script that takes them | `public/images/products/`, `scripts/capture-products.mjs` |
 | The contact emails (to Roman, and the visitor's receipt), server only | `src/lib/contact-email.ts`; the first-name rule they share with the message box is `src/lib/first-name.ts` |
+| The Roman intro: the gate (`intro.tsx`, `intro-gate.ts`), the stage (`intro-stage.tsx`), the palette (`imperial.ts`), the faces (`roman-type.ts`), the cast (`cast.ts`) | `src/components/stage/` |
+| The products' title cards | `src/components/stage/product-stage.tsx` (the box, and when it plays), `product-stage-card.tsx` (the stage) |
+| Roman numerals | `src/lib/roman.ts` (`toRoman`: 1 to 3999, "·" for 0) |
+| The statues (WebP, the figures pre-keyed) and the script that makes them | `public/images/cast/`, `scripts/fetch-cast.mjs` |
 | The 21st.dev components and their `-utils` folders | `src/components/ui/` |
 | Theme | `src/app/globals.css`: shadcn's theme unmodified, then the résumé's own tokens |
 | Share-card fonts | `src/app/_og/fonts/` (Geist, OFL) |
@@ -167,6 +183,53 @@ Alongside Brain):
   year and month it prints, look at the files, and commit them. A page that
   changes height enough to want a new crop changes the crop in the script
   and the sizes in constants.ts together.
+
+### The Roman intro, and the title cards
+
+kedhareswer/old-masters-preloader (`src/components/ui/old-masters-preloader.tsx`),
+as published plus four `[site edit]`s, each keeping the published behaviour
+when its prop is absent: `fonts` (the site's own faces, waited for, the word
+re-fitted when they land; CSP allows no font from elsewhere), `wordAs` (the
+word's element: the page has its h1, so both stages use a `p`), `formatCount`
+(Roman numerals) and `lift` (lift the stage off from any phase).
+
+- When: on `/` only, at most once in 12 hours per browser (localStorage
+  `rk:intro`), never with a hash in the address, under reduced motion or
+  without scripts. `?intro` shows it regardless, for Roman to show people.
+  An inline script (`INTRO_GATE`, first in `page.tsx`) decides before the
+  first paint and sets `data-intro` on `<html>`; `globals.css` keeps the
+  page hidden on the intro's ground until it lifts, and the script gives
+  the page back after 8 s if the stage never mounts.
+- What: ROMAN in Cinzel inside the gold meander, the count in Roman
+  numerals, then the imperial violet flood (`imperial.ts`) and the cast:
+  Apollo, Hercules and the figure with flowers, David blurred behind. The
+  words are the records': his tagline, "Prologue · " and the year in Roman
+  numerals, his initials, his client projects and certifications counted in
+  Roman numerals, and on wide screens his role ("By day") and his music
+  ("By calling").
+- Ways out, each lifting it straight onto the page: Enter, a wheel down or
+  an upward swipe, Escape, ArrowDown, PageDown, End, and its nav links,
+  which land on their section. While it is up it is a modal dialog in a
+  portal on `<body>`, everything else inert; after, focus is on `<main>`.
+- The gate is all that loads for a visitor who doesn't see it; the stage,
+  the component, the faces (Cinzel and Cormorant Garamond, `roman-type.ts`,
+  preload off) and the statues load only when it shows.
+- The statues are Unsplash photographs, credited as the component credits
+  them (`cast.ts`, `public/humans.txt`). `node scripts/fetch-cast.mjs [id]`
+  rewrites them: the three figures pre-keyed (alpha from luminance through
+  the component's own transfer, so Safari, which may ignore the component's
+  CSS mask, still shows only the statue), the Hercules cut at the belly in
+  the file itself, the David an opaque backdrop. Set the printed sizes in
+  `cast.ts` and look at the files before committing. (The David photograph
+  can't be keyed as a figure: his face is as dark as the wall behind him.)
+
+Each product in Act II opens on a title card of the same staging
+(`product-stage.tsx`): its title, tagline, domain or "Private", status and
+number, one statue (the Alongside pair share Apollo, mirrored), and a public
+product's own screenshot blurred behind. It is aria-hidden with nothing to
+focus (the row below keeps the heading and the link); its stage mounts once
+35% of it is in view and unmounts once it has left the screen; its box has a
+fixed height, so nothing below moves.
 
 ## Definition of done
 

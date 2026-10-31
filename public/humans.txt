@@ -12,4 +12,12 @@ are the same skill.
 /* SITE */
 Stack: Next.js, TypeScript, Tailwind CSS, shadcn/ui, Netlify
 Built from: 21st.dev components, used as their authors published them
-Type: Geist and Geist Mono
+Type: Geist and Geist Mono; Cinzel and Cormorant Garamond for the intro
+
+/* PHOTOGRAPHS */
+The intro's and the title cards' statues, from Unsplash, credited as
+kedhareswer's Old Masters Preloader credits them:
+The Apollo Belvedere: Nayani Teixeira
+A marble Hercules: Şafak Atalay
+A marble figure holding flowers: Clarence E. Hsu
+Michelangelo's David: Jack Hunter
