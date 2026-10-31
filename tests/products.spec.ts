@@ -298,6 +298,70 @@ test.describe('the products act, laid out', () => {
   })
 })
 
+test.describe('the title cards', () => {
+  const cardOf = (page: Page, id: string) => page.locator(`#products [data-title-card="${id}"]`)
+
+  test('each product opens on its title card: its own words, hidden from assistive tech, nothing to focus, images from this origin', async ({ page }) => {
+    await gotoHome(page)
+    await expect(page.locator('#products [data-title-card]')).toHaveCount(PRODUCTS.length)
+    for (const product of PRODUCTS) {
+      const card = cardOf(page, product.id)
+      await expect(card).toHaveAttribute('aria-hidden', 'true')
+      await card.evaluate((el) => el.scrollIntoView({ block: 'center', behavior: 'instant' }))
+      await expect(card.locator('.om-root[data-phase="landing"]')).toBeAttached({ timeout: 20_000 })
+      await expect(card.locator('.om-word')).toContainText(product.title)
+      await expect(card.locator('.om-tagline')).toHaveText(product.tagline)
+      await expect(card.locator('.om-pill').first()).toHaveText(product.status)
+      await expect(card).toContainText(product.url ? domain(product.url).replace(/^www\./, '') : 'Private')
+      const reachable = await card.evaluate((el) =>
+        [...el.querySelectorAll<HTMLElement>('a, button, input, select, textarea, [tabindex]')]
+          .filter((n) => n.tabIndex >= 0 && n.getClientRects().length > 0)
+          .map((n) => n.outerHTML.slice(0, 80)),
+      )
+      expect(reachable, `${product.id}: focusable in its card`).toEqual([])
+      const sources = await card.evaluate((el) => [...el.querySelectorAll('img')].map((img) => img.currentSrc || img.src))
+      for (const src of sources) expect(new URL(src).origin, src).toBe(new URL(page.url()).origin)
+    }
+  })
+
+  test('a card plays when it arrives and stops once it has left; nothing below moves when it mounts', async ({ page }) => {
+    await gotoHome(page)
+    const product = PRODUCTS[0]
+    const card = cardOf(page, product.id)
+    const row = page.locator('#products h3', { hasText: product.title })
+    // Off screen at the top of the page: a block of its own height, no stage.
+    await expect(card).toHaveAttribute('data-live', 'false')
+    const before = await card.evaluate((el) => el.getBoundingClientRect().height)
+    const offset = async () => {
+      const [c, r] = await Promise.all([card.boundingBox(), row.boundingBox()])
+      return Math.round(r!.y - c!.y)
+    }
+    const gapBefore = await offset()
+    await card.evaluate((el) => el.scrollIntoView({ block: 'center', behavior: 'instant' }))
+    await expect(card).toHaveAttribute('data-live', 'true')
+    await expect(card.locator('.om-root')).toBeAttached({ timeout: 20_000 })
+    expect(await card.evaluate((el) => el.getBoundingClientRect().height)).toBe(before)
+    expect(await offset()).toBe(gapBefore)
+    // Gone from the screen: the stage unmounts.
+    await page.evaluate(() => window.scrollTo({ top: 0, behavior: 'instant' }))
+    await expect(card).toHaveAttribute('data-live', 'false')
+    await expect(card.locator('.om-root')).toHaveCount(0)
+  })
+
+  test('a swipe or wheel over a card scrolls the page, and the row below keeps the heading and the link', async ({ page }) => {
+    test.skip(project() === 'mobile', 'touch.spec swipes on a card.')
+    await gotoHome(page)
+    const card = cardOf(page, PRODUCTS[0].id)
+    await card.evaluate((el) => el.scrollIntoView({ block: 'center', behavior: 'instant' }))
+    await expect(card.locator('.om-root')).toBeAttached({ timeout: 20_000 })
+    const box = (await card.boundingBox())!
+    await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2)
+    const y0 = await page.evaluate(() => window.scrollY)
+    await page.mouse.wheel(0, 400)
+    await expect.poll(() => page.evaluate(() => window.scrollY)).toBeGreaterThan(y0 + 200)
+  })
+})
+
 test.describe('the products act, under reduced motion', () => {
   test('nothing moves: the shots show the top of each page, the beams hold still, and there is nothing to pause', async ({ page }) => {
     await page.emulateMedia({ reducedMotion: 'reduce' })
@@ -320,5 +384,16 @@ test.describe('the products act, under reduced motion', () => {
       )
     }
     await expect(page.locator('#products').getByRole('button', { name: /^(Pause|Play) the / })).toHaveCount(0)
+  })
+
+  test('a title card opens straight on its still landing', async ({ page }) => {
+    await page.emulateMedia({ reducedMotion: 'reduce' })
+    await gotoHome(page)
+    const card = page.locator(`#products [data-title-card="${PRODUCTS[0].id}"]`)
+    await card.evaluate((el) => el.scrollIntoView({ block: 'center', behavior: 'instant' }))
+    const root = card.locator('.om-root')
+    await expect(root).toBeAttached({ timeout: 20_000 })
+    await expect(root).toHaveAttribute('data-phase', 'landing')
+    await expect(root).toHaveAttribute('data-instant', 'true')
   })
 })

@@ -19,6 +19,8 @@ import {
 import { SITE_CARD, pageMetadata } from '@/lib/seo'
 import { RESUME_HREF, RESUME_PUBLIC } from '@/lib/routes'
 import { toRoman } from '@/lib/roman'
+import { CAST } from '@/components/stage/cast'
+import { INTRO_FIGURES } from '@/components/stage/intro-gate'
 
 /**
  * The data layer, tested in Node alone: no browser, no server. The last
@@ -171,6 +173,50 @@ test.describe('Roman numerals', () => {
     }
     expect(seen.size).toBe(3999)
     for (const bad of [-1, 1.5, 4000, Number.NaN]) expect(() => toRoman(bad), String(bad)).toThrow(RangeError)
+  })
+})
+
+test.describe('the Roman intro and the title cards', () => {
+  const STAGE = path.join(ROOT, 'src/components/stage')
+
+  test('their words are the records\': his name, tagline, music, role and counts; each product\'s own', () => {
+    const intro = readFileSync(path.join(STAGE, 'intro-stage.tsx'), 'utf8')
+    for (const use of [
+      'wordmark={PERSON.first}',
+      'tagline={PERSON.tagline}',
+      'text: PERSON.music',
+      '`${ROLES[0].title}, ${ROLES[0].company}`',
+      'toRoman(PROJECTS.length)',
+      'toRoman(CERTIFICATIONS.length)',
+      'eyebrow={`Prologue · ${year}`}',
+      'toRoman(new Date().getFullYear())',
+      'annotations={[]}',
+    ])
+      expect(intro, use).toContain(use)
+    const card = readFileSync(path.join(STAGE, 'product-stage-card.tsx'), 'utf8')
+    for (const use of ['wordmark={product.title}', 'tagline={product.tagline}', 'labels={[product.status,', 'asides={[]}', 'annotations={[]}', 'nav={[]}'])
+      expect(card, use).toContain(use)
+    // The records they read hold what the landing shows.
+    expect(content.PERSON.first).toBe('Roman')
+    expect(content.PERSON.tagline).toBe(HIS_WORDS.tagline)
+    expect(toRoman(content.PROJECTS.length)).toMatch(/^[IVXLC]+$/)
+  })
+
+  test('the cast is served from this origin, each file present, its size as declared, and small', () => {
+    for (const [id, photo] of Object.entries(CAST)) {
+      expect(photo.src, id).toMatch(/^\/images\/cast\/[a-z-]+\.webp$/)
+      const file = path.join(ROOT, 'public', photo.src)
+      expect(existsSync(file), photo.src).toBe(true)
+      expect(webpSize(file), photo.src).toEqual({ width: photo.width, height: photo.height })
+      expect(statSync(file).size, `${photo.src} stays under 240 KB`).toBeLessThan(240 * 1024)
+      expect(photo.credit.length, id).toBeGreaterThan(0)
+    }
+    // The backdrop is decoration; every figure is named.
+    expect(CAST.david.alt).toBe('')
+    for (const f of [...INTRO_FIGURES.wide, ...INTRO_FIGURES.tall]) expect(f.alt, f.src).toBeTruthy()
+    // humans.txt credits each photographer.
+    const humans = readFileSync(path.join(ROOT, 'public', 'humans.txt'), 'utf8')
+    for (const photo of Object.values(CAST)) expect(humans, photo.credit).toContain(photo.credit)
   })
 })
 
