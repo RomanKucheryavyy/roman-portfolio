@@ -133,7 +133,7 @@ function ProjectCard({ project, index }: { project: Project; index: number }) {
           </h3>
           <p className="mt-3 text-[15px] leading-relaxed text-muted-foreground text-pretty lg:mt-4 xl:text-base lg:[@media(max-height:45rem)]:mt-3 xl:[@media(max-height:45rem)]:text-[15px]">{project.description}</p>
           <ul
-            className="mt-4 flex flex-wrap items-center gap-x-2.5 gap-y-1 font-sans text-[11px] font-medium uppercase leading-5 tracking-[0.2em] text-muted-foreground lg:mt-5 lg:[@media(max-height:45rem)]:mt-4"
+            className="mt-4 flex flex-wrap items-center gap-x-2.5 gap-y-1 font-sans text-xs font-medium uppercase leading-5 tracking-[0.18em] text-muted-foreground lg:mt-5 lg:[@media(max-height:45rem)]:mt-4"
             aria-label="Tags"
           >
             {project.tags.map((tag, i) => (

@@ -28,11 +28,15 @@ const Lifeline = dynamic(() => import('@/components/ui/lifeline'), {
 function buildMarkers(): LifelineMarker[] {
   const byYear = new Map<number, string[]>()
   const add = (year: number, lines: string[]) => byYear.set(year, [...(byYear.get(year) ?? []), ...lines])
+  // A date range wraps as one piece, after the "·": no break at its spaces
+  // (no-break spaces) nor after its dash, where browsers break by default
+  // (a word joiner).
+  const keep = (dates: string) => dates.replace(/ /g, '\u00a0').replace(/–/g, '–\u2060')
   for (const r of ROLES) {
     const where = [r.company, r.team, r.note].filter(Boolean).join(', ')
-    add(r.startYear, [r.title, `${where} · ${r.dates}`])
+    add(r.startYear, [r.title, `${where} · ${keep(r.dates)}`])
   }
-  for (const e of EDUCATION) add(e.start, [e.degree, `${e.school} · ${e.start} – ${e.end}`])
+  for (const e of EDUCATION) add(e.start, [e.degree, `${e.school} · ${keep(`${e.start} – ${e.end}`)}`])
   return [...byYear.entries()]
     .sort(([a], [b]) => a - b)
     .map(([year, events]) => ({ id: `y${year}`, year, age: '', events }))
