@@ -12,11 +12,14 @@ import { Cinzel, Cormorant_Garamond } from 'next/font/google'
  *
  * Both are variable fonts (one file per style). preload is off: the intro
  * shows at most once in 12 hours and the title cards sit below the first
- * screen, so a preload link would make every visitor fetch about 100 KB of
- * type before the page is up for something most visits never show. Their
- * @font-face rules are in the page's CSS, so a face is fetched the moment
- * text uses it or the intro asks for it (fontFaces below). display: block
- * keeps the big word from flashing in a fallback face.
+ * screen, so a preload link would make every visitor fetch their files
+ * before the page is up for something most visits never show. Import this
+ * module only from code that loads after the page (next/dynamic, or a
+ * dynamic import(), as the intro's gate does): its @font-face rules then
+ * arrive with that chunk instead of as one more stylesheet in the page's
+ * head, and a face is fetched the moment text uses it or loadRomanFaces()
+ * asks for it. display: block keeps the big word from flashing in a
+ * fallback face.
  */
 const cinzel = Cinzel({ subsets: ['latin'], display: 'block', preload: false })
 const cormorant = Cormorant_Garamond({ subsets: ['latin'], style: ['normal', 'italic'], display: 'block', preload: false })

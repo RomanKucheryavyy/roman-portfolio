@@ -21,6 +21,18 @@ const PORT = Number(process.env.E2E_PORT ?? 3100)
 const FORMS_PORT = Number(process.env.E2E_FORMS_PORT ?? PORT + 1)
 const baseURL = `http://localhost:${PORT}`
 
+/**
+ * Every test starts as a browser that saw the Roman intro a moment ago
+ * (localStorage `rk:intro`, src/components/stage/intro-gate.ts), so the home
+ * page opens straight on the Stage, as it did before the intro. A spec about
+ * the intro starts from an empty state instead (`test.use({ storageState:
+ * { cookies: [], origins: [] } })`) or loads `/?intro`.
+ */
+const SEEN_INTRO = {
+  cookies: [],
+  origins: [{ origin: baseURL, localStorage: [{ name: 'rk:intro', value: String(Date.now()) }] }],
+}
+
 export default defineConfig({
   testDir: './tests',
   tsconfig: './tests/tsconfig.json',
@@ -36,6 +48,7 @@ export default defineConfig({
   reporter: process.env.CI ? [['list'], ['html', { open: 'never' }]] : [['list']],
   use: {
     baseURL,
+    storageState: SEEN_INTRO,
     trace: 'retain-on-failure',
     screenshot: 'only-on-failure',
   },
