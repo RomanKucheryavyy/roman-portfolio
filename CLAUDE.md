@@ -147,7 +147,7 @@ report-only; `next.config.ts` says what each source is for).
 
 | Spec | Covers |
 |---|---|
-| `smoke` | Every route and head file, the redirects, a clean console, no request off-origin, the CSP, the server HTML, the page without WebGL |
+| `smoke` | Every route and head file, the redirects, a clean console, no request off-origin, the CSP, the server HTML, the page without WebGL, the hero's painting (aria-hidden, inert, nothing to focus, one light, the name the largest paint) |
 | `a11y` | axe, any impact, on `/`, `/resume`, the 404 and the message box's sent and failure panels |
 | `keyboard-walk` | Every Tab stop visible, named, ringed, on screen, not under the top bar, the message box's panels and every product's preview, link and Pause included |
 | `intro` | The Roman intro: shows on a first visit, not again within 12 hours, again after them, with `?intro`, never with a hash, under reduced motion or without scripts; the page comes back at once if the stage's code fails, and at the 8 s fail-safe if it never arrives (and it never shows late); the count in Roman numerals; Skip (focus stays inside); the landing's words from the records; Enter (from the unveil on), Escape (straight to the exit), ArrowDown, PageDown, End, a wheel or swipe during the load and a nav link each lift it onto the page (focus on main, or the section; the page scrolls); Tab stays inside and every stop shows, ringed; axe during the load and at the landing; a clean console, no CSP report, nothing off-origin; nothing off screen and no overlapping pills from 320 to 1920 |
@@ -196,6 +196,7 @@ move only in a commit that says why.
 | The contact emails (to Roman, and the visitor's receipt), server only | `src/lib/contact-email.ts`; the first-name rule they share with the message box is `src/lib/first-name.ts` |
 | The Roman intro: the gate (`intro.tsx`, `intro-gate.ts`), the stage (`intro-stage.tsx`), the cast (`cast.ts`); the palette (`imperial.ts`) and the faces (`roman-type.ts`), which the whole page uses | `src/components/stage/` |
 | The products' title cards | `src/components/stage/product-stage.tsx` (the box, and when it plays), `product-stage-card.tsx` (the stage) |
+| The hero's painting | `src/components/stage/hero-painting.tsx` (the box, and when it plays), `hero-painting-stage.tsx` (the stage) |
 | Roman numerals | `src/lib/roman.ts` (`toRoman`: 1 to 3999, "·" for 0) |
 | The statues (WebP, the figures pre-keyed) and the script that makes them | `public/images/cast/`, `scripts/fetch-cast.mjs` |
 | The 21st.dev components and their `-utils` folders | `src/components/ui/` |
@@ -246,13 +247,13 @@ beside the description, the stack as an inscribed line and the link.
   changes height enough to want a new crop changes the crop in the script
   and the sizes in constants.ts together.
 
-### The Roman intro, and the title cards
+### The Roman intro, the hero's painting, and the title cards
 
 kedhareswer/old-masters-preloader (`src/components/ui/old-masters-preloader.tsx`),
 as published plus four `[site edit]`s, each keeping the published behaviour
 when its prop is absent: `fonts` (the site's own faces, waited for, the word
 re-fitted when they land; CSP allows no font from elsewhere), `wordAs` (the
-word's element: the page has its h1, so both stages use a `p`), `formatCount`
+word's element: the page has its h1, so every stage uses a `p`), `formatCount`
 (Roman numerals) and `lift` (lift the stage off from any phase, re-applied on
 every phase change while asked for, so a timer can't set the landing back).
 
@@ -305,6 +306,29 @@ intro's alone, so a card opens on its own word filling in. It is aria-hidden wit
 nothing to focus (the row below keeps the heading and the link); its stage
 mounts once 35% of it is in view and unmounts once it has left the screen;
 its box has a fixed height, so nothing below moves.
+
+The hero carries the same painting (Roman, 2026-10-31: "the hero can still
+have the painting thingy", then "make it epic"): `hero-painting.tsx` (the
+box, and when it plays) and `hero-painting-stage.tsx` (the stage, the
+component configured from outside: still landing, its own word, copy,
+chrome, flood, meander and backdrop gone, root and stage transparent over
+the curtain). Apollo alone, a colossal head in the middle between the name
+and the tagline, his face turned up to the name, sized from where the
+hero's words are (his curls behind the surname's lower half, his chin above
+the tagline, his curls clear of the screen's sides), on a pool of the
+intro's violet, under the component's light drawn twice as strong. It
+fades out into the curtain well inside the photograph's edges and below
+his chin, so the tagline and the buttons stand on the curtain; the name
+has a dark halo where the curls rise behind it (every letter 5.4:1 or
+more, 320 to 2560 wide). So the hero is laid out as a poster: the name at
+the top, the tagline and the buttons at the foot, his room between. It
+differs from the intro (two statues standing at the sides of ROMAN on the
+floor) and the cards (one statue to one side of the product's word). It is
+aria-hidden and inert; it loads after the page (once idle, next/dynamic)
+so the name stays the first and largest paint (smoke checks the LCP); it
+waits while the intro is up and rises from below once the intro has gone
+(only a fade under reduced motion, and on a return to the hero); it
+unmounts when the hero leaves the screen.
 
 ## Definition of done
 
