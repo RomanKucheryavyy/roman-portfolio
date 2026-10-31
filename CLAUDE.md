@@ -33,6 +33,11 @@ make it not feel repetitive". So the whole page took the intro's look, the
 section header from the intro to the footer, and a different Roman idea in
 each section, so it reads as one book with different chapters.
 
+The same day: "also we should add somewhere that im not all star ranger on
+trailhead, the highest ranger status", and "And make it epic". Read as "I'm
+now": he is an All Star Ranger on Trailhead, the highest Ranger status. So
+Act IV opens on that rank as its crowning honour (below), from one record.
+
 ## Rules
 
 - **Never push, merge or force-push `main`.** It auto-deploys production on
@@ -101,9 +106,11 @@ each section, so it reads as one book with different chapters.
   with the name in Cinzel; Act I, inscribed plaques (a gold edge, rivets,
   the number in a tabula ansata); Act II, the title cards, then rows that
   show the product itself (nothing the card above already says) and
-  gold-on-violet diagrams; Act III, a road of gold milestones; Act IV, a
-  frieze of laurel seals, all eight in one row on wide screens so none
-  shows twice; About, the portrait in an arched niche and the skills as
+  gold-on-violet diagrams; Act III, a road of gold milestones; Act IV, his
+  Trailhead rank first, a gold phalera (Rome's struck disc for a soldier's
+  honours) with a faceted star, crowned in laurel on a glory of gold rays,
+  then a frieze of laurel seals, all eight in one row on wide screens so
+  none shows twice; About, the portrait in an arched niche and the skills as
   marble tiles; Contact, the world in gold on a violet globe; the footer,
   the fluted violet glass under a gilt edge, closing on his monogram and a
   line in Cinzel (no giant wordmark: his name stands full-width in the
@@ -147,17 +154,18 @@ report-only; `next.config.ts` says what each source is for).
 
 | Spec | Covers |
 |---|---|
-| `smoke` | Every route and head file, the redirects, a clean console, no request off-origin, the CSP, the server HTML, the page without WebGL, the hero's painting (aria-hidden, inert, nothing to focus, one light, the name the largest paint) |
+| `smoke` | Every route and head file, the redirects, a clean console, no request off-origin, the CSP, the server HTML (the JSON-LD Person and its award, the `<noscript>` summary, the rank in llms.txt), the page without WebGL, the hero's painting (aria-hidden, inert, nothing to focus, one light, the name the largest paint) |
 | `a11y` | axe, any impact, on `/`, `/resume`, the 404 and the message box's sent and failure panels |
 | `keyboard-walk` | Every Tab stop visible, named, ringed, on screen, not under the top bar, the message box's panels and every product's preview, link and Pause included |
 | `intro` | The Roman intro: shows on a first visit, not again within 12 hours, again after them, with `?intro`, never with a hash, under reduced motion or without scripts; the page comes back at once if the stage's code fails, and at the 8 s fail-safe if it never arrives (and it never shows late); the count in Roman numerals; Skip (focus stays inside); the landing's words from the records; Enter (from the unveil on), Escape (straight to the exit), ArrowDown, PageDown, End, a wheel or swipe during the load and a nav link each lift it onto the page (focus on main, or the section; the page scrolls); Tab stays inside and every stop shows, ringed; axe during the load and at the landing; a clean console, no CSP report, nothing off-origin; nothing off screen and no overlapping pills from 320 to 1920 |
 | `products` | Act II: each product's title card (its own words, aria-hidden, nothing to focus, images from this origin, mounting in view and unmounting after, nothing below moving, none of the intro's count, barcode or plate, the still landing under reduced motion), the row not repeating it (its name, tagline, number and status for screen readers only), Roman's order, each public product's real screenshots loading (`naturalWidth`) with alt text naming the site, the preview playing only while most of it is in view (also when it arrives in view as it mounts), back to the top after leaving, its two shots on one loop, holding still on hover, focus and Pause, the private products' diagrams (the product at the centre, its own parts, the links listed for screen readers, the beams running and pausing), nothing below moving when the previews land, no sideways scroll, no diagram overflowing and every beam long enough and out from under the cards from 320 to 1920 wide, and nothing moving under reduced motion |
+| `credentials` | Act IV's rank: its words from the record in an h3 after the act's h2 (no h1), before and above the seals; the drawing aria-hidden, nothing to focus, no link; the entrance held until it is in view, then letting go, the rays and sheen running only on screen; still and whole under reduced motion and without scripts; no sideways scroll, its words on screen, clear of the header and above the seals from 320 to 1920 |
 | `contact-ui` | The suggestion, the undo window, the POST (intercepted), the sent panel (with and without a receipt), Send another, the failure panel, Try again, Edit message, Copy email, the 429 panel, the quote, 16px text on phones (landscape too) |
 | `contact-api` | The `/api/contact` contract with no Resend key: 400s, the honeypot, 502 when nothing delivered, 200 `delivered: ['forms']` with `receipt: false`, 429 |
 | `contact-email` | The email to Roman and the visitor's receipt (content, escaping, plain text, layout at 600 and 375 with long names and addresses), the first-name rule, `oneLine`, when receipts are on, and the route in Node with `fetch` faked: what it hands Resend, the receipt's headers, its per-address limit, no receipt without the email |
 | `touch` | Phone swipes that start on the badges, the cards, a product's preview, diagram or title card, or the timeline scroll the page |
 | `resume` | The PIN gate, the builder (mocked data) and its routes |
-| `data` | `toRoman`; the intro's and cards' words read from the records; the cast's files (present, their declared sizes, small, credited in humans.txt); the records (the products' order, previews and flows included: a flow's words are its description's, its links only the stated ones), the preview files' sizes, the owner-fixed copy, nothing private in the build |
+| `data` | `toRoman`; the intro's and cards' words read from the records; the Trailhead rank (his words, nothing he didn't give, typed once, read by Act IV, the summary and llms.txt, the JSON-LD award); the cast's files (present, their declared sizes, small, credited in humans.txt); the records (the products' order, previews and flows included: a flow's words are its description's, its links only the stated ones), the preview files' sizes, the owner-fixed copy, nothing private in the build |
 
 CI (`.github/workflows/ci.yml`) runs typecheck, lint, check:protected,
 build, budget and test:e2e on every PR and branch push. It never deploys and
@@ -183,10 +191,10 @@ move only in a commit that says why.
 
 | What | Where |
 |---|---|
-| The work, products (with each public one's `preview` and each private one's `flow`), certifications, skills, his own words (`HIS_WORDS`: tagline, manifesto, about, music line) | `src/lib/constants.ts` |
+| The work, products (with each public one's `preview` and each private one's `flow`), certifications, his Trailhead rank (`TRAILHEAD_RANK`), skills, his own words (`HIS_WORDS`: tagline, manifesto, about, music line) | `src/lib/constants.ts` |
 | Roles, schools, dates | `src/lib/site-facts.ts` |
 | Email, LinkedIn, GitHub | `src/lib/links.ts` |
-| The Stage's shape of all of it (`PERSON`, `PROJECTS`, `PRODUCTS`, `ROLES`, ...), built from the three above, typed nowhere else | `src/lib/content.ts` |
+| The Stage's shape of all of it (`PERSON`, `PROJECTS`, `PRODUCTS`, `ROLES`, `RANK`, ...), built from the three above, typed nowhere else | `src/lib/content.ts` |
 | The résumé's private data (server only) | `src/lib/resume-data.ts` |
 | Head and JSON-LD | `src/lib/seo.ts` (`pageMetadata`), `src/lib/structured-data.ts` |
 | API settings (server only) | `src/lib/env.ts`; routes never read `process.env` directly |
@@ -196,6 +204,7 @@ move only in a commit that says why.
 | The contact emails (to Roman, and the visitor's receipt), server only | `src/lib/contact-email.ts`; the first-name rule they share with the message box is `src/lib/first-name.ts` |
 | The Roman intro: the gate (`intro.tsx`, `intro-gate.ts`), the stage (`intro-stage.tsx`), the cast (`cast.ts`); the palette (`imperial.ts`) and the faces (`roman-type.ts`), which the whole page uses | `src/components/stage/` |
 | The products' title cards | `src/components/stage/product-stage.tsx` (the box, and when it plays), `product-stage-card.tsx` (the stage) |
+| Act IV: the rank, then the seals | `src/components/stage/rank-honour.tsx` (the medal, its words and its entrance; its gold shades are `GILT` in `imperial.ts`), `credentials.tsx` (the act, and the frieze) |
 | The hero's painting | `src/components/stage/hero-painting.tsx` (the box, and when it plays), `hero-painting-stage.tsx` (the stage) |
 | Roman numerals | `src/lib/roman.ts` (`toRoman`: 1 to 3999, "·" for 0) |
 | The statues (WebP, the figures pre-keyed) and the script that makes them | `public/images/cast/`, `scripts/fetch-cast.mjs` |
@@ -246,6 +255,23 @@ beside the description, the stack as an inscribed line and the link.
   year and month it prints, look at the files, and commit them. A page that
   changes height enough to want a new crop changes the crop in the script
   and the sizes in constants.ts together.
+
+### Act IV, his Trailhead rank
+
+`rank-honour.tsx`, the page's own SVG and type (glue; no 21st.dev
+component draws a medal): the platform and the rank in an h3 after the
+act's h2 ("Trailhead", Cormorant italic; the rank, gold Cinzel capitals),
+then the standing in his words, all from `RANK`; the drawing (the phalera,
+the laurel tied with a violet ribbon, the crown's star, the glory of rays)
+is aria-hidden. From xl it stands beside the act's header, below xl between
+the header and the frieze. It plays once, when a third of it is in view:
+the medal struck in, the laurel growing leaf by leaf from the ribbon to the
+crown, the words, the crown's star, then a sheen across the medal and the
+rank's name (Web Animations, each letting go when done); after that the
+rays turn and the sheen comes round every 7 s, only while it is on screen.
+The server's HTML is the finished honour, so without scripts and under
+reduced motion it stands whole and still. No date, badge count or profile
+link was given: `// needs Roman:` in constants.ts, and nothing links.
 
 ### The Roman intro, the hero's painting, and the title cards
 
