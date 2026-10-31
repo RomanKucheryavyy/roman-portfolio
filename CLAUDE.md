@@ -107,9 +107,9 @@ Act IV opens on that rank as its crowning honour (below), from one record.
   the number in a tabula ansata); Act II, the title cards, then rows that
   show the product itself (nothing the card above already says) and
   gold-on-violet diagrams; Act III, a road of gold milestones; Act IV, his
-  Trailhead rank first, a gold phalera (Rome's struck disc for a soldier's
-  honours) with a faceted star, crowned in laurel on a glory of gold rays,
-  then a frieze of laurel seals, all eight in one row on wide screens so
+  Trailhead rank first, the rank's name inside a laurel crown struck in gold
+  (designali-in/award) on a glory of gold rays, then a frieze of laurel
+  seals, all eight in one row on wide screens so
   none shows twice; About, the portrait in an arched niche and the skills as
   marble tiles; Contact, the world in gold on a violet globe; the footer,
   the fluted violet glass under a gilt edge, closing on his monogram and a
@@ -154,12 +154,12 @@ report-only; `next.config.ts` says what each source is for).
 
 | Spec | Covers |
 |---|---|
-| `smoke` | Every route and head file, the redirects, a clean console, no request off-origin, the CSP, the server HTML (the JSON-LD Person and its award, the `<noscript>` summary, the rank in llms.txt), the page without WebGL, the hero's painting (aria-hidden, inert, nothing to focus, one light, the name the largest paint) |
+| `smoke` | Every route and head file, the redirects, a clean console, no request off-origin, the CSP, the server HTML (the JSON-LD Person and its award, the `<noscript>` summary, the rank in llms.txt), the page without WebGL, the hero's painting (aria-hidden, inert, nothing to focus, one light, Hercules, his curls below the surname, the name the largest paint; never without WebGL or for a browser that saves data; its chunk failing leaves the page as it is) |
 | `a11y` | axe, any impact, on `/`, `/resume`, the 404 and the message box's sent and failure panels |
 | `keyboard-walk` | Every Tab stop visible, named, ringed, on screen, not under the top bar, the message box's panels and every product's preview, link and Pause included |
 | `intro` | The Roman intro: shows on a first visit, not again within 12 hours, again after them, with `?intro`, never with a hash, under reduced motion or without scripts; the page comes back at once if the stage's code fails, and at the 8 s fail-safe if it never arrives (and it never shows late); the count in Roman numerals; Skip (focus stays inside); the landing's words from the records; Enter (from the unveil on), Escape (straight to the exit), ArrowDown, PageDown, End, a wheel or swipe during the load and a nav link each lift it onto the page (focus on main, or the section; the page scrolls); Tab stays inside and every stop shows, ringed; axe during the load and at the landing; a clean console, no CSP report, nothing off-origin; nothing off screen and no overlapping pills from 320 to 1920 |
 | `products` | Act II: each product's title card (its own words, aria-hidden, nothing to focus, images from this origin, mounting in view and unmounting after, nothing below moving, none of the intro's count, barcode or plate, the still landing under reduced motion), the row not repeating it (its name, tagline, number and status for screen readers only), Roman's order, each public product's real screenshots loading (`naturalWidth`) with alt text naming the site, the preview playing only while most of it is in view (also when it arrives in view as it mounts), back to the top after leaving, its two shots on one loop, holding still on hover, focus and Pause, the private products' diagrams (the product at the centre, its own parts, the links listed for screen readers, the beams running and pausing), nothing below moving when the previews land, no sideways scroll, no diagram overflowing and every beam long enough and out from under the cards from 320 to 1920 wide, and nothing moving under reduced motion |
-| `credentials` | Act IV's rank: its words from the record in an h3 after the act's h2 (no h1), before and above the seals; the drawing aria-hidden, nothing to focus, no link; the entrance held until it is in view, then letting go, the rays and sheen running only on screen; still and whole under reduced motion and without scripts; no sideways scroll, its words on screen, clear of the header and above the seals from 320 to 1920 |
+| `credentials` | Act IV's rank: its words from the record in reading order, none a heading (the act's one heading is its h2), no level pill, before and above the seals; the drawings silent, nothing to focus, no link, the laurel in its gold; the entrance held until it is in view, then letting go, the rays and sheen running only on screen; no entrance when the page lands on it (`/#credentials`: no word ever drawn below full); still and whole under reduced motion and without scripts; no sideways scroll, its words on screen, clear of the header and above the seals from 320 to 1920 |
 | `contact-ui` | The suggestion, the undo window, the POST (intercepted), the sent panel (with and without a receipt), Send another, the failure panel, Try again, Edit message, Copy email, the 429 panel, the quote, 16px text on phones (landscape too) |
 | `contact-api` | The `/api/contact` contract with no Resend key: 400s, the honeypot, 502 when nothing delivered, 200 `delivered: ['forms']` with `receipt: false`, 429 |
 | `contact-email` | The email to Roman and the visitor's receipt (content, escaping, plain text, layout at 600 and 375 with long names and addresses), the first-name rule, `oneLine`, when receipts are on, and the route in Node with `fetch` faked: what it hands Resend, the receipt's headers, its per-address limit, no receipt without the email |
@@ -204,7 +204,7 @@ move only in a commit that says why.
 | The contact emails (to Roman, and the visitor's receipt), server only | `src/lib/contact-email.ts`; the first-name rule they share with the message box is `src/lib/first-name.ts` |
 | The Roman intro: the gate (`intro.tsx`, `intro-gate.ts`), the stage (`intro-stage.tsx`), the cast (`cast.ts`); the palette (`imperial.ts`) and the faces (`roman-type.ts`), which the whole page uses | `src/components/stage/` |
 | The products' title cards | `src/components/stage/product-stage.tsx` (the box, and when it plays), `product-stage-card.tsx` (the stage) |
-| Act IV: the rank, then the seals | `src/components/stage/rank-honour.tsx` (the medal, its words and its entrance; its gold shades are `GILT` in `imperial.ts`), `credentials.tsx` (the act, and the frieze) |
+| Act IV: the rank, then the seals | `src/components/stage/rank-honour.tsx` (designali-in/award configured, the platform's line, the glory and the entrance; the laurel's golds are `GILT` in `imperial.ts`), `src/components/ui/award.tsx` (the component), `credentials.tsx` (the act, and the frieze) |
 | The hero's painting | `src/components/stage/hero-painting.tsx` (the box, and when it plays), `hero-painting-stage.tsx` (the stage) |
 | Roman numerals | `src/lib/roman.ts` (`toRoman`: 1 to 3999, "·" for 0) |
 | The statues (WebP, the figures pre-keyed) and the script that makes them | `public/images/cast/`, `scripts/fetch-cast.mjs` |
@@ -258,20 +258,29 @@ beside the description, the stack as an inscribed line and the link.
 
 ### Act IV, his Trailhead rank
 
-`rank-honour.tsx`, the page's own SVG and type (glue; no 21st.dev
-component draws a medal): the platform and the rank in an h3 after the
-act's h2 ("Trailhead", Cormorant italic; the rank, gold Cinzel capitals),
-then the standing in his words, all from `RANK`; the drawing (the phalera,
-the laurel tied with a violet ribbon, the crown's star, the glory of rays)
-is aria-hidden. From xl it stands beside the act's header, below xl between
-the header and the frieze. It plays once, when a third of it is in view:
-the medal struck in, the laurel growing leaf by leaf from the ribbon to the
-crown, the words, the crown's star, then a sheen across the medal and the
-rank's name (Web Animations, each letting go when done); after that the
-rays turn and the sheen comes round every 7 s, only while it is on screen.
-The server's HTML is the finished honour, so without scripts and under
-reduced motion it stands whole and still. No date, badge count or profile
-link was given: `// needs Roman:` in constants.ts, and nothing links.
+designali-in/award (`src/components/ui/award.tsx`), its `award` variant,
+as published plus two `[site edit]`s that keep the published elements when
+absent: `titleAs` and `subtitleAs` (published: h1 and h2; the page has its
+h1, and the act's h2 is its eight certifications, so the rank is not filed
+under it as a heading of its own: both are `p`). `rank-honour.tsx`
+configures it from outside: the rank's name as its title in gold Cinzel
+capitals (a sheen parked off them), its rule in gold, his standing as its
+subtitle in Cormorant italic, the laurel filled with a gradient of the
+palette's golds, and no level pill (its word, "GOLD", is the component's,
+not the record's). "Trailhead" stands in the crown's opening, the page's
+own line, first in reading order; the page's own glory (a violet halo and
+fine gold rays, aria-hidden) is behind. All the words are `RANK`'s. From
+xl it stands beside the act's header, below xl between the header and the
+frieze. It plays once, when a third of it is in view: the glory, the laurel
+growing up from its stems to the crown, the words one after another and
+the rule drawn out, then a sheen across the name (Web Animations, each
+letting go when done); after that the rays turn and the sheen comes round
+every 7 s, only while it is on screen. If any of it is on screen as the
+page starts (`/#credentials`, the `/credentials` redirect, the intro's
+nav, a restored scroll), there is no entrance. The server's HTML is the
+finished honour, so without scripts and under reduced motion it stands
+whole and still. No date, badge count or profile link was given:
+`// needs Roman:` in constants.ts, and nothing links.
 
 ### The Roman intro, the hero's painting, and the title cards
 
@@ -338,23 +347,30 @@ have the painting thingy", then "make it epic"): `hero-painting.tsx` (the
 box, and when it plays) and `hero-painting-stage.tsx` (the stage, the
 component configured from outside: still landing, its own word, copy,
 chrome, flood, meander and backdrop gone, root and stage transparent over
-the curtain). Apollo alone, a colossal head in the middle between the name
-and the tagline, his face turned up to the name, sized from where the
-hero's words are (his curls behind the surname's lower half, his chin above
-the tagline, his curls clear of the screen's sides), on a pool of the
-intro's violet, under the component's light drawn twice as strong. It
-fades out into the curtain well inside the photograph's edges and below
-his chin, so the tagline and the buttons stand on the curtain; the name
-has a dark halo where the curls rise behind it (every letter 5.4:1 or
-more, 320 to 2560 wide). So the hero is laid out as a poster: the name at
-the top, the tagline and the buttons at the foot, his room between. It
-differs from the intro (two statues standing at the sides of ROMAN on the
-floor) and the cards (one statue to one side of the product's word). It is
-aria-hidden and inert; it loads after the page (once idle, next/dynamic)
-so the name stays the first and largest paint (smoke checks the LCP); it
-waits while the intro is up and rises from below once the intro has gone
-(only a fade under reduced motion, and on a return to the hero); it
-unmounts when the hero leaves the screen.
+the curtain). Hercules alone, a colossal bust in the middle between the
+name and the tagline, his head bowed beneath the name, so it repeats
+neither the intro (on a phone Apollo alone, looking up; wider, both
+statues standing at the sides of ROMAN on the floor) nor the first title
+card (Apollo). He is sized from where the hero's words are: the crown of
+his curls below the surname (no letter stands on marble; smoke checks it),
+his head at most 72% of the screen's width (on a phone the photograph
+stays near the intro's scale), his shoulders fading out below his beard,
+gone above the tagline, so the tagline and the buttons stand on the
+curtain. He stands in a niche of the page's dark: the print's shadows are
+keyed out of the photograph, and on the dark they read as shadow (on
+violet or on the curtain's folds his face broke up into fragments). The
+component's light is drawn twice as strong. So the hero is laid out as a
+poster: the name at the top, the tagline and the buttons at the foot, his
+room between. It is aria-hidden and inert; it loads after the page (once
+idle, next/dynamic) so the name stays the first and largest paint (smoke
+checks the LCP); it waits while the intro is up and rises from below once
+the intro has gone (only a fade under reduced motion, and on a return to
+the hero); it unmounts when the hero leaves the screen. It never comes for
+a browser that asks to save data or reports 2G (the intro's own test,
+`savesData()` in `intro-gate.ts`), nor without WebGL, where its full-hero
+light, a canvas drawn every frame, would take most of the frames. If its
+chunk fails to load, it is simply not there (as the intro's stage does),
+never the error page.
 
 ## Definition of done
 
