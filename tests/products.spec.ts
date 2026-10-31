@@ -328,7 +328,7 @@ test.describe('the title cards', () => {
     await gotoHome(page)
     const product = PRODUCTS[0]
     const card = cardOf(page, product.id)
-    const row = page.locator('#products h3', { hasText: product.title })
+    const row = page.locator('#products li', { has: page.locator('h3', { hasText: product.title }) }).getByText(product.description)
     // Off screen at the top of the page: a block of its own height, no stage.
     await expect(card).toHaveAttribute('data-live', 'false')
     const before = await card.evaluate((el) => el.getBoundingClientRect().height)
@@ -348,7 +348,7 @@ test.describe('the title cards', () => {
     await expect(card.locator('.om-root')).toHaveCount(0)
   })
 
-  test('a swipe or wheel over a card scrolls the page, and the row below keeps the heading and the link', async ({ page }) => {
+  test('a swipe or wheel over a card scrolls the page, and the row below keeps the heading (for screen readers) and the link', async ({ page }) => {
     test.skip(project() === 'mobile', 'touch.spec swipes on a card.')
     await gotoHome(page)
     const card = cardOf(page, PRODUCTS[0].id)
@@ -361,8 +361,26 @@ test.describe('the title cards', () => {
     await expect.poll(() => page.evaluate(() => window.scrollY)).toBeGreaterThan(y0 + 200)
     // The card is a picture; the row below it is the product.
     const row = page.locator('#products li', { has: page.locator('h3', { hasText: PRODUCTS[0].title }) }).first()
-    await expect(row.locator('h3')).toBeVisible()
+    await expect(row.getByRole('heading', { level: 3, name: PRODUCTS[0].title, exact: true })).toHaveCount(1)
+    await expect(row.getByText(PRODUCTS[0].description)).toBeVisible()
     if (PRODUCTS[0].url) await expect(row.getByRole('link', { name: domain(PRODUCTS[0].url), exact: true })).toBeVisible()
+  })
+
+  test('a row doesn\'t repeat its card: the name, tagline, number and status are there for screen readers only', async ({ page }) => {
+    await gotoHome(page)
+    for (const product of PRODUCTS) {
+      const row = page.locator('#products li', { has: page.locator('h3', { hasText: product.title }) }).first()
+      const words = row.locator('.sr-only').filter({ has: page.locator('h3') })
+      await expect(words.locator('h3')).toHaveText(product.title)
+      await expect(words).toContainText(product.tagline)
+      await expect(words).toContainText(`Status: ${product.status}`)
+      // Clipped to nothing: on screen, the card above says them.
+      const box = await words.evaluate((el) => {
+        const r = el.getBoundingClientRect()
+        return { w: r.width, h: r.height }
+      })
+      expect(box.w * box.h, `${product.id}: the row's own copy of the card's words takes no room`).toBeLessThanOrEqual(1)
+    }
   })
 })
 

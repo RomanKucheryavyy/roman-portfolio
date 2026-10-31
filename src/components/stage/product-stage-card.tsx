@@ -17,8 +17,7 @@ import { ROMAN_FONTS } from './roman-type'
  * - the wordmark: its title; the tagline: its tagline;
  * - the eyebrow: its domain if it is public, "Private" if not (from `url`);
  * - the brand: its number, I to IV; the pills: its status, and its number
- *   of the whole (II / IV); the plate continues the intro's (Tab. I) from
- *   Tab. II;
+ *   of the whole (II / IV);
  * - one statue, on the side away from the row's text from lg (the rows
  *   alternate; products.tsx): Apollo for Alongside Events and, mirrored,
  *   for Sembly (he is the god of music, and Sembly schedules worship
@@ -65,19 +64,18 @@ const domain = (url: string) => url.replace(/^https?:\/\/(www\.)?/, '').replace(
  * call to action hidden (nothing here is a way in), and the scroll hint
  * with it; its interface above the statue (as in the intro), so no figure
  * covers a word of it; the copy below the pills (on a 1024 screen it ran
- * between them); on phones no barcode, which stood on the statue's base;
- * the plate on a dark label, as in the intro; the word keeps the intro's
- * dark halo; the tagline's lines are balanced; the backdrop darker than the
- * component's (a light site's screenshot, Sembly's, showed its headings
- * through and dimmed the chrome); and no meander ring while it loads: the
- * ring is the intro's alone, so a card opens on its own word and count.
+ * between them); the word keeps the intro's dark halo; the tagline's lines
+ * are balanced; the backdrop darker than the component's (a light site's
+ * screenshot, Sembly's, showed its headings through and dimmed the chrome);
+ * and none of the intro's loading: no meander ring, no count, no barcode and
+ * no plate. Those are the intro's alone, and over a product that is already
+ * on the page "Loading" says something untrue; a card opens on its own word
+ * filling in, its statue and its domain.
  */
 const LOOK = [
-  '[&_.om-cta]:hidden! [&_.om-hint]:hidden! [&_.om-ring]:hidden!',
+  '[&_.om-cta]:hidden! [&_.om-hint]:hidden! [&_.om-ring]:hidden! [&_.om-counter]:hidden! [&_.om-foot]:hidden!',
   '[&_.om-chrome]:z-[6]!',
   'max-sm:[&_.om-copy]:top-[148px]! sm:[&_.om-copy]:top-[max(16.5%,138px)]!',
-  'max-sm:[&_.om-bars]:hidden! max-sm:[&_.om-foot]:justify-end!',
-  '[&_.om-plate]:rounded-[2px] [&_.om-plate]:bg-[var(--om-ground-b)] [&_.om-plate]:px-2 [&_.om-plate]:py-1',
   WORD_HALO,
   '[&_.om-tagline]:text-balance',
   '[&_.om-backdrop]:[filter:grayscale(1)_contrast(1.1)_brightness(0.32)_blur(6px)]!',
@@ -156,9 +154,10 @@ export default function ProductStageCard({ product, index }: { product: Product;
         labels={[product.status, `${n} / ${toRoman(PRODUCTS.length)}`]}
         asides={[]}
         annotations={[]}
-        plate={`Tab. ${toRoman(index + 2)}`}
+        // The count and the plate are hidden (LOOK): no plate of its own, and
+        // the progress bar keeps its name inside the aria-hidden card.
+        plate=""
         loadingLabel="Loading"
-        formatCount={toRoman}
         height="100%"
         // The word fits the card's width down to 36px; a long title on a phone
         // needs less, and the word's size is a CSS variable, so it is set here.

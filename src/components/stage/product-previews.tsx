@@ -117,7 +117,7 @@ function Toggle({ stopped, onToggle, what }: { stopped: boolean; onToggle: () =>
       type="button"
       onClick={onToggle}
       aria-label={`${verb} the ${what}`}
-      className="inline-flex h-8 shrink-0 items-center gap-2 rounded-[2px] border border-border px-3 font-sans text-[10.5px] font-medium uppercase tracking-[0.2em] text-muted-foreground transition-colors duration-300 hover:border-gold/70 hover:text-foreground"
+      className="inline-flex h-8 shrink-0 items-center gap-2 rounded-[2px] border border-border px-3 font-sans text-xs font-medium uppercase tracking-[0.18em] text-muted-foreground transition-colors duration-300 hover:border-gold/70 hover:text-foreground"
     >
       <Icon aria-hidden="true" className="size-3" />
       {verb}
@@ -621,7 +621,7 @@ export function ProductParts({ product }: { product: Product }) {
               )}
             >
               <p className="font-roman text-lg font-medium leading-tight tracking-[0.04em] text-foreground">{product.title}</p>
-              <p className="mt-1.5 font-serif text-[15px] italic leading-snug text-(--stage-text) text-balance">{flow.hub}</p>
+              <p className="mt-1.5 font-serif text-lg italic leading-snug text-(--stage-text) text-balance">{flow.hub}</p>
               <Ports list={layout.ports.get(product.id)} refs={refs} />
             </div>
             <div className={cn(group, 'items-start md:items-stretch')}>

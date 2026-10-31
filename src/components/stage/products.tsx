@@ -3,7 +3,6 @@
 import dynamic from 'next/dynamic'
 import { ArrowUpRight } from 'lucide-react'
 import { PRODUCTS, type Product } from '@/lib/content'
-import { toRoman } from '@/lib/roman'
 import { cn } from '@/lib/utils'
 import { stageButton } from './look'
 import { CAPTION_ROW, FLOW_BOX, LIVE_BOX } from './preview-box'
@@ -14,20 +13,10 @@ const pad = (n: number) => String(n).padStart(2, '0')
 const domain = (url: string) => url.replace(/^https?:\/\//, '').replace(/\/$/, '')
 
 /**
- * A row's catalogue line, in the Imperial Stage's type (look.ts): its number
- * of the whole as Roman numerals in gold Cinzel ("II / IV", as on its title
- * card; screen readers still get "02 / 04"), and its status on a gold-edged
- * pill in Geist capitals, the title cards' own pill. Under it the title in
- * Cinzel and the tagline in Cormorant italic: quieter than the card above,
- * which already shouts the name.
+ * The stack: an inscribed line rather than boxes, each name after a small
+ * gold lozenge, in the Stage's Geist capitals at the page's label size.
  */
-const NUMBER = 'font-roman text-lg font-medium leading-none tracking-[0.14em] text-gold md:text-xl'
-const STATUS =
-  'inline-flex items-center gap-2.5 rounded-full border border-gold/60 px-3 py-1.5 font-sans text-[10.5px] font-medium uppercase leading-none tracking-[0.22em] text-(--stage-text)'
-const TITLE = 'font-roman text-[1.875rem] font-medium leading-[1.06] tracking-[0.02em] text-balance text-foreground md:text-5xl lg:text-[3.25rem]'
-const TAGLINE = 'font-serif text-[1.375rem] italic leading-snug text-pretty text-(--stage-text) md:text-[1.625rem]'
-/** The stack: an inscribed line rather than boxes, each name after a small gold lozenge. */
-const STACK = 'flex flex-wrap items-center gap-x-5 gap-y-2.5 font-sans text-[11px] font-medium uppercase leading-4 tracking-[0.18em] text-muted-foreground'
+const STACK = 'flex flex-wrap items-center gap-x-5 gap-y-2.5 font-sans text-xs font-medium uppercase leading-4 tracking-[0.18em] text-muted-foreground'
 const LOZENGE = 'size-[5px] shrink-0 rotate-45 bg-gold/80'
 
 /**
@@ -66,39 +55,28 @@ function ProductRow({ product, index }: { product: Product; index: number }) {
       <ProductStage product={product} index={index} />
       <Container
         className={cn(
-          'grid grid-cols-1 gap-y-8 py-16 md:gap-y-10 md:py-24 lg:grid-rows-[auto_auto] lg:gap-x-16 lg:gap-y-6 lg:py-28',
+          'grid grid-cols-1 gap-y-8 py-16 md:gap-y-10 md:py-24 lg:gap-x-16 lg:py-28',
           flip ? 'lg:grid-cols-[minmax(0,7fr)_minmax(0,5fr)]' : 'lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)]',
         )}
       >
-        <div className={cn('lg:row-start-1 lg:self-end', text)}>
-          {/* On a phone the title card just above already shows the number,
-              the status and the tagline, so there they are for screen
-              readers only, and the row opens on its title. */}
-          <div className="flex flex-wrap items-center gap-x-4 gap-y-3 max-md:sr-only">
-            <span className={NUMBER}>
-              <span aria-hidden="true">
-                {toRoman(index + 1)} <span className="text-gold/55">/</span>{' '}
-                {toRoman(PRODUCTS.length)}
-              </span>
-              <span className="sr-only">
-                {pad(index + 1)} / {pad(PRODUCTS.length)}
-              </span>
-            </span>
-            <span className={STATUS}>
-              <span aria-hidden="true" className="size-1.5 shrink-0 rounded-full bg-gold" />
-              <span className="sr-only">Status: </span>
-              {product.status}
-            </span>
-          </div>
-          <h3 className={cn('md:mt-6', TITLE)}>{product.title}</h3>
-          <p className={cn('mt-3 max-md:sr-only md:mt-4', TAGLINE)}>{product.tagline}</p>
+        {/* The title card just above shows the product's name, tagline,
+            status and number, so the row doesn't say them again: they are
+            here for screen readers (the card is aria-hidden), ahead of the
+            preview, and the row shows the product itself. */}
+        <div className="sr-only">
+          <h3>{product.title}</h3>
+          <p>{product.tagline}</p>
+          <p>
+            {pad(index + 1)} / {pad(PRODUCTS.length)}
+          </p>
+          <p>Status: {product.status}</p>
         </div>
 
-        <div className={cn('lg:row-span-2 lg:row-start-1 lg:self-center', flip ? 'lg:col-start-1' : 'lg:col-start-2')}>
+        <div className={cn('lg:row-start-1 lg:self-center', flip ? 'lg:col-start-1' : 'lg:col-start-2')}>
           {product.preview ? <LivePreview product={product} flip={flip} /> : product.flow ? <ProductParts product={product} /> : null}
         </div>
 
-        <div className={cn('flex flex-col items-start gap-6 lg:row-start-2 lg:self-start', text)}>
+        <div className={cn('flex flex-col items-start gap-6 lg:row-start-1 lg:self-center', text)}>
           <p className="max-w-xl text-[15px] leading-relaxed text-muted-foreground md:text-base">{product.description}</p>
           <ul aria-label="Stack" className={cn('w-full max-w-xl border-t border-border pt-5', STACK)}>
             {product.stack.map((item) => (
