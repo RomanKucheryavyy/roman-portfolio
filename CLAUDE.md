@@ -83,9 +83,12 @@ each section, so it reads as one book with different chapters.
   numerals (its lowercase draws as small capitals: that is the look);
   Cormorant Garamond italic, `font-serif`, preloaded, for his voice:
   taglines, section intros, quotes, his words (18px and up on phones); Geist
-  for everything read or used: nav, buttons, labels, descriptions, fields,
-  dates (years stay Arabic). The faces are font bytes, not JS: Cinzel 25.9
-  kB, Cormorant italic 39.3 kB.
+  for everything read or used: nav, buttons, labels (12px and up),
+  descriptions, fields, dates (years stay Arabic). The one exception is
+  Act IV's frieze, where each certification and its date are one
+  inscription, in Cinzel. The faces are font bytes, not JS: Cinzel 25.9
+  kB, Cormorant italic 39.3 kB; `display: swap`, so no heading is blank
+  while its face loads (the intro and title cards wait for theirs).
 - **Shapes** (`look.ts`): `stageButton('primary' | 'secondary', 'md' |
   'sm')`, the intro's ENTER (rectangular, a 2px radius, Geist capitals;
   marble fill, or a gold edge), for every action, the message box's Send
@@ -96,12 +99,15 @@ each section, so it reads as one book with different chapters.
   gold, 2px, offset 4.
 - **Each section's own idea:** the hero, the kokonut curtain dyed imperial
   with the name in Cinzel; Act I, inscribed plaques (a gold edge, rivets,
-  the number in a tabula ansata); Act II, the title cards, then rows with a
-  gold-edged status and gold-on-violet diagrams; Act III, a road of gold
-  milestones; Act IV, a frieze of laurel seals; About, the portrait in an
-  arched niche and the skills as marble tiles; Contact, the world in gold on
-  a violet globe; the footer, his name cut in outline Cinzel over the
-  fluted violet glass.
+  the number in a tabula ansata); Act II, the title cards, then rows that
+  show the product itself (nothing the card above already says) and
+  gold-on-violet diagrams; Act III, a road of gold milestones; Act IV, a
+  frieze of laurel seals, all eight in one row on wide screens so none
+  shows twice; About, the portrait in an arched niche and the skills as
+  marble tiles; Contact, the world in gold on a violet globe; the footer,
+  the fluted violet glass under a gilt edge, closing on his monogram and a
+  line in Cinzel (no giant wordmark: his name stands full-width in the
+  intro and the hero already).
 
 ## Commands
 
@@ -208,12 +214,11 @@ Roman asked for it on 2026-10-27: "the way projects are presented like
 alongside events which are like my biggest projects seems very boring
 should be a preview of it and more cooler". Each product is a split row,
 alternating sides from lg, in his order (Alongside Events, Sembly, Praxis,
-Alongside Brain). A row reads: its number in Roman numerals ("II / IV";
-screen readers get "02 / 04"), its status on a gold-edged pill, its title in
-Cinzel and tagline in Cormorant, the preview, the description, the stack as
-an inscribed line and the link. On phones the title card just above already
-shows the number, status and tagline, so there the row keeps them for screen
-readers only and opens on its title.
+Alongside Brain). The title card just above a row shows its name,
+tagline, status and number, so the row doesn't say them again: it keeps
+them for screen readers only (its h3, the tagline, "02 / 04" and the
+status, ahead of the preview) and shows the product itself, the preview
+beside the description, the stack as an inscribed line and the link.
 
 - The public ones show their live sites: a real full-page screenshot in a
   browser frame (dillionverma/safari) and on a phone (designali-in/
@@ -275,8 +280,9 @@ every phase change while asked for, so a timer can't set the landing back).
 - The gate is all that loads for a visitor who doesn't see it; the stage,
   the component and the statues load only when it shows. The faces are the
   whole page's now (Cinzel and Cormorant Garamond italic preloaded on every
-  route from `layout.tsx`; Cormorant upright, the counter's, not preloaded),
-  and the stages are handed them (`ROMAN_FONTS`) to wait for.
+  page route from `layout.tsx`, though Next gives the 404 no font preloads;
+  Cormorant upright, the counter's, not preloaded), and the stages are
+  handed them (`ROMAN_FONTS`) to wait for.
 - The statues are Unsplash photographs, credited as the component credits
   them (`cast.ts`, `public/humans.txt`). `node scripts/fetch-cast.mjs [id]`
   rewrites them: the two figures pre-keyed (alpha from luminance through
@@ -293,8 +299,9 @@ Each product in Act II opens on a title card of the same staging
 (`product-stage.tsx`): its title, tagline, domain or "Private", status and
 number, one statue (Apollo for Alongside Events and Sembly, the Hercules for
 Praxis and Alongside Brain, mirrored on the left-hand rows), and a public
-product's own screenshot blurred behind, and no meander ring (the intro's
-alone), so a card loads on its own word and count. It is aria-hidden with
+product's own screenshot blurred behind. None of the intro's loading (the
+meander ring, the count, "Loading", the barcode, the plate): those are the
+intro's alone, so a card opens on its own word filling in. It is aria-hidden with
 nothing to focus (the row below keeps the heading and the link); its stage
 mounts once 35% of it is in view and unmounts once it has left the screen;
 its box has a fixed height, so nothing below moves.
