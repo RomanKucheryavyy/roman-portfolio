@@ -67,10 +67,13 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <ThemeProvider attribute="class" forcedTheme="dark" enableSystem={false} disableTransitionOnChange>
           {/* First in the tab order on every route. Every page renders one
               <main id="main" tabIndex={-1}>, so following it moves focus, not
-              just the scroll position. Above the Stage's fixed top bar. */}
+              just the scroll position. Above the Stage's fixed top bar, and
+              drawn as the Stage's primary button (look.ts stageButton:
+              marble, ground ink, Geist capitals, a 2px corner) from the
+              inks globals.css keeps outside the Stage's wrapper. */}
           <a
             href="#main"
-            className="sr-only rounded-full bg-foreground px-4 py-2 text-sm font-medium text-background focus:not-sr-only focus:fixed focus:left-4 focus:top-3 focus:z-[60] focus:px-4 focus:py-2 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-solid focus-visible:outline-[var(--stage-accent-ink)]"
+            className="sr-only rounded-[2px] bg-(--stage-marble) px-4 py-2 text-xs font-medium uppercase tracking-[0.2em] text-(--stage-ground) focus:not-sr-only focus:fixed focus:left-4 focus:top-3 focus:z-[60] focus:px-4 focus:py-2.5 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-solid focus-visible:outline-gold"
           >
             Skip to content
           </a>

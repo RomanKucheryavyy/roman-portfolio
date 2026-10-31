@@ -139,13 +139,16 @@
 }
 
 /* ── The Stage accent ──
-   The page's imperial pair (look.ts sets the same on the Stage's wrapper,
+   The page's imperial inks (look.ts sets the same on the Stage's wrapper,
    from imperial.ts: keep them in step), here for what sits outside that
-   wrapper: the skip link above all. The violet as a fill, and the gold, the
-   ink that reads on the dark. */
+   wrapper: the skip link above all. The violet as a fill, the gold, the ink
+   that reads on the dark, and the marble and ground the skip link is drawn
+   in, as the Stage's primary button is. */
 :root {
   --stage-accent: #24115e;
   --stage-accent-ink: #d6b25e;
+  --stage-marble: #f2ece2;
+  --stage-ground: #07050f;
 }
 
 /* The same inks as Tailwind colours, so the Stage's classes name the

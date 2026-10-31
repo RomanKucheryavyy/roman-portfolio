@@ -93,13 +93,20 @@ export function TopBar() {
             RING,
           )}
         >
-          <span aria-hidden="true" className="sm:hidden">
-            R<span className="text-gold">·</span>K
+          {/* On phones the name says what is shown first (WCAG 2.5.3, label
+              in name): "RK, Roman Kucheryavyy"; the dot is ornament. */}
+          <span className="sm:hidden">
+            R<span aria-hidden="true" className="text-gold">·</span>K<span className="sr-only">, </span>
           </span>
           <span className="max-sm:sr-only">{PERSON.name}</span>
         </a>
-        <nav aria-label="Sections" className="flex items-center gap-3 md:gap-7">
-          <ul className="flex items-center gap-3 text-[13px] text-muted-foreground md:gap-7 md:text-sm">
+        {/* The links in the intro's own nav type (Geist capitals: from xl
+            its 12px and 0.16em, below it a little smaller and closer, so
+            five links and the mail icon fit a 768px bar and six and the
+            address a 1024px one), so the bar keeps its face when the intro
+            lifts. */}
+        <nav aria-label="Sections" className="flex items-center gap-3 md:gap-4 lg:gap-5 xl:gap-7">
+          <ul className="flex items-center gap-3 text-[11px] font-medium uppercase tracking-[0.14em] text-muted-foreground md:gap-4 lg:gap-5 xl:gap-7 xl:text-xs xl:tracking-[0.16em]">
             {SECTIONS.map((s) => (
               <li key={s.id} className={SHOW[s.from]}>
                 <a
