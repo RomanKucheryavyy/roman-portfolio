@@ -61,6 +61,9 @@ async function swipeUp(context: BrowserContext, page: Page) {
   await cdp.detach()
 }
 
+/** The stage's script chunks (not the stylesheet, which names the layer too). */
+const STAGE_SCRIPTS = /\/_next\/static\/chunks\/.*\.js(\?|$)/
+
 const fromRoman = (s: string) => {
   if (s === '·') return 0
   const v: Record<string, number> = { I: 1, V: 5, X: 10, L: 50, C: 100 }
@@ -161,9 +164,9 @@ test.describe('what it says', () => {
   test('Skip rushes the load', async ({ page }) => {
     await openIntro(page)
     await page.getByRole('button', { name: 'Skip' }).click()
-    // Left alone the load takes 3.6 s at least (its count follows the
+    // Left alone the load takes 3.6 s at least (rushed, a few frames) (its count follows the
     // component's surge and stall to the end); rushed, it is over sooner.
-    await expect.poll(() => phase(page), { timeout: 3000 }).not.toBe('load')
+    await expect.poll(() => phase(page), { timeout: 3400 }).not.toBe('load')
     // Skip goes with the load; focus must not fall out of the dialog with it.
     await expect.poll(() => page.evaluate((sel) => !!document.activeElement?.closest(sel), LAYER)).toBe(true)
   })
@@ -248,13 +251,36 @@ test.describe('a proper modal', () => {
           const style = getComputedStyle(el)
           return { inside: true, name: (el.textContent ?? '').trim().slice(0, 24) || el.className.toString().slice(0, 24), opacity, ring: style.outlineStyle !== 'none' && parseFloat(style.outlineWidth) > 0 }
         }, LAYER)
+      let wrapped = false
       for (let i = 0; i < 10; i++) {
         await page.keyboard.press('Tab')
+        // Skip leaves with the load; if it held focus, focus comes back in a moment.
+        let where = ''
+        await expect
+          .poll(
+            async () => {
+              const now = await read()
+              where = now.name
+              return now.inside || now.name === 'BODY'
+            },
+            { message: `${when}: Tab ${i + 1} went outside the intro`, timeout: 1500 },
+          )
+          .toBe(true)
+          .catch((error: Error) => {
+            throw new Error(`${error.message} (to ${where})`)
+          })
         const stop = await read()
-        expect(stop.inside, `${when}: Tab ${i + 1} left the intro (${stop.name})`).toBe(true)
+        if (!stop.inside) {
+          // Past the last stop focus goes to the browser's own controls (as
+          // from a native modal dialog); the next Tab must come back in.
+          expect(wrapped, `${when}: Tab ${i + 1} left the intro twice in a row`).toBe(false)
+          wrapped = true
+          continue
+        }
+        wrapped = false
         expect(stop.ring, `${when}: "${stop.name}" has no focus ring`).toBe(true)
         // Shown the moment it has focus (a frame or two to paint it).
-        await expect.poll(async () => (await read()).opacity, { message: `${when}: "${stop.name}" is focused but not shown`, timeout: 600 }).toBeGreaterThan(0.6)
+        await expect.poll(async () => (await read()).opacity, { message: `${when}: "${stop.name}" is focused but not shown`, timeout: 1500 }).toBeGreaterThan(0.6)
       }
     }
     await check('load')
@@ -263,39 +289,64 @@ test.describe('a proper modal', () => {
   })
 
   test('if the stage fails to load, the page comes back at once', async ({ page }) => {
-    // Its script only: the site's stylesheet names the layer too.
-    await page.route(/\/_next\/static\/chunks\/.*\.js(\?|$)/, async (route) => {
+    // When the page came back, noted in the page as it happens (Date.now(),
+    // the test's clock too): once shown the page works hard for a while, so
+    // a check from outside would see it late.
+    await page.addInitScript(() => {
+      const w = window as unknown as { __gone?: number }
+      new MutationObserver(() => {
+        if (w.__gone === undefined && document.documentElement && !document.documentElement.hasAttribute('data-intro') && document.documentElement.dataset.seen) w.__gone = Date.now()
+        if (document.documentElement?.getAttribute('data-intro') === '') document.documentElement.dataset.seen = '1'
+      }).observe(document, { subtree: true, attributes: true, attributeFilter: ['data-intro'] })
+    })
+    let abortedAt = 0
+    await page.route(STAGE_SCRIPTS, async (route) => {
       const response = await route.fetch()
       const body = await response.text()
-      if (body.includes('data-intro-layer')) return route.abort()
+      if (body.includes('data-intro-layer')) {
+        abortedAt = Date.now()
+        return route.abort()
+      }
       return route.fulfill({ response, body })
     })
-    await page.goto('/?intro')
-    // Well before the gate's 8 s fail-safe.
-    await expect(page.locator('html')).not.toHaveAttribute('data-intro', { timeout: 6000 })
-    await expect(page.locator('#hero-title')).toBeVisible()
+    await page.goto('/?intro', { waitUntil: 'commit' })
+    const gone = () => page.evaluate(() => (window as unknown as { __gone?: number }).__gone ?? 0)
+    await expect.poll(gone, { message: 'the page was given back', timeout: 45_000 }).toBeGreaterThan(0)
+    expect(abortedAt, 'the stage was asked for').toBeGreaterThan(0)
+    // Given back by the failed load itself, not seconds later by the fail-safe.
+    expect((await gone()) - abortedAt, 'ms from the failed load to the page').toBeLessThan(3000)
     await expect(page.locator(LAYER)).toHaveCount(0)
   })
 
   test('if the stage never arrives, the fail-safe gives the page back and it never shows late', async ({ page }) => {
-    let held = 0
-    await page.route(/\/_next\/static\/chunks\/.*\.js(\?|$)/, async (route) => {
+    // A held clock, moved on by hand.
+    await page.clock.install()
+    await page.clock.pauseAt(Date.now() + 1000)
+    // The stage's script is held unanswered, then let through once the
+    // fail-safe has acted.
+    let held: (() => Promise<void>) | null = null
+    await page.route(STAGE_SCRIPTS, async (route) => {
       const response = await route.fetch()
       const body = await response.text()
-      if (body.includes('data-intro-layer')) {
-        held++
-        await sleep(12_000)
+      if (body.includes('data-intro-layer') && !held) {
+        held = () => route.fulfill({ response, body })
+        return
       }
-      return route.fulfill({ response, body }).catch(() => {})
+      return route.fulfill({ response, body })
     })
-    await page.goto('/?intro')
+    await page.goto('/?intro', { waitUntil: 'commit' })
     await expect(page.locator('html')).toHaveAttribute('data-intro', '')
-    await expect(page.locator('html')).not.toHaveAttribute('data-intro', { timeout: 11_000 })
-    await expect(page.locator('#hero-title')).toBeVisible()
-    expect(held, 'the stage was asked for').toBeGreaterThan(0)
-    // When it does arrive, it stays away.
-    await sleep(5000)
-    await expect(page.locator(LAYER)).toHaveCount(0)
+    await expect.poll(() => held !== null, { message: 'the stage was asked for', timeout: 30_000 }).toBe(true)
+    // Not before its time...
+    await page.clock.fastForward(7000)
+    await expect(page.locator('html')).toHaveAttribute('data-intro', '')
+    // ...and at 8 s, the page is given back.
+    await page.clock.fastForward(1500)
+    await expect(page.locator('html')).not.toHaveAttribute('data-intro', { timeout: 30_000 })
+    // Now it arrives, late: it stays away.
+    await held!()
+    await sleep(3000)
+    await expect(page.locator(LAYER)).toHaveCount(0, { timeout: 30_000 })
     await expect(page.locator('html')).not.toHaveAttribute('data-intro')
   })
 

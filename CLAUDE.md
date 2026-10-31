@@ -197,7 +197,7 @@ every phase change while asked for, so a timer can't set the landing back).
 - When: on `/` only, at most once in 12 hours per browser (localStorage
   `rk:intro`), never with a hash in the address, under reduced motion or
   without scripts, nor for a browser that asks to save data or reports a 2G
-  or 3G connection. `?intro` shows it regardless, for Roman to show people.
+  connection. `?intro` shows it regardless, for Roman to show people.
   An inline script (`INTRO_GATE`, first in `page.tsx`) decides before the
   first paint and sets `data-intro` on `<html>`; `globals.css` keeps the
   page hidden on the intro's ground until it lifts, and the script gives
