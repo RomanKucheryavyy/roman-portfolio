@@ -27,6 +27,16 @@ export const INTRO_FAILSAFE_MS = 8000
 export const INTRO_GATE = `(function(){var d=document.documentElement;try{var c=navigator.connection;if(location.hash||matchMedia('(prefers-reduced-motion: reduce)').matches||(c&&(c.saveData||/2g$/.test(c.effectiveType||''))))return;var force=/[?&]intro(?:[=&]|$)/.test(location.search),last=0,now=Date.now();try{last=Number(localStorage.getItem('${INTRO_KEY}'))||0}catch(e){}if(!force&&last<=now&&now-last<${INTRO_WINDOW_MS})return;d.setAttribute('data-intro','');setTimeout(function(){if(d.getAttribute('data-intro')==='')d.removeAttribute('data-intro')},${INTRO_FAILSAFE_MS})}catch(e){d.removeAttribute('data-intro')}})();`
 
 /**
+ * The gate's own test of the connection, for code that runs after it (the
+ * hero's painting, hero-painting.tsx): a browser that asks to save data or
+ * reports a 2G connection.
+ */
+export function savesData(): boolean {
+  const c = (navigator as Navigator & { connection?: { saveData?: boolean; effectiveType?: string } }).connection
+  return !!c && (!!c.saveData || /2g$/.test(c.effectiveType || ''))
+}
+
+/**
  * Phones (the component drops its `phone: false` figures below 640px) and
  * any screen taller than it is wide: the cast's sizes are fractions of the
  * height and its places fractions of the width, so on a tall screen the

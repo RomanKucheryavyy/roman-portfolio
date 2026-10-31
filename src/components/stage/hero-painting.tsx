@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from 'react'
 import dynamic from 'next/dynamic'
 import { CAST } from './cast'
+import { savesData } from './intro-gate'
 
 /**
  * The hero's painting: the intro's Old Masters staging
@@ -27,15 +28,39 @@ import { CAST } from './cast'
  * never draw at once; once the hero has left the screen the stage unmounts
  * (the component's light and frame loops stop with it), and it comes back
  * when the hero does.
+ *
+ * Never at all (the hero is then the name on the curtain, as before) for a
+ * browser that asks to save data or reports a 2G connection (the intro's
+ * own test: the stage and the statue are about 300 KB more), nor for one
+ * with no WebGL: there the curtain is its flat ground, and the painting's
+ * full-hero light, a canvas drawn every frame and blended over the hero,
+ * would fall to a processor that cannot spare it (about 7 frames a second
+ * at 1440 wide, against 60 without it).
+ *
+ * If the stage's chunk fails to load (a deploy that replaced it, a broken
+ * connection, a blocker), the painting is simply not there: the failure
+ * stays here instead of reaching the page's error boundary, as intro.tsx
+ * does for its own stage.
  */
 
-const HeroPaintingStage = dynamic(() => import('./hero-painting-stage'), { ssr: false })
+const HeroPaintingStage = dynamic(() => import('./hero-painting-stage').catch(() => ({ default: () => null })), { ssr: false })
 
 /** Idle, or this long after hydration at the latest. */
 const IDLE_TIMEOUT_MS = 1500
 
 /** No intro on screen (none at all, or it has lifted off entirely). */
 const introClear = () => !document.documentElement.hasAttribute('data-intro')
+
+/** Whether this browser draws WebGL at all (the curtain's own test); the probe's context is let go at once. */
+function drawsWebGL(): boolean {
+  try {
+    const gl = document.createElement('canvas').getContext('webgl')
+    gl?.getExtension('WEBGL_lose_context')?.loseContext()
+    return !!gl
+  } catch {
+    return false
+  }
+}
 
 export function HeroPainting() {
   const ref = useRef<HTMLDivElement>(null)
@@ -60,6 +85,13 @@ export function HeroPainting() {
     intro.observe(document.documentElement, { attributes: true, attributeFilter: ['data-intro'] })
     watch.observe(el)
     const done = () => {
+      // Asked once, when the browser is idle: nothing more happens for a
+      // browser that saves data, or one without WebGL.
+      if (savesData() || !drawsWebGL()) {
+        watch.disconnect()
+        intro.disconnect()
+        return
+      }
       idle = true
       // The statue starts on its way with the stage's code, not after it.
       // (While the intro is up it is already fetching both, and nothing

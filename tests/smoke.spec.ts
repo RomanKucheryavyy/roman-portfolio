@@ -108,25 +108,76 @@ test.describe('the home page', () => {
         }
       }).observe({ type: 'largest-contentful-paint', buffered: true })
     })
+    const statues: string[] = []
+    page.on('request', (req) => {
+      if (req.url().includes('/images/cast/')) statues.push(new URL(req.url()).pathname)
+    })
     await gotoHome(page)
     const painting = page.locator('[data-hero-painting]')
     await expect(painting).toHaveAttribute('aria-hidden', 'true')
     await expect(painting).toHaveAttribute('inert', '')
-    // It mounts (after the page) and fades in: Apollo, and its one light.
-    await expect(painting.locator('[data-shown="true"] .om-fig img')).toHaveAttribute('src', '/images/cast/apollo.webp', { timeout: 30_000 })
-    await expect(painting.locator('canvas')).toHaveCount(1)
-    // None of the component's own interface shows, and nothing in it is reachable.
-    for (const part of ['.om-chrome', '.om-wordlayer', '.om-flood']) await expect(painting.locator(part)).toBeHidden()
-    const focusable = await painting.evaluate((box) =>
-      [...box.querySelectorAll<HTMLElement>('*')].filter((el) => {
-        el.focus({ preventScroll: true })
-        return document.activeElement === el
-      }).length,
-    )
-    expect(focusable, 'elements in the painting that took focus').toBe(0)
-    await page.waitForTimeout(1500)
+    if (project() === 'no-webgl') {
+      // Without WebGL the painting never comes: its light would cost most of
+      // the hero's frames on a processor drawing everything itself.
+      await page.waitForTimeout(3000)
+      await expect(painting.locator('*')).toHaveCount(0)
+      expect(statues, 'statues fetched without WebGL').toEqual([])
+    } else {
+      // It mounts (after the page) and fades in: Apollo, and its one light.
+      await expect(painting.locator('[data-shown="true"] .om-fig img')).toHaveAttribute('src', '/images/cast/apollo.webp', { timeout: 30_000 })
+      await expect(painting.locator('canvas')).toHaveCount(1)
+      // None of the component's own interface shows, and nothing in it is reachable.
+      for (const part of ['.om-chrome', '.om-wordlayer', '.om-flood']) await expect(painting.locator(part)).toBeHidden()
+      const focusable = await painting.evaluate((box) =>
+        [...box.querySelectorAll<HTMLElement>('*')].filter((el) => {
+          el.focus({ preventScroll: true })
+          return document.activeElement === el
+        }).length,
+      )
+      expect(focusable, 'elements in the painting that took focus').toBe(0)
+      await page.waitForTimeout(1500)
+    }
     const lcp = await page.evaluate(() => (window as unknown as { __lcp: string[] }).__lcp)
     expect(lcp.at(-1), `largest paints: ${lcp.join(', ')}`).toBe('name')
+  })
+
+  test('the hero painting stays away for a browser that saves data', async ({ page }) => {
+    test.skip(project() === 'no-webgl', 'never there without WebGL')
+    await page.addInitScript(() => {
+      Object.defineProperty(Navigator.prototype, 'connection', { configurable: true, get: () => ({ saveData: true, effectiveType: '4g' }) })
+    })
+    const statues: string[] = []
+    page.on('request', (req) => {
+      if (req.url().includes('/images/cast/')) statues.push(new URL(req.url()).pathname)
+    })
+    await gotoHome(page)
+    await expect(page.locator('#hero-title')).toBeVisible()
+    await page.waitForTimeout(3000)
+    await expect(page.locator('[data-hero-painting] *')).toHaveCount(0)
+    expect(statues, 'statues fetched for a browser that saves data').toEqual([])
+  })
+
+  test("the hero painting's code failing to load leaves the page as it is", async ({ page }) => {
+    test.skip(project() === 'no-webgl', 'never asked for without WebGL')
+    // The painting's chunk is the one that brings the component's class
+    // names; every other script loads.
+    const aborted: string[] = []
+    await page.route('**/_next/static/chunks/*.js', async (route) => {
+      const res = await route.fetch()
+      const body = await res.text()
+      if (body.includes('om-fig') && body.includes('hp-rx')) {
+        aborted.push(route.request().url())
+        await route.abort()
+      } else await route.fulfill({ response: res, body })
+    })
+    const log = collectConsole(page, [/ChunkLoadError|Failed to load chunk|net::ERR_FAILED|Failed to load resource/])
+    await gotoHome(page)
+    await expect.poll(() => aborted.length, { timeout: 30_000 }).toBeGreaterThan(0)
+    await page.waitForTimeout(1500)
+    await expect(page.locator('#hero-title')).toBeVisible()
+    for (const id of SECTION_IDS) await expect(page.locator(`section#${id}`)).toBeAttached()
+    await expect(page.locator('[data-hero-painting] *')).toHaveCount(0)
+    log.expectClean()
   })
 
   test('no request leaves this origin', async ({ page, baseURL }) => {
