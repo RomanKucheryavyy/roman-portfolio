@@ -35,9 +35,9 @@ export const PALETTE = {
 
 /**
  * Struck gold, for Act IV's rank (rank-honour.tsx): the gold and its glow
- * with the two darker shades a medal's relief needs, and the sheen that
- * crosses it. Drawing only, never text: the rank's words are the palette's
- * gold, glow and lavender.
+ * with the darker shades the laurel's gradient and its edge need, and the
+ * sheen that crosses the rank's name. Drawing only, never text: the rank's
+ * words are the palette's gold, lavender and marble.
  */
 export const GILT = {
   sheen: '#fff4d6',
