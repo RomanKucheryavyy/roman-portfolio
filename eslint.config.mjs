@@ -11,11 +11,14 @@ import next from 'eslint-config-next'
  * them: a component is edited only where it cannot work otherwise, so lint
  * findings in them are not fixed in place. React Compiler's render-purity
  * rules flag patterns they use on purpose (refs read during render for
- * measured layout, a `this` in d3 code), so those three rules are off for
- * these files only. Everything else still applies to them.
+ * measured layout, a `this` in d3 code, an award's laurel drawn by a
+ * component declared inside its render in designali-in/award), so those
+ * four rules are off for these files only. Everything else still applies
+ * to them.
  */
 const publishedComponents = {
   files: [
+    'src/components/ui/award.tsx',
     'src/components/ui/button.tsx',
     'src/components/ui/card.tsx',
     'src/components/ui/contact-with-globe.tsx',
@@ -37,6 +40,7 @@ const publishedComponents = {
     'react-hooks/refs': 'off',
     'react-hooks/immutability': 'off',
     'react-hooks/unsupported-syntax': 'off',
+    'react-hooks/static-components': 'off',
   },
 }
 
