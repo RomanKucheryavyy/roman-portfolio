@@ -1,11 +1,12 @@
 #!/usr/bin/env node
 /**
- * Fetches the cast of the Roman intro (src/components/stage/intro.tsx), the
- * four photographs kedhareswer/old-masters-preloader stages by default, all
+ * Fetches the cast of the Roman intro (src/components/stage/intro.tsx), three
+ * of the four photographs kedhareswer/old-masters-preloader stages by default
+ * (not its figure holding flowers, which Roman asked to remove), all
  * from Unsplash (free to use under the Unsplash License), and writes them to
  * public/images/cast/ as WebP:
  *
- * - The three figures, PRE-KEYED: an alpha channel from each pixel's
+ * - The two figures, PRE-KEYED: an alpha channel from each pixel's
  *   luminance through the component's own transfer (omTransfer with
  *   threshold 0.2, softness 0.16, subject "light": alpha = 6.25 L - 0.75,
  *   L the Rec. 709 luma of the sRGB values, as its SVG filter computes it),
@@ -16,20 +17,16 @@
  * - The backdrop (Michelangelo's David), opaque, 1200px wide at a modest
  *   quality: the component shows it grayscale, darkened and blurred.
  *
- * Two figures need more than the key:
- * - The Hercules photograph's lower edge shows his genitals. Its crop stops
- *   at the belly (66% of the photo's height, well above them) and the last
- *   stretch fades out, so the file the site serves does not contain them at
- *   all; the page also stands its foot below the floor.
- * - The figure with flowers stands before a brick wall whose lit bricks are
- *   as bright as the marble's shadows. Marble is near grey and the bricks
- *   are red, so where a pixel is both saturated and not bright, its alpha
- *   goes (`neutral`).
+ * The Hercules needs more than the key: the photograph's lower edge shows
+ * his genitals. Its crop stops at the belly (66% of the photo's height, well
+ * above them) and the last stretch fades out, so the file the site serves
+ * does not contain them at all; the page also stands its foot below the
+ * floor.
  *
  * The credits are the component's (its DEFAULT_FIGURES comment); the alt
  * texts the page gives them are its too (src/components/stage/cast.ts).
  *
- *   node scripts/fetch-cast.mjs            # all four
+ *   node scripts/fetch-cast.mjs            # all three
  *   node scripts/fetch-cast.mjs hercules   # one
  *
  * Needs network access to images.unsplash.com, and sharp (Next installs it
@@ -73,14 +70,6 @@ const CAST = [
     // page stands below the floor.
     crop: { left: 0.04, top: 0.02, right: 0.68, bottom: 0.66 },
     fade: 0.05,
-  },
-  {
-    id: 'flowers',
-    photo: '1662808141421-54240cbfd45f',
-    credit: 'Clarence E. Hsu',
-    kind: 'figure',
-    crop: { left: 0.17, top: 0.1, right: 0.83, bottom: 1 },
-    neutral: true,
   },
   {
     id: 'david-backdrop',
@@ -139,12 +128,6 @@ async function figure(entry) {
       const b = soft[i * 3 + 2] / 255
       const luma = 0.2126 * r + 0.7152 * g + 0.0722 * b
       let alpha = clamp01(SLOPE * luma + INTERCEPT)
-      if (entry.neutral && alpha > 0) {
-        const max = Math.max(r, g, b)
-        const saturation = max > 0 ? (max - Math.min(r, g, b)) / max : 0
-        // Saturated and not bright: a lit brick, not marble.
-        alpha *= 1 - smoothstep(0.2, 0.3, saturation) * (1 - smoothstep(0.32, 0.45, luma))
-      }
       alpha *= foot
       // Below a sliver of coverage, none: specks of ground, not marble.
       if (alpha < ALPHA_FLOOR) alpha = 0

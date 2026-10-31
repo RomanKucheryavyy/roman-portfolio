@@ -32,11 +32,13 @@ export const TALL_QUERY = '(max-width: 639px), (max-aspect-ratio: 11/10)'
 
 /**
  * The cast, arranged for this word. "ROMAN" is short, so it is set huge
- * along the floor, in front of every figure; the faces stand clear above it
- * and below the copy at the top centre: Apollo looking up in the middle,
- * Hercules to his right (our left) looking in, the figure with flowers
- * smaller and further back on the other side, turned in. On phones and tall
- * screens (TALL_QUERY), Apollo alone, his face near the middle.
+ * along the floor, in front of both figures; the faces stand clear above it
+ * and below the copy at the top centre, one on either side of it: Hercules
+ * on the left looking in, Apollo on the right looking up, his arm reaching
+ * out past the edge of the screen (the photograph cuts it off, and the cut
+ * must not show: x 82 keeps it off screen from 1024 to 1920 wide). On
+ * phones and tall screens (TALL_QUERY), Apollo alone, his face near the
+ * middle.
  *
  * The files are pre-keyed (cast.ts), so the component's own key is set low:
  * it keeps the files' edge rather than cutting it a second time.
@@ -44,10 +46,9 @@ export const TALL_QUERY = '(max-width: 639px), (max-aspect-ratio: 11/10)'
 const KEY = { threshold: 0.08, softness: 0.08 } as const
 export const INTRO_FIGURES: { wide: OldMastersFigure[]; tall: OldMastersFigure[] } = {
   wide: [
-    { src: CAST.flowers.src, alt: CAST.flowers.alt, x: 91, y: 100, h: 62, depth: 0.6, flip: true, phone: false, ...KEY },
     // Cut at the belly in the file itself, and stood 4% below the floor.
     { src: CAST.hercules.src, alt: CAST.hercules.alt, x: 19, y: 104, h: 56, depth: 0.8, ...KEY },
-    { src: CAST.apollo.src, alt: CAST.apollo.alt, x: 60, y: 100, h: 62, depth: 0.85, ...KEY },
+    { src: CAST.apollo.src, alt: CAST.apollo.alt, x: 82, y: 100, h: 62, depth: 0.85, ...KEY },
   ],
   tall: [{ src: CAST.apollo.src, alt: CAST.apollo.alt, x: 80, y: 100, h: 56, depth: 0.85, ...KEY }],
 }

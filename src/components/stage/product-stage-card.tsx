@@ -20,9 +20,10 @@ import { ROMAN_FONTS } from './roman-type'
  *   of the whole (II / IV); the plate continues the intro's (Tab. I) from
  *   Tab. II;
  * - one statue, on the side away from the row's text from lg (the rows
- *   alternate; products.tsx), turned in. The two Alongside products share
- *   Apollo, mirrored; Sembly has the figure with flowers, Praxis the
- *   Hercules (cut at the belly in the file, and stood below the floor);
+ *   alternate; products.tsx): Apollo for Alongside Events and, mirrored,
+ *   for Sembly (he is the god of music, and Sembly schedules worship
+ *   teams); the Hercules for Praxis and, mirrored, for Alongside Brain (cut
+ *   at the belly in the file, and stood below the floor);
  * - behind it, a public product's own desktop screenshot (already on the
  *   page, in its preview), which the component greys, darkens and blurs;
  *   nothing behind a private one.
@@ -49,9 +50,9 @@ const KEY = { threshold: 0.08, softness: 0.08 } as const
  */
 const STATUES: Record<string, { photo: CastPhoto; x: number; y: number; h: number; flip: boolean }> = {
   'alongside-events': { photo: CAST.apollo, x: 84, y: 100, h: 74, flip: false },
-  sembly: { photo: CAST.flowers, x: 84, y: 100, h: 82, flip: true },
+  sembly: { photo: CAST.apollo, x: 84, y: 100, h: 74, flip: false },
   praxis: { photo: CAST.hercules, x: 78, y: 104, h: 74, flip: false },
-  'alongside-brain': { photo: CAST.apollo, x: 84, y: 100, h: 74, flip: false },
+  'alongside-brain': { photo: CAST.hercules, x: 78, y: 104, h: 74, flip: false },
 }
 
 /** A title longer than this is set smaller on phones than the component's floor of 36px allows. */

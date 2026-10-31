@@ -202,7 +202,7 @@ word's element: the page has its h1, so both stages use a `p`), `formatCount`
   the page back after 8 s if the stage never mounts.
 - What: ROMAN in Cinzel inside the gold meander, the count in Roman
   numerals, then the imperial violet flood (`imperial.ts`) and the cast:
-  Apollo, Hercules and the figure with flowers, David blurred behind. The
+  Hercules and Apollo, David blurred behind. The
   words are the records': his tagline, "Prologue · " and the year in Roman
   numerals, his initials, his client projects and certifications counted in
   Roman numerals, and on wide screens his role ("By day") and his music
@@ -216,16 +216,20 @@ word's element: the page has its h1, so both stages use a `p`), `formatCount`
   preload off) and the statues load only when it shows.
 - The statues are Unsplash photographs, credited as the component credits
   them (`cast.ts`, `public/humans.txt`). `node scripts/fetch-cast.mjs [id]`
-  rewrites them: the three figures pre-keyed (alpha from luminance through
+  rewrites them: the two figures pre-keyed (alpha from luminance through
   the component's own transfer, so Safari, which may ignore the component's
   CSS mask, still shows only the statue), the Hercules cut at the belly in
   the file itself, the David an opaque backdrop. Set the printed sizes in
   `cast.ts` and look at the files before committing. (The David photograph
   can't be keyed as a figure: his face is as dark as the wall behind him.)
+  The component's fourth photograph, a marble figure holding flowers, is
+  left out: Roman, 2026-10-31, "can we remove the girl tho cuz she looks
+  naked".
 
 Each product in Act II opens on a title card of the same staging
 (`product-stage.tsx`): its title, tagline, domain or "Private", status and
-number, one statue (the Alongside pair share Apollo, mirrored), and a public
+number, one statue (Apollo for Alongside Events and Sembly, the Hercules for
+Praxis and Alongside Brain, mirrored on the left-hand rows), and a public
 product's own screenshot blurred behind. It is aria-hidden with nothing to
 focus (the row below keeps the heading and the link); its stage mounts once
 35% of it is in view and unmounts once it has left the screen; its box has a

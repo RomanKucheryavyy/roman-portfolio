@@ -1,12 +1,14 @@
 /**
- * The cast: the four photographs kedhareswer/old-masters-preloader stages
- * by default, all from Unsplash (free to use under the Unsplash License),
+ * The cast: three of the four photographs kedhareswer/old-masters-preloader
+ * stages by default, all from Unsplash (free to use under the Unsplash License),
  * served from this origin (public/images/cast/, written by
  * scripts/fetch-cast.mjs). The alt texts and the credits are the
  * component's own (its DEFAULT_FIGURES); nothing here names more than it
- * did.
+ * did. The fourth, the component's marble figure holding flowers, is left
+ * out (Roman, 2026-10-31: "can we remove the girl tho cuz she looks
+ * naked").
  *
- * The three figures are pre-keyed: their alpha comes from their luminance
+ * The two figures are pre-keyed: their alpha comes from their luminance
  * through the component's own transfer, so they show only the statue even
  * where a browser ignores the component's CSS mask. The David is the
  * backdrop, opaque (the component greys, darkens and blurs it).
@@ -44,14 +46,6 @@ export const CAST = {
     credit: 'Şafak Atalay',
     photo: '1567522874215-d5e2f1bee83d',
     width: 2133,
-    height: 1600,
-  },
-  flowers: {
-    src: '/images/cast/flowers.webp',
-    alt: 'A marble figure holding flowers',
-    credit: 'Clarence E. Hsu',
-    photo: '1662808141421-54240cbfd45f',
-    width: 747,
     height: 1600,
   },
   david: {
