@@ -18,6 +18,9 @@ import {
 } from '@/lib/site-facts'
 import { SITE_CARD, pageMetadata } from '@/lib/seo'
 import { RESUME_HREF, RESUME_PUBLIC } from '@/lib/routes'
+import { toRoman } from '@/lib/roman'
+import { CAST } from '@/components/stage/cast'
+import { INTRO_FIGURES } from '@/components/stage/intro-gate'
 
 /**
  * The data layer, tested in Node alone: no browser, no server. The last
@@ -132,6 +135,175 @@ test.describe('the Stage reads the records', () => {
     expect(label('alongside-coffee')).toBe('alongsidecoffee.com')
     expect(label('fubc-coffee-ios')).toBe('App Store')
     expect(label('dtm-plumbing')).toBe('Launching soon')
+  })
+})
+
+test.describe('Roman numerals', () => {
+  test('toRoman writes 1 to 3999, subtractive forms included, and a dot for nothing', () => {
+    const cases: [number, string][] = [
+      [0, '·'],
+      [1, 'I'],
+      [4, 'IV'],
+      [8, 'VIII'],
+      [9, 'IX'],
+      [14, 'XIV'],
+      [40, 'XL'],
+      [49, 'XLIX'],
+      [88, 'LXXXVIII'],
+      [90, 'XC'],
+      [99, 'XCIX'],
+      [100, 'C'],
+      [400, 'CD'],
+      [944, 'CMXLIV'],
+      [1994, 'MCMXCIV'],
+      [2026, 'MMXXVI'],
+      [3999, 'MMMCMXCIX'],
+    ]
+    for (const [n, roman] of cases) expect(toRoman(n), String(n)).toBe(roman)
+    // Every value up to 3999 reads back to itself (a letter before a larger
+    // one is subtracted), and no two share a numeral.
+    const value: Record<string, number> = { I: 1, V: 5, X: 10, L: 50, C: 100, D: 500, M: 1000 }
+    const read = (r: string) => [...r].reduce((sum, c, i) => sum + (value[c] < (value[r[i + 1]] ?? 0) ? -value[c] : value[c]), 0)
+    const seen = new Set<string>()
+    for (let n = 1; n <= 3999; n++) {
+      const roman = toRoman(n)
+      expect(roman).toMatch(/^M{0,3}(CM|CD|D?C{0,3})(XC|XL|L?X{0,3})(IX|IV|V?I{0,3})$/)
+      if (read(roman) !== n) expect(read(roman), roman).toBe(n)
+      seen.add(roman)
+    }
+    expect(seen.size).toBe(3999)
+    for (const bad of [-1, 1.5, 4000, Number.NaN]) expect(() => toRoman(bad), String(bad)).toThrow(RangeError)
+  })
+})
+
+test.describe('the Roman intro and the title cards', () => {
+  const STAGE = path.join(ROOT, 'src/components/stage')
+
+  test('their words are the records\': his name, tagline, music, role and counts; each product\'s own', () => {
+    const intro = readFileSync(path.join(STAGE, 'intro-stage.tsx'), 'utf8')
+    for (const use of [
+      'wordmark={PERSON.first}',
+      'tagline={PERSON.tagline}',
+      'text: PERSON.music',
+      '`${ROLES[0].title}, ${ROLES[0].company}`',
+      'toRoman(PROJECTS.length)',
+      'toRoman(CERTIFICATIONS.length)',
+      'eyebrow={`Prologue · ${year}`}',
+      'toRoman(new Date().getFullYear())',
+      'annotations={[]}',
+    ])
+      expect(intro, use).toContain(use)
+    const card = readFileSync(path.join(STAGE, 'product-stage-card.tsx'), 'utf8')
+    for (const use of ['wordmark={product.title}', 'tagline={product.tagline}', 'labels={[product.status,', 'asides={[]}', 'annotations={[]}', 'nav={[]}'])
+      expect(card, use).toContain(use)
+    // The records they read hold what the landing shows.
+    expect(content.PERSON.first).toBe('Roman')
+    expect(content.PERSON.tagline).toBe(HIS_WORDS.tagline)
+    expect(toRoman(content.PROJECTS.length)).toMatch(/^[IVXLC]+$/)
+  })
+
+  test('the cast is served from this origin, each file present, its size as declared, and small', () => {
+    for (const [id, photo] of Object.entries(CAST)) {
+      expect(photo.src, id).toMatch(/^\/images\/cast\/[a-z-]+\.webp$/)
+      const file = path.join(ROOT, 'public', photo.src)
+      expect(existsSync(file), photo.src).toBe(true)
+      expect(webpSize(file), photo.src).toEqual({ width: photo.width, height: photo.height })
+      expect(statSync(file).size, `${photo.src} stays under 240 KB`).toBeLessThan(240 * 1024)
+      expect(photo.credit.length, id).toBeGreaterThan(0)
+    }
+    // The backdrop is decoration; every figure is named.
+    expect(CAST.david.alt).toBe('')
+    for (const f of [...INTRO_FIGURES.wide, ...INTRO_FIGURES.tall]) expect(f.alt, f.src).toBeTruthy()
+    // The marble figure holding flowers is gone (Roman: "can we remove the
+    // girl tho cuz she looks naked"), and stays gone.
+    expect(existsSync(path.join(ROOT, 'public/images/cast/flowers.webp'))).toBe(false)
+    for (const photo of Object.values(CAST)) expect(photo.alt, photo.src).not.toMatch(/flowers/i)
+    for (const f of [...INTRO_FIGURES.wide, ...INTRO_FIGURES.tall]) expect(f.src).not.toMatch(/flowers/)
+    // humans.txt credits each photographer.
+    const humans = readFileSync(path.join(ROOT, 'public', 'humans.txt'), 'utf8')
+    for (const photo of Object.values(CAST)) expect(humans, photo.credit).toContain(photo.credit)
+  })
+})
+
+/** A WebP file's width and height, from its header (lossy, lossless or extended). */
+function webpSize(file: string): { width: number; height: number } {
+  const b = readFileSync(file)
+  if (b.toString('ascii', 0, 4) !== 'RIFF' || b.toString('ascii', 8, 12) !== 'WEBP') throw new Error(`${file} is not a WebP`)
+  const chunk = b.toString('ascii', 12, 16)
+  if (chunk === 'VP8 ') return { width: b.readUInt16LE(26) & 0x3fff, height: b.readUInt16LE(28) & 0x3fff }
+  if (chunk === 'VP8L') {
+    const bits = b.readUInt32LE(21)
+    return { width: (bits & 0x3fff) + 1, height: ((bits >> 14) & 0x3fff) + 1 }
+  }
+  if (chunk === 'VP8X') return { width: 1 + b.readUIntLE(24, 3), height: 1 + b.readUIntLE(27, 3) }
+  throw new Error(`${file}: unknown WebP chunk ${chunk}`)
+}
+
+test.describe('his products', () => {
+  test('in his order, Alongside Events first, linked to its public site', () => {
+    expect(COMPOSITIONS.map((c) => c.id)).toEqual(['alongside-events', 'sembly', 'praxis', 'alongside-brain'])
+    const events = content.PRODUCTS.find((p) => p.id === 'alongside-events')!
+    expect(events.url).toBe('https://alongsideevents.com')
+    // His tagline and status, unchanged by the link.
+    expect(events.tagline).toBe('The tech stack behind the family coffee cart')
+    expect(events.status).toBe('Runs the family cart')
+  })
+
+  test('the public ones have a preview, the private ones a flow, and none has both', () => {
+    for (const product of content.PRODUCTS) {
+      expect(!!product.preview, product.id).toBe(!!product.url)
+      expect(!!product.flow, product.id).toBe(!product.url)
+    }
+  })
+
+  test('each preview is a real, small WebP of the size the page declares', () => {
+    for (const product of content.PRODUCTS) {
+      if (!product.preview) continue
+      expect(product.preview.captured).toMatch(/^20\d\d-\d\d$/)
+      for (const shot of [product.preview.desktop, product.preview.phone]) {
+        expect(shot.src).toMatch(new RegExp(`^/images/products/${product.id}-(desktop|phone)\\.webp$`))
+        const file = path.join(ROOT, 'public', shot.src)
+        expect(existsSync(file), shot.src).toBe(true)
+        expect(webpSize(file), shot.src).toEqual({ width: shot.width, height: shot.height })
+        expect(statSync(file).size, `${shot.src} stays well under 400 KB`).toBeLessThan(400 * 1024)
+      }
+      // The desktop shot is 1280 CSS px wide at 1x, the phone's 390 at 1.5x.
+      expect(product.preview.desktop.width).toBe(1280)
+      expect(product.preview.phone.width).toBe(585)
+    }
+  })
+
+  test("a flow names only what the description names, in the description's words", () => {
+    const words = (text: string) => text.toLowerCase().replace(/\s+/g, ' ')
+    for (const product of content.PRODUCTS) {
+      if (!product.flow) continue
+      const description = words(product.description)
+      // The centre: the product, under the description's opening line.
+      expect(description.startsWith(words(product.flow.hub)), `${product.id}: hub "${product.flow.hub}"`).toBe(true)
+      const ids = product.flow.nodes.map((n) => n.id)
+      expect(ids, `${product.id}: a part named like the product`).not.toContain(product.id)
+      for (const node of product.flow.nodes) {
+        expect(description, `${product.id}: "${node.label}"`).toContain(words(node.label))
+        expect(description, `${product.id}: "${node.note}"`).toContain(words(node.note))
+      }
+      for (const [from, to] of product.flow.links) {
+        expect([...ids, product.id], `${product.id}: link ${from} -> ${to}`).toEqual(expect.arrayContaining([from, to]))
+        expect(from, `${product.id}: a link from ${from} to itself`).not.toBe(to)
+      }
+      // Every part is wired in, and the centre too.
+      for (const id of [...ids, product.id]) expect(product.flow.links.some((link) => link.includes(id)), `${product.id}: ${id}`).toBe(true)
+    }
+  })
+
+  test("a flow's links are only the ones its description states", () => {
+    // Each part to or from the product at the centre, and the one hand-off
+    // between parts a description states (the Slack bot's captures, routed
+    // by Claude). Which part feeds which beyond that is Roman's to say
+    // (`needs Roman` in constants.ts): a link added for it is added here too.
+    expect(Object.fromEntries(content.PRODUCTS.filter((p) => p.flow).map((p) => [p.id, p.flow!.links.map(([a, b]) => `${a} -> ${b}`)]))).toEqual({
+      praxis: ['personas -> praxis', 'discovery -> praxis', 'manager -> praxis', 'praxis -> alpaca'],
+      'alongside-brain': ['slack -> claude', 'claude -> alongside-brain', 'alongside-brain -> digests'],
+    })
   })
 })
 

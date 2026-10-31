@@ -1,5 +1,8 @@
 import { expect, test, type Page } from '@playwright/test'
+import { PRODUCTS } from '@/lib/content'
 import { collectConsole, gotoHome } from './helpers'
+
+const domain = (url: string) => url.replace(/^https?:\/\//, '').replace(/\/$/, '')
 
 /**
  * The keyboard-only pass, as a test. Tab through each page from the top the
@@ -224,6 +227,13 @@ test.describe('keyboard walk', () => {
     for (const field of [/^input#c-name /, /^input#c-email /, /^textarea.* "Message"$/]) {
       expect(stops.some((s) => field.test(s.what)), String(field)).toBe(true)
     }
+    // So is every product's control: each public one's preview and link,
+    // and every preview's and diagram's Pause.
+    const productStops = PRODUCTS.flatMap((p) => [
+      ...(p.url ? [`a "Visit ${domain(p.url)}"`, `a "${domain(p.url)}"`] : []),
+      `button "Pause the ${p.title} ${p.url ? 'preview' : 'diagram'}"`,
+    ])
+    for (const stop of productStops) expect(stops.map((s) => s.what), stop).toContain(stop)
 
     // Send is disabled until the box holds a name, an address and a message,
     // so the empty page's walk passes it by. Filled in, it is the stop after
@@ -241,6 +251,45 @@ test.describe('keyboard walk', () => {
     expect(send?.what).toBe('button "Send"')
     await expect(page.locator(':focus')).toHaveAccessibleName('Send')
     check([send!], await readUnfocused(page), { fromTop: false })
+    log.expectClean()
+  })
+
+  test('home: the message box’s failure and sent panels, every control a visible, named, ringed stop', async ({ page }) => {
+    const log = collectConsole(page, [/status of 502/])
+    // The first POST fails, the second (Try again) is delivered.
+    let posts = 0
+    await page.route('**/api/contact', (route) =>
+      posts++ === 0
+        ? route.fulfill({ status: 502, json: { error: 'delivery_failed' } })
+        : route.fulfill({ json: { ok: true, delivered: ['forms'], receipt: false } }),
+    )
+    await gotoHome(page, '/#contact')
+    const box = page.locator('#contact form')
+    await box.getByLabel('Name', { exact: true }).fill('Keyboard')
+    await box.getByLabel('Email', { exact: true }).fill('keys@example.com')
+    await box.getByRole('textbox', { name: 'Message', exact: true }).fill('Hello there. I have a question about a project.')
+    await page.waitForTimeout(800)
+    await page.locator('#contact form button[aria-label="Send"]').focus()
+    await page.keyboard.press('Enter')
+
+    // Focus lands on each panel's heading; from there Tab reaches its controls in order.
+    const contact = page.locator('#contact')
+    await expect(contact.getByRole('heading', { name: 'Your message didn’t go through' })).toBeFocused({ timeout: 15_000 })
+    const failed: Stop[] = []
+    for (let n = 1; n <= 4; n++) {
+      await page.keyboard.press('Tab')
+      failed.push((await readStop(page, 1000 + n))!)
+    }
+    expect(failed.map((s) => s.what)).toEqual(['button "Try again"', 'button "Edit message"', 'button "Copy email"', 'a "Open in your mail app"'])
+    check(failed, await readUnfocused(page), { fromTop: false })
+
+    await contact.getByRole('button', { name: 'Try again' }).focus()
+    await page.keyboard.press('Enter')
+    await expect(contact.getByRole('heading', { name: 'Message sent' })).toBeFocused({ timeout: 10_000 })
+    await page.keyboard.press('Tab')
+    const another = await readStop(page, 1100)
+    expect(another?.what).toBe('button "Send another message"')
+    check([another!], await readUnfocused(page), { fromTop: false })
     log.expectClean()
   })
 

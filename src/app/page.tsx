@@ -1,4 +1,6 @@
 import { Stage } from '@/components/stage/stage'
+import { Intro } from '@/components/stage/intro'
+import { INTRO_GATE } from '@/components/stage/intro-gate'
 import { Container } from '@/components/stage/section-header'
 import { CERTIFICATIONS, EDUCATION, PERSON, PRODUCTS, PROJECTS, ROLES, linkLabel } from '@/lib/content'
 import { ROUTES } from '@/lib/routes'
@@ -110,11 +112,16 @@ function Summary() {
 /**
  * The home page: the Stage (client components, rendered on the server as
  * well), the site's JSON-LD, and the summary above for visitors without
- * scripts.
+ * scripts. First, the intro's gate: an inline script that decides, before
+ * the first paint, whether the Roman intro opens the page (it sets
+ * data-intro on <html>; see components/stage/intro.tsx), and the client
+ * piece that shows it. Without scripts neither does anything.
  */
 export default function Home() {
   return (
     <>
+      <script dangerouslySetInnerHTML={{ __html: INTRO_GATE }} />
+      <Intro />
       <Stage>
         <Summary />
       </Stage>
