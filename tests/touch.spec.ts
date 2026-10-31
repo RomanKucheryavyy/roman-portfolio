@@ -5,7 +5,8 @@ import { gotoHome, sleep } from './helpers'
  * On a phone, a vertical swipe that starts on one of the page's interactive
  * pieces still scrolls the page: the About badges (matter-js, which a
  * sideways drag still throws), the client-work cards (StackingCards, flat
- * below lg) and the Experience timeline (Lifeline's phone list). Real touch
+ * below lg), the products' previews, diagrams and title cards, and the Experience
+ * timeline (Lifeline's phone list). Real touch
  * events through CDP, which the compositor scrolls with (a synthesized
  * scroll gesture does not scroll anything in headless Chromium).
  */
@@ -49,6 +50,20 @@ const PIECES: [string, string, (page: Page) => Promise<void>][] = [
     },
   ],
   ['a client-work card', '#work [data-slot="card"]', async () => {}],
+  // A product's live preview (its link holds the scrolling screenshots) and
+  // a private product's diagram.
+  ['a product preview', '#products [data-preview="live"] a', async () => {}],
+  ['a product diagram', '#products [data-preview="flow"] [role="group"]', async () => {}],
+  // A product's title card (the Roman staging above its row), once its stage is up.
+  [
+    'a product title card',
+    '#products [data-title-card]',
+    async (page) => {
+      const card = page.locator('#products [data-title-card]').first()
+      await card.evaluate((el) => el.scrollIntoView({ block: 'center', behavior: 'instant' }))
+      await expect(card.locator('.om-root')).toBeAttached({ timeout: 20_000 })
+    },
+  ],
   ['the Experience timeline', '#experience article', async () => {}],
 ]
 

@@ -1,6 +1,5 @@
 import type { Metadata } from 'next'
-import { buttonVariants } from '@/components/ui/button'
-import { DISPLAY, INTRO, KICKER, STAGE_FOCUS, STAGE_STYLE } from '@/components/stage/look'
+import { DISPLAY, HAIRLINE, INTRO, KICKER, NUMERAL, STAGE_FOCUS, STAGE_STYLE, WASH, stageButton } from '@/components/stage/look'
 import { SITE } from '@/lib/constants'
 import { fullTitle } from '@/lib/seo'
 import { cn } from '@/lib/utils'
@@ -10,14 +9,15 @@ const TITLE = fullTitle('Not found')
 const LINE = 'Nothing is written for this address. The page moved, or the link has a typo.'
 
 /**
- * The 404 in the Stage's look: its black, its violet, its header type and
- * the hero's two pill buttons (shadcn's Button, as buttonVariants on plain
- * links). Next's built-in one injected an unlayered `body { background: #fff }`
- * and a second <title>, and offered no way back.
+ * The 404 in the Stage's look: its ground and violet wash, the gold, the
+ * Roman type (its variables are on <html>, from the root layout), its
+ * section header's shape (a gold numeral, a hairline, the kicker) and the
+ * hero's buttons (stageButton on plain links). Next's built-in one injected
+ * an unlayered `body { background: #fff }` and a second <title>, and offered
+ * no way back.
  *
  * Every route's tree carries the root 404, so it is a server component with
- * no client code of its own: buttonVariants runs here, on the server, and only
- * its class string reaches the page.
+ * no client code of its own: only class strings reach the page.
  */
 export const metadata: Metadata = {
   // Absolute, so the tab reads the same with or without the layout's template.
@@ -33,45 +33,43 @@ export const metadata: Metadata = {
   twitter: { card: 'summary_large_image', title: TITLE, description: LINE },
 }
 
-const PILL = 'h-11 rounded-full px-6'
-
 /** Home first, solid; then the two places a visitor most likely came for, as the hero offers them. */
 const WAYS_OUT = [
-  { href: '/', label: 'Back to the home page', variant: 'default' },
-  { href: '/#work', label: 'See the work', variant: 'outline' },
-  { href: '/#contact', label: 'Get in touch', variant: 'outline' },
+  { href: '/', label: 'Back to the home page', kind: 'primary' },
+  { href: '/#work', label: 'See the work', kind: 'secondary' },
+  { href: '/#contact', label: 'Get in touch', kind: 'secondary' },
 ] as const
 
 export default function NotFound() {
   return (
-    <div className={cn('relative min-h-svh bg-background text-foreground', STAGE_FOCUS)} style={STAGE_STYLE}>
-      {/* His name where the Stage's top bar draws it, as the way home it is there. */}
+    <div className={cn('relative min-h-svh overflow-hidden bg-background text-foreground', STAGE_FOCUS)} style={STAGE_STYLE}>
+      <div aria-hidden="true" className={WASH} />
+      {/* His name where the Stage's top bar draws it, in its Cinzel, as the way home it is there. */}
       <header className="absolute inset-x-0 top-0 z-10">
         <div className="mx-auto flex h-14 max-w-[1280px] items-center px-4 md:h-16 md:px-12">
           {/* eslint-disable-next-line @next/next/no-html-link-for-pages -- a full load, as below */}
-          <a href="/" className="rounded-sm text-sm font-semibold tracking-tight text-foreground">
+          <a href="/" className="rounded-sm font-roman text-[15px] font-semibold tracking-[0.06em] text-foreground md:text-base">
             {SITE.name}
           </a>
         </div>
       </header>
-      <main id="main" tabIndex={-1} className="flex min-h-svh items-center outline-none">
+      <main id="main" tabIndex={-1} className="relative flex min-h-svh items-center outline-none">
         <div className="mx-auto w-full max-w-[1280px] px-4 py-24 md:px-12">
-          <p className={KICKER}>
-            <span className="text-[var(--stage-accent-ink)]">404</span>
-            <span aria-hidden="true" className="mx-2">
-              ·
-            </span>
-            Not found
+          <p className="flex items-center gap-4 md:gap-5">
+            <span className={NUMERAL}>404</span>
+            <span aria-hidden="true" className={HAIRLINE} />
+            <span className="sr-only">, </span>
+            <span className={KICKER}>Not found</span>
           </p>
-          <h1 className={`mt-5 max-w-3xl ${DISPLAY}`}>This page is not on the programme.</h1>
-          <p role="alert" className={`mt-6 ${INTRO}`}>
+          <h1 className={`mt-6 max-w-4xl ${DISPLAY}`}>This page is not on the programme.</h1>
+          <p role="alert" className={`mt-5 ${INTRO}`}>
             {LINE}
           </p>
-          <div className="mt-9 flex flex-wrap gap-3 md:mt-11">
-            {WAYS_OUT.map(({ href, label, variant }) => (
+          <div className="mt-10 flex flex-wrap gap-3 md:mt-12 md:gap-4">
+            {WAYS_OUT.map(({ href, label, kind }) => (
               // Plain links: a full load of the home page, and no client
               // router for a page that only leads away.
-              <a key={href} href={href} className={cn(buttonVariants({ size: 'lg', variant }), PILL)}>
+              <a key={href} href={href} className={stageButton(kind)}>
                 {label}
               </a>
             ))}

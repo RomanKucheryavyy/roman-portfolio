@@ -1,4 +1,5 @@
 import type { MetadataRoute } from 'next'
+import { PALETTE } from '@/components/stage/imperial'
 import { SITE } from '@/lib/constants'
 
 /**
@@ -14,9 +15,9 @@ export default function manifest(): MetadataRoute.Manifest {
     description: SITE.description,
     start_url: '/',
     display: 'standalone',
-    // The Stage black, as the layout's theme-color.
-    background_color: '#060606',
-    theme_color: '#060606',
+    // The Stage's ground (imperial.ts), as the layout's theme-color.
+    background_color: PALETTE.ground,
+    theme_color: PALETTE.ground,
     icons: [
       { src: '/icon.svg', sizes: 'any', type: 'image/svg+xml' },
       { src: '/apple-icon', sizes: '180x180', type: 'image/png' },

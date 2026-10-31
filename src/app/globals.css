@@ -2,10 +2,11 @@
    design lab's, design-lab/src/app/globals.css), so every 21st.dev component
    renders the way its author published it. The site is dark-only: <html>
    always carries .dark (layout.tsx). The Stage page re-points a few of these
-   on its own wrapper (stage.tsx): its black, its violet accent, its ring.
+   on its own wrapper (look.ts): its ground, its marble and lavender inks,
+   its violet and gold, its ring.
 
-   Below the theme: the Stage accent for pages outside that wrapper, and the
-   résumé builder's own tokens. */
+   Below the theme: the Stage accent for pages outside that wrapper, the
+   Stage's inks as Tailwind colours, and the résumé builder's own tokens. */
 @import "tailwindcss";
 @import "tw-animate-css";
 /* The redesign lab is a separate app; keep its classes out of this build. */
@@ -19,6 +20,11 @@
   /* Geist and Geist Mono, self-hosted by next/font (layout.tsx). */
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
+  /* The Roman faces (src/components/stage/roman-type.ts), defined on the
+     wrapper of the pages that draw them: Cinzel for inscriptions
+     (font-roman), Cormorant Garamond for his voice (font-serif). */
+  --font-roman: var(--font-cinzel), ui-serif, Georgia, serif;
+  --font-serif: var(--font-cormorant), ui-serif, Georgia, serif;
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
@@ -133,13 +139,66 @@
 }
 
 /* ── The Stage accent ──
-   The page's one accent (stage.tsx sets the same pair on its wrapper), here
-   for what sits outside that wrapper: the skip link, the 404, the error
-   pages. A fill, and an ink that reads on black. */
+   The page's imperial inks (look.ts sets the same on the Stage's wrapper,
+   from imperial.ts: keep them in step), here for what sits outside that
+   wrapper: the skip link above all. The violet as a fill, the gold, the ink
+   that reads on the dark, and the marble and ground the skip link is drawn
+   in, as the Stage's primary button is. */
 :root {
-  --stage-accent: #16106d;
-  --stage-accent-ink: #9d94ff;
+  --stage-accent: #24115e;
+  --stage-accent-ink: #d6b25e;
+  --stage-marble: #f2ece2;
+  --stage-ground: #07050f;
 }
+
+/* The same inks as Tailwind colours, so the Stage's classes name the
+   palette: text-gold, border-gold/40, bg-imperial/45, hover:text-glow,
+   border-rule/60. They read the variables above (look.ts sets them all on
+   the Stage's wrapper), so nothing here holds a colour of its own. */
+@theme inline {
+  --color-gold: var(--stage-accent-ink);
+  --color-imperial: var(--stage-accent);
+  --color-glow: var(--stage-glow);
+  --color-rule: var(--stage-rule);
+}
+
+/* ── The intro (src/components/stage/intro.tsx) ──
+   The home page's inline gate (app/page.tsx) sets data-intro on <html>
+   before the first paint when the Roman intro will open the page. While it
+   is "" (decided, not yet mounted) or "up" (on screen), the page is laid
+   out but not drawn, on the intro's ground (its imperial palette's ground,
+   imperial.ts), so the hero never flashes first; visibility because it
+   keeps the layout (nothing moves when the page appears) and takes the
+   page out of the accessibility tree, opacity because a descendant can
+   undo visibility. The intro's own layer ([data-intro-layer], a portal on
+   <body>) is the one thing drawn. At "lift" the stage is lifting off, so
+   the page shows beneath it. Until the attribute is gone the document does
+   not scroll; the scrollbar's gutter stays, so the page does not shift
+   sideways when it comes back. */
+html[data-intro] { overflow: hidden; scrollbar-gutter: stable; }
+/* Until the stage mounts (a phone on a slow network can take seconds), a
+   gold ring breathes where its meander will draw, so the wait reads as a
+   start, not a blank screen. */
+html[data-intro=""]::after {
+  content: "";
+  position: fixed;
+  left: 50%;
+  top: 50%;
+  z-index: 101;
+  width: 64px;
+  height: 64px;
+  margin: -32px 0 0 -32px;
+  border: 1px solid #d6b25e;
+  border-radius: 50%;
+  animation: rk-intro-wait 1.6s ease-in-out infinite;
+}
+@keyframes rk-intro-wait {
+  0%, 100% { opacity: 0.55; transform: scale(1); }
+  50% { opacity: 0.2; transform: scale(0.84); }
+}
+html[data-intro]:not([data-intro="lift"]),
+html[data-intro]:not([data-intro="lift"]) body { background: #07050f !important; }
+html[data-intro]:not([data-intro="lift"]) body > :not([data-intro-layer]) { visibility: hidden; opacity: 0; }
 
 /* ── The résumé builder (/resume) ──
    Its own type steps, inks and paper colours, which its pieces in
