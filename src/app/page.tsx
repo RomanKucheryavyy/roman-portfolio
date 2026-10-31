@@ -2,7 +2,7 @@ import { Stage } from '@/components/stage/stage'
 import { Intro } from '@/components/stage/intro'
 import { INTRO_GATE } from '@/components/stage/intro-gate'
 import { Container } from '@/components/stage/section-header'
-import { CERTIFICATIONS, EDUCATION, PERSON, PRODUCTS, PROJECTS, ROLES, linkLabel } from '@/lib/content'
+import { CERTIFICATIONS, EDUCATION, PERSON, PRODUCTS, PROJECTS, RANK, ROLES, linkLabel } from '@/lib/content'
 import { ROUTES } from '@/lib/routes'
 import { pageMetadata } from '@/lib/seo'
 import { jsonLd, siteGraph } from '@/lib/structured-data'
@@ -74,6 +74,11 @@ function Summary() {
               </li>
             ))}
           </ul>
+
+          <h3 className={H3}>{RANK.platform}</h3>
+          <p className={`mt-3 ${ITEM}`}>
+            <span className="text-foreground">{RANK.name}</span> · {RANK.standing}
+          </p>
 
           <h3 className={H3}>Salesforce certifications</h3>
           <ul className="mt-3 space-y-1.5">

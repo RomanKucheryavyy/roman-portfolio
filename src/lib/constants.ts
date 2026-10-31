@@ -63,6 +63,24 @@ export const CERTIFICATIONS: readonly Certification[] = (
   ] as const
 ).map((cert) => (CERT_VERIFY[cert.id] ? { ...cert, verifyUrl: CERT_VERIFY[cert.id] } : cert))
 
+/**
+ * His rank on Trailhead, Salesforce's learning platform. Roman, 2026-10-31:
+ * "also we should add somewhere that im not all star ranger on trailhead,
+ * the highest ranger status", and "And make it epic". ("im not" read as
+ * "I'm now".) In his words: the rank as he spelled it, and his own "the
+ * highest ranger status". Act IV leads with it; the summary without
+ * scripts, the JSON-LD and llms.txt read it from here.
+ *
+ * No date earned, badge count or points were given, so none is stated.
+ * needs Roman: the address of his public Trailhead profile, if the rank
+ * should link to it (nothing links until then).
+ */
+export const TRAILHEAD_RANK = {
+  rank: 'All Star Ranger',
+  platform: 'Trailhead',
+  standing: 'The highest Ranger status',
+} as const
+
 /** Client work, in the order the Stage's Act I shows it. */
 export const PROJECTS = [
   {

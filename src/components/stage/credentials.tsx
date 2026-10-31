@@ -5,6 +5,7 @@ import dynamic from 'next/dynamic'
 import type { ToolchainItem } from '@/components/ui/toolchain-marquee'
 import { CERTIFICATIONS } from '@/lib/content'
 import { cn } from '@/lib/utils'
+import { RankHonour } from './rank-honour'
 import { Container, SectionHeader } from './section-header'
 
 // The marquee reads prefers-reduced-motion during its first render, so the
@@ -185,7 +186,12 @@ function useLayout(): Layout {
   return layout
 }
 
-/** Act IV: the eight Salesforce certifications, newest first. */
+/**
+ * Act IV: his Trailhead rank first, its crowning honour (rank-honour.tsx),
+ * then the eight Salesforce certifications, newest first. From xl the rank
+ * stands beside the act's header (narrower, the header's longest word would
+ * not fit beside it); below that, between the header and the frieze.
+ */
 export function Credentials() {
   const layout = useLayout()
   const { stacks } = LAYOUTS[layout]
@@ -213,8 +219,9 @@ export function Credentials() {
   )
 
   return (
-    <section id="credentials" aria-labelledby="credentials-title" className="scroll-mt-14 py-16 md:py-24">
-      <Container>
+    // overflow-x-clip: the rank's glory spreads wider than the column.
+    <section id="credentials" aria-labelledby="credentials-title" className="scroll-mt-14 overflow-x-clip py-16 md:py-24">
+      <Container className="xl:grid xl:grid-cols-[minmax(0,1fr)_minmax(0,30rem)] xl:items-center xl:gap-10">
         <SectionHeader
           id="credentials-title"
           act="Act IV"
@@ -222,6 +229,7 @@ export function Credentials() {
           title={`${CERTIFICATIONS.length} Salesforce certifications`}
           intro={`From ${oldest.name} in ${oldest.date} to ${newest.name} in ${newest.date}.`}
         />
+        <RankHonour className="mt-14 md:mt-16 xl:mt-0" />
       </Container>
       {/* The module's own inks, re-pointed at the Stage's: marble words, a
           violet-dark surface (the pause control's fill) and the gold focus

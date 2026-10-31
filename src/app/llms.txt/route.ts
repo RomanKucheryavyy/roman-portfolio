@@ -1,4 +1,4 @@
-import { CERTIFICATIONS, EDUCATION, PERSON, PRODUCTS, PROJECTS, ROLES, linkLabel, type Product, type Project } from '@/lib/content'
+import { CERTIFICATIONS, EDUCATION, PERSON, PRODUCTS, PROJECTS, RANK, ROLES, linkLabel, type Product, type Project } from '@/lib/content'
 
 /**
  * /llms.txt (llmstxt.org): what the home page says, as markdown, for agents
@@ -34,6 +34,10 @@ export function GET() {
     '',
     ...ROLES.map((r) => `- ${r.title}, ${[r.company, r.team].filter(Boolean).join(', ')} (${r.dates})`),
     ...EDUCATION.map((e) => `- ${e.degree}, ${e.school} (${e.start} – ${e.end})`),
+    '',
+    `## ${RANK.platform}`,
+    '',
+    `- ${RANK.name}: ${RANK.standing}`,
     '',
     '## Certifications',
     '',

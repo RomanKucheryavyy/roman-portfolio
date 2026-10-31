@@ -2,7 +2,7 @@ import { test, expect } from '@playwright/test'
 import { existsSync, readFileSync, readdirSync, statSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
 import path from 'node:path'
-import { CERTIFICATIONS, COMPOSITIONS, HIS_WORDS, PROJECTS as WORK, SITE, TECH_SKILLS } from '@/lib/constants'
+import { CERTIFICATIONS, COMPOSITIONS, HIS_WORDS, PROJECTS as WORK, SITE, TECH_SKILLS, TRAILHEAD_RANK } from '@/lib/constants'
 import { LINKS } from '@/lib/links'
 import * as content from '@/lib/content'
 import { RESUME_DATA } from '@/lib/resume-data'
@@ -17,6 +17,7 @@ import {
   yearRange,
 } from '@/lib/site-facts'
 import { SITE_CARD, pageMetadata } from '@/lib/seo'
+import { siteGraph } from '@/lib/structured-data'
 import { RESUME_HREF, RESUME_PUBLIC } from '@/lib/routes'
 import { toRoman } from '@/lib/roman'
 import { CAST } from '@/components/stage/cast'
@@ -126,8 +127,9 @@ test.describe('the Stage reads the records', () => {
       'Premier Technical Support Engineer · Salesforce · Nov 2023 – Apr 2026',
       'Technical Support Engineer · MindTree · May 2021 – Nov 2023',
     ])
+    expect(content.RANK).toEqual({ name: TRAILHEAD_RANK.rank, platform: TRAILHEAD_RANK.platform, standing: TRAILHEAD_RANK.standing })
     const source = readFileSync(path.join(LIB, 'content.ts'), 'utf8')
-    expect(source, 'no description is typed into content.ts').not.toMatch(/Native Swift|licensed electrician|Platform Developer/)
+    expect(source, 'no description is typed into content.ts').not.toMatch(/Native Swift|licensed electrician|Platform Developer|Star Ranger|highest Ranger/)
   })
 
   test('linkLabel: the domain, "App Store", or the status of a piece with no link', () => {
@@ -135,6 +137,42 @@ test.describe('the Stage reads the records', () => {
     expect(label('alongside-coffee')).toBe('alongsidecoffee.com')
     expect(label('fubc-coffee-ios')).toBe('App Store')
     expect(label('dtm-plumbing')).toBe('Launching soon')
+  })
+})
+
+test.describe('his Trailhead rank', () => {
+  // Roman, 2026-10-31: "also we should add somewhere that im not all star
+  // ranger on trailhead, the highest ranger status" ("im not": "I'm now").
+  test('the record holds it in his words, and nothing he did not give', () => {
+    expect(TRAILHEAD_RANK).toEqual({ rank: 'All Star Ranger', platform: 'Trailhead', standing: 'The highest Ranger status' })
+    // No date earned, badge count or profile link was given, so none is stated.
+    expect(content.RANK).not.toHaveProperty('url')
+    expect(Object.keys(TRAILHEAD_RANK).sort()).toEqual(['platform', 'rank', 'standing'])
+  })
+
+  test('its words are typed once, in constants.ts, and every place that shows it reads the record', () => {
+    const typed = (dir: string): string[] =>
+      readdirSync(dir, { recursive: true, encoding: 'utf8' })
+        .filter((f) => /\.(ts|tsx|txt)$/.test(f) && statSync(path.join(dir, f)).isFile())
+        .filter((f) => /Star Ranger|highest Ranger/i.test(readFileSync(path.join(dir, f), 'utf8')))
+        .map((f) => path.relative(ROOT, path.join(dir, f)))
+    expect([...typed(path.join(ROOT, 'src')), ...typed(path.join(ROOT, 'public'))]).toEqual(['src/lib/constants.ts'])
+    const read = (file: string) => readFileSync(path.join(ROOT, file), 'utf8')
+    // Act IV's honour, the summary without scripts and llms.txt.
+    for (const use of ['{RANK.platform}', '{RANK.name}', '{RANK.standing}']) expect(read('src/components/stage/rank-honour.tsx'), use).toContain(use)
+    for (const use of ['{RANK.platform}', '{RANK.name}', '{RANK.standing}']) expect(read('src/app/page.tsx'), use).toContain(use)
+    for (const use of ['${RANK.platform}', '${RANK.name}', '${RANK.standing}']) expect(read('src/app/llms.txt/route.ts'), use).toContain(use)
+    // Act IV renders the honour before the frieze.
+    const credentials = read('src/components/stage/credentials.tsx')
+    expect(credentials.indexOf('<RankHonour')).toBeGreaterThan(credentials.indexOf('<SectionHeader'))
+    expect(credentials.indexOf('<RankHonour')).toBeLessThan(credentials.indexOf('{marquee}'))
+  })
+
+  test('the JSON-LD Person names it as an award, and stays a Person with no job title and no ratings', () => {
+    const person = siteGraph()['@graph'].find((n) => n['@type'] === 'Person') as Record<string, unknown>
+    expect(person.award).toBe(`${TRAILHEAD_RANK.platform} ${TRAILHEAD_RANK.rank}`)
+    expect(person).not.toHaveProperty('jobTitle')
+    expect(JSON.stringify(person)).not.toMatch(/aggregateRating|ratingValue/)
   })
 })
 

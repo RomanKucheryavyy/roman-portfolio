@@ -1,4 +1,5 @@
 import { expect, test } from '@playwright/test'
+import { RANK } from '@/lib/content'
 import { SECTION_IDS, collectConsole, collectCspReports, gotoHome, project, scrollThrough } from './helpers'
 
 /**
@@ -239,6 +240,7 @@ test.describe('server HTML', () => {
     const person = graph.find((n) => n['@type'] === 'Person')!
     expect(person.name).toBe('Roman Kucheryavyy')
     expect(person).not.toHaveProperty('jobTitle')
+    expect(person.award, 'his Trailhead rank, from the record').toBe(`${RANK.platform} ${RANK.name}`)
     expect(blocks[0][1]).not.toMatch(/aggregateRating|ratingValue/)
     expect(html).toMatch(/<link rel="canonical" href="https:\/\/romankucheryavyy\.com"\/>/)
     expect(html).toContain('<title>Roman Kucheryavyy — Salesforce engineer &amp; full-stack builder</title>')
@@ -252,6 +254,8 @@ test.describe('server HTML', () => {
     }
     expect(summary).toContain('Alongside Coffee')
     expect(summary).toContain('Platform Developer I')
+    expect(summary).toContain(RANK.name)
+    expect(summary).toContain(RANK.standing)
     expect(summary).toContain('mailto:kucheryavyyroman@gmail.com')
   })
 
@@ -275,6 +279,7 @@ test.describe('server HTML', () => {
     expect(llms).toMatch(/^# Roman Kucheryavyy\n/)
     expect(llms).not.toMatch(/\/works|\/colophon|Program notes/)
     expect(llms).not.toMatch(/\(\d{3}\)\s*\d{3}-\d{4}/)
-    for (const heading of ['## Client work', '## My own products', '## Experience', '## Certifications', '## Links']) expect(llms).toContain(heading)
+    for (const heading of ['## Client work', '## My own products', '## Experience', `## ${RANK.platform}`, '## Certifications', '## Links']) expect(llms).toContain(heading)
+    expect(llms).toContain(`- ${RANK.name}: ${RANK.standing}`)
   })
 })

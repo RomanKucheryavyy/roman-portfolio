@@ -34,6 +34,20 @@ export const PALETTE = {
 } as const
 
 /**
+ * Struck gold, for Act IV's rank (rank-honour.tsx): the gold and its glow
+ * with the two darker shades a medal's relief needs, and the sheen that
+ * crosses it. Drawing only, never text: the rank's words are the palette's
+ * gold, glow and lavender.
+ */
+export const GILT = {
+  sheen: '#fff4d6',
+  light: PALETTE.glow,
+  gold: PALETTE.gold,
+  deep: '#9c7633',
+  shadow: '#5a3f14',
+} as const
+
+/**
  * The word's halo, set from outside on both stages: a tight dark edge round
  * each letter, then a soft one, so the marble word reads where it crosses a
  * lit statue (marble on marble had no edge at all).
