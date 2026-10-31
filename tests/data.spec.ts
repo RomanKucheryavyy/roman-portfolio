@@ -214,6 +214,11 @@ test.describe('the Roman intro and the title cards', () => {
     // The backdrop is decoration; every figure is named.
     expect(CAST.david.alt).toBe('')
     for (const f of [...INTRO_FIGURES.wide, ...INTRO_FIGURES.tall]) expect(f.alt, f.src).toBeTruthy()
+    // The marble figure holding flowers is gone (Roman: "can we remove the
+    // girl tho cuz she looks naked"), and stays gone.
+    expect(existsSync(path.join(ROOT, 'public/images/cast/flowers.webp'))).toBe(false)
+    for (const photo of Object.values(CAST)) expect(photo.alt, photo.src).not.toMatch(/flowers/i)
+    for (const f of [...INTRO_FIGURES.wide, ...INTRO_FIGURES.tall]) expect(f.src).not.toMatch(/flowers/)
     // humans.txt credits each photographer.
     const humans = readFileSync(path.join(ROOT, 'public', 'humans.txt'), 'utf8')
     for (const photo of Object.values(CAST)) expect(humans, photo.credit).toContain(photo.credit)

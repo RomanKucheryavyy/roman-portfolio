@@ -92,7 +92,7 @@ report-only; `next.config.ts` says what each source is for).
 | `smoke` | Every route and head file, the redirects, a clean console, no request off-origin, the CSP, the server HTML, the page without WebGL |
 | `a11y` | axe, any impact, on `/`, `/resume`, the 404 and the message box's sent and failure panels |
 | `keyboard-walk` | Every Tab stop visible, named, ringed, on screen, not under the top bar, the message box's panels and every product's preview, link and Pause included |
-| `intro` | The Roman intro: shows on a first visit, not again within 12 hours, with `?intro`, never with a hash, under reduced motion or without scripts; the count in Roman numerals; Skip; the landing's words from the records; Enter, Escape, a wheel or swipe during the load and a nav link each lift it onto the page (focus on main, or the section); Tab stays inside; axe during the load and at the landing; a clean console, no CSP report, nothing off-origin; no sideways scroll and no overlapping pills from 320 to 1920 |
+| `intro` | The Roman intro: shows on a first visit, not again within 12 hours, again after them, with `?intro`, never with a hash, under reduced motion or without scripts; the page comes back at once if the stage's code fails, and at the 8 s fail-safe if it never arrives (and it never shows late); the count in Roman numerals; Skip (focus stays inside); the landing's words from the records; Enter (from the unveil on), Escape (straight to the exit), ArrowDown, PageDown, End, a wheel or swipe during the load and a nav link each lift it onto the page (focus on main, or the section; the page scrolls); Tab stays inside and every stop shows, ringed; axe during the load and at the landing; a clean console, no CSP report, nothing off-origin; nothing off screen and no overlapping pills from 320 to 1920 |
 | `products` | Act II: each product's title card (its own words, aria-hidden, nothing to focus, images from this origin, mounting in view and unmounting after, nothing below moving, the still landing under reduced motion), Roman's order, each public product's real screenshots loading (`naturalWidth`) with alt text naming the site, the preview playing only while most of it is in view (also when it arrives in view as it mounts), back to the top after leaving, its two shots on one loop, holding still on hover, focus and Pause, the private products' diagrams (the product at the centre, its own parts, the links listed for screen readers, the beams running and pausing), nothing below moving when the previews land, no sideways scroll, no diagram overflowing and every beam long enough and out from under the cards from 320 to 1920 wide, and nothing moving under reduced motion |
 | `contact-ui` | The suggestion, the undo window, the POST (intercepted), the sent panel (with and without a receipt), Send another, the failure panel, Try again, Edit message, Copy email, the 429 panel, the quote, 16px text on phones (landscape too) |
 | `contact-api` | The `/api/contact` contract with no Resend key: 400s, the honeypot, 502 when nothing delivered, 200 `delivered: ['forms']` with `receipt: false`, 429 |
@@ -191,15 +191,19 @@ as published plus four `[site edit]`s, each keeping the published behaviour
 when its prop is absent: `fonts` (the site's own faces, waited for, the word
 re-fitted when they land; CSP allows no font from elsewhere), `wordAs` (the
 word's element: the page has its h1, so both stages use a `p`), `formatCount`
-(Roman numerals) and `lift` (lift the stage off from any phase).
+(Roman numerals) and `lift` (lift the stage off from any phase, re-applied on
+every phase change while asked for, so a timer can't set the landing back).
 
 - When: on `/` only, at most once in 12 hours per browser (localStorage
   `rk:intro`), never with a hash in the address, under reduced motion or
-  without scripts. `?intro` shows it regardless, for Roman to show people.
+  without scripts, nor for a browser that asks to save data or reports a 2G
+  or 3G connection. `?intro` shows it regardless, for Roman to show people.
   An inline script (`INTRO_GATE`, first in `page.tsx`) decides before the
   first paint and sets `data-intro` on `<html>`; `globals.css` keeps the
   page hidden on the intro's ground until it lifts, and the script gives
-  the page back after 8 s if the stage never mounts.
+  the page back after 8 s if the stage never mounts (a gold ring breathes on
+  the dark until then). If the stage is taken down by an error, it gives the
+  page back too.
 - What: ROMAN in Cinzel inside the gold meander, the count in Roman
   numerals, then the imperial violet flood (`imperial.ts`) and the cast:
   Hercules and Apollo, David blurred behind. The

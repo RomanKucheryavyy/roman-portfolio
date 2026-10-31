@@ -69,7 +69,9 @@ const year = toRoman(new Date().getFullYear())
  * - on phones the component hides its nav's links but keeps the two <nav>s,
  *   empty landmarks: they go too;
  * - its root, a Tab stop while it loads, shows a gold ring when it has
- *   keyboard focus (the component rings only what is inside it).
+ *   keyboard focus (the component rings only what is inside it);
+ * - Enter and Skip fade in late (2.2 s and 1.6 s), but can take focus at
+ *   once: with keyboard focus they show at once.
  */
 const LOOK = [
   'bg-transparent!',
@@ -84,6 +86,7 @@ const LOOK = [
   '[&_.om-tagline]:text-balance',
   'max-sm:[&_.om-top_nav]:hidden!',
   'focus-visible:outline focus-visible:outline-1 focus-visible:-outline-offset-8 focus-visible:outline-[#d6b25e]',
+  '[&_.om-cta:focus-visible]:opacity-100! [&_.om-cta:focus-visible]:[transition-delay:0s]! [&_.om-skip:focus-visible]:opacity-100! [&_.om-skip:focus-visible]:[transition-delay:0s]!',
 ].join(' ')
 
 /** The wide cast, Apollo's cut-off arm past the edge of a screen this size. */

@@ -34,10 +34,14 @@ async function expectGone(page: Page) {
   await expect(page.locator('#hero-title')).toBeVisible()
 }
 
-/** The page scrolls (it was held still while the intro was up). */
+/**
+ * The page scrolls again: the document is no longer held still (a script's
+ * scrollBy would move it even then), and the keyboard moves it.
+ */
 async function expectScrolls(page: Page) {
+  expect(await page.evaluate(() => getComputedStyle(document.documentElement).overflowY)).not.toBe('hidden')
   const before = await page.evaluate(() => window.scrollY)
-  await page.evaluate(() => window.scrollBy(0, 300))
+  await page.keyboard.press('PageDown')
   await expect.poll(() => page.evaluate(() => window.scrollY)).toBeGreaterThan(before)
 }
 
@@ -81,6 +85,11 @@ test.describe('when the intro shows', () => {
     await sleep(1500)
     await expect(page.locator(LAYER)).toHaveCount(0)
     await expect(page.locator('html')).not.toHaveAttribute('data-intro')
+  })
+
+  test('after 12 hours it shows again', async ({ page }) => {
+    await page.addInitScript(() => localStorage.setItem('rk:intro', String(Date.now() - 12 * 60 * 60 * 1000 - 60_000)))
+    await openIntro(page)
   })
 
   test('?intro shows it again inside the 12 hours', async ({ page }) => {
@@ -171,11 +180,22 @@ test.describe('the ways out', () => {
     await expectScrolls(page)
   })
 
-  test('Escape during the load lifts it at once', async ({ page }) => {
+  test('Escape during the load lifts it at once, without the unveil', async ({ page }) => {
     await openIntro(page)
     expect(await phase(page)).toBe('load')
+    const phases: string[] = []
+    await page.exposeFunction('notePhase', (p: string) => phases.push(p))
+    await page.evaluate((sel) => {
+      const root = document.querySelector(`${sel} .om-root`)!
+      new MutationObserver(() => (window as unknown as { notePhase: (p: string) => void }).notePhase(root.getAttribute('data-phase') ?? '')).observe(root, {
+        attributes: true,
+        attributeFilter: ['data-phase'],
+      })
+    }, LAYER)
     await page.keyboard.press('Escape')
     await expectGone(page)
+    // Straight from the load to the exit: no unveil, no landing on the way.
+    expect(phases[0], phases.join(' > ')).toBe('exit')
     await expect.poll(() => page.evaluate(() => document.activeElement?.id)).toBe('main')
     await expectScrolls(page)
   })
@@ -193,6 +213,15 @@ test.describe('the ways out', () => {
     await expectScrolls(page)
   })
 
+  test('ArrowDown, PageDown and End lift it too', async ({ page }) => {
+    test.skip(project() !== 'desktop', 'Keys are the same everywhere; once is enough.')
+    for (const key of ['ArrowDown', 'PageDown', 'End']) {
+      await openIntro(page, '/?intro')
+      await page.keyboard.press(key)
+      await expectGone(page)
+    }
+  })
+
   test('a nav link lifts it and lands on its section', async ({ page, isMobile }) => {
     test.skip(isMobile, 'The component shows its nav from 640px wide.')
     await openIntro(page)
@@ -206,13 +235,65 @@ test.describe('the ways out', () => {
 })
 
 test.describe('a proper modal', () => {
-  test('Tab stays inside it while it is up', async ({ page }) => {
+  test('Tab stays inside it while it is up, and every stop shows, ringed', async ({ page }) => {
     await openIntro(page)
-    for (let i = 0; i < 12; i++) {
-      await page.keyboard.press('Tab')
-      const inside = await page.evaluate((sel) => !!document.activeElement?.closest(sel) || document.activeElement === document.body, LAYER)
-      expect(inside, `Tab ${i + 1} left the intro`).toBe(true)
+    const check = async (when: string) => {
+      for (let i = 0; i < 10; i++) {
+        await page.keyboard.press('Tab')
+        // Let a late control's fade (Enter, Skip) catch up with its focus.
+        await sleep(350)
+        const stop = await page.evaluate((sel) => {
+          const el = document.activeElement as HTMLElement | null
+          if (!el || !el.closest(sel)) return { inside: false, name: el?.tagName ?? 'none', opacity: 0, ring: false }
+          let opacity = 1
+          for (let n: HTMLElement | null = el; n; n = n.parentElement) opacity *= Number(getComputedStyle(n).opacity)
+          const style = getComputedStyle(el)
+          return { inside: true, name: (el.textContent ?? '').trim().slice(0, 24) || el.className.toString().slice(0, 24), opacity, ring: style.outlineStyle !== 'none' && parseFloat(style.outlineWidth) > 0 }
+        }, LAYER)
+        expect(stop.inside, `${when}: Tab ${i + 1} left the intro (${stop.name})`).toBe(true)
+        expect(stop.opacity, `${when}: "${stop.name}" is focused but not shown`).toBeGreaterThan(0.6)
+        expect(stop.ring, `${when}: "${stop.name}" has no focus ring`).toBe(true)
+      }
     }
+    await check('load')
+    await expect(page.locator(`${LAYER} .om-root[data-phase="landing"]`)).toBeAttached({ timeout: 20_000 })
+    await check('landing')
+  })
+
+  test('if the stage fails to load, the page comes back at once', async ({ page }) => {
+    await page.route('**/_next/static/chunks/**', async (route) => {
+      const response = await route.fetch()
+      const body = await response.text()
+      if (body.includes('data-intro-layer')) return route.abort()
+      return route.fulfill({ response, body })
+    })
+    await page.goto('/?intro')
+    // Well before the gate's 8 s fail-safe.
+    await expect(page.locator('html')).not.toHaveAttribute('data-intro', { timeout: 6000 })
+    await expect(page.locator('#hero-title')).toBeVisible()
+    await expect(page.locator(LAYER)).toHaveCount(0)
+  })
+
+  test('if the stage never arrives, the fail-safe gives the page back and it never shows late', async ({ page }) => {
+    let held = 0
+    await page.route('**/_next/static/chunks/**', async (route) => {
+      const response = await route.fetch()
+      const body = await response.text()
+      if (body.includes('data-intro-layer')) {
+        held++
+        await sleep(12_000)
+      }
+      return route.fulfill({ response, body }).catch(() => {})
+    })
+    await page.goto('/?intro')
+    await expect(page.locator('html')).toHaveAttribute('data-intro', '')
+    await expect(page.locator('html')).not.toHaveAttribute('data-intro', { timeout: 11_000 })
+    await expect(page.locator('#hero-title')).toBeVisible()
+    expect(held, 'the stage was asked for').toBeGreaterThan(0)
+    // When it does arrive, it stays away.
+    await sleep(5000)
+    await expect(page.locator(LAYER)).toHaveCount(0)
+    await expect(page.locator('html')).not.toHaveAttribute('data-intro')
   })
 
   test('axe finds nothing during the load or at the landing', async ({ page }) => {
@@ -265,12 +346,18 @@ test.describe('layout', () => {
       await expect(page.locator(`${LAYER} .om-root[data-phase="landing"]`)).toBeAttached({ timeout: 20_000 })
       const m = await page.evaluate((sel) => {
         const pills = [...document.querySelectorAll(`${sel} .om-pill`)].map((p) => p.getBoundingClientRect())
-        return {
-          sw: document.documentElement.scrollWidth,
-          pills: pills.map((r) => [Math.round(r.left), Math.round(r.right)]),
-        }
+        // The layer is fixed, so the document's scrollWidth can't see it:
+        // measure what it shows instead (the word may run to the edges).
+        const shown = [...document.querySelectorAll(`${sel} .om-top a, ${sel} .om-brand, ${sel} .om-eyebrow, ${sel} .om-tagline, ${sel} .om-cta, ${sel} .om-aside, ${sel} .om-plate`)]
+          .filter((el) => el.getClientRects().length > 0)
+          .map((el) => [el.className.toString().split(' ')[0], Math.round(el.getBoundingClientRect().left), Math.round(el.getBoundingClientRect().right)] as const)
+        return { pills: pills.map((r) => [Math.round(r.left), Math.round(r.right)]), shown }
       }, LAYER)
-      expect(m.sw, `${width}: scrollWidth`).toBeLessThanOrEqual(width)
+      expect(m.shown.length, `${width}: nothing measured`).toBeGreaterThan(3)
+      for (const [what, l, r] of m.shown) {
+        expect(l, `${width}: ${what} starts off screen`).toBeGreaterThanOrEqual(0)
+        expect(r, `${width}: ${what} ends off screen`).toBeLessThanOrEqual(width)
+      }
       for (const [l, r] of m.pills) {
         expect(l, `${width}: a pill starts off screen`).toBeGreaterThanOrEqual(0)
         expect(r, `${width}: a pill ends off screen`).toBeLessThanOrEqual(width)

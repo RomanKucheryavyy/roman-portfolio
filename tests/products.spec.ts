@@ -359,6 +359,10 @@ test.describe('the title cards', () => {
     const y0 = await page.evaluate(() => window.scrollY)
     await page.mouse.wheel(0, 400)
     await expect.poll(() => page.evaluate(() => window.scrollY)).toBeGreaterThan(y0 + 200)
+    // The card is a picture; the row below it is the product.
+    const row = page.locator('#products li', { has: page.locator('h3', { hasText: PRODUCTS[0].title }) }).first()
+    await expect(row.locator('h3')).toBeVisible()
+    if (PRODUCTS[0].url) await expect(row.getByRole('link', { name: domain(PRODUCTS[0].url), exact: true })).toBeVisible()
   })
 })
 
