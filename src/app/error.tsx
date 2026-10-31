@@ -1,13 +1,13 @@
 'use client'
 
-import { Button } from '@/components/ui/button'
-import { DISPLAY, INTRO, KICKER, STAGE_FOCUS, STAGE_STYLE } from '@/components/stage/look'
+import { DISPLAY, HAIRLINE, INTRO, KICKER, STAGE_FOCUS, STAGE_STYLE, WASH, stageButton } from '@/components/stage/look'
 import { cn } from '@/lib/utils'
 
 /**
- * What a page shows when something inside it throws: the Stage's black page,
- * its type and its two pill buttons (shadcn's Button), instead of Next's white
- * "This page couldn't load". The root layout stays; global-error.tsx covers a
+ * What a page shows when something inside it throws: the Stage's ground,
+ * its gold and Roman type (their variables are on <html>, from the root
+ * layout) and its two buttons (stageButton), instead of Next's white "This
+ * page couldn't load". The root layout stays; global-error.tsx covers a
  * throw in the layout itself.
  *
  * React already reports the error to the console, so nothing is logged here.
@@ -25,29 +25,29 @@ export default function ErrorPage({
   reset: () => void
 }) {
   return (
-    <div className={cn('min-h-svh bg-background text-foreground', STAGE_FOCUS)} style={STAGE_STYLE}>
-      <main id="main" tabIndex={-1} className="flex min-h-svh items-center outline-none">
+    <div className={cn('relative min-h-svh overflow-hidden bg-background text-foreground', STAGE_FOCUS)} style={STAGE_STYLE}>
+      <div aria-hidden="true" className={WASH} />
+      <main id="main" tabIndex={-1} className="relative flex min-h-svh items-center outline-none">
         <div className="mx-auto w-full max-w-[1280px] px-4 py-24 md:px-12">
-          <p className={KICKER}>
-            <span className="text-[var(--stage-accent-ink)]">Error</span>
-            <span aria-hidden="true" className="mx-2">
-              ·
-            </span>
-            Something broke
+          <p className="flex items-center gap-4 md:gap-5">
+            <span className={cn(KICKER, 'text-[var(--stage-accent-ink)]')}>Error</span>
+            <span aria-hidden="true" className={HAIRLINE} />
+            <span className="sr-only">, </span>
+            <span className={KICKER}>Something broke</span>
           </p>
-          <h1 className={`mt-5 max-w-3xl ${DISPLAY}`}>This part of the page failed to load.</h1>
-          <p role="alert" className={`mt-6 ${INTRO}`}>
+          <h1 className={`mt-6 max-w-4xl ${DISPLAY}`}>This part of the page failed to load.</h1>
+          <p role="alert" className={`mt-5 ${INTRO}`}>
             Try it again, or head back to the home page.
           </p>
-          <div className="mt-9 flex flex-wrap gap-3 md:mt-11">
-            <Button size="lg" className="h-11 rounded-full px-6" onClick={() => (retry ?? reset)()}>
+          <div className="mt-10 flex flex-wrap gap-3 md:mt-12 md:gap-4">
+            <button type="button" className={stageButton('primary')} onClick={() => (retry ?? reset)()}>
               Try again
-            </Button>
-            <Button asChild size="lg" variant="outline" className="h-11 rounded-full px-6">
-              {/* A full load on purpose, see above. */}
-              {/* eslint-disable-next-line @next/next/no-html-link-for-pages */}
-              <a href="/">Back to the home page</a>
-            </Button>
+            </button>
+            {/* A full load on purpose, see above. */}
+            {/* eslint-disable-next-line @next/next/no-html-link-for-pages */}
+            <a href="/" className={stageButton('secondary')}>
+              Back to the home page
+            </a>
           </div>
         </div>
       </main>

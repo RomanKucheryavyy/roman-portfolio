@@ -6,16 +6,15 @@ import { Github, Linkedin, Mail } from 'lucide-react'
 import DrapeBackground from '@/components/ui/kokonut-drape-background'
 import type { PortfolioBadge } from '@/components/ui/portfolio-hero-physics'
 import { Composer } from './composer'
-import { Button } from '@/components/ui/button'
 import { PERSON, ROLES, SKILLS } from '@/lib/content'
 import { cn } from '@/lib/utils'
 import { TopBar, SECTIONS } from './top-bar'
-import { Container, SectionHeader } from './section-header'
+import { Container, Ornament, SectionHeader } from './section-header'
 import { Work } from './work'
 import { Products } from './products'
 import { Experience } from './experience'
 import { Credentials } from './credentials'
-import { STAGE_FOCUS, STAGE_STYLE } from './look'
+import { STAGE_FOCUS, STAGE_STYLE, stageButton } from './look'
 
 const EMAIL_HREF = `mailto:${PERSON.links.email}`
 
@@ -56,30 +55,58 @@ const FooterSection5 = dynamic(() => import('@/components/ui/footer-section-5'),
 
 /* ---------------------------------------------------------------- hero -- */
 
+/**
+ * The curtain dyed imperial, from outside: the component reads its two
+ * shader colours from two hidden spans' text colour (the lit face, then the
+ * deepest fold), so descendant classes re-point them: the lit fold in the
+ * intro's imperial violet, the deepest in the ground. Its own ground is the
+ * page's.
+ */
+const DRAPE_LOOK = cn(
+  'min-h-svh dark:bg-background',
+  '[&>span:nth-child(1)]:text-[var(--stage-accent)]! [&>span:nth-child(2)]:text-[var(--background)]!',
+)
+
+/**
+ * The intro's landing, lifted onto the page: the curtain in its violet,
+ * lit warm from above as its stage is; a small gold crest; the name in
+ * Cinzel capitals, ROMAN large as the intro sets it and the surname spaced
+ * out beneath to the same measure, as an inscription; the tagline in
+ * Cormorant italic, as the intro sets it; and its ENTER button's style for
+ * the two ways in.
+ */
 function Hero() {
   return (
     <section id="top" aria-labelledby="hero-title">
-      <DrapeBackground className="min-h-svh dark:bg-background" wind={0.9} pleat={36}>
-        <div className="relative mx-auto flex w-full max-w-[1280px] flex-col items-center px-4 pb-10 pt-24 text-center md:px-12">
-          <h1
-            id="hero-title"
-            className="text-[clamp(3.4rem,11.5vw,11rem)] font-bold leading-[0.86] tracking-[-0.06em] text-foreground"
-          >
-            <span className="block">{PERSON.first}</span> <span className="block">{PERSON.last}</span>
+      <DrapeBackground className={DRAPE_LOOK} wind={0.9} pleat={36}>
+        {/* Warm light on the stage, behind the name. */}
+        <div
+          aria-hidden="true"
+          className="pointer-events-none absolute inset-0 bg-[radial-gradient(50%_44%_at_50%_42%,color-mix(in_oklab,var(--stage-glow)_17%,transparent),color-mix(in_oklab,var(--stage-accent-ink)_6%,transparent)_45%,transparent_76%)] mix-blend-screen"
+        />
+        <div className="relative z-[1] mx-auto flex w-full max-w-[1280px] flex-col items-center px-4 pb-10 pt-24 text-center md:px-12">
+          <Ornament />
+          <h1 id="hero-title" className="mt-7 font-roman font-medium uppercase text-foreground md:mt-9">
+            <span className="block text-[clamp(3.5rem,18.5vw,12rem)] leading-[0.92] tracking-[0.05em] [padding-left:0.05em]">
+              {PERSON.first}
+            </span>{' '}
+            <span className="mt-[0.45em] block text-[clamp(1.25rem,7.1vw,4.6rem)] leading-none tracking-[0.32em] [padding-left:0.32em] text-[var(--stage-text)]">
+              {PERSON.last}
+            </span>
           </h1>
-          <p className="mt-8 max-w-[22rem] text-base leading-relaxed text-foreground/75 text-balance md:mt-10 md:max-w-none md:text-xl">
+          <p className="mt-9 max-w-[24ch] font-serif text-[clamp(1.375rem,6vw,1.75rem)] italic leading-[1.18] text-[var(--stage-text)] text-balance sm:max-w-[34ch] md:mt-11 md:max-w-[40ch] md:text-[clamp(1.75rem,2.7vw,2.5rem)]">
             {PERSON.tagline}
           </p>
-          <div className="mt-9 flex flex-wrap items-center justify-center gap-3 md:mt-11">
-            <Button asChild size="lg" className="h-11 rounded-full px-6">
-              <a href="#work">See the work</a>
-            </Button>
-            <Button asChild size="lg" variant="outline" className="h-11 rounded-full px-6 backdrop-blur-sm">
-              <a href="#contact">Get in touch</a>
-            </Button>
+          <div className="mt-9 flex flex-wrap items-center justify-center gap-3 md:mt-11 md:gap-4">
+            <a href="#work" className={cn(stageButton('primary'), 'min-w-40')}>
+              See the work
+            </a>
+            <a href="#contact" className={cn(stageButton('secondary'), 'min-w-40 backdrop-blur-sm')}>
+              Get in touch
+            </a>
           </div>
         </div>
-        {/* The stage floor: the curtain's hem fades into the page. */}
+        {/* The stage floor: the curtain's hem fades into the page (under the words, which stay on top). */}
         <div aria-hidden="true" className="pointer-events-none absolute inset-x-0 bottom-0 h-40 bg-linear-to-b from-transparent to-background" />
       </DrapeBackground>
     </section>
@@ -324,7 +351,8 @@ function Footer() {
 export function Stage({ children }: { children?: React.ReactNode }) {
   return (
     <div
-      // Stage black, the violet accent and the page's one focus ring (look.ts).
+      // The imperial ground, inks and gold and the page's one focus ring
+      // (look.ts). The Roman faces' variables are on <html> (layout.tsx).
       className={cn('relative min-h-svh overflow-x-clip bg-background font-sans text-foreground antialiased', STAGE_FOCUS)}
       style={STAGE_STYLE}
     >
