@@ -123,8 +123,8 @@ test.describe('the home page', () => {
       await expect(painting.locator('*')).toHaveCount(0)
       expect(statues, 'statues fetched without WebGL').toEqual([])
     } else {
-      // It mounts (after the page) and fades in: Apollo, and its one light.
-      await expect(painting.locator('[data-shown="true"] .om-fig img')).toHaveAttribute('src', '/images/cast/apollo.webp', { timeout: 30_000 })
+      // It mounts (after the page) and fades in: Hercules, and its one light.
+      await expect(painting.locator('[data-shown="true"] .om-fig img')).toHaveAttribute('src', '/images/cast/hercules.webp', { timeout: 30_000 })
       await expect(painting.locator('canvas')).toHaveCount(1)
       // None of the component's own interface shows, and nothing in it is reachable.
       for (const part of ['.om-chrome', '.om-wordlayer', '.om-flood']) await expect(painting.locator(part)).toBeHidden()
@@ -139,6 +139,22 @@ test.describe('the home page', () => {
     }
     const lcp = await page.evaluate(() => (window as unknown as { __lcp: string[] }).__lcp)
     expect(lcp.at(-1), `largest paints: ${lcp.join(', ')}`).toBe('name')
+  })
+
+  test('the hero painting stands clear of the name: his curls start below the surname', async ({ page }) => {
+    test.skip(project() === 'no-webgl', 'no painting without WebGL')
+    await gotoHome(page)
+    const painting = page.locator('[data-hero-painting]')
+    await expect(painting.locator('[data-shown="true"] .om-fig img')).toBeAttached({ timeout: 30_000 })
+    // The statue's box, and where its curls start in it (the photograph's
+    // first opaque row, hero-painting-stage.tsx HEAD.top), against the
+    // surname's box.
+    const { crown, surname } = await page.evaluate(() => {
+      const fig = document.querySelector('[data-hero-painting] .om-fig')!.getBoundingClientRect()
+      const name = document.querySelector('#hero-title > span:last-child')!.getBoundingClientRect()
+      return { crown: fig.top + fig.height * 0.046, surname: name.bottom }
+    })
+    expect(crown, 'the crown of his curls, against the surname\'s foot').toBeGreaterThan(surname)
   })
 
   test('the hero painting stays away for a browser that saves data', async ({ page }) => {

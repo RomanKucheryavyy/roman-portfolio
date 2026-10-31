@@ -14,18 +14,18 @@ import { IMPERIAL } from './imperial'
  * flood.
  *
  * The composition is the hero's own, so it never repeats the landing a
- * visitor may have just seen lift away (Hercules and Apollo standing either
- * side of ROMAN on the floor) nor a product's title card (one statue to one
- * side of the product's word): Apollo alone, in the middle, a colossal
- * marble head (as the Romans carved their colossi) rising out of the dark
- * beneath the name, his face turned up to it and to the light falling from
- * above, in a pool of the intro's violet. He is sized and placed from the
- * hero's own words: his curls rise behind the surname's lower half, his
- * chin stops short of the tagline, and his curls stay clear of either side
- * of the screen. The photograph cuts his arm off at its right edge; the
- * painting fades out into the curtain well before that edge, and below his
- * chin, so the tagline and the buttons stand on the curtain, and the name
- * stands above him in the light.
+ * visitor may have just seen lift away (on a phone, Apollo alone, looking
+ * up; wider, Hercules and Apollo standing either side of ROMAN on the
+ * floor) nor the first product's title card (Apollo again, beside the
+ * product's word): Hercules alone, in the middle, a colossal marble bust
+ * (as the Romans carved their colossi), his head bowed beneath the name, in
+ * a pool of the intro's violet, the light falling on him from above. He is
+ * sized and placed from the hero's own words: the crown of his curls just
+ * below the surname (no letter of the name stands on marble), his head no
+ * wider than about three quarters of the screen (on a phone, the photograph
+ * stays near the intro's scale), and below his beard his shoulders fading
+ * into the curtain, gone a few px above the tagline, so the tagline and the
+ * buttons stand on the curtain.
  *
  * Nothing of the component's own interface: no word, tagline, nav, labels,
  * asides, call to action, count or plate (each emptied, and the interface
@@ -38,15 +38,15 @@ import { IMPERIAL } from './imperial'
  * motion it only fades, and the component holds its light and dust still.
  */
 
-const APOLLO = CAST.apollo
+const HERCULES = CAST.hercules
 
 /**
  * Where his head is in the photograph, as fractions of its width and
  * height, measured from the file's alpha (scripts/fetch-cast.mjs keyed it):
- * the crown of his curls, his chin, the curls' left and right, and the
- * height of his eyes (the middle of the fade into the curtain).
+ * the crown of his curls, the foot of his beard, the curls' left and right,
+ * and the middle of his head (the centre of the fade into the curtain).
  */
-const HEAD = { top: 0.03, chin: 0.45, left: 0.03, right: 0.4, eyes: 0.27 } as const
+const HEAD = { top: 0.046, chin: 0.44, left: 0.369, right: 0.594, middle: 0.24 } as const
 
 /** The middle of his head, curls and all, across the photograph. */
 const HEAD_X = (HEAD.left + HEAD.right) / 2
@@ -54,12 +54,21 @@ const HEAD_X = (HEAD.left + HEAD.right) / 2
 /** The cast's files are pre-keyed (cast.ts): the component's own key only keeps their edge. */
 const KEY = { threshold: 0.08, softness: 0.08 } as const
 
+/** Clear space between the surname's foot and his curls, in px. */
+const UNDER_NAME = 10
+
+/** The share of his room his head may take: the rest is his shoulders, fading into the curtain. */
+const HEAD_SHARE = 0.8
+
+/** His head at most this wide, as a share of the stage's width. */
+const MAX_HEAD_W = 0.72
+
 /** The first arrival rises; a return to the hero only fades in. */
 let risen = false
 
 /** Where the hero's words are, in px of the stage. */
 export interface HeroWords {
-  /** The surname's line: his curls may rise behind its lower part. */
+  /** The surname's line: his curls start below its foot. */
   surname: { top: number; bottom: number }
   /** The top of the tagline: he fades out above it. */
   copy: number
@@ -67,42 +76,44 @@ export interface HeroWords {
 
 interface Composition {
   figure: OldMastersFigure
-  /** In px of the stage: the middle of his head at the height of his eyes (the centre of the fade into the curtain, and of the ground behind him), and its height. */
+  /** In px of the stage: the middle of his head (the centre of the fade into the curtain, and of the ground behind him), and its height. */
   face: { x: number; y: number; head: number }
-  /** The fade into the curtain: an ellipse round his face, and below his chin a fade to nothing above the tagline. */
+  /** The fade into the curtain: an ellipse round his head, and below his beard a fade to nothing above the tagline. */
   mask: { rx: number; ry: number; from: number; to: number }
 }
 
-/** Apollo for a stage of w × h around the hero's words. */
+/** Hercules for a stage of w × h around the hero's words. */
 export function compose(w: number, h: number, { surname, copy }: HeroWords): Composition | null {
   if (!(w > 0) || !(h > 0)) return null
-  const aspect = APOLLO.width / APOLLO.height
+  const aspect = HERCULES.width / HERCULES.height
   const head = HEAD.chin - HEAD.top
-  // His curls rise behind the surname's lower half; below his chin his neck
-  // fades into the dark, gone at the latest a few px above the tagline.
-  const crown = surname.top + (surname.bottom - surname.top) * 0.4
+  // His curls start just below the surname; the fade below his beard is
+  // gone a few px above the tagline.
+  const crown = surname.bottom + UNDER_NAME
   const to = copy - 6
-  const chin = to - Math.max(36, h * 0.06)
-  const room = Math.max(h * 0.18, chin - crown)
-  // As tall as the room allows, with his curls clear of either side of the screen.
-  const ph = Math.min(room / head, (w * 0.46) / ((HEAD_X - HEAD.left) * aspect))
+  const room = Math.max(h * 0.16, to - crown)
+  // As tall as his share of the room allows, and no wider than MAX_HEAD_W of the stage.
+  const ph = Math.min((room * HEAD_SHARE) / head, (w * MAX_HEAD_W) / ((HEAD.right - HEAD.left) * aspect))
   const pw = ph * aspect
-  const top = chin - HEAD.chin * ph
-  // His head in the middle of the stage (his face just right of it, turned up to the name).
+  const top = crown - HEAD.top * ph
+  const chin = top + HEAD.chin * ph
+  // His head in the middle of the stage.
   const left = w / 2 - HEAD_X * pw
+  const headW = (HEAD.right - HEAD.left) * pw
   return {
     figure: {
-      src: APOLLO.src,
-      alt: APOLLO.alt,
+      src: HERCULES.src,
+      alt: HERCULES.alt,
       x: ((left + pw / 2) / w) * 100,
       y: ((top + ph) / h) * 100,
       h: (ph / h) * 100,
       depth: 0.85,
       ...KEY,
     },
-    face: { x: w / 2, y: top + HEAD.eyes * ph, head: head * ph },
-    // Gone soon below the chin: the cloak over his arm starts just under it.
-    mask: { rx: pw * 0.4, ry: ph * 0.56, from: chin - ph * 0.02, to: Math.min(to, chin + Math.max(24, ph * 0.05)) },
+    face: { x: w / 2, y: top + HEAD.middle * ph, head: head * ph },
+    // The ellipse takes in his head and the tops of his shoulders; below
+    // his beard all of him fades out, gone above the tagline.
+    mask: { rx: headW * 1.25, ry: head * ph * 0.95, from: chin - head * ph * 0.12, to: Math.max(chin + 12, to) },
   }
 }
 
@@ -120,10 +131,9 @@ export function compose(w: number, h: number, { surname, copy }: HeroWords): Com
  *   themselves, by a drop shadow of their own colour): on the curtain the
  *   intro's strength barely showed;
  * - the cast fades into the curtain (the CSS variables set on the box, from
- *   compose()): an ellipse round his face, well inside the photograph's
- *   edges (it cuts his arm off at the right), and a fade below his chin
- *   that is gone above the tagline, so no word below the name stands on
- *   marble;
+ *   compose()): an ellipse round his head and the tops of his shoulders,
+ *   well inside the photograph's edges, and a fade below his beard that is
+ *   gone above the tagline, so no word below the name stands on marble;
  * - the first time, he rises into place as the box fades in (RISE).
  */
 const LOOK = [
@@ -192,7 +202,7 @@ export default function HeroPaintingStage() {
   useEffect(() => {
     let live = true
     const img = new Image()
-    img.src = APOLLO.src
+    img.src = HERCULES.src
     img
       .decode()
       .catch(() => {})
@@ -241,12 +251,14 @@ export default function HeroPaintingStage() {
       style={vars}
     >
       {layout ? (
-        // The ground he is painted on: a pool of the intro's flood (the
-        // imperial violet, lifted warm at its heart) behind his head, so his
-        // shadows read as the print's violet ink rather than the curtain's
-        // folds, fading into the curtain at its edge.
+        // The ground he is painted on: a pool of the page's dark behind
+        // him, a niche he stands in, fading into the curtain at its edge.
+        // The print's shadows are keyed out of the photograph, so what is
+        // behind him shows through them: on the dark they read as shadow
+        // and he reads whole (on violet, or on the curtain's folds, his
+        // face and curls broke up into fragments).
         <div
-          className="absolute rounded-full bg-[radial-gradient(closest-side,color-mix(in_srgb,var(--stage-accent)_86%,var(--stage-glow)),var(--stage-accent)_48%,color-mix(in_srgb,var(--stage-accent)_72%,transparent)_68%,transparent)]"
+          className="absolute rounded-full bg-[radial-gradient(closest-side,var(--background)_0%,color-mix(in_srgb,var(--background)_88%,transparent)_46%,color-mix(in_srgb,var(--background)_45%,transparent)_70%,transparent)]"
           style={{
             left: layout.face.x - layout.face.head * 1.35,
             top: layout.face.y - layout.face.head * 1.35,

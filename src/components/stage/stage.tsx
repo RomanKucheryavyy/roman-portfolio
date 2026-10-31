@@ -78,15 +78,15 @@ const DRAPE_LOOK = cn(
  * the two ways in.
  *
  * And the intro's painting (Roman, 2026-10-31: "the hero can still have the
- * painting thingy", "make it epic"): Apollo, a colossal marble head painted
- * as the intro paints its cast, rising out of the dark between the name and
- * the tagline, his face turned up to the name and to the gold light falling
- * on both (hero-painting.tsx). So the name stands at the top of the stage
- * and the tagline and the buttons at its foot, with his room between. The
- * name keeps a dark halo, a few px wide and invisible on the curtain, so the
- * surname reads where his curls rise behind it (every letter at least
- * 5.4:1 on what is behind it, measured from 320 to 2560 wide); the tagline
- * and the buttons stand on the curtain, where he has faded out. On a short
+ * painting thingy", "make it epic"): Hercules, a colossal marble bust
+ * painted as the intro paints its cast, rising out of a dark niche between
+ * the name and the tagline, his head bowed beneath the name, in the gold
+ * light falling on both (hero-painting.tsx). So the name stands at the top
+ * of the stage and the tagline and the buttons at its foot, with his room
+ * between. His curls start below the surname, so no letter stands on
+ * marble; the name keeps a dark halo, a few px wide and invisible on the
+ * curtain, for the gold light falling across it. The tagline and the
+ * buttons stand on the curtain, where he has faded out. On a short
  * screen the name is capped by the height as well as the width (in vh,
  * which every browser knows), so name, room and buttons still fit one
  * screen 768 tall.
@@ -113,7 +113,7 @@ function Hero() {
               {PERSON.last}
             </span>
           </h1>
-          {/* Apollo's room (hero-painting-stage.tsx): the words below stand at the foot of the stage. */}
+          {/* Hercules's room (hero-painting-stage.tsx): the words below stand at the foot of the stage. */}
           <div aria-hidden="true" className="min-h-[clamp(8rem,22svh,22rem)] flex-1" />
           <div data-hero-copy="" className="flex flex-col items-center">
             <p className="max-w-[24ch] font-serif text-[clamp(1.375rem,6vw,1.75rem)] italic leading-[1.18] text-(--stage-text) text-balance sm:max-w-[34ch] md:max-w-[40ch] md:text-[clamp(1.75rem,2.7vw,2.5rem)]">

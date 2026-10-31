@@ -22,12 +22,12 @@ import { savesData } from './intro-gate'
  * absolute over the whole hero from the start, so nothing moves when the
  * painting lands; the stage fades it in. It runs only while the hero is on
  * screen and the intro is not: while the intro is up (data-intro on <html>,
- * intro.tsx) it waits (the intro fetches the component and the statue
- * itself), and mounts once the intro has lifted off, so the visitor sees
- * Apollo rise onto the page the intro has just revealed and the two stages
- * never draw at once; once the hero has left the screen the stage unmounts
- * (the component's light and frame loops stop with it), and it comes back
- * when the hero does.
+ * intro.tsx) it waits (the intro fetches the component itself, and on a
+ * wide screen Hercules too), and mounts once the intro has lifted off, so
+ * the visitor sees Hercules rise onto the page the intro has just revealed
+ * and the two stages never draw at once; once the hero has left the screen
+ * the stage unmounts (the component's light and frame loops stop with it),
+ * and it comes back when the hero does.
  *
  * Never at all (the hero is then the name on the curtain, as before) for a
  * browser that asks to save data or reports a 2G connection (the intro's
@@ -96,7 +96,7 @@ export function HeroPainting() {
       // The statue starts on its way with the stage's code, not after it.
       // (While the intro is up it is already fetching both, and nothing
       // here should compete with it.)
-      if (clear) new Image().src = CAST.apollo.src
+      if (clear) new Image().src = CAST.hercules.src
       update()
     }
     // Safari has no requestIdleCallback: a timeout stands in.
