@@ -20,9 +20,10 @@ import { Cinzel, Cormorant_Garamond } from 'next/font/google'
  * the stylesheet next/font makes for it, on every route anyway. One set of
  * rules for the whole site also keeps the faces single: two @font-face sets
  * for one family on a page make document.fonts.load() (the intro's, and the
- * title cards') fetch both. The preloads below are on every route
- * therefore; /resume, which draws none of it, also prefetches them through
- * its link home.
+ * title cards') fetch both. The preloads below are on every page route
+ * therefore (/resume, which draws none of it, too), but not on the 404:
+ * Next serves not-found with no font preloads at all, so there the faces
+ * arrive after the first paint.
  *
  * Both are variable fonts, one latin file per style: Cinzel 25.9 kB,
  * Cormorant 37.8 kB upright and 39.3 kB italic. What the first screen draws
@@ -36,11 +37,19 @@ import { Cinzel, Cormorant_Garamond } from 'next/font/google'
  * the tagline's face is in at about 1.0-1.3 s instead of 1.9-2.0 s, and
  * the largest paint (the name, about 1.1-1.4 s) does not move; preloading
  * both styles, 77 kB, pushed Cinzel and the largest paint back by
- * 0.1-0.2 s. display: block keeps the big words from flashing in a
- * fallback face.
+ * 0.1-0.2 s.
+ *
+ * display: swap, so a heading is never blank while its face is on the way
+ * (on the 404, measured on that throttled phone, Cinzel and the italic land
+ * 0.65-0.8 s after the first paint; where web fonts are blocked, block
+ * would hide every heading for 3 s). next/font writes a size-adjusted
+ * fallback for each, so the swap barely moves a line. The intro and the
+ * title cards don't swap: they wait for the faces themselves (`fonts`,
+ * loadRomanFaces). The upright, which only the intro's counter draws, keeps
+ * block.
  */
-const cinzel = Cinzel({ subsets: ['latin'], display: 'block', variable: '--font-cinzel' })
-const cormorant = Cormorant_Garamond({ subsets: ['latin'], style: ['italic'], display: 'block', variable: '--font-cormorant' })
+const cinzel = Cinzel({ subsets: ['latin'], display: 'swap', variable: '--font-cinzel' })
+const cormorant = Cormorant_Garamond({ subsets: ['latin'], style: ['italic'], display: 'swap', variable: '--font-cormorant' })
 const cormorantUpright = Cormorant_Garamond({ subsets: ['latin'], style: ['normal'], display: 'block', preload: false })
 
 /** The class that defines --font-cinzel and --font-cormorant: on <html> (layout.tsx). */
