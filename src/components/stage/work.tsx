@@ -2,19 +2,115 @@
 
 import { ArrowUpRight } from 'lucide-react'
 import StackingCards, { StackingCardItem } from '@/components/ui/stacking-cards'
-import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import { PROJECTS, linkLabel, type Project } from '@/lib/content'
+import { toRoman } from '@/lib/roman'
+import { cn } from '@/lib/utils'
+import { stageButton } from './look'
 import { Container, SectionHeader } from './section-header'
 
 const pad = (n: number) => String(n).padStart(2, '0')
 
+/**
+ * Act I's own shape: each project an inscribed plaque. A dark tablet tinted
+ * with the imperial violet (lit from its upper corner, opaque, since the next
+ * plaque slides over it), a gold hairline edge and a finer rule inside it,
+ * held at its corners by four small gold rivets. Square cornered, as the
+ * intro's ENTER is. The plaque is Act I's alone: the products have their
+ * title cards, the certifications their own form.
+ */
+const PLAQUE = cn(
+  'relative mx-auto h-full w-full max-w-[1184px] gap-0 overflow-hidden rounded-[3px] py-0 text-foreground',
+  'border-gold/42 transition-[border-color] duration-500 hover:border-gold/70',
+  'bg-[linear-gradient(155deg,color-mix(in_oklab,var(--stage-accent)_36%,var(--background))_0%,color-mix(in_oklab,var(--stage-accent)_17%,var(--background))_48%,color-mix(in_oklab,var(--stage-accent)_9%,var(--background))_100%)]',
+  // A faint top bevel; below lg a soft drop, from lg the shadow the stack casts upward.
+  'shadow-[inset_0_1px_0_color-mix(in_oklab,var(--stage-glow)_12%,transparent),0_24px_48px_-32px_rgb(3_2_8/0.95)]',
+  'lg:shadow-[inset_0_1px_0_color-mix(in_oklab,var(--stage-glow)_12%,transparent),0_-24px_60px_-20px_rgb(3_2_8/0.9)]',
+)
+
+/** A rivet at one corner of the inner rule: a small gold boss, lit from the upper left. */
+const RIVET =
+  'absolute size-[5px] rounded-full bg-[radial-gradient(circle_at_35%_35%,var(--stage-glow),var(--stage-accent-ink)_55%,color-mix(in_oklab,var(--stage-accent-ink)_45%,var(--background)))]'
+
+/** The plaque's inner rule and its four rivets. Decoration only. */
+function InnerRule() {
+  return (
+    <span aria-hidden="true" className="pointer-events-none absolute inset-[7px] rounded-[1px] border border-gold/17 md:inset-2 lg:inset-4">
+      <span className={`${RIVET} -left-[3px] -top-[3px]`} />
+      <span className={`${RIVET} -right-[3px] -top-[3px]`} />
+      <span className={`${RIVET} -bottom-[3px] -left-[3px]`} />
+      <span className={`${RIVET} -bottom-[3px] -right-[3px]`} />
+    </span>
+  )
+}
+
+/** One handle (ansa) of the little tablet: a dovetail whose point meets the tablet's side. */
+function Ansa({ side }: { side: 'left' | 'right' }) {
+  return (
+    <svg viewBox="0 0 10 32" className={cn('h-8 w-2.5 shrink-0 overflow-visible', side === 'right' && '-scale-x-100')}>
+      <path d="M10 16 0.5 5.5v21Z" fill="none" stroke="currentColor" strokeWidth="1" strokeLinejoin="miter" vectorEffect="non-scaling-stroke" />
+    </svg>
+  )
+}
+
+/**
+ * The project's number, cut into a tabula ansata (the Romans' handled
+ * tablet for an inscription): its place in his order and the count, in
+ * Roman numerals in gold Cinzel. Screen readers keep the figures as they
+ * were ("01 / 09").
+ */
+function Index({ index }: { index: number }) {
+  return (
+    <p className="flex items-center self-start">
+      <span className="sr-only">
+        {pad(index + 1)} / {pad(PROJECTS.length)}
+      </span>
+      <span aria-hidden="true" className="flex items-center text-gold/60">
+        <Ansa side="left" />
+        <span className="flex h-8 items-center gap-2 border border-gold/60 px-3.5 font-roman font-medium leading-none">
+          <span className="text-[1.0625rem] tracking-[0.06em] text-gold">{toRoman(index + 1)}</span>
+          <span className="text-xs tracking-[0.14em] text-muted-foreground">/ {toRoman(PROJECTS.length)}</span>
+        </span>
+        <Ansa side="right" />
+      </span>
+    </p>
+  )
+}
+
+/** The plaque's way out: the Stage's secondary button (its domain, or "App Store"), or the plain status when there is no link yet. */
+function ProjectLink({ project }: { project: Project }) {
+  // Narrow phones: a little less tracking, so the longest domain keeps to one line at 320px.
+  const fit = 'max-[379px]:gap-2 max-[379px]:px-3 max-[379px]:tracking-[0.1em]'
+  if (!project.url) {
+    return (
+      <span
+        className={cn(
+          'inline-flex h-9 items-center whitespace-nowrap rounded-[2px] border border-dashed border-rule/95 px-4 font-sans text-[11px] font-medium uppercase tracking-[0.2em] text-muted-foreground',
+          fit,
+        )}
+      >
+        {linkLabel(project)}
+      </span>
+    )
+  }
+  return (
+    <a href={project.url} target="_blank" rel="noopener noreferrer" className={cn(stageButton('secondary', 'sm'), fit)}>
+      {linkLabel(project)}
+      <ArrowUpRight aria-hidden="true" />
+    </a>
+  )
+}
+
 function ProjectCard({ project, index }: { project: Project; index: number }) {
   return (
-    <Card className="mx-auto h-full w-full max-w-[1184px] gap-0 overflow-hidden rounded-3xl border-white/10 bg-[#0b0b0b] py-0 shadow-[0_-24px_60px_-20px_rgba(0,0,0,0.9)]">
-      <div className="grid h-full grid-rows-[auto_1fr] lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)] lg:grid-rows-1">
-        <div className="p-3 lg:order-2 lg:p-4 lg:pl-0">
-          <div className="relative aspect-[16/10] overflow-hidden rounded-2xl border border-white/10 bg-black">
+    <Card className={PLAQUE}>
+      <InnerRule />
+      <div className="grid h-full grid-rows-[auto_1fr] lg:grid-cols-2 lg:grid-rows-1 xl:grid-cols-[minmax(0,5fr)_minmax(0,7fr)]">
+        {/* The screenshot, whole (16:10), set into the plaque: centred in its
+            half from lg, and cut at the foot only if a short window makes
+            the plaque shorter than the picture. */}
+        <div className="p-3.5 md:p-4 lg:order-2 lg:flex lg:h-full lg:items-center lg:py-7 lg:pl-0 lg:pr-7">
+          <div className="relative aspect-[16/10] w-full overflow-hidden rounded-[2px] border border-gold/30 bg-background lg:max-h-full">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src={project.image}
@@ -26,36 +122,34 @@ function ProjectCard({ project, index }: { project: Project; index: number }) {
           </div>
         </div>
 
-        {/* Below lg the counter and link share the top row; from lg the
-            text column reads top to bottom with the link at its foot. */}
-        <div className="grid min-h-0 grid-cols-[1fr_auto] content-start items-center gap-x-3 px-5 pb-6 pt-1 lg:order-1 lg:flex lg:flex-col lg:items-stretch lg:p-10">
-          <p className="whitespace-nowrap font-mono text-xs tabular-nums text-muted-foreground">
-            {pad(index + 1)} / {pad(PROJECTS.length)}
-          </p>
-          <h3 className="col-span-2 mt-1.5 text-2xl font-semibold tracking-[-0.035em] lg:order-2 lg:mt-4 lg:text-[2.5rem] lg:leading-[1.05]">
+        {/* The inscription: the number, the title, the words, the tags, and
+            the link at its foot (from md, level across a row of plaques).
+            In a short window (720px high or less) the plaque is shorter, so
+            from lg the lines draw closer and the title a little smaller. */}
+        <div className="flex min-h-0 flex-col px-5 pb-7 pt-1.5 max-[379px]:px-4 md:px-6 lg:order-1 lg:px-11 lg:py-10 lg:[@media(max-height:45rem)]:py-7">
+          <Index index={index} />
+          <h3 className="mt-5 font-roman text-[1.625rem] font-medium leading-[1.12] tracking-[0.02em] text-balance text-foreground lg:mt-6 lg:text-[clamp(1.875rem,2.6vw,2.375rem)] lg:leading-[1.08] lg:[@media(max-height:45rem)]:mt-4 lg:[@media(max-height:45rem)]:text-[clamp(1.75rem,2.3vw,2.125rem)]">
             {project.title}
           </h3>
-          <p className="col-span-2 mt-2.5 text-sm leading-relaxed text-muted-foreground lg:order-3 lg:mt-5 lg:text-base">{project.description}</p>
-          <ul className="col-span-2 mt-4 flex flex-wrap gap-1.5 lg:order-4 lg:mt-6" aria-label="Tags">
-            {project.tags.map((tag) => (
-              <li key={tag} className="rounded-full border border-white/10 px-2.5 py-0.5 text-xs text-muted-foreground">
+          <p className="mt-3 text-[15px] leading-relaxed text-muted-foreground text-pretty lg:mt-4 xl:text-base lg:[@media(max-height:45rem)]:mt-3 xl:[@media(max-height:45rem)]:text-[15px]">{project.description}</p>
+          <ul
+            className="mt-4 flex flex-wrap items-center gap-x-2.5 gap-y-1 font-sans text-[11px] font-medium uppercase leading-5 tracking-[0.2em] text-muted-foreground lg:mt-5 lg:[@media(max-height:45rem)]:mt-4"
+            aria-label="Tags"
+          >
+            {project.tags.map((tag, i) => (
+              <li key={tag} className="flex items-center gap-2.5">
                 {tag}
+                {/* The inscriptions' own word divider. */}
+                {i < project.tags.length - 1 ? (
+                  <span aria-hidden="true" className="text-gold">
+                    ·
+                  </span>
+                ) : null}
               </li>
             ))}
           </ul>
-          <div className="col-start-2 row-start-1 lg:order-5 lg:mt-auto lg:pt-5">
-            {project.url ? (
-              <Button asChild variant="outline" size="sm" className="rounded-full">
-                <a href={project.url} target="_blank" rel="noopener noreferrer">
-                  {linkLabel(project)}
-                  <ArrowUpRight aria-hidden="true" />
-                </a>
-              </Button>
-            ) : (
-              <span className="inline-flex h-8 items-center whitespace-nowrap rounded-full border border-dashed border-white/15 px-3 text-sm text-muted-foreground">
-                {linkLabel(project)}
-              </span>
-            )}
+          <div className="mt-auto pt-6 lg:pt-7 lg:[@media(max-height:45rem)]:pt-5">
+            <ProjectLink project={project} />
           </div>
         </div>
       </div>
