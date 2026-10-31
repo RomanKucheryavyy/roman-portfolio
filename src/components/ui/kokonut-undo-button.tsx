@@ -73,12 +73,22 @@ export interface UndoButtonProps {
   onCommit?: () => void;
   onUndo?: () => void;
   className?: string;
+  /**
+   * [site edit] The corner radius, in px, of the outline the countdown
+   * drains along. Leave it out for the published pill (half the height);
+   * set it with a matching `rounded-[…]` in className for a squarer button.
+   */
+  radius?: number;
 }
 
 // A pill outline that starts at the top centre and runs clockwise, so the
 // countdown drains back toward where it began.
-function pillPath(width: number, height: number) {
+function pillPath(width: number, height: number, radius?: number) {
   const s = STROKE / 2;
+  // [site edit] A rounded rectangle when a radius is given; the pill as published otherwise.
+  if (radius !== undefined) {
+    return roundedPath(width, height, Math.max(0, Math.min(radius, height / 2) - s));
+  }
   const r = height / 2 - s;
   const left = s + r;
   const right = width - s - r;
@@ -88,6 +98,23 @@ function pillPath(width: number, height: number) {
     `A ${r} ${r} 0 0 1 ${right} ${height - s}`,
     `H ${left}`,
     `A ${r} ${r} 0 0 1 ${left} ${s}`,
+    "Z",
+  ].join(" ");
+}
+
+// [site edit] The same outline with corners of radius r, from the top centre, clockwise.
+function roundedPath(width: number, height: number, r: number) {
+  const s = STROKE / 2;
+  return [
+    `M ${width / 2} ${s}`,
+    `H ${width - s - r}`,
+    `A ${r} ${r} 0 0 1 ${width - s} ${s + r}`,
+    `V ${height - s - r}`,
+    `A ${r} ${r} 0 0 1 ${width - s - r} ${height - s}`,
+    `H ${s + r}`,
+    `A ${r} ${r} 0 0 1 ${s} ${height - s - r}`,
+    `V ${s + r}`,
+    `A ${r} ${r} 0 0 1 ${s + r} ${s}`,
     "Z",
   ].join(" ");
 }
@@ -107,6 +134,7 @@ export default function UndoButton({
   onCommit,
   onUndo,
   className,
+  radius,
 }: UndoButtonProps) {
   const [phase, setPhase] = useState<Phase>("idle");
   const [seconds, setSeconds] = useState(Math.ceil(duration / 1000));
@@ -163,13 +191,13 @@ export default function UndoButton({
     const observer = new ResizeObserver(() => {
       pathRef.current?.setAttribute(
         "d",
-        pillPath(button.offsetWidth, button.offsetHeight)
+        pillPath(button.offsetWidth, button.offsetHeight, radius)
       );
       paint();
     });
     observer.observe(button);
     return () => observer.disconnect();
-  }, [paint]);
+  }, [paint, radius]);
 
   const undo = useCallback(() => {
     setPhase("idle");
