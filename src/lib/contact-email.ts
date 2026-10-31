@@ -19,9 +19,9 @@ import { firstName } from '@/lib/first-name'
  * layout, every style inline (the <style> block only tightens the padding on
  * phones, and the email reads fine where a client drops it), widths in
  * attributes as well as CSS, a fixed 560px column for Outlook's Word engine,
- * system fonts, a light page. The one accent is the site's violet
- * (src/components/stage/look.ts): its deep fill for text and links, which
- * reads on white, and its light ink for the rule and the quote's edge only,
+ * system fonts, a light page. The accents are the site's
+ * (src/components/stage/look.ts): its imperial violet for text and links,
+ * which reads on white, and its gold for the rule and the quote's edge only,
  * since it is too pale for text on white.
  *
  * Every value from the form is HTML-escaped here. The route passes the name
@@ -57,9 +57,9 @@ export interface Email {
 }
 
 const look = STAGE_STYLE as unknown as Record<string, string>
-/** The violet as a fill: text and links on white. */
+/** The imperial violet: text and links on white. */
 const INK = look['--stage-accent']
-/** The violet as the page draws it on black: decoration only here. */
+/** The gold the page draws on the dark: decoration only here. */
 const TINT = look['--stage-accent-ink']
 const PAGE = '#f4f4f5'
 const CARD = '#ffffff'

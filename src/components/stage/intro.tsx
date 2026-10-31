@@ -76,8 +76,10 @@ export function Intro() {
     // Read once: the gate script decided before the first paint. Absent
     // means no intro (or the fail-safe already gave the page back).
     if (document.documentElement.getAttribute('data-intro') !== '') return
-    // The faces' @font-face rules come with this import (preload is off; see
-    // roman-type.ts), so a visit without the intro loads neither.
+    // The faces' @font-face rules are the whole site's now (roman-type.ts
+    // loads with the root layout), but the stage's counter is the one
+    // upright Cormorant on the page: start it (and the rest, each at most
+    // once) before the stage's chunk asks.
     import('./roman-type')
       .then((m) => m.loadRomanFaces())
       .catch(() => {})

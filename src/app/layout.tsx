@@ -1,12 +1,16 @@
 import type { Metadata, Viewport } from 'next'
 import { Geist, Geist_Mono } from 'next/font/google'
 import { ThemeProvider } from 'next-themes'
+import { PALETTE } from '@/components/stage/imperial'
+import { ROMAN_TYPE } from '@/components/stage/roman-type'
 import { SITE } from '@/lib/constants'
 import { TITLE_TEMPLATE } from '@/lib/seo'
 import './globals.css'
 
 // Self-hosted at build time, so no request leaves for Google Fonts.
-// globals.css points font-sans and font-mono at these variables.
+// globals.css points font-sans and font-mono at these variables, and
+// font-roman and font-serif at the Roman faces' (ROMAN_TYPE: the Stage, the
+// 404 and the error page draw them; roman-type.ts says why they are here).
 const geistSans = Geist({ subsets: ['latin'], variable: '--font-geist-sans' })
 const geistMono = Geist_Mono({ subsets: ['latin'], variable: '--font-geist-mono' })
 
@@ -39,7 +43,8 @@ export const viewport: Viewport = {
   initialScale: 1,
   // No maximumScale / userScalable: false. Blocking pinch-zoom fails WCAG
   // 1.4.4; a 16px field is what stops iOS zooming in on focus.
-  themeColor: '#060606',
+  // The Stage's ground (imperial.ts).
+  themeColor: PALETTE.ground,
   colorScheme: 'dark',
 }
 
@@ -50,7 +55,7 @@ export const viewport: Viewport = {
  */
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className={`dark ${geistSans.variable} ${geistMono.variable}`} suppressHydrationWarning>
+    <html lang="en" className={`dark ${geistSans.variable} ${geistMono.variable} ${ROMAN_TYPE}`} suppressHydrationWarning>
       {/* Inline as well as in classes: Next's built-in error pages inject an
           unlayered body{background:#fff;color:#000}, which beats any
           utility. */}
