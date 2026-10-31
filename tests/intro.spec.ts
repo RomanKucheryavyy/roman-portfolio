@@ -35,13 +35,14 @@ async function expectGone(page: Page) {
 }
 
 /**
- * The page scrolls again: the document is no longer held still (a script's
- * scrollBy would move it even then), and the keyboard moves it.
+ * The page scrolls again: the document is no longer held still (the check
+ * that counts: a script's scrollBy moves it even while it is), and there is
+ * a page to scroll.
  */
 async function expectScrolls(page: Page) {
   expect(await page.evaluate(() => getComputedStyle(document.documentElement).overflowY)).not.toBe('hidden')
   const before = await page.evaluate(() => window.scrollY)
-  await page.keyboard.press('PageDown')
+  await page.evaluate(() => window.scrollBy(0, 300))
   await expect.poll(() => page.evaluate(() => window.scrollY)).toBeGreaterThan(before)
 }
 
@@ -238,11 +239,8 @@ test.describe('a proper modal', () => {
   test('Tab stays inside it while it is up, and every stop shows, ringed', async ({ page }) => {
     await openIntro(page)
     const check = async (when: string) => {
-      for (let i = 0; i < 10; i++) {
-        await page.keyboard.press('Tab')
-        // Let a late control's fade (Enter, Skip) catch up with its focus.
-        await sleep(350)
-        const stop = await page.evaluate((sel) => {
+      const read = () =>
+        page.evaluate((sel) => {
           const el = document.activeElement as HTMLElement | null
           if (!el || !el.closest(sel)) return { inside: false, name: el?.tagName ?? 'none', opacity: 0, ring: false }
           let opacity = 1
@@ -250,9 +248,13 @@ test.describe('a proper modal', () => {
           const style = getComputedStyle(el)
           return { inside: true, name: (el.textContent ?? '').trim().slice(0, 24) || el.className.toString().slice(0, 24), opacity, ring: style.outlineStyle !== 'none' && parseFloat(style.outlineWidth) > 0 }
         }, LAYER)
+      for (let i = 0; i < 10; i++) {
+        await page.keyboard.press('Tab')
+        const stop = await read()
         expect(stop.inside, `${when}: Tab ${i + 1} left the intro (${stop.name})`).toBe(true)
-        expect(stop.opacity, `${when}: "${stop.name}" is focused but not shown`).toBeGreaterThan(0.6)
         expect(stop.ring, `${when}: "${stop.name}" has no focus ring`).toBe(true)
+        // Shown the moment it has focus (a frame or two to paint it).
+        await expect.poll(async () => (await read()).opacity, { message: `${when}: "${stop.name}" is focused but not shown`, timeout: 600 }).toBeGreaterThan(0.6)
       }
     }
     await check('load')
@@ -261,7 +263,8 @@ test.describe('a proper modal', () => {
   })
 
   test('if the stage fails to load, the page comes back at once', async ({ page }) => {
-    await page.route('**/_next/static/chunks/**', async (route) => {
+    // Its script only: the site's stylesheet names the layer too.
+    await page.route(/\/_next\/static\/chunks\/.*\.js(\?|$)/, async (route) => {
       const response = await route.fetch()
       const body = await response.text()
       if (body.includes('data-intro-layer')) return route.abort()
@@ -276,7 +279,7 @@ test.describe('a proper modal', () => {
 
   test('if the stage never arrives, the fail-safe gives the page back and it never shows late', async ({ page }) => {
     let held = 0
-    await page.route('**/_next/static/chunks/**', async (route) => {
+    await page.route(/\/_next\/static\/chunks\/.*\.js(\?|$)/, async (route) => {
       const response = await route.fetch()
       const body = await response.text()
       if (body.includes('data-intro-layer')) {

@@ -70,8 +70,10 @@ const year = toRoman(new Date().getFullYear())
  *   empty landmarks: they go too;
  * - its root, a Tab stop while it loads, shows a gold ring when it has
  *   keyboard focus (the component rings only what is inside it);
- * - Enter and Skip fade in late (2.2 s and 1.6 s), but can take focus at
- *   once: with keyboard focus they show at once.
+ * - Enter and Skip fade in late (2.2 s and 1.6 s), and the nav's links
+ *   shortly after the stage comes up, but each can take focus at once:
+ *   with keyboard focus its fade is cancelled, so it shows at once (a
+ *   new delay would not touch a fade already under way).
  */
 const LOOK = [
   'bg-transparent!',
@@ -86,7 +88,8 @@ const LOOK = [
   '[&_.om-tagline]:text-balance',
   'max-sm:[&_.om-top_nav]:hidden!',
   'focus-visible:outline focus-visible:outline-1 focus-visible:-outline-offset-8 focus-visible:outline-[#d6b25e]',
-  '[&_.om-cta:focus-visible]:opacity-100! [&_.om-cta:focus-visible]:[transition-delay:0s]! [&_.om-skip:focus-visible]:opacity-100! [&_.om-skip:focus-visible]:[transition-delay:0s]!',
+  '[&_.om-cta:focus-visible]:opacity-100! [&_.om-cta:focus-visible]:transition-none! [&_.om-skip:focus-visible]:opacity-100! [&_.om-skip:focus-visible]:transition-none!',
+  '[&_.om-top_li:has(:focus-visible)]:opacity-100! [&_.om-top_li:has(:focus-visible)]:transition-none!',
 ].join(' ')
 
 /** The wide cast, Apollo's cut-off arm past the edge of a screen this size. */
