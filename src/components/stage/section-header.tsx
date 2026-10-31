@@ -52,12 +52,12 @@ export function SectionHeader({
  */
 export function Ornament({ className }: { className?: string }) {
   return (
-    <span aria-hidden="true" className={cn('flex items-center justify-center gap-3 text-[var(--stage-accent-ink)]', className)}>
-      <span className="h-px w-12 bg-linear-to-r from-transparent to-[color-mix(in_oklab,var(--stage-accent-ink)_75%,transparent)] md:w-20" />
+    <span aria-hidden="true" className={cn('flex items-center justify-center gap-3 text-gold', className)}>
+      <span className="h-px w-12 bg-linear-to-r from-transparent to-gold/75 md:w-20" />
       <svg viewBox="0 0 12 12" className="size-3 shrink-0" fill="currentColor">
         <path d="M6 0c.35 3.1 2.9 5.65 6 6-3.1.35-5.65 2.9-6 6-.35-3.1-2.9-5.65-6-6 3.1-.35 5.65-2.9 6-6Z" />
       </svg>
-      <span className="h-px w-12 bg-linear-to-l from-transparent to-[color-mix(in_oklab,var(--stage-accent-ink)_75%,transparent)] md:w-20" />
+      <span className="h-px w-12 bg-linear-to-l from-transparent to-gold/75 md:w-20" />
     </span>
   )
 }

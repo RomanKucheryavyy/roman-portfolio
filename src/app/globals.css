@@ -5,8 +5,8 @@
    on its own wrapper (look.ts): its ground, its marble and lavender inks,
    its violet and gold, its ring.
 
-   Below the theme: the Stage accent for pages outside that wrapper, and the
-   résumé builder's own tokens. */
+   Below the theme: the Stage accent for pages outside that wrapper, the
+   Stage's inks as Tailwind colours, and the résumé builder's own tokens. */
 @import "tailwindcss";
 @import "tw-animate-css";
 /* The redesign lab is a separate app; keep its classes out of this build. */
@@ -146,6 +146,17 @@
 :root {
   --stage-accent: #24115e;
   --stage-accent-ink: #d6b25e;
+}
+
+/* The same inks as Tailwind colours, so the Stage's classes name the
+   palette: text-gold, border-gold/40, bg-imperial/45, hover:text-glow,
+   border-rule/60. They read the variables above (look.ts sets them all on
+   the Stage's wrapper), so nothing here holds a colour of its own. */
+@theme inline {
+  --color-gold: var(--stage-accent-ink);
+  --color-imperial: var(--stage-accent);
+  --color-glow: var(--stage-glow);
+  --color-rule: var(--stage-rule);
 }
 
 /* ── The intro (src/components/stage/intro.tsx) ──

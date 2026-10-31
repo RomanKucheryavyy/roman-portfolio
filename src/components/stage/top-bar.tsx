@@ -28,14 +28,14 @@ const SHOW = {
 
 /** One focus ring for the bar: the page's gold, clear of the text. */
 const RING =
-  'rounded-sm focus-visible:outline-2 focus-visible:outline-solid focus-visible:outline-offset-4 focus-visible:outline-[var(--stage-accent-ink)]'
+  'rounded-sm focus-visible:outline-2 focus-visible:outline-solid focus-visible:outline-offset-4 focus-visible:outline-gold'
 
 /**
  * A gold hairline under a section's link, drawn from the left on hover and
  * held under the section on screen. (The ::after pads the tap target.)
  */
 const MARK =
-  'before:absolute before:inset-x-0 before:-bottom-1.5 before:h-px before:origin-left before:scale-x-0 before:bg-[var(--stage-accent-ink)] before:transition-transform before:duration-300 hover:before:scale-x-100 [&[aria-current]]:text-foreground [&[aria-current]]:before:scale-x-100'
+  'before:absolute before:inset-x-0 before:-bottom-1.5 before:h-px before:origin-left before:scale-x-0 before:bg-gold before:transition-transform before:duration-300 hover:before:scale-x-100 [&[aria-current]]:text-foreground [&[aria-current]]:before:scale-x-100'
 
 /** The section under the middle of the screen, if any. */
 function useCurrentSection(): string | null {
@@ -76,7 +76,7 @@ export function TopBar() {
       className={cn(
         'fixed inset-x-0 top-0 z-50 border-b transition-[background-color,border-color] duration-500',
         scrolled
-          ? 'border-[var(--border)] bg-[color-mix(in_oklab,var(--background)_78%,transparent)] backdrop-blur-md'
+          ? 'border-border bg-background/78 backdrop-blur-md'
           : 'border-transparent bg-transparent',
       )}
     >
@@ -89,12 +89,12 @@ export function TopBar() {
         <a
           href="#top"
           className={cn(
-            'shrink-0 font-roman text-[15px] font-semibold tracking-[0.08em] text-foreground transition-colors hover:text-[var(--stage-glow)] sm:text-sm sm:tracking-[0.06em] md:text-base',
+            'shrink-0 font-roman text-[15px] font-semibold tracking-[0.08em] text-foreground transition-colors hover:text-glow sm:text-sm sm:tracking-[0.06em] md:text-base',
             RING,
           )}
         >
           <span aria-hidden="true" className="sm:hidden">
-            R<span className="text-[var(--stage-accent-ink)]">·</span>K
+            R<span className="text-gold">·</span>K
           </span>
           <span className="max-sm:sr-only">{PERSON.name}</span>
         </a>
@@ -118,7 +118,7 @@ export function TopBar() {
           </ul>
           <a
             href={`mailto:${PERSON.links.email}`}
-            className={cn('hidden text-sm text-foreground transition-colors hover:text-[var(--stage-accent-ink)] lg:inline', RING)}
+            className={cn('hidden text-sm text-foreground transition-colors hover:text-gold lg:inline', RING)}
           >
             {PERSON.links.email}
           </a>
@@ -126,7 +126,7 @@ export function TopBar() {
             href={`mailto:${PERSON.links.email}`}
             aria-label={`Email ${PERSON.links.email}`}
             className={cn(
-              '-mr-2 grid size-9 shrink-0 place-items-center rounded-full text-foreground transition-colors hover:text-[var(--stage-accent-ink)] lg:hidden',
+              '-mr-2 grid size-9 shrink-0 place-items-center rounded-full text-foreground transition-colors hover:text-gold lg:hidden',
               RING,
               'rounded-full',
             )}

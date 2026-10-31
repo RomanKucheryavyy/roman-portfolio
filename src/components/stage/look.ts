@@ -49,7 +49,7 @@ export const STAGE_STYLE = {
 
 /** One focus ring for every link and button inside: gold, 2px, clear of the shape. */
 export const STAGE_FOCUS =
-  '[&_:is(a,button):focus-visible]:outline-2 [&_:is(a,button):focus-visible]:outline-solid [&_:is(a,button):focus-visible]:outline-offset-4 [&_:is(a,button):focus-visible]:outline-[var(--stage-accent-ink)]'
+  '[&_:is(a,button):focus-visible]:outline-2 [&_:is(a,button):focus-visible]:outline-solid [&_:is(a,button):focus-visible]:outline-offset-4 [&_:is(a,button):focus-visible]:outline-gold'
 
 /** The stage's light for a page with no curtain (the 404, the error page): the imperial violet washing down from above. */
 export const WASH =
@@ -59,8 +59,8 @@ export const WASH =
 export const KICKER = 'font-sans text-xs font-medium uppercase tracking-[0.24em] text-muted-foreground'
 
 /** The act's numeral, in gold Cinzel ("II"), and the short gold hairline after it. */
-export const NUMERAL = 'font-roman text-[2rem] font-medium leading-none tracking-[0.04em] text-[var(--stage-accent-ink)] md:text-[2.5rem]'
-export const HAIRLINE = 'h-px w-10 shrink-0 bg-[color-mix(in_oklab,var(--stage-accent-ink)_65%,transparent)] md:w-14'
+export const NUMERAL = 'font-roman text-[2rem] font-medium leading-none tracking-[0.04em] text-gold md:text-[2.5rem]'
+export const HAIRLINE = 'h-px w-10 shrink-0 bg-gold/65 md:w-14'
 
 /** Every section heading's display type: Cinzel, marble (lowercase draws as small capitals). */
 export const DISPLAY =
@@ -85,9 +85,9 @@ const BUTTON_SIZE = {
 } as const
 const BUTTON_KIND = {
   primary:
-    'border-[var(--foreground)] bg-[var(--foreground)] text-[var(--background)] hover:border-[var(--stage-glow)] hover:bg-[var(--stage-glow)]',
+    'border-foreground bg-foreground text-background hover:border-glow hover:bg-glow',
   secondary:
-    'border-[color-mix(in_oklab,var(--stage-accent-ink)_70%,transparent)] bg-[color-mix(in_oklab,var(--background)_45%,transparent)] text-[var(--foreground)] hover:border-[var(--stage-accent-ink)] hover:bg-[color-mix(in_oklab,var(--stage-accent-ink)_12%,transparent)] hover:text-[var(--stage-glow)]',
+    'border-gold/70 bg-background/45 text-foreground hover:border-gold hover:bg-gold/12 hover:text-glow',
 } as const
 
 export function stageButton(kind: keyof typeof BUTTON_KIND = 'primary', size: keyof typeof BUTTON_SIZE = 'md'): string {
