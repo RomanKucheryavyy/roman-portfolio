@@ -151,15 +151,18 @@ test.describe('what it says', () => {
   test('Skip rushes the load', async ({ page }) => {
     await openIntro(page)
     await page.getByRole('button', { name: 'Skip' }).click()
-    await expect.poll(() => phase(page), { timeout: 2000 }).not.toBe('load')
+    // Left alone the load takes 3.6 s at least (its count follows the
+    // component's surge and stall to the end); rushed, it is over sooner.
+    await expect.poll(() => phase(page), { timeout: 3000 }).not.toBe('load')
   })
 })
 
 test.describe('the ways out', () => {
-  test('Enter at the landing lifts it onto the page, focus on main', async ({ page }) => {
+  test('Enter lifts it onto the page the moment it shows (during the unveil too), focus on main', async ({ page }) => {
     await openIntro(page)
     const enter = page.getByRole('button', { name: 'Enter' })
     await expect(enter).toBeVisible({ timeout: 20_000 })
+    // It shows from the unveil on; a click then must not be lost.
     await enter.click()
     await expectGone(page)
     await expect.poll(() => page.evaluate(() => document.activeElement?.id)).toBe('main')
@@ -245,6 +248,8 @@ test.describe('a proper modal', () => {
 test.describe('layout', () => {
   test('no sideways scroll, and the pills never overlap, 320 to 1920 wide', async ({ page }) => {
     test.skip(project() !== 'desktop', 'One sweep of window sizes is enough.')
+    // Six intros, each to its landing.
+    test.setTimeout(240_000)
     for (const [width, height] of [
       [320, 640],
       [390, 844],

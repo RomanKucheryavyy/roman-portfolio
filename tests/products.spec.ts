@@ -393,7 +393,10 @@ test.describe('the products act, under reduced motion', () => {
     await card.evaluate((el) => el.scrollIntoView({ block: 'center', behavior: 'instant' }))
     const root = card.locator('.om-root')
     await expect(root).toBeAttached({ timeout: 20_000 })
-    await expect(root).toHaveAttribute('data-phase', 'landing')
-    await expect(root).toHaveAttribute('data-instant', 'true')
+    // No load: it is on the landing within a moment of mounting (a playing
+    // card holds its load for 1.8 s at least), the count already at C.
+    await expect(root).toHaveAttribute('data-phase', 'landing', { timeout: 600 })
+    await expect(root).toHaveAttribute('aria-busy', 'false', { timeout: 600 })
+    await expect(card.locator('.om-num')).toHaveText('C', { timeout: 600 })
   })
 })

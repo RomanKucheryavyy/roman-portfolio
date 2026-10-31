@@ -1053,10 +1053,10 @@ export default function OldMastersPreloader({
     }
   }, [phase, hasChildren, holdMs, wordmark, tagline])
 
-  // [site edit] lift: from the load, the unveil or the landing, straight into the exit.
+  // [site edit] lift: from the load, the unveil or the landing, straight into the exit, and back into it if the unveil's timer set the landing in the same moment.
   React.useEffect(() => {
-    if (liftNow && hasChildren) setPhase((p) => (p === "exit" || p === "done" ? p : "exit"))
-  }, [liftNow, hasChildren])
+    if (liftNow && hasChildren && phase !== "exit" && phase !== "done") setPhase("exit")
+  }, [liftNow, hasChildren, phase])
 
   // With children: a wheel or a swipe lifts the stage.
   React.useEffect(() => {

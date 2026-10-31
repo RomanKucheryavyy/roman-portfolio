@@ -24,7 +24,7 @@ import { SECTIONS } from './top-bar'
  *
  * Ways out, every one lifting the stage straight off onto the page (the
  * component's `lift`, [site edit] 4), from any phase: Enter (the call to
- * action), a wheel down or an upward swipe, Escape, ArrowDown, PageDown or
+ * action, which shows during the unveil already), a wheel down or an upward swipe, Escape, ArrowDown, PageDown or
  * End, and the nav links, which land on their section. A click, Space or
  * Enter on the stage during the load, or its Skip button, rushes the load,
  * as the component does on its own. When it has lifted, focus goes to
@@ -206,6 +206,12 @@ export default function IntroStage({ cast, onDone }: { cast: Promise<void>; onDo
       return a ? a.getAttribute('href')!.slice(1) : null
     }
     const onClick = (e: MouseEvent) => {
+      // The call to action shows from the unveil on, while the component's
+      // own handler only acts on it at the landing: it lifts from any phase.
+      if ((e.target as Element | null)?.closest?.('.om-cta')) {
+        out()
+        return
+      }
       const id = navLink(e)
       if (!id) return
       e.preventDefault()
