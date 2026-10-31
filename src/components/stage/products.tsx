@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button'
 import { PRODUCTS, type Product } from '@/lib/content'
 import { cn } from '@/lib/utils'
 import { CAPTION_ROW, FLOW_BOX, LIVE_BOX } from './preview-box'
+import { ProductStage } from './product-stage'
 import { Container, SectionHeader } from './section-header'
 
 const pad = (n: number) => String(n).padStart(2, '0')
@@ -43,10 +44,11 @@ function ProductRow({ product, index }: { product: Product; index: number }) {
   const flip = index % 2 === 1
   const text = flip ? 'lg:col-start-2' : 'lg:col-start-1'
   return (
-    <li className="border-t border-white/[0.07] py-16 md:py-24 lg:py-28">
+    <li>
+      <ProductStage product={product} index={index} />
       <Container
         className={cn(
-          'grid grid-cols-1 gap-y-8 md:gap-y-10 lg:grid-rows-[auto_auto] lg:gap-x-16 lg:gap-y-6',
+          'grid grid-cols-1 gap-y-8 py-16 md:gap-y-10 md:py-24 lg:grid-rows-[auto_auto] lg:gap-x-16 lg:gap-y-6 lg:py-28',
           flip ? 'lg:grid-cols-[minmax(0,7fr)_minmax(0,5fr)]' : 'lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)]',
         )}
       >
@@ -93,9 +95,10 @@ function ProductRow({ product, index }: { product: Product; index: number }) {
 }
 
 /**
- * Act II: his own products, after the client work of Act I. Each one is a
- * split tour, alternating sides from lg: what it is on one side, a look at
- * it on the other. The public ones show their live sites, scrolling in a
+ * Act II: his own products, after the client work of Act I. Each one opens
+ * on its title card (product-stage.tsx: its name in marble, one statue),
+ * then a split tour, alternating sides from lg: what it is on one side, a
+ * look at it on the other. The public ones show their live sites, scrolling in a
  * browser and on a phone; the private ones, which have no public screens,
  * show their parts around them, in the description's own words. Nothing
  * takes over the scroll: the previews move by themselves, and only while in
