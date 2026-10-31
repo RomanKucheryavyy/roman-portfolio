@@ -55,9 +55,13 @@ const chunk = (size: number) =>
 
 /**
  * How the eight seals are laid out. Moving rows run full-bleed so the
- * module's own edge fade sits at the screen edge. Under reduced motion the
- * rows hold still and must show every seal without sideways scrolling, so
- * they sit in the page column with fewer seals per row.
+ * module's own edge fade sits at the screen edge. Wide, all eight run in
+ * one row: its track (about 2,700px) is wider than any screen up to 1920,
+ * so no seal shows twice at once (three rows of two or three, each shorter
+ * than the screen, wrote every one out two or three times over). On a
+ * phone, four rows of two, each wider than the screen. Under reduced motion
+ * the rows hold still and must show every seal without sideways scrolling,
+ * so they sit in the page column with fewer seals per row.
  *
  * RESERVE holds each layout's rendered height while the browser-only
  * marquee loads, so nothing moves when it arrives: rows of 52px (a 36px
@@ -69,7 +73,7 @@ const chunk = (size: number) =>
  * Literal numbers, so Tailwind finds the classes.
  */
 const LAYOUTS = {
-  wide: { stacks: [items.slice(0, 3), items.slice(3, 6), items.slice(6)] },
+  wide: { stacks: [items] },
   narrow: { stacks: chunk(2) },
   stillWide: { stacks: chunk(2) },
   stillNarrow: { stacks: chunk(1) },
@@ -78,8 +82,8 @@ const LAYOUTS = {
 type Layout = keyof typeof LAYOUTS
 
 const RESERVE = [
-  // wide: 3 * 52 + 2 + 2, + 12 + 32
-  '[@media(prefers-reduced-motion:no-preference)_and_(min-width:601px)]:min-h-[204px]',
+  // wide: 52 + 2, + 12 + 32
+  '[@media(prefers-reduced-motion:no-preference)_and_(min-width:601px)]:min-h-[98px]',
   // narrow: 4 * 52 + 3 + 2, + 12 + 32
   '[@media(prefers-reduced-motion:no-preference)_and_(max-width:600px)]:min-h-[257px]',
   // stillWide: 4 * 52 + 3 + 2
@@ -97,8 +101,8 @@ const RESERVE = [
  * violet rule between them; each badge loses its box and becomes a seal
  * (FRIEZE_SEAL) and its words in Cinzel (FRIEZE_WORDS, 12px and closer set
  * below 360px wide so the longest fits a 320px phone's still list, 13px,
- * then 14px from lg). The pause control takes the Stage's square shape and
- * a gold edge.
+ * the most that fits the still list from 360px, then 15px from lg). The
+ * pause control takes the Stage's square shape and a gold edge.
  *
  * Act I's projects are plaques (rectangles, rivets, Roman numerals); these
  * are round, struck, and unnumbered, so the two never read as one idea.
@@ -125,7 +129,7 @@ const FRIEZE_SEAL = [
 /** The inscription: Cinzel, in the module's ink (marble, below). */
 const FRIEZE_WORDS = [
   '[&_span>span+span]:font-roman [&_span>span+span]:font-medium [&_span>span+span]:tracking-[0.05em] max-[359.98px]:[&_span>span+span]:tracking-[0.03em]',
-  '[&_span>span+span]:text-[12px] min-[360px]:[&_span>span+span]:text-[13px] lg:[&_span>span+span]:text-[14px]',
+  '[&_span>span+span]:text-[12px] min-[360px]:[&_span>span+span]:text-[13px] lg:[&_span>span+span]:text-[15px]',
 ].join(' ')
 
 /**
@@ -199,7 +203,10 @@ export function Credentials() {
       aria-label="Salesforce certifications"
       stacks={stacks.map((s) => [...s])}
       rows={stacks.length}
-      duration={34}
+      // The module moves a row by its own width in `duration` seconds, so the
+      // one long row takes longer, to run at the pace the rows of two do
+      // (about 20-30px a second, slow enough to read).
+      duration={layout === 'wide' ? 90 : 34}
       showControl
       className={cn(FRIEZE, FRIEZE_SEAL, FRIEZE_WORDS, still ? FRIEZE_STILL : FRIEZE_MOVING, layout === 'stillWide' && FRIEZE_TWO_UP)}
     />
