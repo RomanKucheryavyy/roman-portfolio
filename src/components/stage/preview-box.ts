@@ -17,10 +17,11 @@ export const LIVE_BOX = 'mx-auto aspect-[1/2] w-[min(62vw,15.5rem)] md:mx-0 md:a
 /**
  * A private product's diagram panel: from md the live previews' own 3:2
  * stage, so the rows keep one rhythm; below md, a fixed height that holds
- * the taller diagram at 320px wide. tests/products.spec.ts checks that
- * nothing overflows at any width.
+ * the taller diagram at 320px wide, with room for its beams around the
+ * hub's two lines of 18px Cormorant. tests/products.spec.ts checks that
+ * nothing overflows and every beam shows at any width.
  */
-export const FLOW_BOX = 'h-[36rem] md:h-auto md:aspect-[3/2]'
+export const FLOW_BOX = 'h-[37rem] md:h-auto md:aspect-[3/2]'
 
 /** The line under either: a caption and the Pause / Play button, two lines of text at most. */
 export const CAPTION_ROW = 'mt-5 flex h-8 items-center justify-between gap-4 text-xs leading-4 text-muted-foreground md:mt-6'

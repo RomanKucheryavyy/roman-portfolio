@@ -340,6 +340,8 @@ test.describe('the title cards', () => {
     await card.evaluate((el) => el.scrollIntoView({ block: 'center', behavior: 'instant' }))
     await expect(card).toHaveAttribute('data-live', 'true')
     await expect(card.locator('.om-root')).toBeAttached({ timeout: 20_000 })
+    // It opens on its own word filling in, not on the intro's count.
+    await expect(card.locator('.om-counter')).toBeHidden()
     expect(await card.evaluate((el) => el.getBoundingClientRect().height)).toBe(before)
     expect(await offset()).toBe(gapBefore)
     // Gone from the screen: the stage unmounts.
@@ -416,9 +418,10 @@ test.describe('the products act, under reduced motion', () => {
     const root = card.locator('.om-root')
     await expect(root).toBeAttached({ timeout: 20_000 })
     // No load: it is on the landing within a moment of mounting (a playing
-    // card holds its load for 1.8 s at least), the count already at C.
+    // card holds its load for 1.8 s at least). The intro's count, barcode and
+    // plate are the intro's alone: never shown on a card.
     await expect(root).toHaveAttribute('data-phase', 'landing', { timeout: 600 })
     await expect(root).toHaveAttribute('aria-busy', 'false', { timeout: 600 })
-    await expect(card.locator('.om-num')).toHaveText('C', { timeout: 600 })
+    for (const part of ['.om-counter', '.om-bars', '.om-plate']) await expect(card.locator(part)).toBeHidden()
   })
 })
