@@ -50,8 +50,8 @@ const ContactWithGlobe = dynamic(() => import('./contact-card'), {
 })
 const FooterSection5 = dynamic(() => import('@/components/ui/footer-section-5'), {
   ssr: false,
-  // Its wordmark scales with the width, so the height does too.
-  loading: hold('h-[calc(813px+16.1vw)] bg-background sm:h-[calc(779px+16.1vw)] md:h-[calc(912px+11.2vw)] lg:h-[calc(581px+11.2vw)]'),
+  // With its wordmark hidden (Footer, below), a fixed height at each width.
+  loading: hold('h-[813px] bg-background sm:h-[779px] md:h-[912px] lg:h-[581px]'),
 })
 
 /* ---------------------------------------------------------------- hero -- */
@@ -368,13 +368,13 @@ function Contact() {
 
 /**
  * The curtain's last fall: the fluted glass over the imperial violet, lit
- * gold from its top edge, which is a gilt line the wordmark sinks behind.
- * The footer's own Roman idea is the inscription: his name cut in outline
- * Cinzel above the panel (its lowercase draws as small capitals, unlike the
- * hero's capitals), his monogram as the panel's mark, his manifesto in
- * Cormorant italic, the columns' titles in gold Geist capitals, and a quiet
- * closing line in Cinzel. On the violet: gold 7.9:1, the links (the text ink
- * at 84%) over 9:1.
+ * gold from its top edge, which is a gilt line. The footer closes quietly:
+ * his monogram as the panel's mark, his manifesto in Cormorant italic, the
+ * columns' titles in gold Geist capitals, and a closing line in Cinzel with
+ * his name. The component's giant wordmark is hidden: his name already
+ * stands full-width in the intro and the hero, and the products' names on
+ * their title cards, so a fifth giant word would only repeat them. On the
+ * violet: gold 7.9:1, the links (the text ink at 84%) over 9:1.
  */
 const FOOTER_LOOK = cn(
   'bg-background [&_.max-w-7xl]:px-4 md:[&_.max-w-7xl]:px-12',
@@ -407,12 +407,9 @@ function Footer() {
       panelColor="var(--stage-accent)"
       // Its content column moves onto the page's gutter (16px, 48px from md).
       className={FOOTER_LOOK}
-      // One line at every width, sunk a little into the panel like the
-      // component's own: his name cut in outline Cinzel, in gold. Cinzel's
-      // contours overlap where its strokes cross (the M, the A, the N), so
-      // the letters are filled with the ground and stroked under the fill:
-      // only the outer edge shows, with no lines inside the letters.
-      wordmarkClassName="font-roman font-medium text-center text-[23vw] sm:text-[23vw] md:text-[16vw] leading-[0.8] tracking-[0.03em] whitespace-nowrap opacity-100 text-background [paint-order:stroke_fill] [-webkit-text-stroke:2px_color-mix(in_oklab,var(--stage-accent-ink)_80%,transparent)] -mb-[0.1em] md:-mb-[0.1em]"
+      // No wordmark (above); its block keeps its top padding, a breath of
+      // the ground between the contact card and the glass.
+      wordmarkClassName="hidden"
       columns={[
         { title: 'On this page', links: SECTIONS.map((s) => ({ name: s.label, href: `#${s.id}` })) },
         {
