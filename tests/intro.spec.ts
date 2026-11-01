@@ -295,29 +295,32 @@ test.describe('the ways out', () => {
       const watch = new MutationObserver(() => {
         if (html.hasAttribute('data-intro')) return
         watch.disconnect()
-        // At the moment the stage has gone, then every 50 ms for 4 s (timers, not
-        // frames: the page is busy for a moment as it comes back, and may draw
-        // few frames; each sample is what a frame would draw).
+        // At the moment the stage has gone, then every 50 ms until 2 s have
+        // passed and at least six samples are in (timers, not frames: the
+        // page is busy for a moment as it comes back, for seconds on a loaded
+        // machine, and may draw few frames; each sample is what a frame would
+        // draw).
+        const start = performance.now()
         const look = () => {
           for (const el of parts) w.lowest = Math.min(w.lowest, Number(getComputedStyle(el).opacity))
           w.frames++
+          if (performance.now() - start > 2000 && w.frames >= 6) window.clearInterval(every)
         }
-        look()
         const every = window.setInterval(look, 50)
-        window.setTimeout(() => window.clearInterval(every), 4000)
+        look()
       })
       watch.observe(html, { attributes: true, attributeFilter: ['data-intro'] })
     })
     await page.locator(LAYER).getByRole('link', { name: 'Experience' }).click()
     await expectGone(page)
     await expect(page).toHaveURL(/#experience$/)
-    await expect.poll(() => page.evaluate(() => (window as unknown as { frames: number }).frames), { timeout: 10_000 }).toBeGreaterThan(3)
-    await sleep(4200)
+    await expect.poll(() => page.evaluate(() => (window as unknown as { frames: number }).frames), { timeout: 30_000 }).toBeGreaterThanOrEqual(6)
+    await sleep(2200)
     const seen = await page.evaluate(() => {
       const w = window as unknown as { lowest: number; frames: number }
       return { lowest: w.lowest, frames: w.frames }
     })
-    expect(seen.frames, 'samples taken after the lift').toBeGreaterThan(3)
+    expect(seen.frames, 'samples taken after the lift').toBeGreaterThanOrEqual(6)
     expect(seen.lowest, 'the lowest opacity any part of its header showed').toBeGreaterThanOrEqual(0.99)
   })
 })
