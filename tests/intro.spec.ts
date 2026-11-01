@@ -562,7 +562,7 @@ test.describe('what it says', () => {
       const real = (await page.screenshot({ clip: box, animations: 'allow' })).toString('base64')
       const tag = await page.addStyleTag({ content: green })
       const mask = (await page.screenshot({ clip: box, animations: 'allow' })).toString('base64')
-      await tag.evaluate((el) => el.remove())
+      await tag.evaluate((el) => (el as Element).remove())
       // The glyphs (the letters drawn solid green, their halo kept), then
       // on the real shot: the darkest of their own pixels (5th percentile,
       // a CSS pixel in from their edge) against the brightest of the ring
