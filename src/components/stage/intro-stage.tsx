@@ -91,7 +91,11 @@ const year = toRoman(new Date().getFullYear())
  *   sweeping the stage at the unveil, left the counts and the nav near 2:1
  *   for a moment (with the halo, 6.6:1 and more at the light's brightest;
  *   the light itself is as published);
- * - the word keeps a dark halo, so it reads over the marble behind it;
+ * - the word keeps a dark halo, so it reads over the marble behind it,
+ *   and stands in front of the sheen rather than under it (as on the
+ *   title cards): the band passes behind the letters, so it brightens
+ *   the stage round them but never washes out their halo (under it, the
+ *   word fell to 2.8:1 for a moment as the band crossed it on a phone);
  * - the tagline's lines are balanced;
  * - on phones the component hides its nav's links but keeps the two <nav>s,
  *   empty landmarks: they go too;
@@ -115,6 +119,7 @@ const LOOK = [
   '[&_.om-hint]:text-(--om-text)! [&_.om-hint]:[text-shadow:0_0_1px_var(--om-ground),0_0_4px_var(--om-ground),0_0_12px_var(--om-ground)]!',
   '[&_:is(.om-brand,.om-top_a,.om-eyebrow,.om-pill)]:[text-shadow:0_0_1px_var(--om-ground),0_0_4px_var(--om-ground),0_0_12px_var(--om-ground)]',
   WORD_HALO,
+  '[&_.om-wordclip]:z-[1]',
   '[&_.om-tagline]:text-balance',
   'max-sm:[&_.om-top_nav]:hidden!',
   'focus-visible:outline focus-visible:outline-1 focus-visible:-outline-offset-8 focus-visible:outline-gold',
