@@ -17,6 +17,9 @@ import { IMPERIAL } from './imperial'
  * at least MOUNT_AT of the card is in view and unmounts once the card has
  * left the screen entirely, so only the cards near the screen run their
  * animation loops, and each plays again on return (as the previews rewind).
+ * On a phone it mounts ahead, three quarters of a screen before it arrives,
+ * so it scrolls in already composed and never as an empty box; it holds its
+ * entrance until it has arrived (product-stage-card.tsx).
  *
  * The card's box is this element, the same before, during and after the
  * stage: a block of its own height (TITLE_CARD_BOX) on the stage's ground,
@@ -26,9 +29,9 @@ import { IMPERIAL } from './imperial'
  */
 
 /** Phones: a card, not a wall. From md, most of a screen. */
-export const TITLE_CARD_BOX = 'h-[32rem] md:h-[clamp(520px,80svh,820px)]'
+export const TITLE_CARD_BOX = 'h-[30rem] md:h-[clamp(520px,80svh,820px)]'
 
-/** The share of the card in view that mounts its stage. */
+/** The share of the card in view that mounts its stage (from sm; a phone mounts it ahead). */
 const MOUNT_AT = 0.35
 
 const ProductStageCard = dynamic(() => import('./product-stage-card'), { ssr: false })
@@ -40,14 +43,15 @@ export function ProductStage({ product, index }: { product: Product; index: numb
   useEffect(() => {
     const el = ref.current
     if (!el) return
+    const ahead = matchMedia('(max-width: 639px)').matches
     const watch = new IntersectionObserver(
       (entries) => {
         // The last entry is the card's current state.
         const entry = entries[entries.length - 1]
-        if (entry.intersectionRatio >= MOUNT_AT) setLive(true)
+        if (ahead ? entry.isIntersecting : entry.intersectionRatio >= MOUNT_AT) setLive(true)
         else if (!entry.isIntersecting) setLive(false)
       },
-      { threshold: [0, MOUNT_AT] },
+      ahead ? { rootMargin: '0px 0px 75% 0px' } : { threshold: [0, MOUNT_AT] },
     )
     watch.observe(el)
     return () => watch.disconnect()
