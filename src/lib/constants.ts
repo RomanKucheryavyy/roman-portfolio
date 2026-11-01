@@ -209,11 +209,14 @@ export const PROJECTS = [
  *  sizes are the files' own (tests/data.spec.ts checks them).
  *
  *  `flow` (the private ones, which have no public screens to show): the
- *  diagram the act draws instead, the product at its centre (`hub`: its
- *  title, and the description's opening line) and its parts around it. Every
- *  part is a thing the description names, its label and note the
- *  description's own words; `links` ([from, to], the product's own `id`
- *  standing for the centre) are only the ones the description states. */
+ *  inscription the act sets instead, the product itself (`hub`: the
+ *  description's opening line) and its parts. Every part is a thing the
+ *  description names, its label and note the description's own words (a
+ *  `count` the description spells out, "Eighteen", is set as a numeral; a
+ *  `lead` is the description's own words before a part, "Executing
+ *  through"); `links` ([from, to], the product's own `id` standing for the
+ *  product) are only the ones the description states, and the inscription's
+ *  order follows them. */
 export const COMPOSITIONS = [
   {
     // Linked since Roman's request of 2026-10-27, which asks for a preview of
@@ -272,22 +275,26 @@ export const COMPOSITIONS = [
       'An investment desk that argues with itself. Eighteen investor personas — each with its own rules and an LLM-written thesis — debate every position, an AI portfolio manager sizes the trades, and a Discovery Engine hunts spinoffs, activist stakes, and cyclical bottoms. Executing through Alpaca on paper until it earns the right to real money.',
     stack: ['Next.js', 'TypeScript', 'Claude API', 'Alpaca'],
     color: '#5ac8fa',
-    // The parts the description names, around the desk itself (the
-    // product, at the centre), and only the links it states: the personas,
-    // the portfolio manager and the Discovery Engine are the desk's own
-    // parts, each working into it, and the desk executes through Alpaca.
+    // The parts the description names, under the desk itself (the
+    // product), and only the links it states: the personas, the portfolio
+    // manager and the Discovery Engine are the desk's own parts, each
+    // working into it, and the desk executes through Alpaca. So the
+    // inscription sets the desk, then its parts (the personas first, their
+    // count as a numeral; the other two side by side where there is room,
+    // in this order, which says nothing of which comes first), then Alpaca
+    // after the description's own "Executing through".
     // needs Roman: which part feeds which inside the desk. An earlier draft
     // drew the personas and the Discovery Engine feeding the portfolio
     // manager, and the manager feeding Alpaca; the description does not say
-    // so, so it is not drawn. If that is how it runs, say so and the beams
-    // can show it.
+    // so, so it is not shown. If that is how it runs, say so and the
+    // inscription can follow it.
     flow: {
       hub: 'An investment desk that argues with itself',
       nodes: [
-        { id: 'personas', label: 'Eighteen investor personas', note: 'debate every position' },
+        { id: 'personas', count: { word: 'Eighteen', value: 18 }, label: 'investor personas', note: 'debate every position' },
         { id: 'discovery', label: 'Discovery Engine', note: 'hunts spinoffs, activist stakes, and cyclical bottoms' },
         { id: 'manager', label: 'AI portfolio manager', note: 'sizes the trades' },
-        { id: 'alpaca', label: 'Alpaca', note: 'on paper' },
+        { id: 'alpaca', lead: 'Executing through', label: 'Alpaca', note: 'on paper' },
       ],
       links: [
         ['personas', 'praxis'],
@@ -306,14 +313,15 @@ export const COMPOSITIONS = [
       'An Obsidian vault with a pulse. A Slack bot captures notes, reminders, journal entries, and expenses in plain language; Claude routes every capture where it belongs; scheduled digests and pattern detection keep me honest. Conducting my life around the clock from a desktop in my office.',
     stack: ['Python', 'Claude API', 'Slack API', 'Obsidian'],
     color: '#30d158',
-    // The parts the description names, around the vault itself (the
-    // product, at the centre), and only the links it states: the Slack bot's
-    // captures go to Claude, which routes every capture where it belongs, in
-    // the vault; the product's scheduled digests and pattern detection go out
-    // to keep him honest.
+    // The parts the description names, with the vault itself (the
+    // product), and only the links it states: the Slack bot's captures go to
+    // Claude, which routes every capture where it belongs, in the vault; the
+    // product's scheduled digests and pattern detection go out to keep him
+    // honest. One chain, so the inscription numbers it I to IV, the vault
+    // third, in the links' order.
     // needs Roman: what the digests are made from. An earlier draft drew
     // them coming out of the notes the vault holds; the description does not
-    // say so, so it is not drawn.
+    // say so, so it is not shown.
     flow: {
       hub: 'An Obsidian vault with a pulse',
       nodes: [

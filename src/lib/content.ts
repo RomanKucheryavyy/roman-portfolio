@@ -122,6 +122,10 @@ export interface FlowNode {
   id: string
   label: string
   note: string
+  /** A count the description spells out before the label ("Eighteen"), set as a Roman numeral: its word and its value. */
+  count?: { word: string; value: number }
+  /** The description's own words that lead into this part ("Executing through"). */
+  lead?: string
 }
 
 /** His own products. */
@@ -137,10 +141,9 @@ export interface Product {
   /** A public product's live site, captured (YearMonth) on a desktop and a phone. */
   preview?: { captured: YearMonth; desktop: Shot; phone: Shot }
   /**
-   * A private product's diagram: the product at the centre (`hub`, the
-   * description's opening line under its title), the parts its description
-   * names, and the links it states ([from, to]; the product's `id` is the
-   * centre).
+   * A private product's inscription: the product itself (`hub`, the
+   * description's opening line), the parts its description names, and the
+   * links it states ([from, to]; the product's `id` is the product).
    */
   flow?: { hub: string; nodes: readonly FlowNode[]; links: readonly (readonly [string, string])[] }
 }
