@@ -17,10 +17,12 @@ const EMAIL_HREF = `mailto:${PERSON.links.email}`
  * The colophon: the fluted glass over the ground, quiet. The glass is
  * softened from outside (the shader's layer at 40%, so its highlights and
  * shadows are faint, and faded out at its top and foot, so it grows out of
- * the ground and goes back into it; on a phone, where its flutes would
- * read as pinstripes, drawn 1.8 times as wide), with the wash as a soft
- * tone in it, graded into the ground on every side: no line along its
- * edge, no lit field. The component's giant wordmark and the block it
+ * the ground and goes back into it), with the wash as a soft tone in it,
+ * graded into the ground on every side: no line along its edge, no lit
+ * field. Below lg there is no glass at all: in a phone's narrow column its
+ * flutes stood as evenly spaced upright folds over the glow, a curtain lit
+ * from below (Roman, 2026-11-01: "not this like stage light look
+ * thingy"), so the colophon stands on the ground and its soft tone alone. The component's giant wordmark and the block it
  * stands in are gone: his name already stands full-width in the intro and
  * the hero.
  *
@@ -42,7 +44,7 @@ const FOOTER_LOOK = cn(
   'bg-background [&>div:first-child]:hidden',
   '[&>div:nth-child(2)]:min-h-0 [&>div:nth-child(2)]:bg-[linear-gradient(var(--background),transparent_30%,transparent_70%,var(--background)),radial-gradient(85%_60%_at_50%_42%,color-mix(in_oklab,var(--stage-wash)_60%,transparent),transparent_80%)]',
   '[&>div:nth-child(2)>div:first-child]:opacity-40 [&>div:nth-child(2)>div:first-child]:[mask-image:linear-gradient(transparent,black_30%,black_65%,transparent)]',
-  'max-lg:[&>div:nth-child(2)>div:first-child]:origin-left max-lg:[&>div:nth-child(2)>div:first-child]:scale-x-[1.8]',
+  'max-lg:[&>div:nth-child(2)>div:first-child]:hidden',
   '[&_.max-w-7xl]:px-4 [&_.max-w-7xl]:py-12 max-lg:[&_.max-w-7xl]:gap-8 md:[&_.max-w-7xl]:px-12 lg:[&_.max-w-7xl]:py-24',
   // Below lg, one column in the colophon's order: the mark and manifesto, the links, the closing line.
   'max-lg:[&_.max-w-7xl>div:first-child]:contents max-lg:[&_.max-w-7xl>div:first-child>div:first-child]:order-1 max-lg:[&_.max-w-7xl>div:last-child]:order-2',
@@ -51,12 +53,13 @@ const FOOTER_LOOK = cn(
   '[&_h2]:font-serif [&_h2]:text-[1.75rem] [&_h2]:font-normal [&_h2]:italic [&_h2]:leading-[1.2] [&_h2]:text-foreground [&_h2]:text-pretty md:[&_h2]:text-[2rem]',
   '[&_h3]:text-xs [&_h3]:font-medium [&_h3]:uppercase [&_h3]:tracking-[0.24em] [&_h3]:text-gold md:[&_h3]:text-xs max-lg:[&_h3]:sr-only',
   // The links: one row below lg, every item led by a gold interpunct (drawn, and silent to screen
-  // readers) in a 20px slot. The row starts 20px left of the column and is clipped 16px in from
-  // there (and 8px clear of it on the other sides, for the focus ring), so the interpunct that
-  // would lead each line is out of sight.
-  'max-lg:[&_.max-w-7xl>div:last-child]:-ml-5 max-lg:[&_.max-w-7xl>div:last-child]:flex-wrap max-lg:[&_.max-w-7xl>div:last-child]:gap-0 max-lg:[&_.max-w-7xl>div:last-child]:[clip-path:inset(-8px_-8px_-8px_16px)] max-lg:[&_.max-w-7xl>div:last-child>div]:contents max-lg:[&_ul]:contents',
-  "max-lg:[&_li]:inline-flex max-lg:[&_li]:items-center max-lg:[&_li]:before:inline-block max-lg:[&_li]:before:w-5 max-lg:[&_li]:before:text-center max-lg:[&_li]:before:text-gold max-lg:[&_li]:before:content-['·'_/_'']",
-  '[&_li_a]:inline-block [&_li_a]:py-3 [&_li_a]:leading-5 max-lg:[&_li_a]:pr-2 max-lg:[&_li_a]:text-[13px] lg:[&_li_a]:py-0.5 [&_li_a]:text-(--stage-text)/84 [&_li_a]:underline-offset-[5px] [&_li_a]:decoration-gold/70 [&_li_a]:hover:text-glow [&_li_a]:hover:underline',
+  // readers) in the middle of a 24px slot, so it stands as far from the word before it as from the
+  // one after. The row starts 24px left of the column and is clipped 18px in from there (and 8px
+  // clear of it on the other sides, for the focus ring), so the interpunct that would lead each
+  // line is out of sight.
+  'max-lg:[&_.max-w-7xl>div:last-child]:-ml-6 max-lg:[&_.max-w-7xl>div:last-child]:flex-wrap max-lg:[&_.max-w-7xl>div:last-child]:gap-0 max-lg:[&_.max-w-7xl>div:last-child]:[clip-path:inset(-8px_-8px_-8px_18px)] max-lg:[&_.max-w-7xl>div:last-child>div]:contents max-lg:[&_ul]:contents',
+  "max-lg:[&_li]:inline-flex max-lg:[&_li]:items-center max-lg:[&_li]:before:inline-block max-lg:[&_li]:before:w-6 max-lg:[&_li]:before:text-center max-lg:[&_li]:before:text-gold max-lg:[&_li]:before:content-['·'_/_'']",
+  '[&_li_a]:inline-block [&_li_a]:py-3 [&_li_a]:leading-5 max-lg:[&_li_a]:text-[13px] lg:[&_li_a]:py-0.5 [&_li_a]:text-(--stage-text)/84 [&_li_a]:underline-offset-[5px] [&_li_a]:decoration-gold/70 [&_li_a]:hover:text-glow [&_li_a]:hover:underline',
   "[&_li_a[href^=http]]:after:ml-1 [&_li_a[href^=http]]:after:inline-block [&_li_a[href^=http]]:after:text-gold [&_li_a[href^=http]]:after:content-['↗'_/_'']",
 )
 

@@ -90,7 +90,9 @@ const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/
  * face) with ground ink (zinc-100), the glow on hover (zinc-900), its edge
  * the marble too (zinc-800), and its quiet ink (zinc-500 and -400) a
  * ground-dark one for the undo window's words and count, 7:1 and more on
- * the marble. Square-cornered like the rest: the undo button's `radius`, a
+ * the marble. Until the box can send, SEND_WAITING instead: no fill, the
+ * fields' edge and the muted ink, a button not yet lit (not a grey slab of
+ * half-faded marble). Square-cornered like the rest: the undo button's `radius`, a
  * [site edit], draws its countdown to match, in the ground ink along the
  * marble's edge.
  */
@@ -110,6 +112,14 @@ const SEND_INKS = {
   '--color-zinc-800': 'var(--foreground)',
   '--color-zinc-500': 'color-mix(in oklab, var(--background) 72%, var(--foreground))',
   '--color-zinc-400': 'color-mix(in oklab, var(--background) 72%, var(--foreground))',
+} as React.CSSProperties
+const SEND_WAITING = {
+  '--color-zinc-950': 'var(--background)',
+  '--color-zinc-100': 'var(--muted-foreground)',
+  '--color-zinc-900': 'var(--background)',
+  '--color-zinc-800': EDGE,
+  '--color-zinc-500': 'var(--muted-foreground)',
+  '--color-zinc-400': 'var(--muted-foreground)',
 } as React.CSSProperties
 /**
  * The Send button: the Stage's primary (stageButton's capitals, 44px tall);
@@ -444,8 +454,8 @@ export function Composer() {
                   ? 'You get five seconds to take it back.'
                   : 'Add your name, email and a message to send.'}
             </p>
-            <div ref={sendRef} className="ml-auto" style={SEND_INKS}>
-              <fieldset disabled={!usable} className={usable ? 'contents' : 'contents [&_button]:opacity-50'}>
+            <div ref={sendRef} className="ml-auto" style={usable ? SEND_INKS : SEND_WAITING}>
+              <fieldset disabled={!usable} className="contents">
                 <UndoButton
                   key={attempt}
                   label="Send"

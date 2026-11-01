@@ -97,8 +97,13 @@ function useLayout(): Layout {
  * own CSS is unlayered, so whatever it sets is set here with `!`). No
  * rules, no band and no boxes: each badge loses its box and its icon's
  * tile, leaving the gold laurel alone before its words in Cinzel (13px,
- * 15px from lg), and space between one honour and the next. The pause
- * control loses its disc: the gold icon alone, on a 44px target.
+ * 15px from lg), and space between one honour and the next; the row's edge
+ * fade widened to an eighth of the screen each side, so no inscription is
+ * cut off at the screen's edge but sinks into the dark. The pause control
+ * loses its disc and says what it does, as Act II's do: its icon and
+ * "Pause" (or "Play") in Geist capitals at 12px, muted, on a 44px target
+ * (the word drawn by CSS with empty alternative text: the button keeps the
+ * component's own name).
  *
  * The module's parts, from its root: `>div` the rows, `>div>div` each row,
  * `>div>div>div` a row's track and `>div>div>div>div` its groups;
@@ -106,15 +111,16 @@ function useLayout(): Layout {
  * words, `span svg` the icon's drawing; `>button` the pause control.
  */
 const FRIEZE = [
-  'grid-cols-1! [&>div]:gap-0! [&>div>div]:py-2!',
+  'grid-cols-1! [&>div]:gap-0! [&>div>div]:py-2! [&>div>div]:[mask-image:linear-gradient(to_right,transparent,#000_12.5%,#000_87.5%,transparent)]!',
   '[&_div>span]:h-9! [&_div>span]:gap-3! [&_div>span]:rounded-none! [&_div>span]:border-0! [&_div>span]:bg-transparent! [&_div>span]:pl-0! [&_div>span]:pr-12! [&_div>span]:shadow-none! [&_div>span]:backdrop-blur-none! [&_div>span]:hover:transform-none!',
   '[&_span[aria-hidden]]:size-6! [&_span[aria-hidden]]:rounded-none! [&_span[aria-hidden]]:bg-transparent! [&_span_svg]:size-6!',
   '[&_span>span+span]:font-roman [&_span>span+span]:text-[13px] [&_span>span+span]:font-medium [&_span>span+span]:tracking-[0.05em] lg:[&_span>span+span]:text-[15px]',
-  '[&>button]:size-11! [&>button]:bg-transparent! [&>button]:text-gold! [&>button]:shadow-none! [&>button]:hover:text-glow! [&>button_svg]:size-3.5!',
+  '[&>button]:flex! [&>button]:h-11! [&>button]:w-auto! [&>button]:gap-2 [&>button]:px-2 [&>button]:bg-transparent! [&>button]:text-muted-foreground! [&>button]:shadow-none! [&>button]:hover:text-glow! [&>button]:hover:transform-none! [&>button_svg]:size-3!',
+  "[&>button]:font-sans [&>button]:text-xs [&>button]:font-medium [&>button]:uppercase [&>button]:tracking-[0.18em] [&>button[aria-pressed=false]]:after:content-['Pause'_/_''] [&>button[aria-pressed=true]]:after:content-['Play'_/_'']",
 ].join(' ')
 
-/** Moving: the pause control under the row, its icon on the page column's right edge. */
-const FRIEZE_ROW = '[&>button]:justify-self-end [&>button]:mr-[max(2.0625rem,calc((100%_-_1280px)/2_+_2.0625rem))]'
+/** Moving: the pause control under the row, its word ending on the page column's right edge. */
+const FRIEZE_ROW = '[&>button]:justify-self-end [&>button]:mr-[max(2.5rem,calc((100%_-_1280px)/2_+_2.5rem))]'
 
 /**
  * Still, two to a row in the page column: the second of each pair on one
@@ -173,7 +179,8 @@ function armLines(list: HTMLElement): () => void {
         if (!anims || !entry.isIntersecting) continue
         held.delete(entry.target)
         io.unobserve(entry.target)
-        const passed = entry.boundingClientRect.bottom <= 0
+        // Passed unseen, or landed on by the intro's nav as it lifts: whole.
+        const passed = entry.boundingClientRect.bottom <= 0 || document.documentElement.hasAttribute('data-intro')
         for (const a of anims) {
           if (passed) a.cancel()
           else {

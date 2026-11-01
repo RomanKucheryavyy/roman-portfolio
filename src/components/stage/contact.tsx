@@ -27,10 +27,11 @@ const EMAIL_HREF = `mailto:${PERSON.links.email}`
  *
  * "Get in touch" takes Cinzel; on a phone, where the act's h2 ("Let's
  * talk") stands just above it, it is kept for screen readers only, so one
- * heading shows. The channels are plain lines, no icon tiles: each a
- * label in the Stage's Geist capitals (12px, CHANNEL below, in the
- * component's icon slot, its tile undone here) over the address at 16px,
- * the Stage's text link (marble under a gold line), 44px and more tall.
+ * heading shows. The channels are plain lines, no icon tiles and no
+ * labels: each address alone (it names its channel: an email address,
+ * linkedin.com/..., github.com/...) at 16px, the Stage's text link (marble
+ * under a gold line), 44px tall. The component's icon slot is left empty
+ * and its tile hidden.
  */
 const CONTACT_LOOK = cn(
   'mt-12 pb-8 pt-0 dark:bg-background md:mt-16 md:pb-12',
@@ -41,23 +42,19 @@ const CONTACT_LOOK = cn(
   '[&_.max-w-5xl>div:first-child_h3+p]:text-[15px]',
   // The channels.
   '[&_.max-w-5xl>div:first-child>div:nth-child(2)]:gap-1',
-  '[&_.max-w-5xl>div:first-child_a]:relative [&_.max-w-5xl>div:first-child_a]:pb-1.5 [&_.max-w-5xl>div:first-child_a]:pt-[26px] [&_.max-w-5xl>div:first-child_a]:text-base [&_.max-w-5xl>div:first-child_a]:leading-6 [&_.max-w-5xl>div:first-child_a]:text-foreground! [&_.max-w-5xl>div:first-child_a]:hover:text-glow!',
+  '[&_.max-w-5xl>div:first-child_a]:py-2.5 [&_.max-w-5xl>div:first-child_a]:text-base [&_.max-w-5xl>div:first-child_a]:leading-6 [&_.max-w-5xl>div:first-child_a]:text-foreground! [&_.max-w-5xl>div:first-child_a]:hover:text-glow!',
   '[&_.max-w-5xl>div:first-child_a]:underline [&_.max-w-5xl>div:first-child_a]:decoration-gold/60 [&_.max-w-5xl>div:first-child_a]:decoration-1 [&_.max-w-5xl>div:first-child_a]:underline-offset-[5px] [&_.max-w-5xl>div:first-child_a]:hover:decoration-glow [&_.max-w-5xl>div:first-child_a]:hover:decoration-2',
-  // The label stands above the address out of the line's flow, so the address's underline is not drawn under it too.
-  '[&_.max-w-5xl>div:first-child_a>div]:absolute [&_.max-w-5xl>div:first-child_a>div]:left-0 [&_.max-w-5xl>div:first-child_a>div]:top-1.5 [&_.max-w-5xl>div:first-child_a>div]:size-auto! [&_.max-w-5xl>div:first-child_a>div]:rounded-none [&_.max-w-5xl>div:first-child_a>div]:border-0 [&_.max-w-5xl>div:first-child_a>div]:bg-transparent!',
+  '[&_.max-w-5xl>div:first-child_a>div]:hidden',
+  // Under reduced motion the card's columns and channels arrive without sliding: the component's
+  // entrances (whileInView, inline transforms) keep only their fade.
+  'motion-reduce:[&_.max-w-5xl>div]:transform-none! motion-reduce:[&_.max-w-5xl_a]:transform-none!',
   // The globe: a horizon across a phone, the column's own width from md.
   '[&_.h-52]:mt-2 max-md:[&_.h-52]:-mx-4 max-md:[&_.h-52]:h-60 [&_.h-52>div:first-child]:text-gold',
   '[&_.h-52>div:first-child]:bg-[radial-gradient(circle_farthest-side_at_50%_50%,transparent_88%,color-mix(in_oklab,var(--stage-gold)_16%,transparent)_90%,transparent_97%),radial-gradient(circle_farthest-side_at_50%_50%,color-mix(in_oklab,var(--stage-wash)_70%,var(--background))_0%,var(--stage-wash)_72%,color-mix(in_oklab,var(--stage-wash)_70%,var(--stage-rule))_89.4%,transparent_90%)]',
 )
 
-/** A channel's label, in the component's icon slot (whose className, an icon's size and tint, it does not need). */
-const channel = (word: string) =>
-  function Channel() {
-    return <span className="font-sans text-xs font-medium uppercase leading-4 tracking-[0.24em] text-muted-foreground">{word}</span>
-  }
-const EmailLabel = channel('Email')
-const LinkedInLabel = channel('LinkedIn')
-const GitHubLabel = channel('GitHub')
+/** The component's icon slot, left empty: the address names its channel. */
+const NoIcon = () => null
 
 /**
  * The component's own palette, re-pointed rather than rewritten: its rose
@@ -97,7 +94,9 @@ function riseGlobe(root: HTMLElement): () => void {
     (entries) => {
       if (!entries[entries.length - 1].isIntersecting) return
       io.disconnect()
-      a.play()
+      // Landed on by the intro's nav as it lifts: there already, whole.
+      if (document.documentElement.hasAttribute('data-intro')) a.cancel()
+      else a.play()
     },
     { rootMargin: '0px 0px -12% 0px' },
   )
@@ -121,9 +120,9 @@ export default function Contact() {
         title="Let’s talk"
         channelsNote="Each of these goes straight to me."
         links={[
-          { icon: EmailLabel, label: PERSON.links.email, href: EMAIL_HREF },
-          { icon: LinkedInLabel, label: 'linkedin.com/in/romakuch', href: PERSON.links.linkedin },
-          { icon: GitHubLabel, label: 'github.com/RomanKucheryavyy', href: PERSON.links.github },
+          { icon: NoIcon, label: PERSON.links.email, href: EMAIL_HREF },
+          { icon: NoIcon, label: 'linkedin.com/in/romakuch', href: PERSON.links.linkedin },
+          { icon: NoIcon, label: 'github.com/RomanKucheryavyy', href: PERSON.links.github },
         ]}
       />
     </div>

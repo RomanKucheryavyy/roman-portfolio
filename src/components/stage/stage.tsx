@@ -40,17 +40,17 @@ const hold = (className: string) =>
 
 const AboutTemplate = dynamic(() => import('./about'), {
   ssr: false,
-  loading: hold('h-[826px] max-[334px]:h-[908px] min-[335px]:max-[367px]:h-[878px] min-[368px]:max-[373px]:h-[848px] min-[417px]:max-[457px]:h-[796px] min-[458px]:max-[517px]:h-[766px] min-[518px]:max-[607px]:h-[736px] min-[608px]:max-[639px]:h-[706px] sm:h-[706px] min-[52rem]:h-[676px] min-[65rem]:h-[646px] min-[72rem]:h-[686px] min-[76rem]:h-[637px]'),
+  loading: hold('h-[826px] max-[334px]:h-[908px] min-[335px]:max-[367px]:h-[878px] min-[368px]:max-[373px]:h-[848px] min-[417px]:max-[457px]:h-[796px] min-[458px]:max-[517px]:h-[766px] min-[518px]:max-[607px]:h-[736px] min-[608px]:h-[706px] min-[52rem]:h-[676px] min-[65rem]:h-[646px] min-[72rem]:h-[686px] min-[76rem]:h-[637px]'),
 })
 const ContactBlock = dynamic(() => import('./contact'), {
   ssr: false,
   // Its own height plus the mt-12 / md:mt-16 its CONTACT_LOOK gives it.
-  loading: hold('h-[1180px] max-[324px]:h-[1223px] min-[325px]:max-[372px]:h-[1203px] min-[438px]:max-[639px]:h-[1148px] sm:h-[1065px] min-[42rem]:h-[1042px] md:h-[1073px] lg:h-[611px]'),
+  loading: hold('h-[1187px] min-[324px]:h-[1167px] min-[374px]:h-[1144px] min-[436px]:h-[1112px] sm:h-[1029px] min-[681px]:h-[1006px] md:h-[1037px] lg:h-[575px]'),
 })
 const Footer = dynamic(() => import('./footer'), {
   ssr: false,
   // A colophon on a phone, two columns from lg (footer.tsx), a fixed height at each width.
-  loading: hold('h-[496px] bg-background max-[324px]:h-[529px] min-[392px]:max-[413px]:h-[452px] min-[414px]:max-[617px]:h-[418px] min-[618px]:max-[639px]:h-[385px] sm:h-[385px] md:h-[397px] min-[49rem]:h-[353px] lg:h-[452px]'),
+  loading: hold('h-[529px] bg-background min-[325px]:h-[496px] min-[369px]:h-[452px] min-[414px]:h-[418px] min-[612px]:h-[385px] min-[689px]:h-[341px] md:h-[353px] lg:h-[452px]'),
 })
 
 /* ---------------------------------------------------------------- hero -- */

@@ -69,10 +69,11 @@ const LOOK = [
 ].join(' ')
 
 /**
- * From md, the road: the rail you drag through the years, a gold line that
- * fades out past the last year, with a plain gold tick where each year
- * stands on it, and the year above it set large in gold Geist, as on a
- * phone (both brighter while its column is hovered). Its sticky "Age" / "Years" column
+ * From md, the road: the rail you drag through the years, the years set in
+ * a row, large in gold Geist as on a phone (brighter while its column is
+ * hovered), with space between them and no line: the component's dashed
+ * rail and its ticks are hidden (no rules, no axis; the years in their
+ * order are the road), the ticks' room kept. Its sticky "Age" / "Years" column
  * labels nothing here (no ages, and the years read for themselves), so it
  * is hidden, and each column's empty age line is taken out, with the rail
  * set to match (Lifeline's --lifeline-rail: the 32px year and its 24px
@@ -83,8 +84,7 @@ const RAIL = [
   '[&_.lifeline-labels_p]:invisible',
   '[&_.group]:w-[216px]!',
   '[&_.group_.flex-col>p:first-child]:hidden [&_.will-change-transform]:[--lifeline-rail:3.5rem]',
-  '[&_.border-dashed]:border-0! [&_.border-t.border-dashed]:bg-linear-to-r [&_.border-dashed]:from-gold/70 [&_.border-dashed]:via-gold/70 [&_.border-dashed]:via-85% [&_.border-dashed]:to-transparent',
-  '[&_.group_span[aria-hidden]]:h-3! [&_.group_span[aria-hidden]]:bg-gold/85! [&_.group:hover_span[aria-hidden]]:bg-glow!',
+  '[&_.border-dashed]:hidden! [&_.group_span[aria-hidden]]:invisible!',
   '[&_.group_.flex-col>p:nth-child(2)]:h-8 [&_.group_.flex-col>p:nth-child(2)]:text-[1.75rem] [&_.group_.flex-col>p:nth-child(2)]:leading-8 [&_.group_.flex-col>p:nth-child(2)]:font-normal [&_.group_.flex-col>p:nth-child(2)]:tracking-[0.01em] [&_.group_.flex-col>p:nth-child(2)]:text-gold! [&_.group:hover_.flex-col>p:nth-child(2)]:text-glow!',
   '[&_.space-y-4>p]:odd:text-[17px]',
 ].join(' ')
@@ -156,7 +156,8 @@ function armEntries(root: HTMLElement): () => void {
         if (!anims || !entry.isIntersecting) continue
         held.delete(entry.target)
         io.unobserve(entry.target)
-        const passed = entry.boundingClientRect.bottom <= 0
+        // Passed unseen, or landed on by the intro's nav as it lifts: whole.
+        const passed = entry.boundingClientRect.bottom <= 0 || document.documentElement.hasAttribute('data-intro')
         for (const a of anims) {
           if (passed) a.cancel()
           else {
