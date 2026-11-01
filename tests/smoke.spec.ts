@@ -426,9 +426,21 @@ test.describe('act headers', () => {
       page.evaluate(() => [...document.querySelectorAll('main *')].filter((el) => el.getAnimations().some((a) => a.playState === 'paused') && Number(getComputedStyle(el).opacity) < 0.99).length)
     // At the top of the page the acts below are held at their first frame...
     await expect.poll(held).toBeGreaterThan(0)
-    // ...and printing lets every one of them go, whole.
+    // ...and as the page prints, every one of them is let go, whole. Read at
+    // that moment (a listener of the page's own, after the site's): once the
+    // print is done, a part that lays itself out anew for the paper (Act
+    // III's list on a phone) arms its entrance again for the reader below.
+    await page.evaluate(() => {
+      const w = window as unknown as { heldAtPrint: number }
+      w.heldAtPrint = -1
+      addEventListener('beforeprint', () => {
+        w.heldAtPrint = [...document.querySelectorAll('main *')].filter(
+          (el) => el.getAnimations().some((a) => a.playState === 'paused') && Number(getComputedStyle(el).opacity) < 0.99,
+        ).length
+      })
+    })
     await page.pdf({ path: test.info().outputPath('page.pdf') })
-    expect(await held()).toBe(0)
+    expect(await page.evaluate(() => (window as unknown as { heldAtPrint: number }).heldAtPrint)).toBe(0)
   })
 })
 
