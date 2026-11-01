@@ -3,9 +3,9 @@ import { expect, test, type ConsoleMessage, type Page } from '@playwright/test'
 /**
  * Shared harness helpers. Two rules the whole suite leans on:
  *
- * - Never wait for `networkidle`. The curtain, the marquee and the globe
- *   animate for as long as the page is open; wait for a known element plus a
- *   short settle.
+ * - Never wait for `networkidle`. The marquee, the globe and the title
+ *   cards' dust animate for as long as the page is open; wait for a known
+ *   element plus a short settle.
  * - Console noise is allow-listed, not ignored. Anything new fails the test.
  */
 

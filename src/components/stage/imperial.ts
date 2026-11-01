@@ -23,9 +23,9 @@ export const PALETTE = {
   /** The page's ground, and the print's deepest shadow. */
   ground: '#0b0806',
   /**
-   * The wash: light and glow, never a large flat panel. The curtain's lit
-   * fold, the intro's and the title cards' flood, the glows behind things;
-   * a fill only at low alpha or graded into the ground.
+   * The wash: light and glow, never a large flat panel. The flood of the
+   * intro's print, the hero's and the title cards', the glows behind
+   * things; a fill only at low alpha or graded into the ground.
    */
   wash: '#352114',
   /** Gold, the one accent: numerals, the focus ring, small marks, links' underline. Never a large fill. */

@@ -36,9 +36,9 @@ const SEEN_INTRO = {
 export default defineConfig({
   testDir: './tests',
   tsconfig: './tests/tsconfig.json',
-  // The home page draws its curtain and its footer glass in WebGL, under
-  // software rendering in CI, so give each test room; a hang still fails,
-  // just not instantly.
+  // The home page draws its painting, its title cards, its globe and its
+  // footer glass, under software rendering in CI, so give each test room; a
+  // hang still fails, just not instantly.
   timeout: 90_000,
   expect: { timeout: 10_000 },
   fullyParallel: false,
