@@ -509,7 +509,9 @@ test.describe('the card', () => {
     await expect(f.send).toBeEnabled()
     const send = await f.send.evaluate((el) => {
       const css = getComputedStyle(el)
-      return { fill: css.backgroundColor, ink: css.color, height: el.getBoundingClientRect().height }
+      // Its layout height: the button's motion (its width, animated as it
+      // becomes ready) can leave a transform a hair under 1 for a frame.
+      return { fill: css.backgroundColor, ink: css.color, height: (el as HTMLElement).offsetHeight }
     })
     const marble = await page.evaluate(() => getComputedStyle(document.querySelector('#hero-title')!).color)
     expect(send.fill).toBe(marble)
