@@ -13,12 +13,14 @@ import { IMPERIAL } from './imperial'
  *
  * Purely visual: the row below carries the real heading, words and link, so
  * the card is aria-hidden and holds nothing that takes focus
- * (product-stage-card.tsx). It mounts ahead, three quarters of a screen
- * before it arrives, so it scrolls in with its number, its eyebrow and its
- * word drawn in outline, never as an empty box, and holds its load until it
- * has arrived (product-stage-card.tsx); it unmounts once the card has left
- * the screen entirely, so only the cards near the screen run their
- * animation loops, and each plays again on return (as the previews rewind).
+ * (product-stage-card.tsx). It mounts ahead, a screen and a half before it
+ * arrives from below and three quarters of one from above, so the component
+ * has drawn its word in outline, letter by letter, with its number and its
+ * eyebrow, by the time it scrolls in, never an empty box, and it holds its
+ * load until it has arrived and its word is drawn (product-stage-card.tsx);
+ * it unmounts once the card is that far off the screen, so only the cards
+ * near the screen run their animation loops, and each plays again on return
+ * (as the previews rewind).
  *
  * The card's box is this element, the same before, during and after the
  * stage: a block of its own height (TITLE_CARD_BOX) on the stage's ground,
@@ -44,7 +46,7 @@ export function ProductStage({ product, index }: { product: Product; index: numb
         // The last entry is the card's current state.
         setLive(entries[entries.length - 1].isIntersecting)
       },
-      { rootMargin: '0px 0px 75% 0px' },
+      { rootMargin: '75% 0px 150% 0px' },
     )
     watch.observe(el)
     return () => watch.disconnect()

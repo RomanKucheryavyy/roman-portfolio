@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useRef, useState, useSyncExternalStore } from 'react'
-import OldMastersPreloader, { type OldMastersFigure } from '@/components/ui/old-masters-preloader'
+import OldMastersPreloader, { omSimulated, type OldMastersFigure } from '@/components/ui/old-masters-preloader'
 import { PRODUCTS, type Product } from '@/lib/content'
 import { toRoman } from '@/lib/roman'
 import { CAST, pastEdge, type CastPhoto } from './cast'
@@ -38,12 +38,14 @@ import { ROMAN_FONTS } from './roman-type'
  * spotlight on the pointer), the statue's bob and the parallax, the
  * moving grain, the stars' twinkle. In the palette (IMPERIAL).
  *
- * When: the card mounts ahead of the screen (product-stage.tsx), so it
- * scrolls in with its number, its eyebrow, its stars and its word drawn in
- * outline, never as an empty box. Its load is held at nothing until its
- * word is on screen (ARRIVE_AT); then the word fills within about a second
- * and the unveil follows at once, so a card lands about four seconds after
- * it arrives. Its light runs only while the card is on screen. Under
+ * When: the card mounts ahead of the screen, above it and below
+ * (product-stage.tsx), and the component draws its word in outline letter
+ * by letter as it mounts, with its number, its eyebrow and its stars. Its
+ * load is held at nothing until the word is on screen (ARRIVE_AT) and its
+ * last letter is in (DRAWN), so the word never fills ahead of its outline;
+ * then it fills as the component's own load does, surging and stalling,
+ * over FILL_MS, and the unveil follows, so a card lands about five seconds
+ * after it arrives. Its light runs only while the card is on screen. Under
  * reduced motion it opens straight on its still landing (the component's
  * own still frame).
  *
@@ -164,13 +166,22 @@ const EDGES = [
 const ARRIVE_AT = 0.6
 
 /**
- * The load: the word's outline is up well before the card arrives (it rises
- * in over the first two seconds after mounting), so the load waits at least
- * this long after mounting, for a card that mounts as it arrives (a fast
- * scroll, a page opened there). Then it is handed its full progress and the
- * component fills the word towards it, eased, within about 0.9 s.
+ * The word is drawn: the component brings its letters in one after another
+ * as it mounts (its .om-l: from 60 ms, each 55 ms after the one before,
+ * from 0.5 s, over 0.9 s), so the last letter is in about 2.3 s after
+ * mounting for the longest title. The load waits for that letter's fade to
+ * end, or for this long at the latest (a fade that never ran: a hidden tab).
  */
-const OUTLINE_MS = 900
+const DRAWN = (title: string) => 60 + 500 + Math.max(0, title.length - 1) * 55 + 900 + 400
+
+/**
+ * The load's climb: the component's own simulated load (omSimulated: it
+ * surges and stalls), run on the card's clock over this long, handed to the
+ * component as its progress a step at a time (it eases between steps), so
+ * the word is seen filling from its foot, its glowing edge rising.
+ */
+const FILL_MS = 1200
+const FILL_STEP_MS = 80
 
 /** After the photographs have loaded, a moment for the component to read their sizes. */
 const SETTLE_MS = 120
@@ -271,17 +282,38 @@ export default function ProductStageCard({ product, index }: { product: Product;
       clearTimeout(timer)
     }
   }, [measured, statue, backdrop])
-  // The load starts on arrival, settled, and never before the outline has had OUTLINE_MS.
-  const mountedAt = useRef(0)
+  // Drawn: the word's last letter has come in (DRAWN).
+  const [drawn, setDrawn] = useState(false)
   useEffect(() => {
-    mountedAt.current = performance.now()
-  }, [])
-  const [loading, setLoading] = useState(false)
+    if (still) return
+    const letters = box.current?.querySelectorAll('.om-l')
+    const last = letters?.[letters.length - 1]
+    const done = () => setDrawn(true)
+    const end = (e: Event) => {
+      if (e.target === last && (e as TransitionEvent).propertyName === 'opacity') done()
+    }
+    last?.addEventListener('transitionend', end)
+    const timer = window.setTimeout(done, DRAWN(product.title))
+    return () => {
+      last?.removeEventListener('transitionend', end)
+      clearTimeout(timer)
+    }
+  }, [still, product.title])
+  // The load starts once arrived, settled and drawn, and climbs over FILL_MS.
+  const loading = arrived && settled && drawn && !still
+  const [progress, setProgress] = useState(0)
   useEffect(() => {
-    if (!arrived || !settled || still || loading) return
-    const t = setTimeout(() => setLoading(true), Math.max(0, mountedAt.current + OUTLINE_MS - performance.now()))
-    return () => clearTimeout(t)
-  }, [arrived, settled, still, loading])
+    if (!loading) return
+    const start = performance.now()
+    let timer = 0
+    const step = () => {
+      const p = Math.round(omSimulated((performance.now() - start) / FILL_MS) * 100)
+      setProgress(p)
+      if (p < 100) timer = window.setTimeout(step, FILL_STEP_MS)
+    }
+    step()
+    return () => clearTimeout(timer)
+  }, [loading])
   const figure = titleCardFigure(product, index, phone, stage)
   const where = product.url ? domain(product.url) : 'Private'
   const n = toRoman(index + 1)
@@ -292,8 +324,8 @@ export default function ProductStageCard({ product, index }: { product: Product;
     <div ref={box} className="h-full" data-load={still ? undefined : loading ? 'started' : 'held'} style={still && !settled ? { opacity: 0 } : undefined}>
       <OldMastersPreloader
         // The load's progress is the card's own: nothing until it has
-        // arrived, then all of it, which the component fills towards.
-        progress={still ? undefined : loading ? 100 : 0}
+        // arrived and its word is drawn, then its climb (FILL_MS).
+        progress={still ? undefined : progress}
         durationMs={900}
         minLoadMs={0}
         skippable={false}
