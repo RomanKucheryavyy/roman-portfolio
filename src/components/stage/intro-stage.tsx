@@ -62,8 +62,10 @@ const year = toRoman(new Date().getFullYear())
  *   barcode's place, and the plate keeps the right; on a screen under 480px
  *   tall (a phone on its side) there is no room for it under the copy;
  * - on short phones the two upper stars keep below the pills;
- * - the plate, small type that lands on marble, sits on a dark label (a
- *   museum plate), and the hint keeps a firmer dark halo than its own;
+ * - the plate, small type that lands on marble, sits on an opaque label of
+ *   the ground (a museum plate: its muted ink is 9.5:1 there, where a
+ *   see-through label let the lit statue show behind its first letters),
+ *   and the hint keeps a firmer dark halo than its own;
  * - the word keeps a dark halo, so it reads over the marble behind it;
  * - the tagline's lines are balanced;
  * - on phones the component hides its nav's links but keeps the two <nav>s,
@@ -82,12 +84,12 @@ const LOOK = [
   '[&_.om-hint]:bottom-[calc(var(--om-fs)*(var(--om-cap)+0.03)+1.4vh+18px)]!',
   'max-sm:[&_.om-bars]:hidden! max-sm:[&_.om-foot]:justify-end! [@media(max-height:480px)]:[&_.om-hint]:hidden!',
   'max-sm:[&_.om-star:not(.om-star-s)]:top-[max(15.5%,124px)]!',
-  '[&_.om-plate]:rounded-[2px] [&_.om-plate]:bg-[var(--om-ground-b)] [&_.om-plate]:px-2 [&_.om-plate]:py-1',
+  '[&_.om-plate]:rounded-[2px] [&_.om-plate]:bg-(--om-ground) [&_.om-plate]:px-2 [&_.om-plate]:py-1',
   '[&_.om-hint]:[text-shadow:0_0_1px_var(--om-ground),0_0_4px_var(--om-ground),0_0_12px_var(--om-ground)]!',
   WORD_HALO,
   '[&_.om-tagline]:text-balance',
   'max-sm:[&_.om-top_nav]:hidden!',
-  'focus-visible:outline focus-visible:outline-1 focus-visible:-outline-offset-8 focus-visible:outline-[#d6b25e]',
+  'focus-visible:outline focus-visible:outline-1 focus-visible:-outline-offset-8 focus-visible:outline-gold',
   '[&_.om-cta:focus-visible]:opacity-100! [&_.om-cta:focus-visible]:transition-none! [&_.om-skip:focus-visible]:opacity-100! [&_.om-skip:focus-visible]:transition-none!',
   '[&_.om-top_li:has(:focus-visible)]:opacity-100! [&_.om-top_li:has(:focus-visible)]:transition-none!',
 ].join(' ')

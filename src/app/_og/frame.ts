@@ -1,10 +1,11 @@
 import { readFile } from 'node:fs/promises'
 import { join } from 'node:path'
+import { PALETTE } from '@/components/stage/imperial'
 
 /**
  * What every generated image (the share cards, the apple icon) draws with:
- * the Stage's colours as literals (next/og has no CSS variables; the values
- * are look.ts's and the shadcn dark theme's) and its type, Geist.
+ * the Stage's palette (imperial.ts; next/og has no CSS variables, so the
+ * values themselves) and its type, Geist.
  *
  * The fonts are read from ./fonts at build time (Geist and Geist Mono from
  * the `geist` package, OFL, see fonts/OFL.txt), so an image never goes to the
@@ -16,13 +17,16 @@ export const OG_SIZE = { width: 1200, height: 630 }
 export const OG_CONTENT_TYPE = 'image/png'
 
 export const STAGE = {
-  black: '#060606',
-  /** The accent as a fill: the About block's violet wash. */
-  accent: '#16106d',
-  /** The accent as an ink that reads on black. */
-  accentInk: '#9d94ff',
-  ink: '#fafafa',
-  muted: '#a1a1a1',
+  /** The page's ground. */
+  ground: PALETTE.ground,
+  /** The wash, as the light rising from the stage floor. */
+  wash: PALETTE.wash,
+  /** Gold, the one accent: the address. */
+  gold: PALETTE.gold,
+  /** Marble: the name. */
+  ink: PALETTE.marble,
+  /** The tagline. */
+  muted: PALETTE.muted,
 } as const
 
 export const FONT = { sans: 'Geist', mono: 'Geist Mono' } as const

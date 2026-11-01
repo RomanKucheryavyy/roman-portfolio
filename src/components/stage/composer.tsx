@@ -71,19 +71,19 @@ export function suggest(text: string): string | null {
 // offers Send for an address the route would refuse.
 const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/
 /**
- * The box in the Imperial Stage's dress (look.ts): a tablet of the imperial
- * violet with a gilt top edge, the heading and the panels' headings in
+ * The box in the Imperial Stage's dress (look.ts): a tablet of the wash
+ * with a gilt top edge, the heading and the panels' headings in
  * Cinzel, labels in the Stage's Geist capitals, square-cornered fields that
  * take a gold edge on focus, the visitor's own words quoted back in
  * Cormorant italic, and the Stage's buttons. Every ink clears AA on the
- * violet: the text 13.8:1, the lavender 7.5:1, gold 7.9:1.
+ * wash: the text 13.2:1, the muted ink 7.2:1, gold 7.5:1.
  *
  * The two kokonut parts inside (the autocomplete and the undo button) draw
  * in Tailwind's zinc greys; INKS re-points those greys on the card rather
  * than editing the components: their light ink (zinc-100) becomes the
- * marble, their quiet one (zinc-400) the lavender, the suggestion and the
- * placeholder (zinc-500) a dimmer lavender (4.7:1 on the field), their lines
- * (zinc-800) the violet rule, their hover (zinc-900) a lit violet, and their
+ * marble, their quiet one (zinc-400) the muted ink, the suggestion and the
+ * placeholder (zinc-500) a dimmer muted ink (4.7:1 on the field), their lines
+ * (zinc-800) the rule, their hover (zinc-900) a lit wash, and their
  * ground (zinc-950) the field's. SEND_INKS turns the Send button's edge
  * gold, the Stage's secondary button, square-cornered like the rest (the
  * undo button's `radius`, a [site edit], draws its countdown to match).
@@ -93,22 +93,22 @@ const INKS = {
   '--color-zinc-400': 'var(--muted-foreground)',
   '--color-zinc-500': 'color-mix(in oklab, var(--muted-foreground) 74%, var(--background))',
   '--color-zinc-800': 'color-mix(in oklab, var(--stage-rule) 80%, transparent)',
-  '--color-zinc-900': 'color-mix(in oklab, var(--stage-accent) 70%, var(--stage-rule))',
+  '--color-zinc-900': 'color-mix(in oklab, var(--stage-wash) 70%, var(--stage-rule))',
   '--color-zinc-950': 'color-mix(in oklab, var(--background) 55%, transparent)',
 } as React.CSSProperties
 const SEND_INKS = {
-  '--color-zinc-800': 'color-mix(in oklab, var(--stage-accent-ink) 70%, transparent)',
-  '--color-zinc-900': 'color-mix(in oklab, var(--stage-accent-ink) 14%, var(--background))',
+  '--color-zinc-800': 'color-mix(in oklab, var(--stage-gold) 70%, transparent)',
+  '--color-zinc-900': 'color-mix(in oklab, var(--stage-gold) 14%, var(--background))',
 } as React.CSSProperties
 /** The Send button: the Stage's capitals; its focus is the page's gold ring, not a second one of its own. */
 const SEND = 'rounded-[2px] text-xs tracking-[0.2em] uppercase focus-visible:ring-0 focus-visible:ring-offset-0'
 
 const CARD =
-  'relative flex flex-col rounded-[3px] border border-rule/75 bg-[linear-gradient(180deg,color-mix(in_oklab,var(--stage-accent)_56%,var(--background)),color-mix(in_oklab,var(--stage-accent)_28%,var(--background)))] p-6 before:pointer-events-none before:absolute before:inset-x-0 before:top-[-1px] before:h-px before:bg-linear-to-r before:from-transparent before:via-gold before:to-transparent sm:p-8'
+  'relative flex flex-col rounded-[3px] border border-rule/75 bg-[linear-gradient(180deg,color-mix(in_oklab,var(--stage-wash)_56%,var(--background)),color-mix(in_oklab,var(--stage-wash)_28%,var(--background)))] p-6 before:pointer-events-none before:absolute before:inset-x-0 before:top-[-1px] before:h-px before:bg-linear-to-r before:from-transparent before:via-gold before:to-transparent sm:p-8'
 const TITLE = 'font-roman text-xl font-medium tracking-[0.02em] text-foreground sm:text-[1.375rem]'
 const NOTE = 'text-sm leading-relaxed text-muted-foreground'
 const LABEL = KICKER
-/** A field's frame: the violet rule on the ground, gold when it has focus. */
+/** A field's frame: the rule on the ground, gold when it has focus. */
 const FIELD =
   'rounded-[2px] border border-rule/85 bg-background/55'
 /**
@@ -471,7 +471,7 @@ export function Composer() {
 function PanelIcon({ tone, children }: { tone: 'ok' | 'error'; children: ReactNode }) {
   const ring =
     tone === 'ok'
-      ? 'border-gold/45 bg-gold/12 text-gold shadow-[0_0_0_8px_color-mix(in_oklab,var(--stage-accent-ink)_6%,transparent)]'
+      ? 'border-gold/45 bg-gold/12 text-gold shadow-[0_0_0_8px_color-mix(in_oklab,var(--stage-gold)_6%,transparent)]'
       : 'border-red-400/40 bg-red-400/10 text-red-400 shadow-[0_0_0_8px_rgb(248_113_113/0.05)]'
   return (
     <span aria-hidden="true" className={`flex size-14 shrink-0 items-center justify-center rounded-full border ${ring}`}>

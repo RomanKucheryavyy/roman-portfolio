@@ -10,7 +10,7 @@ import { IMPERIAL } from './imperial'
  * kedhareswer/old-masters-preloader as published, configured from outside,
  * painting one statue exactly as the intro paints its cast (the same
  * pre-keyed photograph, the same two-ink print in the imperial palette, the
- * same light and dust), on the hero's violet curtain instead of the intro's
+ * same light and dust), on the hero's curtain instead of the intro's
  * flood.
  *
  * The composition is the hero's own, so it never repeats the landing a
@@ -19,7 +19,7 @@ import { IMPERIAL } from './imperial'
  * floor) nor the first product's title card (Apollo again, beside the
  * product's word): Hercules alone, in the middle, a colossal marble bust
  * (as the Romans carved their colossi), his head bowed beneath the name, in
- * a pool of the intro's violet, the light falling on him from above. He is
+ * a niche of the page's dark, the light falling on him from above. He is
  * sized and placed from the hero's own words: the crown of his curls just
  * below the surname (no letter of the name stands on marble), his head no
  * wider than about three quarters of the screen (on a phone, the photograph
@@ -255,7 +255,7 @@ export default function HeroPaintingStage() {
         // him, a niche he stands in, fading into the curtain at its edge.
         // The print's shadows are keyed out of the photograph, so what is
         // behind him shows through them: on the dark they read as shadow
-        // and he reads whole (on violet, or on the curtain's folds, his
+        // and he reads whole (on the wash, or on the curtain's folds, his
         // face and curls broke up into fragments).
         <div
           className="absolute rounded-full bg-[radial-gradient(closest-side,var(--background)_0%,color-mix(in_srgb,var(--background)_88%,transparent)_46%,color-mix(in_srgb,var(--background)_45%,transparent)_70%,transparent)]"

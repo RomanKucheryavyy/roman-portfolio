@@ -106,7 +106,7 @@ function useView(ref: RefObject<Element | null>) {
  * anything that moves by itself for more than five seconds can be stopped).
  * Its name says what it will do, as the WAI carousel pattern's does. Drawn as
  * the Stage's buttons are (look.ts: rectangular, Geist capitals), but quiet:
- * a violet rule that turns gold on hover, so it never competes with the
+ * a quiet rule that turns gold on hover, so it never competes with the
  * row's own link.
  */
 function Toggle({ stopped, onToggle, what }: { stopped: boolean; onToggle: () => void; what: string }) {
@@ -126,15 +126,15 @@ function Toggle({ stopped, onToggle, what }: { stopped: boolean; onToggle: () =>
 }
 
 /**
- * The act's violet behind a preview: the Act II header's wash (the same
- * --stage-accent), reaching past the frames so it shows around them.
+ * The act's glow behind a preview: the Act II header's wash (the same
+ * --stage-wash), reaching past the frames so it shows around them.
  */
 function Glow({ className }: { className?: string }) {
   return (
     <div
       aria-hidden="true"
       className={cn(
-        'pointer-events-none absolute -z-10 bg-[radial-gradient(closest-side,color-mix(in_oklab,var(--stage-accent)_85%,transparent),transparent)]',
+        'pointer-events-none absolute -z-10 bg-[radial-gradient(closest-side,color-mix(in_oklab,var(--stage-wash)_85%,transparent),transparent)]',
         className,
       )}
     />
@@ -377,7 +377,7 @@ export function LivePreview({ product, flip }: { product: Product; flip: boolean
           <Iphone16Pro
             aria-hidden="true"
             focusable="false"
-            className="absolute inset-0 size-full text-transparent drop-shadow-[0_24px_40px_rgba(7,5,15,0.75)]"
+            className="absolute inset-0 size-full text-transparent drop-shadow-[0_24px_40px_color-mix(in_oklab,var(--background)_75%,transparent)]"
           />
         </div>
       </a>
@@ -534,7 +534,7 @@ function Part({
     <div
       data-flow-node=""
       className={cn(
-        'relative z-10 rounded-[4px] border border-border bg-[color-mix(in_oklab,var(--stage-accent)_45%,var(--background))] p-3 shadow-[0_14px_30px_-14px_rgba(7,5,15,0.95)] md:w-full md:max-w-none',
+        'relative z-10 rounded-[4px] border border-border bg-[color-mix(in_oklab,var(--stage-wash)_45%,var(--background))] p-3 shadow-[0_14px_30px_-14px_color-mix(in_oklab,var(--background)_95%,transparent)] md:w-full md:max-w-none',
         className,
       )}
     >
@@ -591,7 +591,7 @@ export function ProductParts({ product }: { product: Product }) {
           role="group"
           aria-label={`The parts of ${product.title}`}
           className={cn(
-            'relative flex flex-col overflow-hidden rounded-[4px] border border-border bg-[color-mix(in_oklab,var(--stage-accent)_24%,var(--background))] bg-[radial-gradient(color-mix(in_oklab,var(--stage-accent-ink)_16%,transparent)_1px,transparent_1px)] [background-size:18px_18px] px-5 py-6',
+            'relative flex flex-col overflow-hidden rounded-[4px] border border-border bg-[color-mix(in_oklab,var(--stage-wash)_24%,var(--background))] bg-[radial-gradient(color-mix(in_oklab,var(--stage-gold)_16%,transparent)_1px,transparent_1px)] [background-size:18px_18px] px-5 py-6',
             roomy ? 'md:p-8' : 'md:p-5',
             FLOW_BOX,
           )}
@@ -615,7 +615,7 @@ export function ProductParts({ product }: { product: Product }) {
               data-flow-node=""
               data-flow-hub=""
               className={cn(
-                'relative z-10 mx-auto w-full max-w-[15rem] rounded-[4px] border border-gold/60 bg-[color-mix(in_oklab,var(--stage-accent)_75%,var(--background))] p-4 text-center shadow-[0_0_56px_-12px_color-mix(in_oklab,var(--stage-accent-ink)_40%,transparent)] outline outline-1 outline-offset-[3px] outline-gold/22 md:mx-0',
+                'relative z-10 mx-auto w-full max-w-[15rem] rounded-[4px] border border-gold/60 bg-[color-mix(in_oklab,var(--stage-wash)_75%,var(--background))] p-4 text-center shadow-[0_0_56px_-12px_color-mix(in_oklab,var(--stage-gold)_40%,transparent)] outline outline-1 outline-offset-[3px] outline-gold/22 md:mx-0',
                 'md:w-[27%]',
                 roomy ? null : 'md:p-3',
               )}
@@ -638,7 +638,7 @@ export function ProductParts({ product }: { product: Product }) {
                 curvature={!wide ? link.bow[0] : roomy ? link.bow[1] : (link.bow[1] / BOW) * TIGHT_BOW}
                 duration={2.6}
                 delay={i * 0.65}
-                pathColor="var(--stage-accent-ink)"
+                pathColor="var(--stage-gold)"
                 pathOpacity={0.3}
                 beamColor="var(--stage-glow)"
                 beamLength={40}

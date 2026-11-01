@@ -237,7 +237,7 @@ test.describe('other pages', () => {
     await expect(page.getByRole('link', { name: 'See the work' })).toHaveAttribute('href', '/#work')
     await expect(page.getByRole('link', { name: 'Get in touch' })).toHaveAttribute('href', '/#contact')
     // The Stage's ground (imperial.ts), not Next's white.
-    expect(await page.locator('main#main').evaluate((el) => getComputedStyle(el.parentElement!).backgroundColor)).toBe('rgb(7, 5, 15)')
+    expect(await page.locator('main#main').evaluate((el) => getComputedStyle(el.parentElement!).backgroundColor)).toBe('rgb(11, 8, 6)')
     log.expectClean()
   })
 })

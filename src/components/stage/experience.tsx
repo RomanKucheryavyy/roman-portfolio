@@ -67,9 +67,9 @@ function useIsMobile() {
  *   years read for themselves), so it is hidden in both layouts, and on the
  *   rail each column's empty age line is taken out, with the rail raised to
  *   match (Lifeline's --lifeline-rail, 5rem with the line, 2.75rem without);
- * - a year is lavender, gold while its column is hovered;
+ * - a year is in the muted ink, gold while its column is hovered;
  * - each milestone's title (its odd lines) is Cinzel in marble, its where
- *   and when (the even lines) Geist in lavender;
+ *   and when (the even lines) Geist in the muted ink;
  * - on the rail, every column is 216px, so the whole career fits the page
  *   column from 1200px up with no travel;
  * - in the phone list, the empty age column collapses and the rail moves to
@@ -94,8 +94,8 @@ const LOOK = [
   // the road has got to (the rail's last, the list's first), filled.
   '[&_span[aria-hidden]]:size-[9px]! [&_span[aria-hidden]]:rotate-45 [&_span[aria-hidden]]:border [&_span[aria-hidden]]:border-gold [&_span[aria-hidden]]:bg-background!',
   '[&_.group_span[aria-hidden]]:-translate-x-1/2 [&_.group:hover_span[aria-hidden]]:bg-gold!',
-  '[&_:is(.group:last-child,li:first-child)_span[aria-hidden]]:bg-gold! [&_:is(.group:last-child,li:first-child)_span[aria-hidden]]:shadow-[0_0_0_4px_color-mix(in_oklab,var(--stage-accent-ink)_16%,transparent)]',
-  // The years (and the empty age slots): Geist, lavender, gold on hover.
+  '[&_:is(.group:last-child,li:first-child)_span[aria-hidden]]:bg-gold! [&_:is(.group:last-child,li:first-child)_span[aria-hidden]]:shadow-[0_0_0_4px_color-mix(in_oklab,var(--stage-gold)_16%,transparent)]',
+  // The years (and the empty age slots): Geist, muted, gold on hover.
   '[&_.tabular-nums]:tracking-[0.06em] [&_.tabular-nums]:text-muted-foreground! [&_.group:hover_.tabular-nums]:text-gold!',
   // The milestones' lines: the title inscribed, the where and when below it.
   '[&_.space-y-4>p]:text-muted-foreground [&_.space-y-4>p]:odd:mb-2 [&_.space-y-4>p]:odd:font-roman [&_.space-y-4>p]:odd:text-[17px] [&_.space-y-4>p]:odd:font-medium [&_.space-y-4>p]:odd:leading-[1.3] [&_.space-y-4>p]:odd:tracking-[0.02em] [&_.space-y-4>p]:odd:text-foreground',

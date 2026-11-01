@@ -30,7 +30,7 @@ export default function ErrorPage({
       <main id="main" tabIndex={-1} className="relative flex min-h-svh items-center outline-none">
         <div className="mx-auto w-full max-w-[1280px] px-4 py-24 md:px-12">
           <p className="flex items-center gap-4 md:gap-5">
-            <span className={cn(KICKER, 'text-[var(--stage-accent-ink)]')}>Error</span>
+            <span className={cn(KICKER, 'text-[var(--stage-gold)]')}>Error</span>
             <span aria-hidden="true" className={HAIRLINE} />
             <span className="sr-only">, </span>
             <span className={KICKER}>Something broke</span>

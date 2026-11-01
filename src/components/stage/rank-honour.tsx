@@ -19,7 +19,7 @@ import { GILT, PALETTE } from './imperial'
  * golds, LAUREL); no level pill (its word, "GOLD", is the component's, not
  * the record's). The platform's name, "Trailhead", stands in the crown's
  * opening above the name, the page's own line. Behind it all, the page's
- * own glory: a violet halo and fine gold rays. The seals are small violet
+ * own glory: a halo of the wash and fine gold rays. The seals are small
  * discs with a laurel struck in them; Act I's plaques are rectangles with
  * rivets; this is the one gold wreath, and the largest mark in the act.
  *
@@ -57,7 +57,7 @@ const AWARD_LOOK = cn(
   'aspect-[892.77/688.08] w-[min(22rem,92vw)] p-0! md:w-[26rem] xl:w-[28rem]',
   // The laurel in struck gold, a fine dark edge, and a shadow on the dark.
   // (Literal, so Tailwind finds the class: url(#rk-laurel) is LAUREL.)
-  '[&>svg]:[fill:url(#rk-laurel)]! [&>svg]:[filter:drop-shadow(0_0_0.5px_var(--rk-shadow))_drop-shadow(0_6px_14px_rgb(7_5_15/0.7))]',
+  '[&>svg]:[fill:url(#rk-laurel)]! [&>svg]:[filter:drop-shadow(0_0_0.5px_var(--rk-shadow))_drop-shadow(0_6px_14px_color-mix(in_oklab,var(--background)_70%,transparent))]',
   // The words: a column down the wreath's middle, a little below its centre (the crown's opening holds "Trailhead").
   '[&>div]:flex! [&>div]:flex-col [&>div]:items-center [&>div]:px-0! [&>div]:pt-[9%]',
   // No pill, and no empty date.
@@ -198,7 +198,7 @@ export function RankHonour({ className }: { className?: string }) {
         </defs>
       </svg>
 
-      {/* The glory behind the wreath: a violet halo, a gold core, and fine
+      {/* The glory behind the wreath: a halo of the wash, a gold core, and fine
           gold rays fading out from it, centred on the wreath. Wider than the
           column, so it can spread; the section clips it, so the page never
           widens. */}
@@ -210,7 +210,7 @@ export function RankHonour({ className }: { className?: string }) {
         <div
           className="absolute inset-0 rounded-full"
           style={{
-            background: `radial-gradient(circle, color-mix(in oklab, ${PALETTE.gold} 14%, transparent) 0%, color-mix(in oklab, ${PALETTE.violet} 80%, transparent) 22%, color-mix(in oklab, ${PALETTE.violet} 52%, transparent) 36%, color-mix(in oklab, ${PALETTE.violet} 20%, transparent) 52%, transparent 70%)`,
+            background: `radial-gradient(circle, color-mix(in oklab, ${PALETTE.gold} 14%, transparent) 0%, color-mix(in oklab, ${PALETTE.wash} 80%, transparent) 22%, color-mix(in oklab, ${PALETTE.wash} 52%, transparent) 36%, color-mix(in oklab, ${PALETTE.wash} 20%, transparent) 52%, transparent 70%)`,
           }}
         />
         <div

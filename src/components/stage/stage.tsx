@@ -58,19 +58,19 @@ const FooterSection5 = dynamic(() => import('@/components/ui/footer-section-5'),
 /* ---------------------------------------------------------------- hero -- */
 
 /**
- * The curtain dyed imperial, from outside: the component reads its two
- * shader colours from two hidden spans' text colour (the lit face, then the
- * deepest fold), so descendant classes re-point them: the lit fold in the
- * intro's imperial violet, the deepest in the ground. Its own ground is the
- * page's.
+ * The curtain dyed in the palette, from outside: the component reads its
+ * two shader colours from two hidden spans' text colour (the lit face, then
+ * the deepest fold), so descendant classes re-point them: the lit fold in
+ * the wash (the intro's flood), the deepest in the ground. Its own ground
+ * is the page's.
  */
 const DRAPE_LOOK = cn(
   'min-h-svh dark:bg-background',
-  '[&>span:nth-child(1)]:text-imperial! [&>span:nth-child(2)]:text-background!',
+  '[&>span:nth-child(1)]:text-wash! [&>span:nth-child(2)]:text-background!',
 )
 
 /**
- * The intro's landing, lifted onto the page: the curtain in its violet,
+ * The intro's landing, lifted onto the page: the curtain in the wash,
  * lit warm from above as its stage is; a small gold crest; the name in
  * Cinzel capitals, ROMAN large as the intro sets it and the surname spaced
  * out beneath to the same measure, as an inscription; the tagline in
@@ -91,7 +91,8 @@ const DRAPE_LOOK = cn(
  * which every browser knows), so name, room and buttons still fit one
  * screen 768 tall.
  */
-const NAME_HALO = '[text-shadow:0_0_1px_#07050f,0_0_2px_#07050f,0_0_4px_rgb(7_5_15/0.9),0_0_18px_rgb(7_5_15/0.55)]'
+const NAME_HALO =
+  '[text-shadow:0_0_1px_var(--background),0_0_2px_var(--background),0_0_4px_color-mix(in_oklab,var(--background)_90%,transparent),0_0_18px_color-mix(in_oklab,var(--background)_55%,transparent)]'
 
 function Hero() {
   return (
@@ -100,7 +101,7 @@ function Hero() {
         {/* Warm light on the stage, behind the name. */}
         <div
           aria-hidden="true"
-          className="pointer-events-none absolute inset-0 bg-[radial-gradient(50%_44%_at_50%_42%,color-mix(in_oklab,var(--stage-glow)_17%,transparent),color-mix(in_oklab,var(--stage-accent-ink)_6%,transparent)_45%,transparent_76%)] mix-blend-screen"
+          className="pointer-events-none absolute inset-0 bg-[radial-gradient(50%_44%_at_50%_42%,color-mix(in_oklab,var(--stage-glow)_17%,transparent),color-mix(in_oklab,var(--stage-gold)_6%,transparent)_45%,transparent_76%)] mix-blend-screen"
         />
         <HeroPainting />
         <div className="relative z-[1] mx-auto flex min-h-svh w-full max-w-[1280px] flex-col items-center px-4 pb-8 pt-20 text-center md:px-12">
@@ -156,8 +157,8 @@ const BIO = HIGHLIGHTS.reduce((text, phrase) => text.replace(phrase, `**${phrase
  * 17:1.
  */
 const TILE = {
-  bg: 'linear-gradient(168deg, var(--foreground) 0%, var(--foreground) 46%, color-mix(in oklab, var(--foreground) 80%, var(--stage-accent-ink)) 100%)',
-  border: 'color-mix(in oklab, var(--stage-accent-ink) 85%, transparent)',
+  bg: 'linear-gradient(168deg, var(--foreground) 0%, var(--foreground) 46%, color-mix(in oklab, var(--foreground) 80%, var(--stage-gold)) 100%)',
+  border: 'color-mix(in oklab, var(--stage-gold) 85%, transparent)',
   color: 'var(--background)',
 }
 const BADGES: PortfolioBadge[] = SKILLS.map((label) => ({ label, ...TILE }))
@@ -168,7 +169,7 @@ const BADGES: PortfolioBadge[] = SKILLS.map((label) => ({ label, ...TILE }))
  * column, ground and type. About's own Roman idea is the portrait in an
  * arched niche and the skills as mosaic tiles:
  * - its #060606 ground and white ink give way to the page's ground and
- *   marble, and its blue glow becomes the imperial violet's, starting at the
+ *   marble, and its blue glow becomes the wash's, starting at the
  *   block's top instead of 160-200px above it;
  * - the badge zone and the space above the name shrink to what the pile
  *   needs (260px on phones, 220px from the template's wide layout);
@@ -180,15 +181,15 @@ const BADGES: PortfolioBadge[] = SKILLS.map((label) => ({ label, ...TILE }))
  *   Cinzel, as every name on the page; the role line takes the page's muted
  *   ink (the template's #767676 is 4.46:1 on its black);
  * - his words are in Cormorant italic, his voice everywhere on the page: the
- *   running text in a dimmed lavender (5.6:1 on the ground, 4.6:1 at the
- *   glow's brightest, at 28px and up),
+ *   running text in a dimmed muted ink (5.65:1 on the ground, about 3.9:1
+ *   at the glow's brightest, where it is large text, 28px and up),
  *   the phrases he would underline in gold (10:1);
  * - his links take the Stage's Geist capitals, with gold arrows.
  */
 const ABOUT_LOOK = [
   'bg-transparent! text-foreground!',
   '[&_section>div:first-child]:top-0',
-  '[&_section>div:first-child]:[background:radial-gradient(closest-side,color-mix(in_oklab,var(--stage-rule)_62%,transparent),color-mix(in_oklab,var(--stage-accent)_45%,transparent)_55%,transparent)]!',
+  '[&_section>div:first-child]:[background:radial-gradient(closest-side,color-mix(in_oklab,var(--stage-rule)_62%,transparent),color-mix(in_oklab,var(--stage-wash)_45%,transparent)_55%,transparent)]!',
   '[&_section]:pt-[276px] @6xl:[&_section]:pt-[244px]',
   '[&_[aria-label=Keywords]]:h-[260px] @6xl:[&_[aria-label=Keywords]]:h-[220px]',
   '[&_[aria-label=Keywords]>div]:[touch-action:pan-y_pinch-zoom]',
@@ -198,7 +199,7 @@ const ABOUT_LOOK = [
   // The portrait, in its niche.
   '[&_section>div.relative>div:first-child>div:first-child]:rounded-[30px_30px_2px_2px]',
   '[&_section>div.relative>div:first-child>div:first-child]:border-gold/80!',
-  '[&_section>div.relative>div:first-child>div:first-child]:shadow-[0_0_0_4px_var(--background),0_0_0_5px_color-mix(in_oklab,var(--stage-accent-ink)_35%,transparent)]',
+  '[&_section>div.relative>div:first-child>div:first-child]:shadow-[0_0_0_4px_var(--background),0_0_0_5px_color-mix(in_oklab,var(--stage-gold)_35%,transparent)]',
   // His name and role.
   '[&_section>div.relative>div:first-child>div:last-child>:first-child]:font-roman [&_section>div.relative>div:first-child>div:last-child>:first-child]:text-[25px] [&_section>div.relative>div:first-child>div:last-child>:first-child]:font-medium [&_section>div.relative>div:first-child>div:last-child>:first-child]:leading-[1.2] [&_section>div.relative>div:first-child>div:last-child>:first-child]:tracking-[0.02em]',
   '[&_p.m-0.text-lg]:mt-1 [&_p.m-0.text-lg]:text-base [&_p.m-0.text-lg]:leading-snug [&_p.m-0.text-lg]:tracking-normal [&_p.m-0.text-lg]:text-muted-foreground!',
@@ -318,7 +319,7 @@ function About() {
  * The component's own header (a centred pill and a 60px h2) is hidden in
  * favour of the page's SectionHeader, and its 1024px centred grid widens to
  * the page column, so Contact reads like every other act. Contact's own
- * Roman idea is the globe: the world in gold on an imperial violet sphere
+ * Roman idea is the globe: the world in gold on a sphere of the wash
  * (its lines draw in currentColor; the sphere is a disc behind them, sized
  * to the projection's 0.9 radius, so it sits exactly inside the outline),
  * with a faint gold halo at the limb. "Get in touch" takes Cinzel, and the
@@ -332,7 +333,7 @@ const CONTACT_LOOK = cn(
   '[&_.max-w-5xl>div:first-child_h3]:font-roman [&_.max-w-5xl>div:first-child_h3]:text-[1.375rem] [&_.max-w-5xl>div:first-child_h3]:font-medium [&_.max-w-5xl>div:first-child_h3]:tracking-[0.02em]',
   '[&_.max-w-5xl>div:first-child_a>div]:rounded-[2px]',
   '[&_.h-52>div:first-child]:text-gold',
-  '[&_.h-52>div:first-child]:bg-[radial-gradient(circle_farthest-side_at_50%_50%,transparent_88%,color-mix(in_oklab,var(--stage-accent-ink)_16%,transparent)_90%,transparent_97%),radial-gradient(circle_farthest-side_at_50%_50%,color-mix(in_oklab,var(--stage-accent)_70%,var(--background))_0%,var(--stage-accent)_72%,color-mix(in_oklab,var(--stage-accent)_70%,var(--stage-rule))_89.4%,transparent_90%)]',
+  '[&_.h-52>div:first-child]:bg-[radial-gradient(circle_farthest-side_at_50%_50%,transparent_88%,color-mix(in_oklab,var(--stage-gold)_16%,transparent)_90%,transparent_97%),radial-gradient(circle_farthest-side_at_50%_50%,color-mix(in_oklab,var(--stage-wash)_70%,var(--background))_0%,var(--stage-wash)_72%,color-mix(in_oklab,var(--stage-wash)_70%,var(--stage-rule))_89.4%,transparent_90%)]',
 )
 
 function Contact() {
@@ -345,19 +346,19 @@ function Contact() {
         {
           // The component's own palette, re-pointed rather than rewritten:
           // its rose accent becomes the page's gold; its white the marble;
-          // its zinc greys the imperial inks: zinc-950 (the globe's fade) the
+          // its zinc greys the Stage's inks: zinc-950 (the globe's fade) the
           // page's ground, so the fade has no edge; zinc-400 and -500 (its
-          // notes, its channels and their icons) the lavender; zinc-700 and
-          // -800 (the icon tiles) the violet rule.
-          '--color-rose-50': 'color-mix(in oklab, var(--stage-accent-ink) 12%, transparent)',
-          '--color-rose-300': 'var(--stage-accent-ink)',
-          '--color-rose-400': 'var(--stage-accent-ink)',
-          '--color-rose-500': 'var(--stage-accent-ink)',
+          // notes, its channels and their icons) the muted ink; zinc-700 and
+          // -800 (the icon tiles) the rule and the wash.
+          '--color-rose-50': 'color-mix(in oklab, var(--stage-gold) 12%, transparent)',
+          '--color-rose-300': 'var(--stage-gold)',
+          '--color-rose-400': 'var(--stage-gold)',
+          '--color-rose-500': 'var(--stage-gold)',
           '--color-white': 'var(--foreground)',
           '--color-zinc-400': 'var(--muted-foreground)',
           '--color-zinc-500': 'var(--muted-foreground)',
           '--color-zinc-700': 'color-mix(in oklab, var(--stage-rule) 80%, transparent)',
-          '--color-zinc-800': 'color-mix(in oklab, var(--stage-accent) 60%, var(--background))',
+          '--color-zinc-800': 'color-mix(in oklab, var(--stage-wash) 60%, var(--background))',
           '--color-zinc-950': 'var(--background)',
         } as React.CSSProperties
       }
@@ -389,19 +390,21 @@ function Contact() {
 /* -------------------------------------------------------------- footer -- */
 
 /**
- * The curtain's last fall: the fluted glass over the imperial violet, lit
- * gold from its top edge, which is a gilt line. The footer closes quietly:
+ * The curtain's last fall: the fluted glass over the ground, with the wash
+ * as light falling into it from above and a breath of gold at its top
+ * (graded, so it is never a flat field of the wash, and no line drawn
+ * along its edge). The footer closes quietly:
  * his monogram as the panel's mark, his manifesto in Cormorant italic, the
  * columns' titles in gold Geist capitals, and a closing line in Cinzel with
  * his name. The component's giant wordmark is hidden: his name already
  * stands full-width in the intro and the hero, and the products' names on
- * their title cards, so a fifth giant word would only repeat them. On the
- * violet: gold 7.9:1, the links (the text ink at 84%) over 9:1.
+ * their title cards, so a fifth giant word would only repeat them. Even
+ * where the wash is fullest: gold 7.5:1, the links (the text ink at 84%)
+ * over 8.5:1.
  */
 const FOOTER_LOOK = cn(
   'bg-background [&_.max-w-7xl]:px-4 md:[&_.max-w-7xl]:px-12',
-  '[&>div:nth-child(2)]:border-t [&>div:nth-child(2)]:border-gold/55',
-  '[&>div:nth-child(2)]:bg-[radial-gradient(60%_42%_at_50%_0%,color-mix(in_oklab,var(--stage-accent-ink)_14%,transparent),transparent),linear-gradient(to_bottom,transparent_55%,color-mix(in_oklab,var(--background)_45%,transparent))]',
+  '[&>div:nth-child(2)]:bg-[radial-gradient(60%_42%_at_50%_0%,color-mix(in_oklab,var(--stage-gold)_10%,transparent),transparent),radial-gradient(90%_75%_at_50%_0%,color-mix(in_oklab,var(--stage-wash)_85%,transparent),transparent)]',
   '[&_.max-w-sm]:max-w-md',
   '[&_h2]:font-serif [&_h2]:text-[1.75rem] [&_h2]:font-normal [&_h2]:italic [&_h2]:leading-[1.2] [&_h2]:text-foreground [&_h2]:text-pretty md:[&_h2]:text-[2rem]',
   '[&_h3]:text-xs [&_h3]:font-medium [&_h3]:uppercase [&_h3]:tracking-[0.24em] [&_h3]:text-gold md:[&_h3]:text-xs',
@@ -426,7 +429,7 @@ function Footer() {
           © {new Date().getFullYear()} {PERSON.name}
         </span>
       }
-      panelColor="var(--stage-accent)"
+      panelColor="var(--background)"
       // Its content column moves onto the page's gutter (16px, 48px from md).
       className={FOOTER_LOOK}
       // No wordmark (above); its block keeps its top padding, a breath of
@@ -458,7 +461,7 @@ function Footer() {
 export function Stage({ children }: { children?: React.ReactNode }) {
   return (
     <div
-      // The imperial ground, inks and gold and the page's one focus ring
+      // The palette's ground, inks and gold and the page's one focus ring
       // (look.ts). The Roman faces' variables are on <html> (layout.tsx).
       className={cn('relative min-h-svh overflow-x-clip bg-background font-sans text-foreground antialiased', STAGE_FOCUS)}
       style={STAGE_STYLE}

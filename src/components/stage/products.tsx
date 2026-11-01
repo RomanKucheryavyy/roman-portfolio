@@ -106,14 +106,14 @@ function ProductRow({ product, index }: { product: Product; index: number }) {
  * browser and on a phone; the private ones, which have no public screens,
  * show their parts around them, in the description's own words. Nothing
  * takes over the scroll: the previews move by themselves, and only while in
- * view. The section clips sideways, for the violet behind the previews.
+ * view. The section clips sideways, for the glow behind the previews.
  */
 export function Products() {
   return (
     <section id="products" aria-labelledby="products-title" className="relative isolate scroll-mt-14 overflow-x-clip pt-20 md:pt-32">
       <div
         aria-hidden="true"
-        className="pointer-events-none absolute inset-x-0 top-0 -z-10 h-[40rem] bg-[radial-gradient(60%_50%_at_50%_0%,color-mix(in_oklab,var(--stage-accent)_70%,transparent),transparent)]"
+        className="pointer-events-none absolute inset-x-0 top-0 -z-10 h-[40rem] bg-[radial-gradient(60%_50%_at_50%_0%,color-mix(in_oklab,var(--stage-wash)_70%,transparent),transparent)]"
       />
       <Container>
         <SectionHeader

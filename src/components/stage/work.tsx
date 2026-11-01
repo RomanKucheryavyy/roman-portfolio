@@ -13,7 +13,7 @@ const pad = (n: number) => String(n).padStart(2, '0')
 
 /**
  * Act I's own shape: each project an inscribed plaque. A dark tablet tinted
- * with the imperial violet (lit from its upper corner, opaque, since the next
+ * with the wash (lit from its upper corner, opaque, since the next
  * plaque slides over it), a gold hairline edge and a finer rule inside it,
  * held at its corners by four small gold rivets. Square cornered, as the
  * intro's ENTER is. The plaque is Act I's alone: the products have their
@@ -22,15 +22,15 @@ const pad = (n: number) => String(n).padStart(2, '0')
 const PLAQUE = cn(
   'relative mx-auto h-full w-full max-w-[1184px] gap-0 overflow-hidden rounded-[3px] py-0 text-foreground',
   'border-gold/42 transition-[border-color] duration-500 hover:border-gold/70',
-  'bg-[linear-gradient(155deg,color-mix(in_oklab,var(--stage-accent)_36%,var(--background))_0%,color-mix(in_oklab,var(--stage-accent)_17%,var(--background))_48%,color-mix(in_oklab,var(--stage-accent)_9%,var(--background))_100%)]',
+  'bg-[linear-gradient(155deg,color-mix(in_oklab,var(--stage-wash)_36%,var(--background))_0%,color-mix(in_oklab,var(--stage-wash)_17%,var(--background))_48%,color-mix(in_oklab,var(--stage-wash)_9%,var(--background))_100%)]',
   // A faint top bevel; below lg a soft drop, from lg the shadow the stack casts upward.
-  'shadow-[inset_0_1px_0_color-mix(in_oklab,var(--stage-glow)_12%,transparent),0_24px_48px_-32px_rgb(3_2_8/0.95)]',
-  'lg:shadow-[inset_0_1px_0_color-mix(in_oklab,var(--stage-glow)_12%,transparent),0_-24px_60px_-20px_rgb(3_2_8/0.9)]',
+  'shadow-[inset_0_1px_0_color-mix(in_oklab,var(--stage-glow)_12%,transparent),0_24px_48px_-32px_color-mix(in_oklab,var(--stage-shadow)_95%,transparent)]',
+  'lg:shadow-[inset_0_1px_0_color-mix(in_oklab,var(--stage-glow)_12%,transparent),0_-24px_60px_-20px_color-mix(in_oklab,var(--stage-shadow)_90%,transparent)]',
 )
 
 /** A rivet at one corner of the inner rule: a small gold boss, lit from the upper left. */
 const RIVET =
-  'absolute size-[5px] rounded-full bg-[radial-gradient(circle_at_35%_35%,var(--stage-glow),var(--stage-accent-ink)_55%,color-mix(in_oklab,var(--stage-accent-ink)_45%,var(--background)))]'
+  'absolute size-[5px] rounded-full bg-[radial-gradient(circle_at_35%_35%,var(--stage-glow),var(--stage-gold)_55%,color-mix(in_oklab,var(--stage-gold)_45%,var(--background)))]'
 
 /** The plaque's inner rule and its four rivets. Decoration only. */
 function InnerRule() {

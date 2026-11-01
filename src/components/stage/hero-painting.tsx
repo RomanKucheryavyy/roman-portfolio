@@ -7,7 +7,7 @@ import { savesData } from './intro-gate'
 
 /**
  * The hero's painting: the intro's Old Masters staging
- * (old-masters-preloader) behind the name, on the violet curtain (Roman, on
+ * (old-masters-preloader) behind the name, on the curtain (Roman, on
  * 2026-10-31, of the new hero: "love it but the hero can still have the
  * painting thingy", then "make it epic"). The composition and the look are
  * hero-painting-stage.tsx's; this is the box, and when it plays.

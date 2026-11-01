@@ -9,7 +9,7 @@ const TITLE = fullTitle('Not found')
 const LINE = 'Nothing is written for this address. The page moved, or the link has a typo.'
 
 /**
- * The 404 in the Stage's look: its ground and violet wash, the gold, the
+ * The 404 in the Stage's look: its ground and the wash's light, the gold, the
  * Roman type (its variables are on <html>, from the root layout), its
  * section header's shape (a gold numeral, a hairline, the kicker) and the
  * hero's buttons (stageButton on plain links). Next's built-in one injected

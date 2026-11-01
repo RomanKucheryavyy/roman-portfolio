@@ -14,7 +14,7 @@ import { Container, SectionHeader } from './section-header'
 const ToolchainMarquee = dynamic(() => import('@/components/ui/toolchain-marquee'), { ssr: false })
 
 /**
- * Act IV's own Roman idea: each certification is a seal, a violet disc
+ * Act IV's own Roman idea: each certification is a seal, a disc of the wash
  * ringed in gold with a laurel wreath (Rome's mark of an honour won)
  * struck in it, followed by its inscription. The left branch is drawn and
  * mirrored for the right. Decoration only: the marquee hides its icons
@@ -48,7 +48,7 @@ function Laurel() {
 const items: ToolchainItem[] = CERTIFICATIONS.map((c) => ({
   label: `${c.name} · ${c.date}`,
   icon: <Laurel />,
-  accent: 'var(--stage-accent-ink)',
+  accent: 'var(--stage-gold)',
 }))
 
 const chunk = (size: number) =>
@@ -99,7 +99,7 @@ const RESERVE = [
  * The marquee as a frieze, from outside (descendant classes; the module's
  * own CSS is unlayered, so whatever it sets is set here with `!`). The
  * rows are lines of an inscription between two gold rules, with a fainter
- * violet rule between them; each badge loses its box and becomes a seal
+ * rule between them; each badge loses its box and becomes a seal
  * (FRIEZE_SEAL) and its words in Cinzel (FRIEZE_WORDS, 12px and closer set
  * below 360px wide so the longest fits a 320px phone's still list, 13px,
  * the most that fits the still list from 360px, then 15px from lg). The
@@ -120,9 +120,9 @@ const FRIEZE = [
   '[&>button]:rounded-[2px]! [&>button]:text-gold! [&>button]:ring-1! [&>button]:ring-inset [&>button]:ring-gold/55',
 ].join(' ')
 
-/** The seal: a violet disc, a gold rim, a fine gold ring just inside it (an outline drawn inward), and the laurel in gold. */
+/** The seal: a disc of the wash, a gold rim, a fine gold ring just inside it (an outline drawn inward), and the laurel in gold. */
 const FRIEZE_SEAL = [
-  '[&_span[aria-hidden]]:size-[34px]! max-[359.98px]:[&_span[aria-hidden]]:size-[30px]! [&_span[aria-hidden]]:rounded-full! [&_span[aria-hidden]]:bg-imperial!',
+  '[&_span[aria-hidden]]:size-[34px]! max-[359.98px]:[&_span[aria-hidden]]:size-[30px]! [&_span[aria-hidden]]:rounded-full! [&_span[aria-hidden]]:bg-wash!',
   '[&_span[aria-hidden]]:border [&_span[aria-hidden]]:border-gold/85 [&_span[aria-hidden]]:outline [&_span[aria-hidden]]:-outline-offset-4 [&_span[aria-hidden]]:outline-gold/30',
   '[&_span_svg]:size-[23px]! max-[359.98px]:[&_span_svg]:size-5!',
 ].join(' ')
@@ -137,11 +137,11 @@ const FRIEZE_WORDS = [
  * One column in both (the module keeps a second for its control, and the
  * gap before it, even when there is no control). Moving, the pause control
  * drops under the rows, at the column's right edge, so the rows can run
- * the full width, on a band of violet that fades out at either side.
+ * the full width, on a band of the wash that fades out at either side.
  */
 const FRIEZE_MOVING = [
   'grid-cols-1! [&>button]:mr-4 [&>button]:justify-self-end md:[&>button]:mr-[max(3rem,calc((100%_-_1280px)/2_+_3rem))]',
-  '[&>div]:bg-linear-to-r [&>div]:from-transparent [&>div]:via-imperial/40 [&>div]:to-transparent',
+  '[&>div]:bg-linear-to-r [&>div]:from-transparent [&>div]:via-wash/40 [&>div]:to-transparent',
 ].join(' ')
 
 /**
@@ -232,15 +232,15 @@ export function Credentials() {
         <RankHonour className="mt-14 md:mt-16 xl:mt-0" />
       </Container>
       {/* The module's own inks, re-pointed at the Stage's: marble words, a
-          violet-dark surface (the pause control's fill) and the gold focus
+          dark surface of the wash (the pause control's fill) and the gold focus
           ring. (Its --muted only inks the control, which FRIEZE inks gold.) */}
       <div
         className="mt-10 md:mt-14"
         style={
           {
             '--text': 'var(--foreground)',
-            '--surface': 'color-mix(in oklab, var(--stage-accent) 45%, var(--background))',
-            '--focus-ring': 'var(--stage-accent-ink)',
+            '--surface': 'color-mix(in oklab, var(--stage-wash) 45%, var(--background))',
+            '--focus-ring': 'var(--stage-gold)',
           } as React.CSSProperties
         }
       >
