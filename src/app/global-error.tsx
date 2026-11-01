@@ -6,9 +6,10 @@ import { PALETTE } from '@/components/stage/imperial'
 /**
  * The last resort, when the root layout itself throws. It replaces the whole
  * document, so globals.css may not be there: every style is inline, in the
- * Stage's imperial values (imperial.ts, as look.ts uses them): the ground,
- * the violet wash, marble and the lavender grey, the gold, the intro's
- * rectangular buttons and the page's gold focus ring. The type asks for the
+ * Stage's palette (imperial.ts, as look.ts uses it): the ground, the
+ * wash's flood, marble and the muted ink, the gold, the intro's
+ * rectangular button, the Stage's gold-underlined text link (look.ts
+ * stageLink) and the page's gold focus ring. The type asks for the
  * Stage's faces by name (Cinzel for the heading, Cormorant Garamond for the
  * line under it, Geist for the rest) and
  * falls back to the platform's serif and sans. (Loading them here through
@@ -34,7 +35,15 @@ const BUTTON: CSSProperties = {
   whiteSpace: 'nowrap',
 }
 const SOLID: CSSProperties = { ...BUTTON, border: `1px solid ${PALETTE.marble}`, background: PALETTE.marble, color: PALETTE.ground }
-const OUTLINE: CSSProperties = { ...BUTTON, border: `1px solid ${PALETTE.gold}b3`, background: 'transparent', color: PALETTE.marble }
+/** look.ts stageLink: 13px Geist in marble over a gold line, 44px tall. */
+const LINK: CSSProperties = {
+  display: 'inline-block',
+  padding: '12px 0',
+  font: `500 13px/20px ${SANS}`,
+  color: PALETTE.marble,
+  textDecoration: `underline 1px ${PALETTE.gold}b3`,
+  textUnderlineOffset: 5,
+}
 
 export default function GlobalError({
   retry,
@@ -52,7 +61,7 @@ export default function GlobalError({
           minHeight: '100svh',
           display: 'flex',
           alignItems: 'center',
-          background: `radial-gradient(70% 60% at 50% 0%, ${PALETTE.violet}d9, transparent 70%) no-repeat, ${PALETTE.ground}`,
+          background: `radial-gradient(ellipse 90% 70% at 50% 110%, ${PALETTE.wash}e6, transparent) no-repeat, ${PALETTE.ground}`,
           color: PALETTE.marble,
           fontFamily: SANS,
           WebkitFontSmoothing: 'antialiased',
@@ -64,7 +73,9 @@ export default function GlobalError({
         <main id="main" style={{ width: '100%', maxWidth: 1280, margin: '0 auto', padding: '96px clamp(16px, 4vw, 48px)', boxSizing: 'border-box' }}>
           <p style={{ margin: 0, display: 'flex', alignItems: 'center', gap: 16, fontSize: 12, lineHeight: '16px', fontWeight: 500, letterSpacing: '0.24em', textTransform: 'uppercase', color: PALETTE.muted }}>
             <span style={{ color: PALETTE.gold }}>Error</span>
-            <span aria-hidden="true" style={{ display: 'block', width: 48, height: 1, background: `${PALETTE.gold}a6` }} />
+            <span aria-hidden="true" style={{ color: PALETTE.gold, margin: '0 -4px' }}>
+              ·
+            </span>
             <span style={{ position: 'absolute', width: 1, height: 1, overflow: 'hidden', clip: 'rect(0 0 0 0)', whiteSpace: 'nowrap' }}>, </span>
             Something broke
           </p>
@@ -85,13 +96,13 @@ export default function GlobalError({
           <p role="alert" style={{ margin: '20px 0 0', maxWidth: '36rem', fontFamily: SERIF, fontStyle: 'italic', fontSize: 22, lineHeight: 1.35, color: PALETTE.muted }}>
             Try it again, or head back to the home page.
           </p>
-          <div style={{ marginTop: 48, display: 'flex', flexWrap: 'wrap', gap: 12 }}>
+          <div style={{ marginTop: 48, display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '8px 32px' }}>
             <button type="button" style={SOLID} onClick={() => (retry ?? reset)()}>
               Try again
             </button>
             {/* A full page load on purpose: the app around this page is what failed. */}
             {/* eslint-disable-next-line @next/next/no-html-link-for-pages */}
-            <a href="/" style={OUTLINE}>
+            <a href="/" style={LINK}>
               Back to the home page
             </a>
           </div>

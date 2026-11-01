@@ -1,14 +1,24 @@
+'use client'
+
+import { useEffect, useRef } from 'react'
 import { cn } from '@/lib/utils'
-import { DISPLAY, HAIRLINE, INTRO, KICKER, NUMERAL } from './look'
+import { DISPLAY, INTRO, KICKER, NUMERAL } from './look'
 
 /**
  * The one section header, so every act reads as a chapter of one book: the
- * act's numeral in gold Cinzel with a short gold hairline, the kicker in
- * Geist capitals, the title (an h2) in Cinzel, and an optional intro in
- * Cormorant italic.
+ * act's numeral in gold Cinzel, set large and alone as the chapter mark,
+ * then the kicker in Geist capitals, the title (an h2) in Cinzel, and an
+ * optional intro in Cormorant italic. No rules: the type is the ornament,
+ * and space separates the parts.
  *
  * `act` is the act as words ("Act II"): its numeral is drawn, and "Act"
- * stays for screen readers, so the line still reads "Act II, Client work".
+ * stays for screen readers, so the first line still reads "Act II, Client
+ * work".
+ *
+ * Its entrance (reveal.ts) loads after the page, and plays once, only for
+ * a header that starts below the screen; the server's HTML is the finished
+ * header, so without scripts, under reduced motion, or before it loads, it
+ * stands whole.
  */
 export function SectionHeader({
   id,
@@ -26,39 +36,43 @@ export function SectionHeader({
   className?: string
 }) {
   const [, word, numeral] = act.match(/^(\S+)\s+(\S+)$/) ?? [act, '', act]
+  const ref = useRef<HTMLDivElement>(null)
+  useEffect(() => {
+    let stop = () => {}
+    let gone = false
+    import('./reveal').then(
+      (m) => {
+        if (!gone && ref.current) stop = m.arm(ref.current)
+      },
+      // Its code failing to load leaves the header as it stands.
+      () => {},
+    )
+    return () => {
+      gone = true
+      stop()
+    }
+  }, [])
   return (
-    <div className={cn('max-w-4xl', className)}>
-      <p className="flex items-center gap-4 md:gap-5">
-        <span className={NUMERAL}>
+    <div ref={ref} className={cn('max-w-4xl', className)}>
+      <p>
+        <span data-reveal="numeral" className={NUMERAL}>
           {word ? <span className="sr-only">{word} </span> : null}
           {numeral}
         </span>
-        <span aria-hidden="true" className={HAIRLINE} />
         <span className="sr-only">, </span>
-        <span className={KICKER}>{kicker}</span>
+        <span data-reveal="kicker" className={`mt-4 block md:mt-5 ${KICKER}`}>
+          {kicker}
+        </span>
       </p>
-      <h2 id={id} className={`mt-6 ${DISPLAY}`}>
+      <h2 id={id} data-reveal="title" className={`mt-4 md:mt-5 ${DISPLAY}`}>
         {title}
       </h2>
-      {intro ? <p className={`mt-5 ${INTRO}`}>{intro}</p> : null}
+      {intro ? (
+        <p data-reveal="intro" className={`mt-5 ${INTRO}`}>
+          {intro}
+        </p>
+      ) : null}
     </div>
-  )
-}
-
-/**
- * The Stage's small gold mark, the intro's sparkle between two hairlines:
- * the hero's crest, and a closing mark wherever a page wants one. Decoration
- * only (aria-hidden).
- */
-export function Ornament({ className }: { className?: string }) {
-  return (
-    <span aria-hidden="true" className={cn('flex items-center justify-center gap-3 text-gold', className)}>
-      <span className="h-px w-12 bg-linear-to-r from-transparent to-gold/75 md:w-20" />
-      <svg viewBox="0 0 12 12" className="size-3 shrink-0" fill="currentColor">
-        <path d="M6 0c.35 3.1 2.9 5.65 6 6-3.1.35-5.65 2.9-6 6-.35-3.1-2.9-5.65-6-6 3.1-.35 5.65-2.9 6-6Z" />
-      </svg>
-      <span className="h-px w-12 bg-linear-to-l from-transparent to-gold/75 md:w-20" />
-    </span>
   )
 }
 

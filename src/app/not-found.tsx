@@ -1,5 +1,5 @@
 import type { Metadata } from 'next'
-import { DISPLAY, HAIRLINE, INTRO, KICKER, NUMERAL, STAGE_FOCUS, STAGE_STYLE, WASH, stageButton } from '@/components/stage/look'
+import { DISPLAY, INTRO, KICKER, NUMERAL, STAGE_FOCUS, STAGE_STYLE, WASH, stageButton, stageLink } from '@/components/stage/look'
 import { SITE } from '@/lib/constants'
 import { fullTitle } from '@/lib/seo'
 import { cn } from '@/lib/utils'
@@ -9,10 +9,11 @@ const TITLE = fullTitle('Not found')
 const LINE = 'Nothing is written for this address. The page moved, or the link has a typo.'
 
 /**
- * The 404 in the Stage's look: its ground and violet wash, the gold, the
+ * The 404 in the Stage's look: its ground and the wash's flood, the gold, the
  * Roman type (its variables are on <html>, from the root layout), its
- * section header's shape (a gold numeral, a hairline, the kicker) and the
- * hero's buttons (stageButton on plain links). Next's built-in one injected
+ * section header's shape (the gold numeral alone as the chapter mark, then
+ * the kicker) and its ways on: the one button (stageButton) and text links
+ * (stageLink), on plain links. Next's built-in one injected
  * an unlayered `body { background: #fff }` and a second <title>, and offered
  * no way back.
  *
@@ -33,11 +34,11 @@ export const metadata: Metadata = {
   twitter: { card: 'summary_large_image', title: TITLE, description: LINE },
 }
 
-/** Home first, solid; then the two places a visitor most likely came for, as the hero offers them. */
+/** Home first, the one button; then the two places a visitor most likely came for, as text links. */
 const WAYS_OUT = [
   { href: '/', label: 'Back to the home page', kind: 'primary' },
-  { href: '/#work', label: 'See the work', kind: 'secondary' },
-  { href: '/#contact', label: 'Get in touch', kind: 'secondary' },
+  { href: '/#work', label: 'See the work', kind: 'link' },
+  { href: '/#contact', label: 'Get in touch', kind: 'link' },
 ] as const
 
 export default function NotFound() {
@@ -55,21 +56,20 @@ export default function NotFound() {
       </header>
       <main id="main" tabIndex={-1} className="relative flex min-h-svh items-center outline-none">
         <div className="mx-auto w-full max-w-[1280px] px-4 py-24 md:px-12">
-          <p className="flex items-center gap-4 md:gap-5">
+          <p>
             <span className={NUMERAL}>404</span>
-            <span aria-hidden="true" className={HAIRLINE} />
             <span className="sr-only">, </span>
-            <span className={KICKER}>Not found</span>
+            <span className={`mt-4 block md:mt-5 ${KICKER}`}>Not found</span>
           </p>
-          <h1 className={`mt-6 max-w-4xl ${DISPLAY}`}>This page is not on the programme.</h1>
+          <h1 className={`mt-4 max-w-4xl md:mt-5 ${DISPLAY}`}>This page is not on the programme.</h1>
           <p role="alert" className={`mt-5 ${INTRO}`}>
             {LINE}
           </p>
-          <div className="mt-10 flex flex-wrap gap-3 md:mt-12 md:gap-4">
+          <div className="mt-10 flex flex-wrap items-center gap-x-8 gap-y-2 md:mt-12">
             {WAYS_OUT.map(({ href, label, kind }) => (
               // Plain links: a full load of the home page, and no client
               // router for a page that only leads away.
-              <a key={href} href={href} className={stageButton(kind)}>
+              <a key={href} href={href} className={kind === 'primary' ? stageButton('primary') : stageLink()}>
                 {label}
               </a>
             ))}

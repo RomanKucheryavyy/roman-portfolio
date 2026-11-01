@@ -33,7 +33,8 @@ const REDIRECTS: Record<string, string> = {
  * - style-src 'unsafe-inline': style attributes in the markup (React style
  *   props, 39) and inline <style> elements (3).
  * - img-src data:: the paper shaders' 1x1 transparent pixel
- *   (@paper-design/shaders-react, behind the curtain and the footer; 3).
+ *   (@paper-design/shaders-react, behind the footer) and the hero print's
+ *   grain (an SVG noise, stage.tsx).
  * - font-src 'self': next/font self-hosts Geist and Geist Mono.
  * - connect-src 'self': the globe's map (/countries-110m.json, shipped in
  *   public/) and the message box's POST to /api/contact. Nothing leaves this

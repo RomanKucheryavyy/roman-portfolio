@@ -1,4 +1,4 @@
-import { CERTIFICATIONS, LINKS, SITE, TECH_SKILLS } from '@/lib/constants'
+import { CERTIFICATIONS, LINKS, SITE, TECH_SKILLS, TRAILHEAD_RANK } from '@/lib/constants'
 import { CURRENT_ROLE } from '@/lib/site-facts'
 
 /**
@@ -39,6 +39,8 @@ export function siteGraph() {
           recognizedBy: { '@type': 'Organization', name: 'Salesforce' },
           ...(cert.verifyUrl ? { url: cert.verifyUrl } : {}),
         })),
+        // His Trailhead rank, as schema.org's plain-text award: the platform, then the rank.
+        award: `${TRAILHEAD_RANK.platform} ${TRAILHEAD_RANK.rank}`,
       },
       {
         '@type': 'WebSite',

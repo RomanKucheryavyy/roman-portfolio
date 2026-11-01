@@ -1,7 +1,7 @@
 import { ImageResponse } from 'next/og'
 import { FONT, STAGE, ogFonts } from './_og/frame'
 
-/** The home-screen icon: his initials in the Stage's heavy Geist, on its black. */
+/** The home-screen icon: the page's monogram, R·K in Cinzel, marble on its ground with the point in gold (the top bar's and the intro's). */
 export const size = { width: 180, height: 180 }
 export const contentType = 'image/png'
 
@@ -15,15 +15,15 @@ export default async function AppleIcon() {
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          backgroundColor: STAGE.black,
+          backgroundColor: STAGE.ground,
           color: STAGE.ink,
-          fontFamily: FONT.sans,
-          fontWeight: 700,
-          fontSize: 84,
-          letterSpacing: -5,
+          fontFamily: FONT.roman,
+          fontWeight: 500,
+          fontSize: 76,
+          letterSpacing: 4,
         }}
       >
-        RK
+        R<span style={{ color: STAGE.gold }}>·</span>K
       </div>
     ),
     { ...size, fonts: await ogFonts() },

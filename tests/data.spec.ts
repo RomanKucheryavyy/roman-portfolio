@@ -2,7 +2,7 @@ import { test, expect } from '@playwright/test'
 import { existsSync, readFileSync, readdirSync, statSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
 import path from 'node:path'
-import { CERTIFICATIONS, COMPOSITIONS, HIS_WORDS, PROJECTS as WORK, SITE, TECH_SKILLS } from '@/lib/constants'
+import { CERTIFICATIONS, COMPOSITIONS, HIS_WORDS, PROJECTS as WORK, SITE, TECH_SKILLS, TRAILHEAD_RANK } from '@/lib/constants'
 import { LINKS } from '@/lib/links'
 import * as content from '@/lib/content'
 import { RESUME_DATA } from '@/lib/resume-data'
@@ -17,9 +17,11 @@ import {
   yearRange,
 } from '@/lib/site-facts'
 import { SITE_CARD, pageMetadata } from '@/lib/seo'
+import { siteGraph } from '@/lib/structured-data'
 import { RESUME_HREF, RESUME_PUBLIC } from '@/lib/routes'
 import { toRoman } from '@/lib/roman'
 import { CAST } from '@/components/stage/cast'
+import { isChain } from '@/components/stage/preview-box'
 import { INTRO_FIGURES } from '@/components/stage/intro-gate'
 
 /**
@@ -126,8 +128,9 @@ test.describe('the Stage reads the records', () => {
       'Premier Technical Support Engineer · Salesforce · Nov 2023 – Apr 2026',
       'Technical Support Engineer · MindTree · May 2021 – Nov 2023',
     ])
+    expect(content.RANK).toEqual({ name: TRAILHEAD_RANK.rank, platform: TRAILHEAD_RANK.platform, standing: TRAILHEAD_RANK.standing })
     const source = readFileSync(path.join(LIB, 'content.ts'), 'utf8')
-    expect(source, 'no description is typed into content.ts').not.toMatch(/Native Swift|licensed electrician|Platform Developer/)
+    expect(source, 'no description is typed into content.ts').not.toMatch(/Native Swift|licensed electrician|Platform Developer|Star Ranger|highest Ranger/)
   })
 
   test('linkLabel: the domain, "App Store", or the status of a piece with no link', () => {
@@ -135,6 +138,42 @@ test.describe('the Stage reads the records', () => {
     expect(label('alongside-coffee')).toBe('alongsidecoffee.com')
     expect(label('fubc-coffee-ios')).toBe('App Store')
     expect(label('dtm-plumbing')).toBe('Launching soon')
+  })
+})
+
+test.describe('his Trailhead rank', () => {
+  // Roman, 2026-10-31: "also we should add somewhere that im not all star
+  // ranger on trailhead, the highest ranger status" ("im not": "I'm now").
+  test('the record holds it in his words, and nothing he did not give', () => {
+    expect(TRAILHEAD_RANK).toEqual({ rank: 'All Star Ranger', platform: 'Trailhead', standing: 'The highest Ranger status' })
+    // No date earned, badge count or profile link was given, so none is stated.
+    expect(content.RANK).not.toHaveProperty('url')
+    expect(Object.keys(TRAILHEAD_RANK).sort()).toEqual(['platform', 'rank', 'standing'])
+  })
+
+  test('its words are typed once, in constants.ts, and every place that shows it reads the record', () => {
+    const typed = (dir: string): string[] =>
+      readdirSync(dir, { recursive: true, encoding: 'utf8' })
+        .filter((f) => /\.(ts|tsx|txt)$/.test(f) && statSync(path.join(dir, f)).isFile())
+        .filter((f) => /Star Ranger|highest Ranger/i.test(readFileSync(path.join(dir, f), 'utf8')))
+        .map((f) => path.relative(ROOT, path.join(dir, f)))
+    expect([...typed(path.join(ROOT, 'src')), ...typed(path.join(ROOT, 'public'))]).toEqual(['src/lib/constants.ts'])
+    const read = (file: string) => readFileSync(path.join(ROOT, file), 'utf8')
+    // Act IV's honour, the summary without scripts and llms.txt.
+    for (const use of ['{RANK.platform}', '{RANK.name}', '{RANK.standing}']) expect(read('src/components/stage/rank-honour.tsx'), use).toContain(use)
+    for (const use of ['{RANK.platform}', '{RANK.name}', '{RANK.standing}']) expect(read('src/app/page.tsx'), use).toContain(use)
+    for (const use of ['${RANK.platform}', '${RANK.name}', '${RANK.standing}']) expect(read('src/app/llms.txt/route.ts'), use).toContain(use)
+    // Act IV renders the honour before the frieze (frieze.tsx, loaded after the page).
+    const credentials = read('src/components/stage/credentials.tsx')
+    expect(credentials.indexOf('<RankHonour')).toBeGreaterThan(credentials.indexOf('<SectionHeader'))
+    expect(credentials.indexOf('<RankHonour')).toBeLessThan(credentials.indexOf('<Frieze'))
+  })
+
+  test('the JSON-LD Person names it as an award, and stays a Person with no job title and no ratings', () => {
+    const person = siteGraph()['@graph'].find((n) => n['@type'] === 'Person') as Record<string, unknown>
+    expect(person.award).toBe(`${TRAILHEAD_RANK.platform} ${TRAILHEAD_RANK.rank}`)
+    expect(person).not.toHaveProperty('jobTitle')
+    expect(JSON.stringify(person)).not.toMatch(/aggregateRating|ratingValue/)
   })
 })
 
@@ -275,35 +314,47 @@ test.describe('his products', () => {
 
   test("a flow names only what the description names, in the description's words", () => {
     const words = (text: string) => text.toLowerCase().replace(/\s+/g, ' ')
+    // The counts a description may spell out, and their values.
+    const COUNTS: Record<string, number> = { two: 2, three: 3, four: 4, five: 5, six: 6, seven: 7, eight: 8, nine: 9, ten: 10, twelve: 12, eighteen: 18, twenty: 20 }
     for (const product of content.PRODUCTS) {
       if (!product.flow) continue
       const description = words(product.description)
-      // The centre: the product, under the description's opening line.
+      // The product's own line: the description's opening line.
       expect(description.startsWith(words(product.flow.hub)), `${product.id}: hub "${product.flow.hub}"`).toBe(true)
       const ids = product.flow.nodes.map((n) => n.id)
       expect(ids, `${product.id}: a part named like the product`).not.toContain(product.id)
       for (const node of product.flow.nodes) {
-        expect(description, `${product.id}: "${node.label}"`).toContain(words(node.label))
+        // Its whole name (a count before it, the words that lead into it) as the description has it.
+        const name = [node.lead, node.count?.word, node.label].filter(Boolean).join(' ')
+        expect(description, `${product.id}: "${name}"`).toContain(words(name))
         expect(description, `${product.id}: "${node.note}"`).toContain(words(node.note))
+        // A count is set as its numeral: the word and the value agree.
+        if (node.count) expect(COUNTS[node.count.word.toLowerCase()], `${product.id}: "${node.count.word}" is ${node.count.value}`).toBe(node.count.value)
       }
       for (const [from, to] of product.flow.links) {
         expect([...ids, product.id], `${product.id}: link ${from} -> ${to}`).toEqual(expect.arrayContaining([from, to]))
         expect(from, `${product.id}: a link from ${from} to itself`).not.toBe(to)
       }
-      // Every part is wired in, and the centre too.
+      // Every part is linked, and the product too.
       for (const id of [...ids, product.id]) expect(product.flow.links.some((link) => link.includes(id)), `${product.id}: ${id}`).toBe(true)
     }
   })
 
-  test("a flow's links are only the ones its description states", () => {
-    // Each part to or from the product at the centre, and the one hand-off
-    // between parts a description states (the Slack bot's captures, routed
-    // by Claude). Which part feeds which beyond that is Roman's to say
-    // (`needs Roman` in constants.ts): a link added for it is added here too.
+  test("a flow's links are only the ones its description states, and they decide its inscription", () => {
+    // Each part to or from the product, and the one hand-off between parts
+    // a description states (the Slack bot's captures, routed by Claude).
+    // Which part feeds which beyond that is Roman's to say (`needs Roman` in
+    // constants.ts): a link added for it is added here too.
     expect(Object.fromEntries(content.PRODUCTS.filter((p) => p.flow).map((p) => [p.id, p.flow!.links.map(([a, b]) => `${a} -> ${b}`)]))).toEqual({
       praxis: ['personas -> praxis', 'discovery -> praxis', 'manager -> praxis', 'praxis -> alpaca'],
       'alongside-brain': ['slack -> claude', 'claude -> alongside-brain', 'alongside-brain -> digests'],
     })
+    // Alongside Brain's run as one chain (numbered I to IV on the page);
+    // Praxis's don't: its parts work into the desk, which works through Alpaca.
+    expect(isChain(content.PRODUCTS.find((p) => p.id === 'alongside-brain')!.flow!)).toBe(true)
+    expect(isChain(content.PRODUCTS.find((p) => p.id === 'praxis')!.flow!)).toBe(false)
+    // The one count, Praxis's personas, is the numeral the page sets.
+    expect(toRoman(content.PRODUCTS.find((p) => p.id === 'praxis')!.flow!.nodes.find((n) => n.count)!.count!.value)).toBe('XVIII')
   })
 })
 

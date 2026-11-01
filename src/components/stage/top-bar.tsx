@@ -20,8 +20,9 @@ export const SECTIONS = [
 
 const SHOW = {
   base: undefined,
-  // Below 375px the bar holds the name, Work, Contact and the mail icon.
-  xs: 'max-[374px]:hidden',
+  // Work, Products and Contact and the mail icon fit a 340px bar at 12px;
+  // below it Products steps out, so the monogram keeps its own space.
+  xs: 'max-[339px]:hidden',
   md: 'hidden md:block',
   lg: 'hidden lg:block',
 } as const
@@ -36,6 +37,16 @@ const RING =
  */
 const MARK =
   'before:absolute before:inset-x-0 before:-bottom-1.5 before:h-px before:origin-left before:scale-x-0 before:bg-gold before:transition-transform before:duration-300 hover:before:scale-x-100 [&[aria-current]]:text-foreground [&[aria-current]]:before:scale-x-100'
+
+/**
+ * On a phone the three links read as one inscription, the page's one
+ * divider between them: WORK · PRODUCTS · CONTACT, the gold point of the
+ * monogram's R·K. Drawn, in the middle of the gap, with empty alternative
+ * text, so a screen reader reads the links alone. (Wider, the bar holds
+ * five or six links and the gaps are their own.)
+ */
+const DOT =
+  "relative before:absolute before:-left-2.5 before:-translate-x-1/2 before:text-gold max-md:not-first:before:content-['·'_/_'']"
 
 /** The section under the middle of the screen, if any. */
 function useCurrentSection(): string | null {
@@ -59,7 +70,10 @@ function useCurrentSection(): string | null {
   return current
 }
 
-/** A fixed bar that is clear over the curtain and takes the ground's glass once the page moves. */
+/**
+ * A fixed bar that is clear over the hero's print and takes the ground's
+ * glass once the page moves, with a soft shadow under it rather than a line.
+ */
 export function TopBar() {
   const [scrolled, setScrolled] = useState(false)
   const current = useCurrentSection()
@@ -74,10 +88,10 @@ export function TopBar() {
   return (
     <header
       className={cn(
-        'fixed inset-x-0 top-0 z-50 border-b transition-[background-color,border-color] duration-500',
+        'fixed inset-x-0 top-0 z-50 transition-[background-color,box-shadow] duration-500',
         scrolled
-          ? 'border-border bg-background/78 backdrop-blur-md'
-          : 'border-transparent bg-transparent',
+          ? 'bg-background/88 shadow-[0_12px_32px_-14px_color-mix(in_oklab,var(--stage-shadow)_85%,transparent)] backdrop-blur-md'
+          : 'bg-transparent',
       )}
     >
       {/* The skip link sits in the root layout (it serves every route), drawn
@@ -100,15 +114,15 @@ export function TopBar() {
           </span>
           <span className="max-sm:sr-only">{PERSON.name}</span>
         </a>
-        {/* The links in the intro's own nav type (Geist capitals: from xl
-            its 12px and 0.16em, below it a little smaller and closer, so
-            five links and the mail icon fit a 768px bar and six and the
-            address a 1024px one), so the bar keeps its face when the intro
-            lifts. */}
-        <nav aria-label="Sections" className="flex items-center gap-3 md:gap-4 lg:gap-5 xl:gap-7">
-          <ul className="flex items-center gap-3 text-[11px] font-medium uppercase tracking-[0.14em] text-muted-foreground md:gap-4 lg:gap-5 xl:gap-7 xl:text-xs xl:tracking-[0.16em]">
+        {/* The links in the intro's own nav type (Geist capitals at 12px,
+            the page's floor: from xl at 0.16em, below it a little closer, so
+            three links, their points and the mail icon fit a 340px bar, five
+            links and the mail icon a 768px one and six and the address a
+            1024px one), so the bar keeps its face when the intro lifts. */}
+        <nav aria-label="Sections" className="flex items-center gap-3 md:gap-4 xl:gap-7">
+          <ul className="flex items-center gap-5 text-xs font-medium uppercase tracking-[0.12em] text-muted-foreground md:gap-3 lg:gap-4 xl:gap-7 xl:tracking-[0.16em]">
             {SECTIONS.map((s) => (
-              <li key={s.id} className={SHOW[s.from]}>
+              <li key={s.id} className={cn(DOT, SHOW[s.from])}>
                 <a
                   href={`#${s.id}`}
                   aria-current={current === s.id ? 'location' : undefined}

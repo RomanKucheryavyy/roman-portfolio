@@ -12,10 +12,11 @@ are the same skill.
 /* SITE */
 Stack: Next.js, TypeScript, Tailwind CSS, shadcn/ui, Netlify
 Built from: 21st.dev components, used as their authors published them
-Type: Geist and Geist Mono; Cinzel and Cormorant Garamond for the intro
+Type: Cinzel and Cormorant Garamond (his name, the headings and his words,
+on the page and its share cards); Geist and Geist Mono
 
 /* PHOTOGRAPHS */
-The intro's and the title cards' statues, from Unsplash, credited as
+The intro's, the hero's and the title cards' statues, from Unsplash, credited as
 kedhareswer's Old Masters Preloader credits them:
 The Apollo Belvedere: Nayani Teixeira
 A marble Hercules: Şafak Atalay

@@ -4,9 +4,11 @@ import { gotoHome, sleep } from './helpers'
 /**
  * On a phone, a vertical swipe that starts on one of the page's interactive
  * pieces still scrolls the page: the About badges (matter-js, which a
- * sideways drag still throws), the client-work cards (StackingCards, flat
- * below lg), the products' previews, diagrams and title cards, and the Experience
- * timeline (Lifeline's phone list). Real touch
+ * sideways drag still throws), the client-work folios (StackingCards, which
+ * stack on a phone held upright: one in the flow, and one pinned under the
+ * top bar), the products' previews, inscriptions and title cards, the
+ * Experience timeline (Lifeline's phone list), Act IV's inscription of the
+ * certifications and Contact's globe. Real touch
  * events through CDP, which the compositor scrolls with (a synthesized
  * scroll gesture does not scroll anything in headless Chromium).
  */
@@ -50,10 +52,10 @@ const PIECES: [string, string, (page: Page) => Promise<void>][] = [
     },
   ],
   ['a client-work card', '#work [data-slot="card"]', async () => {}],
-  // A product's live preview (its link holds the scrolling screenshots) and
-  // a private product's diagram.
+  // A product's live preview (its link holds the scrolling screenshots: the
+  // browser and the phone) and a private product's inscription of its parts.
   ['a product preview', '#products [data-preview="live"] a', async () => {}],
-  ['a product diagram', '#products [data-preview="flow"] [role="group"]', async () => {}],
+  ['a product inscription', '#products [data-preview="flow"] [role="group"]', async () => {}],
   // A product's title card (the Roman staging above its row), once its stage is up.
   [
     'a product title card',
@@ -65,6 +67,9 @@ const PIECES: [string, string, (page: Page) => Promise<void>][] = [
     },
   ],
   ['the Experience timeline', '#experience article', async () => {}],
+  // Act IV's still inscription of the certifications, and Contact's globe.
+  ['the certifications', '#credentials [aria-label="Salesforce certifications"] li', async () => {}],
+  ['the contact globe', '#contact .h-52', async () => {}],
 ]
 
 for (const [what, selector, ready] of PIECES) {
@@ -79,3 +84,26 @@ for (const [what, selector, ready] of PIECES) {
     expect(after - before, `scrollY ${before} -> ${after}`).toBeGreaterThan(200)
   })
 }
+
+test('a vertical swipe that starts on a pinned client-work folio scrolls the page', async ({ page, context }) => {
+  await gotoHome(page)
+  // Where the fifth folio has just pinned (the stack's top plus every slot
+  // before it), with the first four stacked under it.
+  await page.evaluate(() => {
+    const items = [...document.querySelectorAll<HTMLElement>('#work [data-stack-item]')]
+    let top = items[0].parentElement!.getBoundingClientRect().top + scrollY
+    for (const slot of items.slice(0, 4)) top += slot.offsetHeight
+    scrollTo({ top, behavior: 'instant' })
+  })
+  await sleep(600)
+  const folio = page.locator('#work [data-slot="card"]').nth(4)
+  expect(await folio.evaluate((el) => getComputedStyle(el.closest('[data-stack-item]')!).position), 'the folios stack at 390x844').toBe('sticky')
+  const box = (await folio.boundingBox())!
+  const [x, y] = [Math.round(box.x + box.width / 2), Math.round(box.y + box.height / 2)]
+  expect(await page.evaluate(([px, py]) => !!document.elementFromPoint(px, py)?.closest('[data-slot="card"]'), [x, y] as const), 'the swipe starts on the folio').toBe(true)
+  const before = await page.evaluate(() => window.scrollY)
+  await swipeUp(context, page, x, y)
+  await sleep(1200)
+  const after = await page.evaluate(() => window.scrollY)
+  expect(after - before, `scrollY ${before} -> ${after}`).toBeGreaterThan(200)
+})

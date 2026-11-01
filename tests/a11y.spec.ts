@@ -56,6 +56,10 @@ const ROUTES: { name: string; path: string; ready: (page: Page) => Promise<void>
       await gotoHome(page)
       await scrollThrough(page)
       // The badges have dropped (the About block's physics) and come to rest.
+      // They drop as the zone rises into the upper part of the screen; a
+      // wheel step of most of a screen can carry it straight past that, so
+      // the zone is brought into view before they are waited for.
+      await page.locator('#about [aria-label="Keywords"]').scrollIntoViewIfNeeded()
       await expect(page.locator('#about [aria-label="Keywords"] > div').first()).toBeVisible({ timeout: 15_000 })
       await page.waitForTimeout(2500)
     },
@@ -132,6 +136,36 @@ for (const [outcome, answer, heading] of [
     expect(results.violations.map((v) => `${v.id} (${v.impact}): ${v.nodes.map((n) => n.target.join(' ')).join(' | ')}`)).toEqual([])
   })
 }
+
+/**
+ * / again, after a reader's scroll, a half screen at a time: everything
+ * that enters as it comes into view (the act headers, Act III's years,
+ * Act IV's rank and its inscription, the About portrait and badges, the
+ * contact globe) has played and let go, and nothing is left held, so axe
+ * audits every one of them as it finally stands. Any violation fails.
+ */
+test('axe: / once every entrance has played, after a reader’s scroll', async ({ page }) => {
+  test.setTimeout(150_000)
+  await gotoHome(page)
+  const height = await page.evaluate(() => document.documentElement.scrollHeight)
+  const step = Math.round((page.viewportSize()?.height ?? 900) / 2)
+  for (let y = 0; y < height; y += step) {
+    await page.evaluate((top) => window.scrollTo({ top, behavior: 'instant' }), y)
+    await page.waitForTimeout(350)
+  }
+  // Every entrance (a finite animation) has run its course and let go.
+  await expect
+    .poll(() => page.evaluate(() => document.getAnimations().filter((a) => a.effect?.getTiming().iterations !== Infinity && a.playState !== 'finished').length), { timeout: 15_000 })
+    .toBe(0)
+  const held = await page.evaluate(() =>
+    [...document.querySelectorAll('[data-reveal], #experience li *, #credentials li *, #credentials [data-rank] p, #about section img')]
+      .filter((el) => Number(getComputedStyle(el).opacity) < 1)
+      .map((el) => `${el.tagName.toLowerCase()} "${el.textContent?.trim().slice(0, 30)}"`),
+  )
+  expect(held, 'nothing left held after the scroll').toEqual([])
+  const results = await new AxeBuilder({ page }).options({ rules: { 'target-size': { enabled: true } } }).analyze()
+  expect(results.violations.map((v) => `${v.id} (${v.impact}): ${v.nodes.slice(0, 5).map((n) => n.target.join(' ')).join(' | ')}`)).toEqual([])
+})
 
 test('the baseline is empty', () => {
   const baseline = readBaseline()

@@ -1,30 +1,22 @@
 'use client'
 
-import { createRef, useEffect, useMemo, useRef, useState, useSyncExternalStore, type CSSProperties, type RefObject } from 'react'
-import {
-  CalendarClock,
-  ChartCandlestick,
-  MessagesSquare,
-  Pause,
-  Play,
-  Radar,
-  Route,
-  Scale,
-  Users,
-  type LucideIcon,
-} from 'lucide-react'
+import { useEffect, useRef, useState, useSyncExternalStore, type CSSProperties, type RefObject } from 'react'
+import { Pause, Play } from 'lucide-react'
 import { Iphone16Pro } from '@/components/ui/iphone-16-pro'
-import { AnimatedBeam } from '@/components/ui/klyv-animated-beam'
 import { Safari } from '@/components/ui/safari'
 import type { FlowNode, Product, Shot } from '@/lib/content'
+import { toRoman } from '@/lib/roman'
 import { monthYear } from '@/lib/site-facts'
 import { cn } from '@/lib/utils'
-import { CAPTION_ROW, FLOW_BOX, LIVE_BOX } from './preview-box'
+import { PALETTE } from './imperial'
+import { KICKER } from './look'
+import { CAPTION_ROW, flowBox, LIVE_BOX } from './preview-box'
 
 /**
  * The Products act's previews (products.tsx draws the act and loads these
  * after the page, behind blocks of the same size): a public product's live
- * site in a browser and a phone, a private product's parts around it.
+ * site in a browser and a phone, a private product's parts set as an
+ * inscription, in its description's words.
  */
 
 const domain = (url: string) => url.replace(/^https?:\/\//, '').replace(/\/$/, '')
@@ -46,30 +38,6 @@ const watchCalm = watch(CALM)
  */
 function useCalm() {
   return useSyncExternalStore(watchCalm, () => window.matchMedia(CALM).matches, () => true)
-}
-
-/** Tailwind's md, where the diagrams turn from rows into columns. */
-const WIDE = '(min-width: 48rem)'
-const watchWide = watch(WIDE)
-function useWide() {
-  return useSyncExternalStore(watchWide, () => window.matchMedia(WIDE).matches, () => true)
-}
-
-/**
- * Whether an element is at least `min` px wide, as it resizes: the diagram
- * panel, whose columns from md fit their notes only from 40rem (at lg, where
- * the act's split leaves it narrower, they go without).
- */
-function useRoomy(ref: RefObject<HTMLElement | null>, min: number) {
-  const [roomy, setRoomy] = useState(true)
-  useEffect(() => {
-    const el = ref.current
-    if (!el) return
-    const resize = new ResizeObserver(() => setRoomy(el.offsetWidth >= min))
-    resize.observe(el)
-    return () => resize.disconnect()
-  }, [ref, min])
-  return roomy
 }
 
 /**
@@ -102,12 +70,11 @@ function useView(ref: RefObject<Element | null>) {
 }
 
 /**
- * The visitor's own Pause / Play, which every moving preview has (WCAG 2.2.2:
- * anything that moves by itself for more than five seconds can be stopped).
- * Its name says what it will do, as the WAI carousel pattern's does. Drawn as
- * the Stage's buttons are (look.ts: rectangular, Geist capitals), but quiet:
- * a violet rule that turns gold on hover, so it never competes with the
- * row's own link.
+ * The visitor's own Pause / Play, which every looping preview has (WCAG
+ * 2.2.2: anything that moves by itself for more than five seconds can be
+ * stopped). Its name says what it will do, as the WAI carousel pattern's
+ * does. No box: its icon and its word in the Stage's Geist capitals, quiet
+ * until hovered, in a 44px-tall tap target.
  */
 function Toggle({ stopped, onToggle, what }: { stopped: boolean; onToggle: () => void; what: string }) {
   const Icon = stopped ? Play : Pause
@@ -117,7 +84,7 @@ function Toggle({ stopped, onToggle, what }: { stopped: boolean; onToggle: () =>
       type="button"
       onClick={onToggle}
       aria-label={`${verb} the ${what}`}
-      className="inline-flex h-8 shrink-0 items-center gap-2 rounded-[2px] border border-border px-3 font-sans text-xs font-medium uppercase tracking-[0.18em] text-muted-foreground transition-colors duration-300 hover:border-gold/70 hover:text-foreground"
+      className="-mr-2 inline-flex h-11 shrink-0 items-center gap-2 px-2 font-sans text-xs font-medium uppercase tracking-[0.18em] text-muted-foreground transition-colors duration-300 hover:text-glow"
     >
       <Icon aria-hidden="true" className="size-3" />
       {verb}
@@ -126,28 +93,20 @@ function Toggle({ stopped, onToggle, what }: { stopped: boolean; onToggle: () =>
 }
 
 /**
- * The act's violet behind a preview: the Act II header's wash (the same
- * --stage-accent), reaching past the frames so it shows around them.
+ * The act's glow behind a preview: the Act II header's wash (the same
+ * --stage-wash), reaching past the frames so it shows around them.
  */
 function Glow({ className }: { className?: string }) {
   return (
     <div
       aria-hidden="true"
       className={cn(
-        'pointer-events-none absolute -z-10 bg-[radial-gradient(closest-side,color-mix(in_oklab,var(--stage-accent)_85%,transparent),transparent)]',
+        'pointer-events-none absolute -z-10 bg-[radial-gradient(closest-side,color-mix(in_oklab,var(--stage-wash)_85%,transparent),transparent)]',
         className,
       )}
     />
   )
 }
-
-/**
- * A caption's words, after a short gold hairline (the section headers' own,
- * look.ts HAIRLINE, in small): from sm, where the line has room for it
- * beside Pause without the words taking a third line.
- */
-const CAPTION_TEXT = 'flex min-w-0 items-center gap-3'
-const CAPTION_RULE = 'hidden h-px w-6 shrink-0 bg-gold/65 sm:block'
 
 /* ------------------------------------------------------------ screens -- */
 
@@ -308,13 +267,14 @@ const PHONE_SCREEN: CSSProperties = {
 
 /**
  * A public product's live preview: its site in a browser frame, and the same
- * site on a phone overlapping it, each scrolling its real screenshot. The
- * preview links to the site. It moves only while it is in view (most of it
- * on screen), and starts from the top of the page each time it comes back
- * after leaving the screen, so every visit begins on the site's first
- * screen. It holds still while the pointer is over it or the link has
- * focus, after Pause, and always under reduced motion. Below md the phone
- * shows alone.
+ * site on a phone overlapping its lower corner, each scrolling its real
+ * screenshot, at every width (on a phone, the desktop's composition at a
+ * phone's scale). The preview links to the site. It moves only while it is
+ * in view (most of it on screen), and starts from the top of the page each
+ * time it comes back after leaving the screen, so every visit begins on
+ * the site's first screen. It holds still while the pointer is over it or
+ * the link has focus, after Pause, and always under reduced motion. Under
+ * it, one quiet line: the site and when the shots were taken.
  */
 export function LivePreview({ product, flip }: { product: Product; flip: boolean }) {
   const figure = useRef<HTMLElement>(null)
@@ -350,8 +310,8 @@ export function LivePreview({ product, flip }: { product: Product; flip: boolean
         onFocus={() => setFocused(true)}
         onBlur={() => setFocused(false)}
       >
-        <Glow className="-inset-x-[18%] -inset-y-[14%] md:-inset-x-[6%] md:-inset-y-[16%]" />
-        <div className={cn('absolute top-0 hidden aspect-[1203/753] w-[88%] md:block', flip ? 'left-0' : 'right-0')}>
+        <Glow className="-inset-x-[10%] -inset-y-[12%] md:-inset-x-[6%] md:-inset-y-[16%]" />
+        <div className={cn('absolute top-0 aspect-[1203/753] w-[90%] md:w-[88%]', flip ? 'left-0' : 'right-0')}>
           <Safari url={site} aria-hidden="true" focusable="false" className="absolute inset-0 size-full" />
           <Screen
             shot={preview.desktop}
@@ -363,8 +323,8 @@ export function LivePreview({ product, flip }: { product: Product; flip: boolean
         </div>
         <div
           className={cn(
-            'absolute inset-0 z-10 transition-transform duration-500 ease-out group-hover:-translate-y-1.5 md:inset-auto md:bottom-0 md:aspect-[1/2] md:w-[27%]',
-            flip ? 'md:right-0' : 'md:left-0',
+            'absolute bottom-0 z-10 aspect-[1/2] w-[31%] transition-transform duration-500 ease-out group-hover:-translate-y-1.5 md:w-[27%]',
+            flip ? 'right-0' : 'left-0',
           )}
         >
           <Screen
@@ -377,16 +337,13 @@ export function LivePreview({ product, flip }: { product: Product; flip: boolean
           <Iphone16Pro
             aria-hidden="true"
             focusable="false"
-            className="absolute inset-0 size-full text-transparent drop-shadow-[0_24px_40px_rgba(7,5,15,0.75)]"
+            className="absolute inset-0 size-full text-transparent drop-shadow-[0_18px_32px_color-mix(in_oklab,var(--stage-shadow)_80%,transparent)]"
           />
         </div>
       </a>
       <figcaption className={CAPTION_ROW}>
-        <span className={CAPTION_TEXT}>
-          <span aria-hidden="true" className={CAPTION_RULE} />
-          <span className="text-pretty">
-            Screenshots from {site} <span className="whitespace-nowrap">· {monthYear(preview.captured)}</span>
-          </span>
+        <span className="min-w-0 truncate">
+          {site} <span aria-hidden="true">·</span> {monthYear(preview.captured)}
         </span>
         {calm ? null : <Toggle stopped={stopped} onToggle={() => setStopped((s) => !s)} what={`${product.title} preview`} />}
       </figcaption>
@@ -394,281 +351,276 @@ export function LivePreview({ product, flip }: { product: Product; flip: boolean
   )
 }
 
-/* ------------------------------------------------------- the diagrams -- */
-
-/** Generic icons for the parts a private product's description names. */
-const ICONS: Record<string, LucideIcon> = {
-  personas: Users,
-  discovery: Radar,
-  manager: Scale,
-  alpaca: ChartCandlestick,
-  slack: MessagesSquare,
-  claude: Route,
-  digests: CalendarClock,
-}
+/* --------------------------------------------------- the inscriptions -- */
 
 /**
- * The diagram's three places: its first parts (`a`), the product at the
- * centre (`hub`), the rest (`b`). Below md they are rows, top to bottom;
- * from md, columns, left to right.
+ * A private product, which has no public screens, set as an inscription
+ * of its parts: no boxes, no lines, no icons; only its description's words
+ * (the flow in constants.ts), in the Stage's type. Names in Cinzel, what
+ * each does in his voice's Cormorant italic, a count the description spells
+ * out as a gold numeral, and the links it states carried by the reading
+ * order alone (and listed for screen readers):
+ *
+ * - a desk (parts working into the product, the product working through
+ *   another): its parts, the counted one first and set large, then where
+ *   it works through, after the description's own words that lead there
+ *   (the product's own line, the description's first sentence, is not set:
+ *   the description beside it opens with it);
+ * - a chain (each part passing to the next): its steps numbered I, II, III
+ *   in the links' order, the product among them with its own line.
  */
-type Group = 'a' | 'hub' | 'b'
-const ORDER: Record<Group, number> = { a: 0, hub: 1, b: 2 }
-interface Slot {
-  group: Group
-  index: number
-  count: number
-}
-type Side = 'top' | 'bottom' | 'left' | 'right'
 
-/** Where a beam meets a card: the middle of one of its edges, below md and from md. */
-const AT: Record<Side, string> = { top: 'left-1/2 top-0', bottom: 'left-1/2 top-full', left: 'left-0 top-1/2', right: 'left-full top-1/2' }
-const MD_AT: Record<Side, string> = {
-  top: 'md:left-1/2 md:top-0',
-  bottom: 'md:left-1/2 md:top-full',
-  left: 'md:left-0 md:top-1/2',
-  right: 'md:left-full md:top-1/2',
+/** A part's whole name, as the description gives it ("Eighteen investor personas"). */
+const nameOf = (node: FlowNode) => (node.count ? `${node.count.word} ${node.label}` : node.label)
+
+/** The ids of a chain's steps in the order its links run, the product among them; null if the links are not one chain. */
+function chainOf(productId: string, flow: NonNullable<Product['flow']>): string[] | null {
+  const next = new Map(flow.links.map(([from, to]) => [from, to]))
+  const takes = new Set(flow.links.map(([, to]) => to))
+  if (next.size !== flow.links.length || takes.size !== flow.links.length) return null
+  const first = [...next.keys()].find((id) => !takes.has(id))
+  const order: string[] = []
+  for (let id = first; id && !order.includes(id); id = next.get(id)) order.push(id)
+  return order.length === flow.links.length + 1 && order.includes(productId) ? order : null
 }
 
-/** The edge of `self` that faces `other`: [below md, from md]. */
-function sidesOf(self: Slot, other: Slot): [Side, Side] {
-  if (self.group === other.group) return self.index < other.index ? ['right', 'bottom'] : ['left', 'top']
-  return ORDER[self.group] < ORDER[other.group] ? ['bottom', 'right'] : ['top', 'left']
-}
+/** The inscription's type: names in Cinzel, marble; notes in Cormorant italic (18px and up on a phone), in the body ink. */
+const NAME = 'font-roman text-[1.0625rem] font-medium leading-snug tracking-[0.04em] text-foreground md:text-xl lg:text-[1.375rem]'
+const NOTE = 'font-serif text-[1.1875rem] italic leading-snug text-(--stage-text) text-pretty md:text-[1.375rem]'
 
-/** How far a beam bows, in px: less where the columns are closest. */
-const BOW = 26
-const TIGHT_BOW = 12
-/**
- * A beam's bow, signed so that it meets the product at the centre square
- * on (across, from md; downward, below md), as the converging and diverging
- * links of a drawn diagram do. Links that run straight (a part level with
- * the centre, or two parts beside each other) stay straight.
- */
-function bowOf(from: Slot, to: Slot, wide: boolean): number {
-  if (from.group !== 'hub' && to.group !== 'hub') return 0
-  const across = (s: Slot) => (s.group === 'hub' ? 0 : (s.index + 0.5) / s.count - 0.5)
-  const offCentre = across(from.group === 'hub' ? to : from)
-  if (offCentre === 0) return 0
-  // AnimatedBeam moves the curve's control point `curvature` px off the
-  // line's middle, along its normal (-dy, dx); this sign moves it toward the
-  // centre's own line.
-  const forward = Math.sign(ORDER[to.group] - ORDER[from.group])
-  return (wide ? -1 : 1) * Math.sign(offCentre) * forward * BOW
-}
-
-interface Port {
-  key: string
-  narrow: Side
-  wide: Side
-}
-interface Layout {
-  a: readonly FlowNode[]
-  b: readonly FlowNode[]
-  ports: Map<string, Port[]>
-  links: { from: string; to: string; fromPort: string; toPort: string; bow: [number, number] }[]
-}
-
-/** Places a flow: its first half of parts before the centre, the rest after; and where each beam meets each card. */
-function layOut(hubId: string, flow: NonNullable<Product['flow']>): Layout {
-  const half = Math.ceil(flow.nodes.length / 2)
-  const a = flow.nodes.slice(0, half)
-  const b = flow.nodes.slice(half)
-  const slots = new Map<string, Slot>([[hubId, { group: 'hub', index: 0, count: 1 }]])
-  a.forEach((n, index) => slots.set(n.id, { group: 'a', index, count: a.length }))
-  b.forEach((n, index) => slots.set(n.id, { group: 'b', index, count: b.length }))
-  const ports = new Map<string, Port[]>()
-  const portOf = (id: string, other: string) => {
-    const [narrow, wide] = sidesOf(slots.get(id)!, slots.get(other)!)
-    const key = `${id}:${narrow}:${wide}`
-    const list = ports.get(id) ?? []
-    if (!list.some((p) => p.key === key)) list.push({ key, narrow, wide })
-    ports.set(id, list)
-    return key
-  }
-  const links = flow.links
-    .filter(([from, to]) => slots.has(from) && slots.has(to))
-    .map(([from, to]) => ({
-      from,
-      to,
-      fromPort: portOf(from, to),
-      toPort: portOf(to, from),
-      bow: [bowOf(slots.get(from)!, slots.get(to)!, false), bowOf(slots.get(from)!, slots.get(to)!, true)] as [number, number],
-    }))
-  return { a, b, ports, links }
-}
-
-/** The dots on a card's edges where its beams meet it. */
-function Ports({ list, refs }: { list: Port[] | undefined; refs: Map<string, RefObject<HTMLSpanElement | null>> }) {
-  return (list ?? []).map((port) => (
-    <span
-      key={port.key}
-      ref={refs.get(port.key)}
-      aria-hidden="true"
-      data-port=""
-      className={cn(
-        'absolute z-20 size-2 -translate-x-1/2 -translate-y-1/2 rounded-full border border-gold/75 bg-background',
-        AT[port.narrow],
-        MD_AT[port.wide],
-      )}
-    />
-  ))
-}
-
-/** One of the parts: its icon, its name, and the description's words for what it does (from md, only where the panel has room). */
-function Part({
-  node,
-  ports,
-  refs,
-  roomy,
-  className,
-}: {
-  node: FlowNode
-  ports: Port[] | undefined
-  refs: Map<string, RefObject<HTMLSpanElement | null>>
-  roomy: boolean
-  className?: string
-}) {
-  const Icon = ICONS[node.id]
+function Desk({ product, flow }: { product: Product; flow: NonNullable<Product['flow']> }) {
+  const into = (n: FlowNode) => flow.links.some(([from, to]) => from === n.id && to === product.id)
+  const out = (n: FlowNode) => flow.links.some(([from, to]) => from === product.id && to === n.id)
+  const parts = flow.nodes.filter(into)
   return (
-    <div
-      data-flow-node=""
-      className={cn(
-        'relative z-10 rounded-[4px] border border-border bg-[color-mix(in_oklab,var(--stage-accent)_45%,var(--background))] p-3 shadow-[0_14px_30px_-14px_rgba(7,5,15,0.95)] md:w-full md:max-w-none',
-        className,
-      )}
-    >
-      {Icon ? (
-        <span className="flex size-7 items-center justify-center rounded-[2px] bg-gold/12 text-gold ring-1 ring-inset ring-gold/35">
-          <Icon aria-hidden="true" className="size-3.5" />
-        </span>
-      ) : null}
-      <p className="mt-2 text-sm font-medium leading-snug text-foreground">{node.label}</p>
-      <p className={cn('mt-1 text-xs leading-snug text-muted-foreground', roomy ? null : 'md:hidden')}>{node.note}</p>
-      <Ports list={ports} refs={refs} />
+    <div className="flex flex-col items-center text-center">
+      {parts
+        .filter((n) => n.count)
+        .map((n) => (
+          <div key={n.id} data-line="">
+            <p aria-hidden="true" data-strike="" className="font-roman text-[clamp(4.5rem,24vw,5.5rem)] font-medium leading-[0.86] tracking-[0.04em] text-gold md:text-[8rem] lg:text-[9rem]">
+              {toRoman(n.count!.value)}
+            </p>
+            <p className="mt-3 text-balance md:mt-4">
+              <span className="sr-only">{n.count!.word} </span>
+              {/* The interpunct stays with the name, so a line that breaks breaks after it. */}
+              <span className="whitespace-nowrap">
+                <span className={NAME}>{n.label}</span> <span aria-hidden="true" className="text-gold">·</span>
+              </span>{' '}
+              <span className={NOTE}>{n.note}</span>
+            </p>
+          </div>
+        ))}
+      <div className="mt-8 grid w-full max-w-[40rem] gap-6 md:mt-12 md:grid-cols-2 md:gap-x-10">
+        {parts
+          .filter((n) => !n.count)
+          .map((n) => (
+            <div key={n.id} data-line="">
+              <p className={cn(NAME, 'text-balance')}>{n.label}</p>
+              <p className={cn('mt-1', NOTE)}>{n.note}</p>
+            </div>
+          ))}
+      </div>
+      {flow.nodes.filter(out).map((n) => (
+        <div key={n.id} data-line="" className="mt-9 md:mt-12">
+          {n.lead ? <p className={KICKER}>{n.lead}</p> : null}
+          <p className="mt-2 font-roman text-[1.75rem] font-medium leading-tight tracking-[0.04em] text-foreground md:text-[2.25rem]">{n.label}</p>
+          <p className={NOTE}>{n.note}</p>
+        </div>
+      ))}
     </div>
   )
 }
 
+function Chain({ product, flow, order }: { product: Product; flow: NonNullable<Product['flow']>; order: string[] }) {
+  return (
+    <ol className="mx-auto grid w-full max-w-[34rem] gap-y-7 md:gap-y-10 lg:gap-y-12">
+      {order.map((id, i) => {
+        const node = flow.nodes.find((n) => n.id === id)
+        const own = id === product.id
+        return (
+          <li key={id} data-line="" data-pulse="" className="grid grid-cols-[2.75rem_minmax(0,1fr)] items-baseline gap-x-4 md:grid-cols-[4.5rem_minmax(0,1fr)] md:gap-x-7 lg:grid-cols-[5.25rem_minmax(0,1fr)]">
+            <span aria-hidden="true" className="text-right font-roman text-[2rem] font-medium leading-none tracking-[0.04em] text-gold md:text-5xl lg:text-[3.5rem]">
+              {toRoman(i + 1)}
+            </span>
+            <div>
+              <p className={cn(NAME, 'lg:text-2xl')}>{own ? product.title : node && nameOf(node)}</p>
+              <p className={cn('mt-1', NOTE, 'lg:text-2xl')}>{own ? flow.hub : node?.note}</p>
+            </div>
+          </li>
+        )
+      })}
+    </ol>
+  )
+}
+
+const RISE_EASE = 'cubic-bezier(0.16, 1, 0.3, 1)'
+const RISE: Keyframe[] = [
+  { opacity: 0, transform: 'translateY(1.25rem)' },
+  { opacity: 1, transform: 'none' },
+]
+/** The count's numeral strikes in: from a little large and lit, to its place. */
+const STRIKE: Keyframe[] = [
+  { opacity: 0, transform: 'scale(1.08)', textShadow: `0 0 36px ${PALETTE.glow}` },
+  { opacity: 1, transform: 'none', textShadow: `0 0 0 ${PALETTE.glow}00` },
+]
+
 /**
- * A private product's diagram: the product at the centre, the parts its
- * description names around it, and the links the description states, drawn
- * with animated beams (klyv's AnimatedBeam, which re-measures as the layout
- * changes) between dots on the cards' edges, so each beam shows whole. No
- * screenshots and no made-up screens: only the description's own words. The
- * beams pulse while the diagram is on screen, stop on Pause, and hold still
- * under reduced motion (the beam's own rule). Screen readers get the links
- * as a list.
+ * The inscription's entrance: its lines rise in one after another as it
+ * arrives, and a counted numeral strikes in, once. Only an inscription that
+ * starts below the screen is held (each line at its first frame) until it
+ * enters; one on screen or above it gets none, one jumped past is let go
+ * whole, and nothing moves under reduced motion. Each animation ends where
+ * the markup stands and lets go. Returns whether the entrance is over (or
+ * there was none), for what moves after it.
+ */
+function useEntrance(ref: RefObject<HTMLElement | null>, calm: boolean): boolean {
+  const [over, setOver] = useState(false)
+  useEffect(() => {
+    const box = ref.current
+    if (!box) return
+    let frame = 0
+    if (calm || box.getBoundingClientRect().top < innerHeight) {
+      frame = requestAnimationFrame(() => setOver(true))
+      return () => cancelAnimationFrame(frame)
+    }
+    const lines = [...box.querySelectorAll<HTMLElement>('[data-line]')]
+    const anims = lines.map((el, i) => el.animate(RISE, { duration: 800, delay: i * 90, easing: RISE_EASE, fill: 'both' }))
+    lines.forEach((el, i) => {
+      const numeral = el.querySelector<HTMLElement>('[data-strike]')
+      if (numeral) anims.push(numeral.animate(STRIKE, { duration: 1200, delay: i * 90 + 90, easing: RISE_EASE, fill: 'both' }))
+    })
+    for (const a of anims) a.pause()
+    Promise.all(anims.map((a) => a.finished)).then(
+      () => {
+        for (const a of anims) a.cancel()
+        setOver(true)
+      },
+      () => {},
+    )
+    // It goes as its first line comes onto the screen (the block's own room
+    // above the words is no arrival), so the lines rise where they are seen,
+    // with no wait; one jumped past is let go whole.
+    const io = new IntersectionObserver(
+      (entries) => {
+        const entry = entries[entries.length - 1]
+        if (!entry.isIntersecting) return
+        io.disconnect()
+        // Passed unseen, or landed on by the intro's nav as it lifts: whole.
+        if (entry.boundingClientRect.bottom > 0 && !document.documentElement.hasAttribute('data-intro')) for (const a of anims) a.play()
+        else {
+          for (const a of anims) a.cancel()
+          setOver(true)
+        }
+      },
+      { rootMargin: '100000px 0px 0px 0px' },
+    )
+    io.observe(lines[0] ?? box)
+    return () => {
+      io.disconnect()
+      for (const a of anims) a.cancel()
+    }
+  }, [ref, calm])
+  return over
+}
+
+/** How lit a chain's step stands while another's turn runs: dim, and still clear of AA for its words (5.5:1 on the ground). */
+const DIM = 0.55
+/** Each step's turn, and the rest after the last. */
+const TURN = 900
+const PAUSE = 700
+
+/**
+ * A chain's pulse: while it runs, its steps stand dim and light up one
+ * after another, top to bottom, as a capture passes down it. When it stops
+ * (Pause, off screen) every step comes back to full.
+ */
+function usePulse(ref: RefObject<HTMLElement | null>, run: boolean) {
+  useEffect(() => {
+    const box = ref.current
+    if (!box || !run) return
+    const steps = [...box.querySelectorAll<HTMLElement>('[data-pulse]')]
+    const total = steps.length * TURN + PAUSE
+    const at = (ms: number) => Math.min(1, Math.max(0, ms / total))
+    const anims = steps.flatMap((el, i) => {
+      // The first step starts lit, its peak at the loop's seam; the others settle to dim first.
+      const frames: Keyframe[] =
+        i === 0
+          ? [
+              { opacity: 1, offset: 0 },
+              { opacity: DIM, offset: at(TURN), easing: 'ease-in-out' },
+              { opacity: DIM, offset: at(total - TURN / 2), easing: 'ease-in-out' },
+              { opacity: 1, offset: 1 },
+            ]
+          : [
+              { opacity: DIM, offset: 0 },
+              { opacity: DIM, offset: at(i * TURN - TURN / 2), easing: 'ease-in-out' },
+              { opacity: 1, offset: at(i * TURN), easing: 'ease-in-out' },
+              { opacity: DIM, offset: at(i * TURN + TURN), easing: 'ease-in-out' },
+              { opacity: DIM, offset: 1 },
+            ]
+      const settle = i === 0 ? [] : [el.animate([{ opacity: 1 }, { opacity: DIM }], { duration: 600, easing: 'ease', fill: 'forwards' })]
+      return [...settle, el.animate(frames, { duration: total, delay: 600, iterations: Infinity })]
+    })
+    return () => {
+      // Back to full from wherever each step stood.
+      for (const el of steps) {
+        const now = getComputedStyle(el).opacity
+        for (const a of el.getAnimations()) a.cancel()
+        el.animate([{ opacity: now }, { opacity: 1 }], { duration: 400, easing: 'ease' })
+      }
+      for (const a of anims) a.cancel()
+    }
+  }, [ref, run])
+}
+
+/**
+ * A private product's inscription (above), in a block of fixed height
+ * (preview-box.ts) with its words in the middle. A chain pulses while it is
+ * on screen, and has its Pause; a desk only moves as it arrives, so it has
+ * none. Screen readers get the links as a list.
  */
 export function ProductParts({ product }: { product: Product }) {
   const figure = useRef<HTMLElement>(null)
-  const diagram = useRef<HTMLDivElement>(null)
+  const box = useRef<HTMLDivElement>(null)
   const view = useView(figure)
   const calm = useCalm()
-  const wide = useWide()
-  const panel = useRef<HTMLDivElement>(null)
-  const roomy = useRoomy(panel, 640)
   const [stopped, setStopped] = useState(false)
   const flow = product.flow
-  const layout = useMemo(() => (flow ? layOut(product.id, flow) : null), [product.id, flow])
-  // One ref per port: the beams measure from them.
-  const refs = useMemo(
-    () => new Map([...(layout?.ports.values() ?? [])].flat().map((p) => [p.key, createRef<HTMLSpanElement>()] as const)),
-    [layout],
-  )
-  if (!flow || !layout) return null
-  const name = (id: string) => (id === product.id ? product.title : (flow.nodes.find((n) => n.id === id)?.label ?? id))
-  // A group of parts: a row below md, a column a quarter of the diagram wide from md.
-  const group = 'flex flex-row justify-between gap-x-10 md:h-full md:w-1/4 md:flex-col md:justify-around md:gap-x-0'
-  const sized = (count: number) => (count > 1 ? 'w-[calc(50%-1.25rem)] max-w-[10rem]' : 'mx-auto w-full max-w-[12rem] md:mx-0')
-
+  const chain = flow ? chainOf(product.id, flow) : null
+  const over = useEntrance(box, calm)
+  usePulse(box, !!chain && over && view !== 'off' && !stopped && !calm)
+  if (!flow) return null
+  const name = (id: string) => {
+    const node = flow.nodes.find((n) => n.id === id)
+    return node ? nameOf(node) : product.title
+  }
   return (
     <figure ref={figure} data-preview="flow" data-product={product.id} className="relative">
       <div className="relative isolate">
-        <Glow className="-inset-x-[4%] -inset-y-[8%] md:-inset-x-[6%] md:-inset-y-[16%]" />
+        <Glow className="-inset-x-[8%] inset-y-[6%] md:-inset-x-[6%] md:inset-y-0" />
         <div
-          ref={panel}
+          ref={box}
           role="group"
           aria-label={`The parts of ${product.title}`}
-          className={cn(
-            'relative flex flex-col overflow-hidden rounded-[4px] border border-border bg-[color-mix(in_oklab,var(--stage-accent)_24%,var(--background))] bg-[radial-gradient(color-mix(in_oklab,var(--stage-accent-ink)_16%,transparent)_1px,transparent_1px)] [background-size:18px_18px] px-5 py-6',
-            roomy ? 'md:p-8' : 'md:p-5',
-            FLOW_BOX,
-          )}
+          data-inscription={chain ? 'chain' : 'desk'}
+          className={cn('flex flex-col justify-center', flowBox(flow))}
         >
-          {/* The drawing's border line, inside the panel's edge, as on a plan. */}
-          <span
-            aria-hidden="true"
-            className="pointer-events-none absolute inset-2 rounded-[2px] border border-gold/16"
-          />
-          <div
-            ref={diagram}
-            data-flow-diagram=""
-            className="relative mx-auto flex min-h-0 w-full max-w-[22rem] flex-1 flex-col justify-between md:max-w-[40rem] md:flex-row md:items-center"
-          >
-            <div className={cn(group, 'items-end md:items-stretch')}>
-              {layout.a.map((node) => (
-                <Part key={node.id} node={node} ports={layout.ports.get(node.id)} refs={refs} roomy={roomy} className={sized(layout.a.length)} />
-              ))}
-            </div>
-            <div
-              data-flow-node=""
-              data-flow-hub=""
-              className={cn(
-                'relative z-10 mx-auto w-full max-w-[15rem] rounded-[4px] border border-gold/60 bg-[color-mix(in_oklab,var(--stage-accent)_75%,var(--background))] p-4 text-center shadow-[0_0_56px_-12px_color-mix(in_oklab,var(--stage-accent-ink)_40%,transparent)] outline outline-1 outline-offset-[3px] outline-gold/22 md:mx-0',
-                'md:w-[27%]',
-                roomy ? null : 'md:p-3',
-              )}
-            >
-              <p className="font-roman text-lg font-medium leading-tight tracking-[0.04em] text-foreground">{product.title}</p>
-              <p className="mt-1.5 font-serif text-lg italic leading-snug text-(--stage-text) text-balance">{flow.hub}</p>
-              <Ports list={layout.ports.get(product.id)} refs={refs} />
-            </div>
-            <div className={cn(group, 'items-start md:items-stretch')}>
-              {layout.b.map((node) => (
-                <Part key={node.id} node={node} ports={layout.ports.get(node.id)} refs={refs} roomy={roomy} className={sized(layout.b.length)} />
-              ))}
-            </div>
-            {layout.links.map((link, i) => (
-              <AnimatedBeam
-                key={`${link.from}-${link.to}`}
-                containerRef={diagram}
-                fromRef={refs.get(link.fromPort)!}
-                toRef={refs.get(link.toPort)!}
-                curvature={!wide ? link.bow[0] : roomy ? link.bow[1] : (link.bow[1] / BOW) * TIGHT_BOW}
-                duration={2.6}
-                delay={i * 0.65}
-                pathColor="var(--stage-accent-ink)"
-                pathOpacity={0.3}
-                beamColor="var(--stage-glow)"
-                beamLength={40}
-                paused={view === 'off' || stopped}
-                // Some links run straight across or straight down, which the
-                // published pulse (lit along x) cannot draw.
-                alongBeam
-                className="z-0"
-              />
-            ))}
-          </div>
+          {chain ? <Chain product={product} flow={flow} order={chain} /> : <Desk product={product} flow={flow} />}
           <ul className="sr-only">
-            {layout.links.map((link) => (
-              <li key={`${link.from}-${link.to}`}>
-                From {name(link.from)} to {name(link.to)}
+            {flow.links.map(([from, to]) => (
+              <li key={`${from}-${to}`}>
+                From {name(from)} to {name(to)}
               </li>
             ))}
           </ul>
         </div>
       </div>
-      <figcaption className={CAPTION_ROW}>
-        <span className={CAPTION_TEXT}>
-          <span aria-hidden="true" className={CAPTION_RULE} />
-          <span className="text-pretty">
-            <span className="whitespace-nowrap">Private, so no screenshots.</span>{' '}
-            <span className="whitespace-nowrap">Its parts, in its own words.</span>
-          </span>
-        </span>
-        {calm ? null : <Toggle stopped={stopped} onToggle={() => setStopped((s) => !s)} what={`${product.title} diagram`} />}
-      </figcaption>
+      {chain ? (
+        <div className={cn(CAPTION_ROW, 'justify-end')}>
+          {calm ? null : <Toggle stopped={stopped} onToggle={() => setStopped((s) => !s)} what={`${product.title} pulse`} />}
+        </div>
+      ) : null}
     </figure>
   )
 }

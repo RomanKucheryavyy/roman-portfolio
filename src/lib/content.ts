@@ -2,9 +2,10 @@
  * The Stage page's content, in the shape its sections read (the design lab's
  * design-lab/src/lib/content.ts), built from the site's own records rather
  * than copied: src/lib/constants.ts (the work, the products, the
- * certifications, the skills and his own words), src/lib/site-facts.ts (the
- * roles and the schools) and src/lib/links.ts (where to find him). Nothing
- * here is typed twice; change a fact there and the page follows.
+ * certifications, his Trailhead rank, the skills and his own words),
+ * src/lib/site-facts.ts (the roles and the schools) and src/lib/links.ts
+ * (where to find him). Nothing here is typed twice; change a fact there and
+ * the page follows.
  *
  * Public facts only: no phone number, no support metrics (those stay behind
  * the résumé PIN).
@@ -17,6 +18,7 @@ import {
   PROJECTS as WORK,
   SITE,
   TECH_SKILLS,
+  TRAILHEAD_RANK,
 } from '@/lib/constants'
 import { LINKS } from '@/lib/links'
 import { CURRENT_ROLE, EDUCATION as SCHOOLS, PREVIOUS_ROLES, monthYear, yearOf, type Role as Fact, type YearMonth } from '@/lib/site-facts'
@@ -70,6 +72,25 @@ export const EDUCATION = SCHOOLS
 /** All Salesforce, newest first. */
 export const CERTIFICATIONS = CERTS
 
+/** A rank he holds, in his words (constants.ts TRAILHEAD_RANK). */
+export interface Rank {
+  /** The rank's name, as he spelled it. */
+  name: string
+  /** Where it is held. */
+  platform: string
+  /** What it is, in his words. */
+  standing: string
+  /** A public page that shows it: none yet (the needs-Roman note in constants.ts). */
+  url?: string
+}
+
+/** His Trailhead rank, Act IV's crowning honour. */
+export const RANK: Rank = {
+  name: TRAILHEAD_RANK.rank,
+  platform: TRAILHEAD_RANK.platform,
+  standing: TRAILHEAD_RANK.standing,
+}
+
 /** Screenshots are 1280×800. */
 export interface Project {
   id: string
@@ -101,6 +122,10 @@ export interface FlowNode {
   id: string
   label: string
   note: string
+  /** A count the description spells out before the label ("Eighteen"), set as a Roman numeral: its word and its value. */
+  count?: { word: string; value: number }
+  /** The description's own words that lead into this part ("Executing through"). */
+  lead?: string
 }
 
 /** His own products. */
@@ -116,10 +141,9 @@ export interface Product {
   /** A public product's live site, captured (YearMonth) on a desktop and a phone. */
   preview?: { captured: YearMonth; desktop: Shot; phone: Shot }
   /**
-   * A private product's diagram: the product at the centre (`hub`, the
-   * description's opening line under its title), the parts its description
-   * names, and the links it states ([from, to]; the product's `id` is the
-   * centre).
+   * A private product's inscription: the product itself (`hub`, the
+   * description's opening line), the parts its description names, and the
+   * links it states ([from, to]; the product's `id` is the product).
    */
   flow?: { hub: string; nodes: readonly FlowNode[]; links: readonly (readonly [string, string])[] }
 }

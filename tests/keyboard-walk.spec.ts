@@ -1,4 +1,5 @@
 import { expect, test, type Page } from '@playwright/test'
+import { isChain } from '@/components/stage/preview-box'
 import { PRODUCTS } from '@/lib/content'
 import { collectConsole, gotoHome } from './helpers'
 
@@ -223,17 +224,37 @@ test.describe('keyboard walk', () => {
     const unfocused = await readUnfocused(page)
     check(stops, unfocused)
     expect(stops.at(-1)!.what, 'the walk ends in the footer').toBe('a "Email"')
+    // The top bar's sections (all three on a phone, Products included), then
+    // the hero's two ways in: "See the work", the button, and "Get in touch",
+    // the text link beside it, in that order.
+    const names = stops.map((s) => s.what)
+    const sections = test.info().project.name === 'mobile' ? ['Work', 'Products', 'Contact'] : ['Work', 'Products', 'Experience', 'Credentials', 'About', 'Contact']
+    for (const label of sections) expect(names, `the top bar's ${label}`).toContain(`a "${label}"`)
+    const see = names.indexOf('a "See the work"')
+    const touch = names.indexOf('a "Get in touch"')
+    expect(see, 'the hero\'s "See the work"').toBeGreaterThan(0)
+    expect(touch, 'the hero\'s "Get in touch", right after it').toBe(see + 1)
     // The message box's three fields are on the way.
     for (const field of [/^input#c-name /, /^input#c-email /, /^textarea.* "Message"$/]) {
       expect(stops.some((s) => field.test(s.what)), String(field)).toBe(true)
     }
-    // So is every product's control: each public one's preview and link,
-    // and every preview's and diagram's Pause.
+    // So is every product's control: each public one's preview, link and
+    // Pause, and the Pause of a private one whose inscription pulses (a
+    // chain; a desk only moves as it arrives, and has none).
     const productStops = PRODUCTS.flatMap((p) => [
-      ...(p.url ? [`a "Visit ${domain(p.url)}"`, `a "${domain(p.url)}"`] : []),
-      `button "Pause the ${p.title} ${p.url ? 'preview' : 'diagram'}"`,
+      ...(p.url ? [`a "Visit ${domain(p.url)}"`, `a "${domain(p.url)}"`, `button "Pause the ${p.title} preview"`] : []),
+      ...(p.flow && isChain(p.flow) ? [`button "Pause the ${p.title} pulse"`] : []),
     ])
     for (const stop of productStops) expect(stops.map((s) => s.what), stop).toContain(stop)
+    // Act IV's frieze has a pause only where it moves (from md); a phone's
+    // still inscription has nothing to stop, so nothing to focus.
+    const pause = 'button "Pause tool animation"'
+    if (test.info().project.name === 'mobile') expect(stops.map((s) => s.what)).not.toContain(pause)
+    else expect(stops.map((s) => s.what)).toContain(pause)
+    // About's three links and Contact's three channels, each a stop of its own.
+    for (const link of [/^a "LinkedIn"$/, /^a "GitHub"$/, /^a "Email"$/, /^a "kucheryavyyroman@gmail\.com"$/, /^a "linkedin\.com\/in\/romakuch"$/, /^a "github\.com\/RomanKucheryavyy"$/]) {
+      expect(stops.some((s) => link.test(s.what)), String(link)).toBe(true)
+    }
 
     // Send is disabled until the box holds a name, an address and a message,
     // so the empty page's walk passes it by. Filled in, it is the stop after

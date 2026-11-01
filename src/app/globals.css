@@ -2,8 +2,8 @@
    design lab's, design-lab/src/app/globals.css), so every 21st.dev component
    renders the way its author published it. The site is dark-only: <html>
    always carries .dark (layout.tsx). The Stage page re-points a few of these
-   on its own wrapper (look.ts): its ground, its marble and lavender inks,
-   its violet and gold, its ring.
+   on its own wrapper (look.ts): its ground, its marble and muted inks,
+   its wash and gold, its ring.
 
    Below the theme: the Stage accent for pages outside that wrapper, the
    Stage's inks as Tailwind colours, and the résumé builder's own tokens. */
@@ -13,6 +13,30 @@
 @source not "../../design-lab";
 
 @custom-variant dark (&:is(.dark *));
+/* Act I's stack (work.tsx), in three variants that between them cover
+   every screen once. stack-phone: a phone held upright, tall enough for a
+   card under the bar, and not asking for less motion (375px and up from
+   34rem tall, narrower from 38.5rem). stack: the phone stack, and from lg
+   the wide stack (which keeps sticking under reduced motion: that is
+   scroll position, not animation). flat: everything else (md to lg,
+   reduced motion on a phone, a phone too short or on its side), the plain
+   list. The block form, because the one-line form breaks on a media list
+   with commas. */
+@custom-variant stack-phone {
+  @media (width >= 23.4375rem) and (width < 48rem) and (height >= 34rem) and (prefers-reduced-motion: no-preference) { @slot; }
+  @media (width < 23.4375rem) and (height >= 38.5rem) and (prefers-reduced-motion: no-preference) { @slot; }
+}
+@custom-variant stack {
+  @media (width >= 23.4375rem) and (width < 48rem) and (height >= 34rem) and (prefers-reduced-motion: no-preference) { @slot; }
+  @media (width < 23.4375rem) and (height >= 38.5rem) and (prefers-reduced-motion: no-preference) { @slot; }
+  @media (width >= 64rem) { @slot; }
+}
+@custom-variant flat {
+  @media (width >= 48rem) and (width < 64rem) { @slot; }
+  @media (width < 48rem) and (prefers-reduced-motion: reduce) { @slot; }
+  @media (width >= 23.4375rem) and (width < 48rem) and (height < 34rem) { @slot; }
+  @media (width < 23.4375rem) and (height < 38.5rem) { @slot; }
+}
 
 @theme inline {
   --color-background: var(--background);
@@ -138,26 +162,28 @@
   }
 }
 
-/* ── The Stage accent ──
-   The page's imperial inks (look.ts sets the same on the Stage's wrapper,
-   from imperial.ts: keep them in step), here for what sits outside that
-   wrapper: the skip link above all. The violet as a fill, the gold, the ink
-   that reads on the dark, and the marble and ground the skip link is drawn
-   in, as the Stage's primary button is. */
+/* ── The Stage's palette ──
+   The page's inks (imperial.ts holds them; look.ts sets the same on the
+   Stage's wrapper: keep them in step), here for what sits outside that
+   wrapper or loads before it: the skip link, the intro's gate and its
+   waiting ring. The wash (light and glow), the gold (the one accent), and
+   the marble and ground the skip link is drawn in, as the Stage's primary
+   button is. A new palette is a change to these four and to imperial.ts. */
 :root {
-  --stage-accent: #24115e;
-  --stage-accent-ink: #d6b25e;
+  --stage-wash: #352114;
+  --stage-gold: #d6b25e;
   --stage-marble: #f2ece2;
-  --stage-ground: #07050f;
+  --stage-ground: #0b0806;
 }
 
-/* The same inks as Tailwind colours, so the Stage's classes name the
-   palette: text-gold, border-gold/40, bg-imperial/45, hover:text-glow,
-   border-rule/60. They read the variables above (look.ts sets them all on
-   the Stage's wrapper), so nothing here holds a colour of its own. */
+/* The same inks as Tailwind colours, so the Stage's classes name what each
+   one does: text-gold, border-gold/40, bg-wash/45, hover:text-glow,
+   border-rule/60, shadow-[...var(--stage-shadow)...]. They read the
+   variables above (look.ts sets them all on the Stage's wrapper), so
+   nothing here holds a colour of its own. */
 @theme inline {
-  --color-gold: var(--stage-accent-ink);
-  --color-imperial: var(--stage-accent);
+  --color-gold: var(--stage-gold);
+  --color-wash: var(--stage-wash);
   --color-glow: var(--stage-glow);
   --color-rule: var(--stage-rule);
 }
@@ -166,7 +192,7 @@
    The home page's inline gate (app/page.tsx) sets data-intro on <html>
    before the first paint when the Roman intro will open the page. While it
    is "" (decided, not yet mounted) or "up" (on screen), the page is laid
-   out but not drawn, on the intro's ground (its imperial palette's ground,
+   out but not drawn, on the intro's ground (the palette's ground,
    imperial.ts), so the hero never flashes first; visibility because it
    keeps the layout (nothing moves when the page appears) and takes the
    page out of the accessibility tree, opacity because a descendant can
@@ -188,7 +214,7 @@ html[data-intro=""]::after {
   width: 64px;
   height: 64px;
   margin: -32px 0 0 -32px;
-  border: 1px solid #d6b25e;
+  border: 1px solid var(--stage-gold);
   border-radius: 50%;
   animation: rk-intro-wait 1.6s ease-in-out infinite;
 }
@@ -197,7 +223,7 @@ html[data-intro=""]::after {
   50% { opacity: 0.2; transform: scale(0.84); }
 }
 html[data-intro]:not([data-intro="lift"]),
-html[data-intro]:not([data-intro="lift"]) body { background: #07050f !important; }
+html[data-intro]:not([data-intro="lift"]) body { background: var(--stage-ground) !important; }
 html[data-intro]:not([data-intro="lift"]) body > :not([data-intro-layer]) { visibility: hidden; opacity: 0; }
 
 /* ── The résumé builder (/resume) ──

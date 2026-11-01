@@ -32,6 +32,12 @@ async function expectGone(page: Page) {
   const inert = await page.evaluate(() => Array.from(document.body.children).filter((el) => el.hasAttribute('inert')).length)
   expect(inert, 'children of <body> left inert').toBe(0)
   await expect(page.locator('#hero-title')).toBeVisible()
+  // The hero's words and its two ways in, held while the intro was up, have
+  // set in (stage.tsx SET_IN), and the name never waited for them.
+  await expect
+    .poll(() => page.locator('[data-hero-copy] > *').evaluateAll((els) => els.map((el) => Number(getComputedStyle(el).opacity))), { timeout: 5000 })
+    .toEqual([1, 1])
+  expect(await page.locator('#hero-title').evaluate((h1) => Number(getComputedStyle(h1).opacity))).toBe(1)
 }
 
 /**
@@ -161,6 +167,45 @@ test.describe('what it says', () => {
     await expect(page.getByRole('button', { name: 'Enter' })).toBeVisible()
   })
 
+  test("no stage light and no ornaments: no shafts, dust, spotlight, flash or sheen; no rules, stars or outlined pills; nothing under 12px; ENTER the page's filled button", async ({ page }) => {
+    await openIntro(page)
+    const root = page.locator(`${LAYER} .om-root`)
+    // Through the unveil (the flash and the sheen would run there) to the landing.
+    const seen = new Set<string>()
+    for (let i = 0; i < 80 && (await phase(page)) !== 'landing'; i++) {
+      const shown = await root.evaluate((el) =>
+        ['.om-light', '.om-spot', '.om-flash', '.om-sheen', '.om-rule', '.om-star']
+          .filter((sel) => [...el.querySelectorAll(sel)].some((n) => n.getClientRects().length > 0 && getComputedStyle(n).display !== 'none'))
+          .join(' '),
+      )
+      if (shown) seen.add(shown)
+      await sleep(100)
+    }
+    expect([...seen], 'light or ornament shown during the load or the unveil').toEqual([])
+    await expect(root).toHaveAttribute('data-phase', 'landing', { timeout: 20_000 })
+    for (const part of ['.om-light', '.om-spot', '.om-flash', '.om-sheen', '.om-rule', '.om-star', '.om-hint i']) {
+      await expect(page.locator(`${LAYER} ${part}`).first()).toBeHidden()
+    }
+    // The flood wells up from the floor: never a widening circle (a spotlight's iris).
+    expect(await root.locator('.om-flood').evaluate((el) => getComputedStyle(el).clipPath)).toBe('none')
+    // The counts are plain words, no outline.
+    for (const pill of await page.locator(`${LAYER} .om-pill`).all()) expect(await pill.evaluate((el) => getComputedStyle(el).borderTopWidth)).toBe('0px')
+    // Nothing shown under the page's 12px floor.
+    const small = await root.evaluate((el) =>
+      [...el.querySelectorAll<HTMLElement>('.om-chrome *')]
+        .filter((n) => n.childNodes.length && [...n.childNodes].some((c) => c.nodeType === 3 && c.textContent!.trim()))
+        .filter((n) => n.getClientRects().length > 0 && getComputedStyle(n).visibility !== 'hidden' && Number(getComputedStyle(n).opacity) > 0)
+        .filter((n) => parseFloat(getComputedStyle(n).fontSize) < 12)
+        .map((n) => `${n.className}: ${getComputedStyle(n).fontSize}`),
+    )
+    expect(small).toEqual([])
+    // ENTER is the page's one filled button: marble, the ground's ink.
+    const enter = page.getByRole('button', { name: 'Enter' })
+    await expect(enter).toBeVisible()
+    const look = await enter.evaluate((el) => ({ fill: getComputedStyle(el).backgroundColor, ink: getComputedStyle(el).color }))
+    expect(look).toEqual({ fill: 'rgb(242, 236, 226)', ink: 'rgb(11, 8, 6)' })
+  })
+
   test('Skip rushes the load', async ({ page }) => {
     await openIntro(page)
     await page.getByRole('button', { name: 'Skip' }).click()
@@ -235,6 +280,48 @@ test.describe('the ways out', () => {
     await expect.poll(() => page.evaluate(() => document.activeElement?.id)).toBe('products')
     const top = await page.locator('#products').evaluate((el) => el.getBoundingClientRect().top)
     expect(Math.abs(top), `#products is ${top}px from the top`).toBeLessThan(120)
+  })
+
+  test("the section a nav link lands on stands whole as the stage lifts: its header isn't cut in late behind it", async ({ page, isMobile }) => {
+    test.skip(isMobile, 'The component shows its nav from 640px wide.')
+    await openIntro(page)
+    // From the moment the stage has gone, the Experience header's parts are never drawn below full.
+    await page.evaluate(() => {
+      const w = window as unknown as { lowest: number; frames: number }
+      w.lowest = 1
+      w.frames = 0
+      const html = document.documentElement
+      const parts = [...document.querySelectorAll<HTMLElement>('#experience [data-reveal]')]
+      const watch = new MutationObserver(() => {
+        if (html.hasAttribute('data-intro')) return
+        watch.disconnect()
+        // At the moment the stage has gone, then every 50 ms until 2 s have
+        // passed and at least six samples are in (timers, not frames: the
+        // page is busy for a moment as it comes back, for seconds on a loaded
+        // machine, and may draw few frames; each sample is what a frame would
+        // draw).
+        const start = performance.now()
+        const look = () => {
+          for (const el of parts) w.lowest = Math.min(w.lowest, Number(getComputedStyle(el).opacity))
+          w.frames++
+          if (performance.now() - start > 2000 && w.frames >= 6) window.clearInterval(every)
+        }
+        const every = window.setInterval(look, 50)
+        look()
+      })
+      watch.observe(html, { attributes: true, attributeFilter: ['data-intro'] })
+    })
+    await page.locator(LAYER).getByRole('link', { name: 'Experience' }).click()
+    await expectGone(page)
+    await expect(page).toHaveURL(/#experience$/)
+    await expect.poll(() => page.evaluate(() => (window as unknown as { frames: number }).frames), { timeout: 30_000 }).toBeGreaterThanOrEqual(6)
+    await sleep(2200)
+    const seen = await page.evaluate(() => {
+      const w = window as unknown as { lowest: number; frames: number }
+      return { lowest: w.lowest, frames: w.frames }
+    })
+    expect(seen.frames, 'samples taken after the lift').toBeGreaterThanOrEqual(6)
+    expect(seen.lowest, 'the lowest opacity any part of its header showed').toBeGreaterThanOrEqual(0.99)
   })
 })
 
@@ -358,8 +445,13 @@ test.describe('a proper modal', () => {
     }
     await audit('load')
     await expect(page.locator(`${LAYER} .om-root[data-phase="landing"]`)).toBeAttached({ timeout: 20_000 })
-    // Let the landing's copy finish fading in.
+    // Let the landing's copy finish fading in, and the scroll hint too (it
+    // waits 3 s, then fades in over 1 s: caught halfway, its ink is halfway
+    // to the ground, and axe reads that contrast).
     await sleep(3000)
+    await expect
+      .poll(() => page.locator(`${LAYER} .om-hint`).evaluate((el) => (getComputedStyle(el).display === 'none' ? '1' : getComputedStyle(el).opacity)), { timeout: 15_000 })
+      .toBe('1')
     await audit('landing')
   })
 
