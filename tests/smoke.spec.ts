@@ -192,8 +192,9 @@ test.describe('the home page', () => {
       await expect.poll(() => heroMotion(page), { message: 'what moves in the hero once the painting has landed', timeout: 15_000 }).toEqual(expect.arrayContaining(['om-bob', 'grain']))
       const first = await lightPrint(page)
       expect(first.drawn, 'the light canvas has drawn').toBe(true)
-      await page.waitForTimeout(400)
-      expect((await lightPrint(page)).hash, 'the light canvas moves (its dust drifts)').not.toBe(first.hash)
+      // (Read until it differs: a busy machine painting the hero in software
+      // can go a few hundred milliseconds between frames.)
+      await expect.poll(async () => (await lightPrint(page)).hash, { message: 'the light canvas moves (its dust drifts)', timeout: 5000 }).not.toBe(first.hash)
     }
     const lcp = await page.evaluate(() => (window as unknown as { __lcp: string[] }).__lcp)
     expect(lcp.at(-1), `largest paints: ${lcp.join(', ')}`).toBe('name')

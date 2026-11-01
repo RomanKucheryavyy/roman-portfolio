@@ -287,8 +287,9 @@ test.describe('what it says', () => {
     await expect.poll(() => light.evaluate((el) => Number(getComputedStyle(el).opacity)), { timeout: 6000 }).toBe(1)
     const first = await lightPrint(page)
     expect(first.drawn, 'the light canvas has drawn its shafts and dust').toBe(true)
-    await sleep(400)
-    expect((await lightPrint(page)).hash, 'the light canvas moves').not.toBe(first.hash)
+    // (Read until it differs: a busy machine painting the stage in software
+    // can go a few hundred milliseconds between frames.)
+    await expect.poll(async () => (await lightPrint(page)).hash, { message: 'the light canvas moves', timeout: 5000 }).not.toBe(first.hash)
     // The spotlight is up, and follows the pointer.
     await expect(root.locator('.om-spot')).toBeVisible()
     await expect.poll(() => root.locator('.om-spot').evaluate((el) => Number(getComputedStyle(el).opacity)), { timeout: 6000 }).toBe(1)
