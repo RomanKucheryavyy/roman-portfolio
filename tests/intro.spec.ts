@@ -32,6 +32,12 @@ async function expectGone(page: Page) {
   const inert = await page.evaluate(() => Array.from(document.body.children).filter((el) => el.hasAttribute('inert')).length)
   expect(inert, 'children of <body> left inert').toBe(0)
   await expect(page.locator('#hero-title')).toBeVisible()
+  // The hero's words and its two ways in, held while the intro was up, have
+  // set in (stage.tsx SET_IN), and the name never waited for them.
+  await expect
+    .poll(() => page.locator('[data-hero-copy] > *').evaluateAll((els) => els.map((el) => Number(getComputedStyle(el).opacity))), { timeout: 5000 })
+    .toEqual([1, 1])
+  expect(await page.locator('#hero-title').evaluate((h1) => Number(getComputedStyle(h1).opacity))).toBe(1)
 }
 
 /**

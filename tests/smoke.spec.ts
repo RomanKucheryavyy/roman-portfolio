@@ -81,8 +81,8 @@ test.describe('the home page', () => {
   })
 
   test('reads in full: every section heading, its cards and the footer are drawn', async ({ page }) => {
-    // In the no-webgl project this is the machine with no WebGL: the curtain
-    // and the footer's glass are WebGL, and the page must read without them.
+    // In the no-webgl project this is the machine with no WebGL: the
+    // footer's glass is WebGL, and the page must read without it.
     await gotoHome(page)
     await scrollThrough(page)
     await expect(page.locator('#hero-title')).toHaveText(/Roman\s*Kucheryavyy/)
@@ -97,7 +97,26 @@ test.describe('the home page', () => {
     }
   })
 
-  test('the hero painting is decoration that lands after the name: hidden, inert, nothing to focus, the name the largest paint', async ({ page }) => {
+  test('the hero is the Roman print: no curtain, no stage light, the name, his words and the two ways in', async ({ page }) => {
+    await gotoHome(page)
+    const hero = page.locator('#top')
+    // The curtain is gone: nothing in the hero draws on a canvas, before the painting or after.
+    const canvases = () => hero.locator('canvas').evaluateAll((all) => all.filter((c) => c.getBoundingClientRect().width > 0 && getComputedStyle(c).display !== 'none').length)
+    expect(await canvases(), 'canvases drawn in the hero').toBe(0)
+    await expect(page.locator('#hero-title')).toHaveText(/^Roman\s+Kucheryavyy$/)
+    await expect(page.locator('#top h1')).toHaveCount(1)
+    await expect(hero.locator('[data-hero-copy] p')).toHaveText('Salesforce engineer by day. Full-stack builder by nature. Conductor by calling.')
+    await expect(hero.getByRole('link', { name: 'See the work' })).toHaveAttribute('href', '#work')
+    await expect(hero.getByRole('link', { name: 'Get in touch' })).toHaveAttribute('href', '#contact')
+    if (project() !== 'no-webgl') {
+      await expect(page.locator('[data-hero-painting] [data-shown="true"] .om-fig img')).toBeAttached({ timeout: 30_000 })
+      expect(await canvases(), 'canvases drawn in the hero once the painting is in').toBe(0)
+      // No light of any kind: the component's shafts and dust, its spotlight and its flash are all off.
+      for (const part of ['.om-light', '.om-spot', '.om-flash']) await expect(page.locator(`[data-hero-painting] ${part}`)).toBeHidden()
+    }
+  })
+
+  test('the hero painting is decoration that lands after the name: hidden, inert, nothing to focus, Hercules, the name the largest paint', async ({ page }) => {
     await page.addInitScript(() => {
       const seen: string[] = []
       ;(window as unknown as { __lcp: string[] }).__lcp = seen
@@ -117,17 +136,19 @@ test.describe('the home page', () => {
     await expect(painting).toHaveAttribute('aria-hidden', 'true')
     await expect(painting).toHaveAttribute('inert', '')
     if (project() === 'no-webgl') {
-      // Without WebGL the painting never comes: its light would cost most of
-      // the hero's frames on a processor drawing everything itself.
+      // Without WebGL the painting never comes: a machine drawing every
+      // frame in software keeps its frames for the page.
       await page.waitForTimeout(3000)
       await expect(painting.locator('*')).toHaveCount(0)
-      expect(statues, 'statues fetched without WebGL').toEqual([])
+      expect(statues, 'photographs fetched without WebGL').toEqual([])
     } else {
-      // It mounts (after the page) and fades in: Hercules, and its one light.
+      // It mounts (after the page) and fades in: Hercules, standing in the
+      // intro's print with the blurred David behind, as the intro has him.
       await expect(painting.locator('[data-shown="true"] .om-fig img')).toHaveAttribute('src', '/images/cast/hercules.webp', { timeout: 30_000 })
-      await expect(painting.locator('canvas')).toHaveCount(1)
-      // None of the component's own interface shows, and nothing in it is reachable.
-      for (const part of ['.om-chrome', '.om-wordlayer', '.om-flood']) await expect(painting.locator(part)).toBeHidden()
+      await expect(painting.locator('.om-fig')).toHaveCount(1)
+      await expect(painting.locator('.om-backdrop')).toHaveAttribute('src', '/images/cast/david-backdrop.webp')
+      // None of the component's own interface, loading or ornament shows, and nothing in it is reachable.
+      for (const part of ['.om-chrome', '.om-wordlayer', '.om-ring', '.om-flood']) await expect(painting.locator(part)).toBeHidden()
       const focusable = await painting.evaluate((box) =>
         [...box.querySelectorAll<HTMLElement>('*')].filter((el) => {
           el.focus({ preventScroll: true })
@@ -135,27 +156,106 @@ test.describe('the home page', () => {
         }).length,
       )
       expect(focusable, 'elements in the painting that took focus').toBe(0)
-      await page.waitForTimeout(1500)
+      // Still: once he has risen, nothing in it moves (no light, no dust, no bob, no grain).
+      await expect
+        .poll(() => painting.evaluate((box) => box.getAnimations({ subtree: true }).filter((a) => a.playState === 'running').length), {
+          message: 'animations running in the painting once it has landed',
+          timeout: 15_000,
+        })
+        .toBe(0)
+      await page.waitForTimeout(1000)
+      expect(await painting.evaluate((box) => box.getAnimations({ subtree: true }).filter((a) => a.playState === 'running').length)).toBe(0)
     }
     const lcp = await page.evaluate(() => (window as unknown as { __lcp: string[] }).__lcp)
     expect(lcp.at(-1), `largest paints: ${lcp.join(', ')}`).toBe('name')
   })
 
-  test('the hero painting stands clear of the name: his curls start below the surname', async ({ page }) => {
+  test('the name keeps AA where it meets the statue: the print behind its letters, without their halo, at 3:1 or more', async ({ page }) => {
     test.skip(project() === 'no-webgl', 'no painting without WebGL')
     await gotoHome(page)
-    const painting = page.locator('[data-hero-painting]')
-    await expect(painting.locator('[data-shown="true"] .om-fig img')).toBeAttached({ timeout: 30_000 })
-    // The statue's box, and where its curls start in it (the photograph's
-    // first opaque row, hero-painting-stage.tsx HEAD.top), against the
-    // surname's box.
-    const { crown, surname } = await page.evaluate(() => {
-      const fig = document.querySelector('[data-hero-painting] .om-fig')!.getBoundingClientRect()
-      const name = document.querySelector('#hero-title > span:last-child')!.getBoundingClientRect()
-      return { crown: fig.top + fig.height * 0.046, surname: name.bottom }
-    })
-    expect(crown, 'the crown of his curls, against the surname\'s foot').toBeGreaterThan(surname)
+    await expect(page.locator('[data-hero-painting] [data-shown="true"] .om-fig img')).toBeAttached({ timeout: 30_000 })
+    // Landed and risen.
+    await page.waitForTimeout(3500)
+    for (const line of ['#hero-title > span:first-child', '#hero-title > span:last-child']) {
+      const el = page.locator(line)
+      const box = (await el.boundingBox())!
+      const clip = { x: 0, y: Math.max(0, box.y), width: page.viewportSize()!.width, height: Math.min(box.height, page.viewportSize()!.height - box.y) }
+      const ink = await el.evaluate((e) => getComputedStyle(e).color)
+      // What stands behind the letters (the letters gone), and where the letters are (in magenta, no halo).
+      await el.evaluate((e) => e.style.setProperty('color', 'transparent', 'important'))
+      await el.evaluate((e) => e.style.setProperty('text-shadow', 'none', 'important'))
+      const behind = (await page.screenshot({ clip })).toString('base64')
+      await el.evaluate((e) => e.style.setProperty('color', '#ff00ff', 'important'))
+      const glyphs = (await page.screenshot({ clip })).toString('base64')
+      await el.evaluate((e) => e.removeAttribute('style'))
+      const { ratio, count } = await page.evaluate(
+        async ({ behind, glyphs, ink }) => {
+          const read = async (b64: string) => {
+            const img = new Image()
+            img.src = `data:image/png;base64,${b64}`
+            await img.decode()
+            const c = document.createElement('canvas')
+            c.width = img.width
+            c.height = img.height
+            const ctx = c.getContext('2d')!
+            ctx.drawImage(img, 0, 0)
+            return ctx.getImageData(0, 0, c.width, c.height).data
+          }
+          const lin = (v: number) => ((v /= 255) <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4)
+          const lum = (r: number, g: number, b: number) => 0.2126 * lin(r) + 0.7152 * lin(g) + 0.0722 * lin(b)
+          const [bg, mg] = await Promise.all([read(behind), read(glyphs)])
+          const under: number[] = []
+          for (let i = 0; i < mg.length; i += 4) if (mg[i] > 200 && mg[i + 1] < 90 && mg[i + 2] > 200) under.push(lum(bg[i], bg[i + 1], bg[i + 2]))
+          under.sort((a, b) => a - b)
+          const worst = under[Math.floor(under.length * 0.95)]
+          const [r, g, b] = ink.match(/\d+/g)!.map(Number)
+          const text = lum(r, g, b)
+          return { ratio: (Math.max(text, worst) + 0.05) / (Math.min(text, worst) + 0.05), count: under.length }
+        },
+        { behind, glyphs, ink },
+      )
+      expect(count, `${line}: letter pixels found`).toBeGreaterThan(200)
+      expect(ratio, `${line}: the name's ink against the print behind its letters (95th percentile)`).toBeGreaterThanOrEqual(3)
+    }
   })
+
+  for (const [w, h] of [
+    [390, 844],
+    [375, 667],
+    [1440, 900],
+  ] as const) {
+    test(`at ${w}x${h} the first screen holds the name, his words, both ways in and his head`, async ({ page }) => {
+      test.skip((w < 768) !== (project() === 'mobile'), 'phone sizes on the phone, the desktop on the desktop')
+      await page.setViewportSize({ width: w, height: h })
+      await gotoHome(page)
+      const bar = await page.locator('header').first().evaluate((el) => el.getBoundingClientRect().bottom)
+      for (const sel of ['#hero-title > span:first-child', '#hero-title > span:last-child', '[data-hero-copy] p', '#top a[href="#work"]', '#top a[href="#contact"]']) {
+        const r = (await page.locator(sel).boundingBox())!
+        // A name line's box is wider than its letters by its tracking (the
+        // space after its last letter, and the padding that balances it).
+        const spacing = await page.locator(sel).evaluate((el) => parseFloat(getComputedStyle(el).letterSpacing) || 0)
+        expect(r.y, `${sel} below the top bar`).toBeGreaterThanOrEqual(bar - 1)
+        expect(r.y + r.height, `${sel} inside the first screen`).toBeLessThanOrEqual(h + 1)
+        expect(r.x, `${sel} on screen`).toBeGreaterThanOrEqual(-1 - spacing)
+        expect(r.x + r.width, `${sel} on screen`).toBeLessThanOrEqual(w + 1 + spacing)
+      }
+      // The two ways in on one row.
+      const [see, touch] = await Promise.all(['#top a[href="#work"]', '#top a[href="#contact"]'].map(async (s) => (await page.locator(s).boundingBox())!))
+      expect(Math.abs(see.y + see.height / 2 - (touch.y + touch.height / 2)), 'See the work and Get in touch on one row').toBeLessThan(4)
+      expect(await page.evaluate(() => document.documentElement.scrollWidth), 'no sideways scroll').toBeLessThanOrEqual(w)
+      if (project() === 'no-webgl') return
+      // Hercules's head (the photograph's crown and chin, hero-painting-stage.tsx HEAD) inside the first screen, clear of his words above.
+      await expect(page.locator('[data-hero-painting] [data-shown="true"] .om-fig img')).toBeAttached({ timeout: 30_000 })
+      await page.waitForTimeout(3000)
+      const head = await page.evaluate(() => {
+        const fig = document.querySelector('[data-hero-painting] .om-fig')!.getBoundingClientRect()
+        return { crown: fig.top + fig.height * 0.046, chin: fig.top + fig.height * 0.44 }
+      })
+      expect(head.crown, 'his crown below the top bar').toBeGreaterThan(bar)
+      expect(head.chin, 'his chin inside the first screen').toBeLessThan(h)
+      if (w < 768) expect(head.crown, 'his crown below the two ways in').toBeGreaterThan(see.y + see.height)
+    })
+  }
 
   test('the hero painting stays away for a browser that saves data', async ({ page }) => {
     test.skip(project() === 'no-webgl', 'never there without WebGL')
@@ -170,18 +270,17 @@ test.describe('the home page', () => {
     await expect(page.locator('#hero-title')).toBeVisible()
     await page.waitForTimeout(3000)
     await expect(page.locator('[data-hero-painting] *')).toHaveCount(0)
-    expect(statues, 'statues fetched for a browser that saves data').toEqual([])
+    expect(statues, 'photographs fetched for a browser that saves data').toEqual([])
   })
 
   test("the hero painting's code failing to load leaves the page as it is", async ({ page }) => {
     test.skip(project() === 'no-webgl', 'never asked for without WebGL')
-    // The painting's chunk is the one that brings the component's class
-    // names; every other script loads.
+    // The painting's chunk is the one that carries its rise (hero-painting-stage.tsx RISE_FROM); every other script loads.
     const aborted: string[] = []
     await page.route('**/_next/static/chunks/*.js', async (route) => {
       const res = await route.fetch()
       const body = await res.text()
-      if (body.includes('om-fig') && body.includes('hp-rx')) {
+      if (body.includes('om-tilt]:translate-y-[12%]')) {
         aborted.push(route.request().url())
         await route.abort()
       } else await route.fulfill({ response: res, body })
@@ -191,6 +290,7 @@ test.describe('the home page', () => {
     await expect.poll(() => aborted.length, { timeout: 30_000 }).toBeGreaterThan(0)
     await page.waitForTimeout(1500)
     await expect(page.locator('#hero-title')).toBeVisible()
+    await expect(page.locator('#top a[href="#work"]')).toBeVisible()
     for (const id of SECTION_IDS) await expect(page.locator(`section#${id}`)).toBeAttached()
     await expect(page.locator('[data-hero-painting] *')).toHaveCount(0)
     log.expectClean()

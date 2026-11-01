@@ -223,6 +223,16 @@ test.describe('keyboard walk', () => {
     const unfocused = await readUnfocused(page)
     check(stops, unfocused)
     expect(stops.at(-1)!.what, 'the walk ends in the footer').toBe('a "Email"')
+    // The top bar's sections (all three on a phone, Products included), then
+    // the hero's two ways in: "See the work", the button, and "Get in touch",
+    // the text link beside it, in that order.
+    const names = stops.map((s) => s.what)
+    const sections = test.info().project.name === 'mobile' ? ['Work', 'Products', 'Contact'] : ['Work', 'Products', 'Experience', 'Credentials', 'About', 'Contact']
+    for (const label of sections) expect(names, `the top bar's ${label}`).toContain(`a "${label}"`)
+    const see = names.indexOf('a "See the work"')
+    const touch = names.indexOf('a "Get in touch"')
+    expect(see, 'the hero\'s "See the work"').toBeGreaterThan(0)
+    expect(touch, 'the hero\'s "Get in touch", right after it').toBe(see + 1)
     // The message box's three fields are on the way.
     for (const field of [/^input#c-name /, /^input#c-email /, /^textarea.* "Message"$/]) {
       expect(stops.some((s) => field.test(s.what)), String(field)).toBe(true)
