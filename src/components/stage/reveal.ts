@@ -15,6 +15,13 @@
  * opacity and the numeral's own letter-spacing (alone on its line, so
  * nothing else moves): no layout shift. Never the hero's h1, which is not
  * an act header.
+ *
+ * A header the intro's nav lands on (the page scrolls to its section while
+ * the stage lifts away, <html> still carrying data-intro) is let go whole,
+ * as one on screen as the page starts: it is there when the stage has gone,
+ * not cut in late behind it. And a page printed or saved as a PDF is whole:
+ * every entrance still waiting below the screen is finished first (here,
+ * for all of the page's entrances, which all hold their parts the same way).
  */
 const EASE = 'cubic-bezier(0.16, 1, 0.3, 1)'
 
@@ -36,6 +43,16 @@ const FRAMES: Record<string, Keyframe[]> = {
     { opacity: 0, transform: 'translateY(0.75rem)' },
     { opacity: 1, transform: 'none' },
   ],
+}
+
+/** Whether the intro is still up or lifting: what arrives now arrived by its nav, not from below. */
+export const landedByIntro = () => document.documentElement.hasAttribute('data-intro')
+
+/** Printed: every entrance still held at its first frame is finished, so nothing prints blank (looping motion is left be). */
+if (typeof window !== 'undefined') {
+  window.addEventListener('beforeprint', () => {
+    for (const a of document.getAnimations()) if (a.effect?.getComputedTiming().endTime !== Infinity) a.finish()
+  })
 }
 
 /** Arms one header's entrance; returns what disarms it (and lets every part go). */
@@ -62,7 +79,7 @@ export function arm(box: HTMLElement): () => void {
       const entry = entries[entries.length - 1]
       if (!entry.isIntersecting) return
       io.disconnect()
-      const passed = entry.boundingClientRect.bottom <= 0
+      const passed = entry.boundingClientRect.bottom <= 0 || landedByIntro()
       for (const a of anims) {
         if (passed) a.cancel()
         else a.play()

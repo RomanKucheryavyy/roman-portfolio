@@ -150,7 +150,12 @@ export function RankHonour({ className }: { className?: string }) {
         const entry = entries[entries.length - 1]
         if (!entered && entry.intersectionRatio >= 0.33) {
           entered = true
-          for (const a of entrance) a.play()
+          // Landed on by the intro's nav as it lifts: there already, whole.
+          const landed = document.documentElement.hasAttribute('data-intro')
+          for (const a of entrance) {
+            if (landed) a.cancel()
+            else a.play()
+          }
         }
         for (const a of loops) {
           if (entered && entry.isIntersecting) a.play()

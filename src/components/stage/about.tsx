@@ -146,7 +146,12 @@ function unveil(portrait: HTMLElement): () => void {
     (entries) => {
       if (entries[entries.length - 1].intersectionRatio < 0.5) return
       io.disconnect()
-      for (const a of anims) a.play()
+      // Landed on by the intro's nav as it lifts: there already, whole.
+      const landed = document.documentElement.hasAttribute('data-intro')
+      for (const a of anims) {
+        if (landed) a.cancel()
+        else a.play()
+      }
     },
     { threshold: [0, 0.5] },
   )
