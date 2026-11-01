@@ -21,6 +21,7 @@ import { siteGraph } from '@/lib/structured-data'
 import { RESUME_HREF, RESUME_PUBLIC } from '@/lib/routes'
 import { toRoman } from '@/lib/roman'
 import { CAST } from '@/components/stage/cast'
+import { isChain } from '@/components/stage/preview-box'
 import { INTRO_FIGURES } from '@/components/stage/intro-gate'
 
 /**
@@ -313,35 +314,47 @@ test.describe('his products', () => {
 
   test("a flow names only what the description names, in the description's words", () => {
     const words = (text: string) => text.toLowerCase().replace(/\s+/g, ' ')
+    // The counts a description may spell out, and their values.
+    const COUNTS: Record<string, number> = { two: 2, three: 3, four: 4, five: 5, six: 6, seven: 7, eight: 8, nine: 9, ten: 10, twelve: 12, eighteen: 18, twenty: 20 }
     for (const product of content.PRODUCTS) {
       if (!product.flow) continue
       const description = words(product.description)
-      // The centre: the product, under the description's opening line.
+      // The product's own line: the description's opening line.
       expect(description.startsWith(words(product.flow.hub)), `${product.id}: hub "${product.flow.hub}"`).toBe(true)
       const ids = product.flow.nodes.map((n) => n.id)
       expect(ids, `${product.id}: a part named like the product`).not.toContain(product.id)
       for (const node of product.flow.nodes) {
-        expect(description, `${product.id}: "${node.label}"`).toContain(words(node.label))
+        // Its whole name (a count before it, the words that lead into it) as the description has it.
+        const name = [node.lead, node.count?.word, node.label].filter(Boolean).join(' ')
+        expect(description, `${product.id}: "${name}"`).toContain(words(name))
         expect(description, `${product.id}: "${node.note}"`).toContain(words(node.note))
+        // A count is set as its numeral: the word and the value agree.
+        if (node.count) expect(COUNTS[node.count.word.toLowerCase()], `${product.id}: "${node.count.word}" is ${node.count.value}`).toBe(node.count.value)
       }
       for (const [from, to] of product.flow.links) {
         expect([...ids, product.id], `${product.id}: link ${from} -> ${to}`).toEqual(expect.arrayContaining([from, to]))
         expect(from, `${product.id}: a link from ${from} to itself`).not.toBe(to)
       }
-      // Every part is wired in, and the centre too.
+      // Every part is linked, and the product too.
       for (const id of [...ids, product.id]) expect(product.flow.links.some((link) => link.includes(id)), `${product.id}: ${id}`).toBe(true)
     }
   })
 
-  test("a flow's links are only the ones its description states", () => {
-    // Each part to or from the product at the centre, and the one hand-off
-    // between parts a description states (the Slack bot's captures, routed
-    // by Claude). Which part feeds which beyond that is Roman's to say
-    // (`needs Roman` in constants.ts): a link added for it is added here too.
+  test("a flow's links are only the ones its description states, and they decide its inscription", () => {
+    // Each part to or from the product, and the one hand-off between parts
+    // a description states (the Slack bot's captures, routed by Claude).
+    // Which part feeds which beyond that is Roman's to say (`needs Roman` in
+    // constants.ts): a link added for it is added here too.
     expect(Object.fromEntries(content.PRODUCTS.filter((p) => p.flow).map((p) => [p.id, p.flow!.links.map(([a, b]) => `${a} -> ${b}`)]))).toEqual({
       praxis: ['personas -> praxis', 'discovery -> praxis', 'manager -> praxis', 'praxis -> alpaca'],
       'alongside-brain': ['slack -> claude', 'claude -> alongside-brain', 'alongside-brain -> digests'],
     })
+    // Alongside Brain's run as one chain (numbered I to IV on the page);
+    // Praxis's don't: its parts work into the desk, which works through Alpaca.
+    expect(isChain(content.PRODUCTS.find((p) => p.id === 'alongside-brain')!.flow!)).toBe(true)
+    expect(isChain(content.PRODUCTS.find((p) => p.id === 'praxis')!.flow!)).toBe(false)
+    // The one count, Praxis's personas, is the numeral the page sets.
+    expect(toRoman(content.PRODUCTS.find((p) => p.id === 'praxis')!.flow!.nodes.find((n) => n.count)!.count!.value)).toBe('XVIII')
   })
 })
 

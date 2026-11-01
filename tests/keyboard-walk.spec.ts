@@ -1,4 +1,5 @@
 import { expect, test, type Page } from '@playwright/test'
+import { isChain } from '@/components/stage/preview-box'
 import { PRODUCTS } from '@/lib/content'
 import { collectConsole, gotoHome } from './helpers'
 
@@ -237,11 +238,12 @@ test.describe('keyboard walk', () => {
     for (const field of [/^input#c-name /, /^input#c-email /, /^textarea.* "Message"$/]) {
       expect(stops.some((s) => field.test(s.what)), String(field)).toBe(true)
     }
-    // So is every product's control: each public one's preview and link,
-    // and every preview's and diagram's Pause.
+    // So is every product's control: each public one's preview, link and
+    // Pause, and the Pause of a private one whose inscription pulses (a
+    // chain; a desk only moves as it arrives, and has none).
     const productStops = PRODUCTS.flatMap((p) => [
-      ...(p.url ? [`a "Visit ${domain(p.url)}"`, `a "${domain(p.url)}"`] : []),
-      `button "Pause the ${p.title} ${p.url ? 'preview' : 'diagram'}"`,
+      ...(p.url ? [`a "Visit ${domain(p.url)}"`, `a "${domain(p.url)}"`, `button "Pause the ${p.title} preview"`] : []),
+      ...(p.flow && isChain(p.flow) ? [`button "Pause the ${p.title} pulse"`] : []),
     ])
     for (const stop of productStops) expect(stops.map((s) => s.what), stop).toContain(stop)
 

@@ -6,7 +6,7 @@ import { gotoHome, sleep } from './helpers'
  * pieces still scrolls the page: the About badges (matter-js, which a
  * sideways drag still throws), the client-work folios (StackingCards, which
  * stack on a phone held upright: one in the flow, and one pinned under the
- * top bar), the products' previews, diagrams and title cards, and the Experience
+ * top bar), the products' previews, inscriptions and title cards, and the Experience
  * timeline (Lifeline's phone list). Real touch
  * events through CDP, which the compositor scrolls with (a synthesized
  * scroll gesture does not scroll anything in headless Chromium).
@@ -51,10 +51,10 @@ const PIECES: [string, string, (page: Page) => Promise<void>][] = [
     },
   ],
   ['a client-work card', '#work [data-slot="card"]', async () => {}],
-  // A product's live preview (its link holds the scrolling screenshots) and
-  // a private product's diagram.
+  // A product's live preview (its link holds the scrolling screenshots: the
+  // browser and the phone) and a private product's inscription of its parts.
   ['a product preview', '#products [data-preview="live"] a', async () => {}],
-  ['a product diagram', '#products [data-preview="flow"] [role="group"]', async () => {}],
+  ['a product inscription', '#products [data-preview="flow"] [role="group"]', async () => {}],
   // A product's title card (the Roman staging above its row), once its stage is up.
   [
     'a product title card',

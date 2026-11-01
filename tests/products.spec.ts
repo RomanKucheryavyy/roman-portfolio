@@ -1,18 +1,24 @@
 import { expect, test, type Locator, type Page } from '@playwright/test'
-import { PRODUCTS } from '@/lib/content'
+import { isChain } from '@/components/stage/preview-box'
+import { PRODUCTS, type FlowNode } from '@/lib/content'
+import { toRoman } from '@/lib/roman'
+import { monthYear } from '@/lib/site-facts'
 import { gotoHome, project, sleep } from './helpers'
 
 /**
  * Act II, his own products: the public ones' live previews (real
- * screenshots scrolling in a browser and a phone frame) and the private
- * ones' diagrams (their parts around them). Runs in all three projects; the
- * hover and the layout sweep only where a mouse and a resizable window make
- * sense.
+ * screenshots scrolling in a browser and a phone frame, together at every
+ * width) and the private ones' inscriptions (their parts, in their
+ * descriptions' words, no boxes and no lines). Runs in all three projects;
+ * the hover and the layout sweep only where a mouse and a resizable window
+ * make sense.
  */
 
 const LIVE = PRODUCTS.filter((p) => p.preview && p.url)
 const FLOW = PRODUCTS.filter((p) => p.flow)
 const domain = (url: string) => url.replace(/^https?:\/\//, '').replace(/\/$/, '')
+const nameOf = (node: FlowNode) => (node.count ? `${node.count.word} ${node.label}` : node.label)
+const words = (text: string) => text.toLowerCase().replace(/\s+/g, ' ').trim()
 
 const figureOf = (page: Page, id: string) => page.locator(`#products figure[data-product="${id}"]`)
 
@@ -62,15 +68,29 @@ test.describe('the products act', () => {
       await expect.poll(async () => (await shots(figure)).filter((s) => s.shown).every((s) => s.loaded), { timeout: 15_000 }).toBe(true)
       const all = await shots(figure)
       const shown = all.filter((s) => s.shown)
-      // The browser frame from md, the phone always.
-      expect(shown.map((s) => s.alt)).toEqual(
-        project() === 'mobile'
-          ? [`Screenshot of ${domain(product.url!)} on a phone`]
-          : [`Screenshot of ${domain(product.url!)} in a desktop browser`, `Screenshot of ${domain(product.url!)} on a phone`],
-      )
+      // The browser and the phone, at every width.
+      expect(shown.map((s) => s.alt)).toEqual([
+        `Screenshot of ${domain(product.url!)} in a desktop browser`,
+        `Screenshot of ${domain(product.url!)} on a phone`,
+      ])
       // Real files, not a drawing: each shown <img> has decoded pixels.
       expect(shown.every((s) => s.loaded)).toBe(true)
-      await expect(figure.locator('figcaption')).toContainText(`Screenshots from ${domain(product.url!)}`)
+      // One quiet line: the site and when the shots were taken.
+      await expect(figure.locator('figcaption > span')).toHaveText(`${domain(product.url!)} · ${monthYear(product.preview!.captured)}`)
+      // One composition at every width, a phone's too: the phone overlapping
+      // the browser's lower corner, both inside the preview, nothing boxed.
+      const frames = await figure.locator('a[aria-label^="Visit"]').evaluate((a) => {
+        const [browser, phone] = [...a.querySelectorAll('[data-preview-screen]')].map((s) => s.parentElement!.getBoundingClientRect())
+        const stage = a.getBoundingClientRect()
+        return {
+          overlap: browser.left < phone.right && phone.left < browser.right && browser.top < phone.bottom && phone.top < browser.bottom,
+          lower: phone.bottom > browser.bottom,
+          inside: [browser, phone].every((r) => r.left >= stage.left - 1 && r.right <= stage.right + 1 && r.top >= stage.top - 1 && r.bottom <= stage.bottom + 1),
+          phoneShare: phone.width / stage.width,
+        }
+      })
+      expect(frames, product.id).toEqual({ overlap: true, lower: true, inside: true, phoneShare: expect.any(Number) })
+      expect(frames.phoneShare, `${product.id}: the phone reads as a phone`).toBeGreaterThanOrEqual(0.25)
     }
   })
 
@@ -93,18 +113,17 @@ test.describe('the products act', () => {
     await figure.evaluate((el) => window.scrollBy({ top: el.getBoundingClientRect().top - (window.innerHeight - 70), behavior: 'instant' }))
     await sleep(800)
     const still = async () => (await shots(figure)).filter((s) => s.shown).map((s) => `${s.state} ${s.time}`)
-    await expect.poll(still).toEqual(project() === 'mobile' ? ['paused 0'] : ['paused 0', 'paused 0'])
+    await expect.poll(still).toEqual(['paused 0', 'paused 0'])
     // In view, it plays; then off screen, it goes back to the start of its loop.
     await bringIn(figure)
     await expect.poll(() => states(figure)).toEqual(expect.arrayContaining(['running']))
     await sleep(1500)
     expect((await shots(figure)).filter((s) => s.shown).every((s) => s.time > 1000)).toBe(true)
     await page.evaluate(() => window.scrollTo({ top: 0, behavior: 'instant' }))
-    await expect.poll(still).toEqual(project() === 'mobile' ? ['paused 0'] : ['paused 0', 'paused 0'])
+    await expect.poll(still).toEqual(['paused 0', 'paused 0'])
   })
 
   test("a preview's browser and phone share one loop, so they reach each end of the page together", async ({ page }) => {
-    test.skip(project() === 'mobile', 'Below md the phone shows alone.')
     await gotoHome(page)
     for (const product of LIVE) {
       const figure = figureOf(page, product.id)
@@ -186,33 +205,151 @@ test.describe('the products act', () => {
     await expect.poll(() => states(figure)).toEqual(expect.arrayContaining(['running']))
   })
 
-  test('the private products show their parts around them, wired with beams, and no screenshots', async ({ page }) => {
+  test("the private products are set as inscriptions of their parts: their descriptions' words, no boxes, no lines, no screenshots", async ({ page }) => {
     await gotoHome(page)
     for (const product of FLOW) {
+      const flow = product.flow!
       const figure = figureOf(page, product.id)
       await bringIn(figure)
       const group = figure.getByRole('group', { name: `The parts of ${product.title}` })
       await expect(group).toBeVisible()
-      await expect(group.locator('[data-flow-hub]')).toContainText(product.title)
-      await expect(group.getByText(product.flow!.hub, { exact: true })).toBeVisible()
-      for (const node of product.flow!.nodes) {
+      // Every part's name and what it does, the product's own line, and the
+      // description's words that lead into a part, all on screen.
+      await expect(group.getByText(flow.hub, { exact: true })).toBeVisible()
+      for (const node of flow.nodes) {
         await expect(group.getByText(node.label, { exact: true })).toBeVisible()
         await expect(group.getByText(node.note, { exact: true })).toBeVisible()
+        if (node.lead) await expect(group.getByText(node.lead, { exact: true })).toBeVisible()
+        // A count the description spells out stands as its numeral, which
+        // screen readers skip for the word itself.
+        if (node.count) {
+          const numeral = group.getByText(toRoman(node.count.value), { exact: true })
+          await expect(numeral).toBeVisible()
+          await expect(numeral).toHaveAttribute('aria-hidden', 'true')
+          await expect(group.locator('span.sr-only', { hasText: node.count.word })).toHaveCount(1)
+        }
       }
-      // The links, for screen readers too (the beams are drawn only).
-      const name = (id: string) => (id === product.id ? product.title : product.flow!.nodes.find((n) => n.id === id)!.label)
-      await expect(group.locator('ul.sr-only li')).toHaveText(product.flow!.links.map(([from, to]) => `From ${name(from)} to ${name(to)}`))
+      // Nothing on it that isn't the description's (or the product's own name).
+      const description = words(product.description)
+      const shown = await group.evaluate((el) =>
+        [...el.querySelectorAll<HTMLElement>('p')]
+          .filter((p) => !p.closest('[aria-hidden="true"], .sr-only') && p.getAttribute('aria-hidden') !== 'true')
+          .flatMap((p) => p.innerText.split('·'))
+          .map((t) => t.trim())
+          .filter(Boolean),
+      )
+      expect(shown.length, product.id).toBeGreaterThan(0)
+      for (const text of shown) expect(text === product.title || description.includes(words(text)), `${product.id}: "${text}"`).toBe(true)
+      // The links, for screen readers too (the reading order carries them on screen).
+      const name = (id: string) => (id === product.id ? product.title : nameOf(flow.nodes.find((n) => n.id === id)!))
+      await expect(group.locator('ul.sr-only li')).toHaveText(flow.links.map(([from, to]) => `From ${name(from)} to ${name(to)}`))
+      // ...and the reading order follows them. A chain: each link's start
+      // before its end, numbered I, II, III... in that order. A desk: the
+      // product's own line, then the parts that work into it, then what it
+      // works through.
+      const order = await group.evaluate((el) => (el as HTMLElement).innerText.toLowerCase())
+      const at = (id: string) => order.indexOf((id === product.id ? (isChain(flow) ? product.title : flow.hub) : flow.nodes.find((n) => n.id === id)!.label).toLowerCase())
+      if (isChain(flow)) {
+        for (const [from, to] of flow.links) expect(at(from), `${product.id}: ${from} before ${to}`).toBeLessThan(at(to))
+        await expect(group.locator('li > span[aria-hidden="true"]')).toHaveText(Array.from({ length: flow.links.length + 1 }, (_, i) => toRoman(i + 1)))
+      } else {
+        const into = flow.links.filter(([, to]) => to === product.id).map(([from]) => from)
+        const out = flow.links.filter(([from]) => from === product.id).map(([, to]) => to)
+        for (const part of into) {
+          expect(at(product.id), `${product.id}: the desk before ${part}`).toBeLessThan(at(part))
+          for (const next of out) expect(at(part), `${product.id}: ${part} before ${next}`).toBeLessThan(at(next))
+        }
+      }
+      // No screenshots, no drawings, no boxes, no rules.
       await expect(figure.locator('img')).toHaveCount(0)
-      // One beam per link, its pulse running while the diagram is on screen.
-      const pulses = group.locator('svg path.motion-safe-only')
-      await expect(pulses).toHaveCount(product.flow!.links.length)
-      const play = () => pulses.evaluateAll((paths) => paths.map((p) => getComputedStyle(p).animationPlayState))
-      await expect.poll(play).toEqual(product.flow!.links.map(() => 'running'))
-      await figure.getByRole('button', { name: `Pause the ${product.title} diagram` }).click()
-      await expect.poll(play).toEqual(product.flow!.links.map(() => 'paused'))
-      await figure.getByRole('button', { name: `Play the ${product.title} diagram` }).click()
-      await expect.poll(play).toEqual(product.flow!.links.map(() => 'running'))
-      await expect(figure.locator('figcaption')).toHaveText(/^Private, so no screenshots\. Its parts, in its own words\./)
+      await expect(group.locator('svg')).toHaveCount(0)
+      const edged = await group.evaluate((el) =>
+        [el, ...el.querySelectorAll('*')].filter((n) => {
+          const cs = getComputedStyle(n)
+          return ['Top', 'Right', 'Bottom', 'Left'].some((side) => parseFloat(cs.getPropertyValue(`border-${side.toLowerCase()}-width`)) > 0 && cs.getPropertyValue(`border-${side.toLowerCase()}-style`) !== 'none') || cs.outlineStyle !== 'none'
+        }).length,
+      )
+      expect(edged, `${product.id}: elements with an edge`).toBe(0)
+    }
+  })
+
+  test("a chain pulses down while on screen, and its Pause stops it; a desk only moves as it arrives, so it has none", async ({ page }) => {
+    await gotoHome(page)
+    for (const product of FLOW) {
+      const figure = figureOf(page, product.id)
+      const steps = figure.locator('[data-pulse]')
+      const looping = () => steps.evaluateAll((els) => els.map((el) => el.getAnimations().some((a) => a.effect?.getTiming().iterations === Infinity && a.playState === 'running')))
+      const lit = () => steps.evaluateAll((els) => els.map((el) => Number(getComputedStyle(el).opacity)))
+      if (!isChain(product.flow!)) {
+        await bringIn(figure)
+        await expect(steps).toHaveCount(0)
+        await expect(figure.getByRole('button')).toHaveCount(0)
+        continue
+      }
+      const count = product.flow!.links.length + 1
+      // Off screen at the top of the page: still, every step whole.
+      await page.evaluate(() => window.scrollTo({ top: 0, behavior: 'instant' }))
+      await expect.poll(looping).toEqual(Array(count).fill(false))
+      await bringIn(figure)
+      await expect.poll(looping, { timeout: 10_000 }).toEqual(Array(count).fill(true))
+      // Each step dims and lights in turn, never below the words' AA floor (0.55).
+      const seen = new Set<number>()
+      for (let i = 0; i < 24; i++) {
+        const now = await lit()
+        expect(Math.min(...now), 'a dimmed step stays readable').toBeGreaterThanOrEqual(0.54)
+        seen.add(now.indexOf(Math.max(...now)))
+        await sleep(200)
+      }
+      expect(seen.size, 'the light passes down the chain').toBeGreaterThanOrEqual(3)
+      await figure.getByRole('button', { name: `Pause the ${product.title} pulse` }).click()
+      await expect.poll(looping).toEqual(Array(count).fill(false))
+      await expect.poll(lit).toEqual(Array(count).fill(1))
+      await figure.getByRole('button', { name: `Play the ${product.title} pulse` }).click()
+      await expect.poll(looping).toEqual(Array(count).fill(true))
+      // Off screen again: it stops.
+      await page.evaluate(() => window.scrollTo({ top: 0, behavior: 'instant' }))
+      await expect.poll(looping).toEqual(Array(count).fill(false))
+    }
+  })
+
+  test('an inscription rises in, line by line, as it arrives (the count struck in), and never hides what is on screen', async ({ page }) => {
+    await gotoHome(page)
+    const product = FLOW.find((p) => p.flow!.nodes.some((n) => n.count))!
+    const figure = figureOf(page, product.id)
+    // Just below the screen: its lines are held at their first frame.
+    await figure.evaluate((el) => window.scrollBy({ top: el.getBoundingClientRect().top - window.innerHeight - 40, behavior: 'instant' }))
+    await sleep(300)
+    const lines = () => figure.locator('[data-line]').evaluateAll((els) => els.map((el) => Number(getComputedStyle(el).opacity)))
+    expect(Math.max(...(await lines())), 'held below the screen').toBe(0)
+    await bringIn(figure)
+    // Then they come in, and let go: whole, with nothing left running.
+    await expect.poll(lines, { timeout: 6000 }).toEqual((await lines()).map(() => 1))
+    await expect.poll(() => figure.locator('[data-line], [data-strike]').evaluateAll((els) => els.flatMap((el) => el.getAnimations()).length)).toBe(0)
+  })
+
+  test('an inscription that arrives already on screen is whole at once, with no entrance', async ({ page }) => {
+    // Hold back the previews' chunk, bring the row on screen (the block
+    // holding the inscription's place is the same size), then let it land there.
+    let release = () => {}
+    const held = new Promise<void>((resolve) => (release = resolve))
+    await page.route('**/_next/static/chunks/**', async (route) => {
+      const response = await route.fetch()
+      const body = await response.text()
+      if (body.includes('data-preview-screen')) await held
+      await route.fulfill({ response, body })
+    })
+    await page.goto('/')
+    const product = FLOW.find((p) => p.flow!.nodes.some((n) => n.count))!
+    await expect(page.locator('#products h3')).toHaveCount(4)
+    await page.locator('#products li', { has: page.locator('h3', { hasText: product.title }) }).getByText(product.description).scrollIntoViewIfNeeded()
+    await sleep(300)
+    release()
+    const figure = figureOf(page, product.id)
+    await expect(figure.locator('[data-line]').first()).toBeAttached({ timeout: 30_000 })
+    const lines = () => figure.locator('[data-line]').evaluateAll((els) => els.map((el) => Number(getComputedStyle(el).opacity)))
+    for (let i = 0; i < 6; i++) {
+      expect(Math.min(...(await lines())), 'nothing on screen is hidden to be brought in').toBe(1)
+      await sleep(100)
     }
   })
 
@@ -247,52 +384,45 @@ test.describe('the products act', () => {
 test.describe('the products act, laid out', () => {
   test.skip(() => project() !== 'desktop', 'One sweep of widths, in the resizable desktop window.')
 
-  test('at every width: no sideways scroll, every diagram inside its panel, and every beam in the open', async ({ page }) => {
+  test("at every width: no sideways scroll, every inscription inside its block, and each preview's browser and phone together", async ({ page }) => {
     test.setTimeout(120_000)
+    // Layout only: no entrance holding the inscriptions' lines off their places.
+    await page.emulateMedia({ reducedMotion: 'reduce' })
     await gotoHome(page)
-    for (const width of [320, 360, 390, 430, 600, 767, 768, 900, 1023, 1024, 1100, 1150, 1279, 1280, 1440, 1920]) {
+    for (const width of [320, 335, 340, 355, 360, 365, 375, 390, 400, 430, 600, 767, 768, 900, 1023, 1024, 1100, 1150, 1279, 1280, 1440, 1920]) {
       await page.setViewportSize({ width, height: 900 })
       await sleep(400)
       const report = await page.evaluate(() => ({
         sideways: document.documentElement.scrollWidth - window.innerWidth,
-        panels: [...document.querySelectorAll('#products [data-preview="flow"] [role="group"]')].map((panel) => {
-          const box = panel.getBoundingClientRect()
-          const diagram = panel.querySelector('[data-flow-diagram]')!
-          const cards = [...diagram.querySelectorAll('[data-flow-node]')].map((c) => c.getBoundingClientRect())
-          const inside = (c: DOMRect) => c.top >= box.top && c.bottom <= box.bottom && c.left >= box.left && c.right <= box.right
-          const overlaps = (a: DOMRect, b: DOMRect) => a.left < b.right && b.left < a.right && a.top < b.bottom && b.top < a.bottom
-          // Each beam's track, sampled: its length, and the share of it no card covers.
-          const beams = [...diagram.querySelectorAll(':scope > svg > path:not(.motion-safe-only)')].map((path) => {
-            const track = path as SVGPathElement
-            const svg = track.ownerSVGElement!.getBoundingClientRect()
-            const length = track.getTotalLength()
-            let open = 0
-            for (let i = 0; i <= 50; i++) {
-              const at = track.getPointAtLength((length * i) / 50)
-              const x = svg.left + at.x
-              const y = svg.top + at.y
-              if (!cards.some((c) => x > c.left + 1 && x < c.right - 1 && y > c.top + 1 && y < c.bottom - 1)) open++
-            }
-            return { length, open: open / 51 }
-          })
+        blocks: [...document.querySelectorAll('#products [data-preview="flow"] [role="group"]')].map((block) => {
+          const box = block.getBoundingClientRect()
+          const texts = [...block.querySelectorAll('p, li')].filter((n) => !n.closest('.sr-only')).map((n) => n.getBoundingClientRect())
           return {
-            overflow: diagram.scrollHeight - diagram.clientHeight,
-            outside: cards.filter((c) => !inside(c)).length,
-            overlapping: cards.filter((c, i) => cards.some((d, j) => j > i && overlaps(c, d))).length,
-            beams,
+            outside: texts.filter((r) => r.top < box.top - 1 || r.bottom > box.bottom + 1 || r.left < box.left - 1 || r.right > box.right + 1).length,
+            // Its words in the middle of the block: the room above and below them, within a line of each other.
+            room: [texts.length ? Math.min(...texts.map((r) => r.top)) - box.top : 0, texts.length ? box.bottom - Math.max(...texts.map((r) => r.bottom)) : 0],
+          }
+        }),
+        previews: [...document.querySelectorAll('#products [data-preview="live"] a')].map((a) => {
+          const [browser, phone] = [...a.querySelectorAll('[data-preview-screen]')].map((s) => s.parentElement!.getBoundingClientRect())
+          const stage = a.getBoundingClientRect()
+          return {
+            shown: [browser.width > 0, phone.width > 0],
+            overlap: browser.left < phone.right && phone.left < browser.right && browser.top < phone.bottom && phone.top < browser.bottom,
+            inside: [browser, phone].every((r) => r.left >= stage.left - 1 && r.right <= stage.right + 1 && r.top >= stage.top - 1 && r.bottom <= stage.bottom + 1),
           }
         }),
       }))
       expect(report.sideways, `${width}px: sideways scroll`).toBeLessThanOrEqual(0)
-      for (const [i, panel] of report.panels.entries()) {
-        expect(panel.overflow, `${width}px: diagram ${i + 1} overflows`).toBeLessThanOrEqual(1)
-        expect(panel.outside, `${width}px: cards outside diagram ${i + 1}`).toBe(0)
-        expect(panel.overlapping, `${width}px: cards overlapping in diagram ${i + 1}`).toBe(0)
-        expect(panel.beams.length, `${width}px: beams in diagram ${i + 1}`).toBe(FLOW[i].flow!.links.length)
-        for (const [j, beam] of panel.beams.entries()) {
-          expect(beam.length, `${width}px: diagram ${i + 1}, beam ${j + 1} long enough to see`).toBeGreaterThanOrEqual(36)
-          expect(beam.open, `${width}px: diagram ${i + 1}, beam ${j + 1} out from under the cards`).toBeGreaterThanOrEqual(0.9)
-        }
+      for (const [i, block] of report.blocks.entries()) {
+        expect(block.outside, `${width}px: words outside inscription ${i + 1}`).toBe(0)
+        expect(Math.min(...block.room), `${width}px: inscription ${i + 1} fills its block`).toBeGreaterThanOrEqual(0)
+        expect(Math.abs(block.room[0] - block.room[1]), `${width}px: inscription ${i + 1} centred`).toBeLessThanOrEqual(24)
+      }
+      for (const [i, preview] of report.previews.entries()) {
+        expect(preview.shown, `${width}px: preview ${i + 1} shows the browser and the phone`).toEqual([true, true])
+        expect(preview.overlap, `${width}px: preview ${i + 1}'s phone overlaps its browser`).toBe(true)
+        expect(preview.inside, `${width}px: preview ${i + 1}'s frames inside its stage`).toBe(true)
       }
     }
   })
@@ -311,8 +441,28 @@ test.describe('the title cards', () => {
       await expect(card.locator('.om-root[data-phase="landing"]')).toBeAttached({ timeout: 20_000 })
       await expect(card.locator('.om-word')).toContainText(product.title)
       await expect(card.locator('.om-tagline')).toHaveText(product.tagline)
-      await expect(card.locator('.om-pill').first()).toHaveText(product.status)
-      await expect(card).toContainText(product.url ? domain(product.url).replace(/^www\./, '') : 'Private')
+      // Where it lives and its status, one quiet line at the page's 12px floor
+      // (two on a phone); its number in Roman numerals.
+      const eyebrow = card.locator('.om-eyebrow')
+      await expect(eyebrow).toContainText(product.url ? domain(product.url).replace(/^www\./, '') : 'Private')
+      await expect(eyebrow).toContainText(product.status)
+      expect(parseFloat(await eyebrow.evaluate((el) => getComputedStyle(el).fontSize))).toBeGreaterThanOrEqual(12)
+      await expect(card.locator('.om-brand')).toHaveText(toRoman(PRODUCTS.indexOf(product) + 1))
+      // No ornaments: no pills, no stars, no rules; and no stage light: no
+      // spotlight on the pointer...
+      for (const part of ['.om-pill', '.om-star', '.om-rule', '.om-spot']) {
+        const shown = await card.locator(part).evaluateAll((els) => els.filter((el) => el.getClientRects().length > 0 && getComputedStyle(el).display !== 'none').length)
+        expect(shown, `${product.id}: ${part} shown`).toBe(0)
+      }
+      // ...and no shafts from above: the light's canvas holds only its
+      // drifting dust (shafts would light a third of it).
+      const lit = await card.locator('canvas.om-light').evaluate((canvas: HTMLCanvasElement) => {
+        const data = canvas.getContext('2d')!.getImageData(0, 0, canvas.width, canvas.height).data
+        let n = 0
+        for (let i = 3; i < data.length; i += 4) if (data[i] > 0) n++
+        return n / (data.length / 4)
+      })
+      expect(lit, `${product.id}: share of the light's canvas lit`).toBeLessThan(0.03)
       const reachable = await card.evaluate((el) =>
         [...el.querySelectorAll<HTMLElement>('a, button, input, select, textarea, [tabindex]')]
           .filter((n) => n.tabIndex >= 0 && n.getClientRects().length > 0)
@@ -348,6 +498,65 @@ test.describe('the title cards', () => {
     await page.evaluate(() => window.scrollTo({ top: 0, behavior: 'instant' }))
     await expect(card).toHaveAttribute('data-live', 'false')
     await expect(card.locator('.om-root')).toHaveCount(0)
+  })
+
+  test('the four words share one scale: a long title on two lines, none more than 1.4 times another, each inside its card', async ({ page }) => {
+    await gotoHome(page)
+    const sizes: number[] = []
+    for (const product of PRODUCTS) {
+      const card = cardOf(page, product.id)
+      await card.evaluate((el) => el.scrollIntoView({ block: 'center', behavior: 'instant' }))
+      await expect(card.locator('.om-root[data-phase="landing"]')).toBeAttached({ timeout: 20_000 })
+      // Its letters set (on a busy machine they can rise in as the card mounts).
+      await expect
+        .poll(() => card.locator('.om-l').evaluateAll((els) => els.every((el) => getComputedStyle(el).transform === 'none' && getComputedStyle(el).opacity === '1')))
+        .toBe(true)
+      const word = await card.evaluate((el) => {
+        const box = el.getBoundingClientRect()
+        const letters = [...el.querySelectorAll('.om-l')].map((l) => l.getBoundingClientRect())
+        const size = parseFloat(getComputedStyle(el.querySelector('.om-word')!).fontSize)
+        return {
+          size,
+          lines: new Set(letters.map((r) => Math.round(r.top))).size,
+          // Each letter's box, which runs below its capitals' baseline by its face's descent.
+          inside: letters.every((r) => r.left >= box.left && r.right <= box.right && r.top >= box.top && r.bottom <= box.bottom + 0.3 * size),
+        }
+      })
+      expect(word.lines, `${product.id}: lines`).toBe(product.title.includes(' ') ? 2 : 1)
+      expect(word.inside, `${product.id}: the word inside its card`).toBe(true)
+      sizes.push(word.size)
+    }
+    expect(Math.max(...sizes) / Math.min(...sizes), `word sizes ${sizes.join(', ')}`).toBeLessThanOrEqual(1.4)
+  })
+
+  test('on a phone a card scrolls in composed and lands within 1.5 s of arriving', async ({ page }) => {
+    test.skip(project() !== 'mobile', 'A phone mounts its card ahead and opens it on its landing.')
+    await gotoHome(page)
+    const card = cardOf(page, PRODUCTS[2].id)
+    // Just below the screen: already mounted, its word and its eyebrow up, its entrance held.
+    await card.evaluate((el) => window.scrollBy({ top: el.getBoundingClientRect().top - window.innerHeight - 60, behavior: 'instant' }))
+    await expect(card.locator('.om-root')).toBeAttached({ timeout: 20_000 })
+    await expect(card.locator('[data-arrived="false"]')).toBeAttached()
+    await expect(card.locator('.om-root')).toHaveAttribute('data-phase', 'landing')
+    await expect.poll(() => card.locator('.om-l').evaluateAll((els) => Math.min(...els.map((el) => Number(getComputedStyle(el).opacity))))).toBe(1)
+    // Arrived: the light, the statue and the tagline are all in within 1.5 s.
+    await card.evaluate((el) => el.scrollIntoView({ block: 'center', behavior: 'instant' }))
+    const t0 = Date.now()
+    const landed = () =>
+      card.evaluate((el) => {
+        const op = (sel: string) => [...el.querySelectorAll(sel)].map((n) => Number(getComputedStyle(n).opacity))
+        const fig = el.querySelector('.om-fig')
+        return (
+          el.querySelector('[data-arrived="true"]') !== null &&
+          !!fig &&
+          Math.min(...op('.om-fig')) >= 0.99 &&
+          Math.abs(new DOMMatrix(getComputedStyle(fig).transform).m42) < 2 &&
+          Math.min(...op('.om-tagline span')) >= 0.99 &&
+          getComputedStyle(el.querySelector('.om-flood')!).clipPath.startsWith('circle(120%')
+        )
+      })
+    await expect.poll(landed, { timeout: 1500, intervals: [100] }).toBe(true)
+    expect(Date.now() - t0).toBeLessThanOrEqual(1700)
   })
 
   test('a swipe or wheel over a card scrolls the page, and the row below keeps the heading (for screen readers) and the link', async ({ page }) => {
@@ -387,7 +596,7 @@ test.describe('the title cards', () => {
 })
 
 test.describe('the products act, under reduced motion', () => {
-  test('nothing moves: the shots show the top of each page, the beams hold still, and there is nothing to pause', async ({ page }) => {
+  test('nothing moves: the shots show the top of each page, the inscriptions stand whole and still, and there is nothing to pause', async ({ page }) => {
     await page.emulateMedia({ reducedMotion: 'reduce' })
     await gotoHome(page)
     for (const product of LIVE) {
@@ -401,11 +610,11 @@ test.describe('the products act, under reduced motion', () => {
       expect(all.map((s) => [s.state, s.y]), product.id).toEqual(all.map(() => ['none', 0]))
     }
     for (const product of FLOW) {
-      const pulses = figureOf(page, product.id).locator('svg path.motion-safe-only')
-      await expect(pulses).toHaveCount(product.flow!.links.length)
-      expect(await pulses.evaluateAll((paths) => paths.map((p) => getComputedStyle(p).animationName))).toEqual(
-        product.flow!.links.map(() => 'none'),
-      )
+      const figure = figureOf(page, product.id)
+      await bringIn(figure)
+      await sleep(1500)
+      const still = await figure.locator('[data-line]').evaluateAll((els) => els.map((el) => [Number(getComputedStyle(el).opacity), el.getAnimations({ subtree: true }).length]))
+      expect(still, product.id).toEqual(still.map(() => [1, 0]))
     }
     await expect(page.locator('#products').getByRole('button', { name: /^(Pause|Play) the / })).toHaveCount(0)
   })
@@ -423,5 +632,7 @@ test.describe('the products act, under reduced motion', () => {
     await expect(root).toHaveAttribute('data-phase', 'landing', { timeout: 600 })
     await expect(root).toHaveAttribute('aria-busy', 'false', { timeout: 600 })
     for (const part of ['.om-counter', '.om-bars', '.om-plate']) await expect(card.locator(part)).toBeHidden()
+    // A phone's entrance is not armed either: nothing is held back.
+    await expect(card.locator('[data-arrived]')).toHaveCount(0)
   })
 })
