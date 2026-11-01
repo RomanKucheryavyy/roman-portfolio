@@ -456,7 +456,7 @@ test.describe('the title cards', () => {
       // ornaments the page has dropped (the pills, the eyebrow's rules).
       for (const part of ['.om-ring', '.om-counter', '.om-foot', '.om-pill', '.om-rule']) expect(await shown(part), `${product.id}: ${part} shown`).toBe(0)
       // The component's own light and stars, as published (Roman, 2026-11-01:
-      // "the animation from 21st dev for this roman theme is now gone"): its
+      // "the animation from2 1st dev for this roman theme is now gone"): its
       // canvas of shafts and dust, the spotlight, the flash and the sheen.
       for (const part of ['.om-light', '.om-spot', '.om-flash', '.om-sheen', '.om-star']) expect(await shown(part), `${product.id}: ${part} shown`).toBeGreaterThan(0)
       // Its flood has opened as the component's circle.

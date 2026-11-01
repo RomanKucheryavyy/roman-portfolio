@@ -30,7 +30,7 @@ import { ROMAN_FONTS } from './roman-type'
  *   nothing behind a private one.
  *
  * It opens as the component does (Roman, 2026-11-01, once its animation had
- * been taken out: "but the animation from 21st dev for this roman theme is
+ * been taken out: "but the animation from2 1st dev for this roman theme is
  * now gone"): the load, its own word filling with marble; the unveil, the
  * flood opening as its circle with the flash, the sheen crossing the word,
  * the statue rising and the backdrop surfacing; then the living landing,
