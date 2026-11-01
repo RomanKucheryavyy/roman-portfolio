@@ -58,16 +58,17 @@ const Footer = dynamic(() => import('./footer'), {
 /**
  * The hero is a page of the intro's book (Roman, 2026-11-01, of the curtain
  * and its stage light: "i like the roman theme better", "i actually hate
- * it"): the Old Masters print the intro lands on, still, with Hercules
- * standing in it, his words above him and his name across its foot.
+ * it"): the Old Masters print the intro lands on, with Hercules standing
+ * in it, his words above him and his name across its foot.
  *
  * The print's ground is the page's own HTML, so it is there before the
  * painting and without it (no scripts, no WebGL, a browser that saves data):
  * the intro's flood (the wash welling up from the floor, the component's
- * own gradient in the palette, imperial.ts), its vignette and its grain,
- * still. The painting (hero-painting.tsx) lands between the flood and the
- * grain, so the grain and the vignette lie over the statue too, as the
- * intro's do.
+ * own gradient in the palette, imperial.ts), its vignette and its grain.
+ * The painting (hero-painting.tsx) lands between the flood and the grain,
+ * so the grain and the vignette lie over the statue too, as the intro's do,
+ * and brings the intro's living landing with it: its light and dust, its
+ * spotlight on the pointer, the statue breathing, the grain moving.
  */
 const FLOOD =
   'pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_90%_80%_at_50%_110%,color-mix(in_srgb,var(--stage-wash),var(--stage-glow)_14%)_0%,var(--stage-wash)_55%,color-mix(in_srgb,var(--stage-wash),var(--background)_55%)_100%)]'
@@ -78,8 +79,10 @@ const SHADE =
 
 /**
  * The print's grain, as the intro's: fine grey noise laid over everything
- * in overlay, at the noir tone's strength; still, where the intro's
- * flickers.
+ * in overlay, at the noir tone's strength, a little larger than the hero
+ * (as the component's is larger than its stage) so it can move. Still on
+ * its own; while the painting is here it flickers as the intro's does
+ * (hero-painting-stage.tsx).
  */
 const GRAIN = {
   backgroundImage:
@@ -152,7 +155,7 @@ function Hero() {
       <div aria-hidden="true" className={FLOOD} />
       <HeroPainting />
       <div aria-hidden="true" className={SHADE} />
-      <div aria-hidden="true" className="pointer-events-none absolute inset-0 opacity-[0.11] mix-blend-overlay" style={GRAIN} />
+      <div aria-hidden="true" data-hero-grain="" className="pointer-events-none absolute -inset-8 opacity-[0.11] mix-blend-overlay" style={GRAIN} />
       <div className="relative z-[1] flex min-h-svh flex-col px-4 pb-[max(1rem,3svh)] pt-[calc(3.5rem+4svh)] md:px-12 md:pt-[calc(4rem+5svh)]">
         <h1 id="hero-title" className={cn('order-last text-center', NAME, FOOT, NAME_HALO)}>
           <span className="block whitespace-nowrap pl-[0.06em] text-(length:--n) leading-[0.82] tracking-[0.06em]">{PERSON.first}</span>{' '}

@@ -14,8 +14,10 @@ import { savesData } from './intro-gate'
  * box, and when it plays.
  *
  * Decoration only: aria-hidden and inert, so nothing in it is read, takes
- * focus or catches the pointer. The hero's words and its print's ground
- * (the flood, the vignette, the grain) are the page's, in its server HTML.
+ * focus or catches the pointer (the stage is handed the pointer's moves
+ * over the hero, for its spotlight and parallax). The hero's words and its
+ * print's ground (the flood, the vignette, the grain) are the page's, in
+ * its server HTML.
  *
  * It loads after the page: the stage, the component and the two photographs
  * are fetched once the browser is idle after hydration (next/dynamic, no
@@ -27,15 +29,15 @@ import { savesData } from './intro-gate'
  * David, and on a wide screen Hercules too), and mounts once the intro has
  * lifted off, so the visitor sees Hercules rise onto the page the intro has
  * just revealed and the two stages never draw at once; once the hero has
- * left the screen the stage unmounts (the component's frame loop stops with
- * it), and it comes back when the hero does.
+ * left the screen the stage unmounts (the component's light, its dust and
+ * its frame loop stop with it), and it comes back when the hero does.
  *
  * Never at all (the hero is then its print's ground and its words) for a
  * browser that asks to save data or reports a 2G connection (the intro's
  * own test: the stage and the photographs are about 200 KB more), nor for
  * one with no WebGL, the sign of a machine drawing every frame in software,
- * where a full-screen blended print beneath the page would take frames the
- * page needs.
+ * where a full-screen blended print beneath the page, its light drawn anew
+ * every frame, would take frames the page needs.
  *
  * If the stage's chunk fails to load (a deploy that replaced it, a broken
  * connection, a blocker), the painting is simply not there: the failure
