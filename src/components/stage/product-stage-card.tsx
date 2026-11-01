@@ -29,28 +29,32 @@ import { ROMAN_FONTS } from './roman-type'
  *   page, in its preview), which the component greys, darkens and blurs;
  *   nothing behind a private one.
  *
- * No ornaments: no pills, no stars, no rules; the type is the ornament.
- * No stage light (Roman, 2026-11-01: "not this like stage light look
- * thingy"): no shafts and no dust (rays and dust off, the light's canvas
- * hidden), no spotlight on the pointer, no flash, no sheen sweeping the
- * card; the flood wells up from the floor and the print is lit by it. The
- * card fades into the page's ground at its top and foot (EDGES), so it is
- * light in the dark, never a panel with edges. One word scale across the four cards: a long
- * title stands on two lines, a short one is held to at most 1.3 times its
- * size, so the four read as one series.
+ * It opens as the component does (Roman, 2026-11-01, once its animation had
+ * been taken out: "but the animation from 21st dev for this roman theme is
+ * now gone"): the load, its own word filling with marble; the unveil, the
+ * flood opening as its circle with the flash, the sheen crossing the word,
+ * the statue rising and the backdrop surfacing; then the living landing,
+ * its light (the shafts and the dust on the component's canvas, the
+ * spotlight on the pointer), the statue's bob and the parallax, the
+ * moving grain, the stars' twinkle. In the palette (IMPERIAL).
+ *
+ * When: the card mounts ahead of the screen (product-stage.tsx), so it
+ * scrolls in with its number, its eyebrow, its stars and its word drawn in
+ * outline, never as an empty box. Its load is held at nothing until its
+ * word is on screen (ARRIVE_AT); then the word fills within about a second
+ * and the unveil follows at once, so a card lands about four seconds after
+ * it arrives. Its light runs only while the card is on screen. Under
+ * reduced motion it opens straight on its still landing (the component's
+ * own still frame).
+ *
+ * Kept from the page's look: no pills, no rules (the eyebrow's), none of
+ * the intro's loading (LOOK); one word scale across the four cards (WORD);
+ * its top and foot sink into the page's ground (EDGES), so it has no hard
+ * edges.
  *
  * Nothing in it takes focus: no nav, no skip (`skippable={false}` also
  * keeps the root out of the tab order), and its call to action, which the
  * component renders by default, hidden.
- *
- * At every width it opens on its landing (the component's load and unveil
- * took seconds over a dark box, and a scroll doesn't wait for them),
- * mounted ahead of the card (product-stage.tsx) so it scrolls in composed:
- * the number, the eyebrow and the word. It holds four things back until a
- * third of it has arrived, then brings them in, all within about 1.3 s: the
- * flood wells up from the floor, the backdrop surfaces in it, the statue
- * rises into it and the tagline follows word by word (ARRIVAL, below).
- * Under reduced motion nothing is held: it stands on its still landing.
  */
 
 /** The cast's files are pre-keyed (cast.ts): the component's own key only keeps their edge. */
@@ -76,33 +80,49 @@ const LONG_TITLE = 10
 const domain = (url: string) => url.replace(/^https?:\/\/(www\.)?/, '').replace(/\/.*$/, '')
 
 /**
+ * The words stay AA through the light, from outside. The sheen's band
+ * crosses the card at the unveil: it fades out above the word (by a third
+ * of the way down, where the eyebrow and the number stand clear of it),
+ * and the word stands in front of it rather than under it (the band passes
+ * behind the letters; over marble it only whitened them, and it washed out
+ * the word's halo). The shafts gather behind the eyebrow at the top and the
+ * spotlight follows the pointer, so the eyebrow and the number take a dark
+ * halo of the ground (the tagline has the component's own). Measured on the
+ * pixels at the band's brightest, over the lightest backdrops (Sembly's,
+ * Alongside Events'): without these the eyebrow fell to 2.0:1 and the word
+ * to 1.9:1 as the band passed.
+ */
+const LIGHT_SAFE = [
+  '[&_.om-eyebrow]:[text-shadow:0_0_1px_var(--om-ground),0_0_3px_var(--om-ground),0_0_6px_var(--om-ground-b),0_1px_14px_var(--om-ground-c)]',
+  '[&_.om-brand]:[text-shadow:0_0_2px_var(--om-ground),0_0_10px_var(--om-ground-c)]',
+  '[&_.om-wordclip]:z-[1]',
+  '[&_.om-sheen]:[mask-image:linear-gradient(to_bottom,transparent_18%,#000_32%)]',
+].join(' ')
+
+/**
  * From outside, by descendant classes (the component as published): its
  * call to action hidden (nothing here is a way in), and the scroll hint
- * with it; its pills, its stars and the rules beside its eyebrow hidden
- * (no lines, no ornaments); its spotlight that follows the pointer hidden
- * (no stage light; over a light site's screenshot it also took the eyebrow
- * under 3:1), and its flash, its light's canvas and its sheen (which swept
- * a band of light across the whole card); its interface above the statue
- * (as in the intro), so no
- * figure covers a word of it; the number in gold Cinzel; the eyebrow at the
- * page's 12px floor, in the body ink (the muted ink, over a light site's
- * blurred screenshot, measured under 4.5:1); the copy just under the
- * eyebrow; the word keeps the intro's dark halo; the tagline's lines are
- * balanced; the backdrop darker
+ * with it; its pills and the rules beside its eyebrow hidden (no lines, no
+ * pills: the eyebrow and the number say what they said); its interface
+ * above the statue (as in the intro), so no figure covers a word of it; the
+ * number in gold Cinzel; the eyebrow at the page's 12px floor, in the body
+ * ink (the muted ink, over a light site's blurred screenshot, measured
+ * under 4.5:1); the copy just under the eyebrow; the word keeps the
+ * intro's dark halo; the tagline's lines are balanced; the backdrop darker
  * than the component's (a light site's screenshot, Sembly's, showed its
  * headings through and dimmed the chrome); and none of the intro's
  * loading: no meander ring, no count, no barcode and no plate. Those are
  * the intro's alone, and over a product that is already on the page
- * "Loading" says something untrue; a card opens on its own word.
+ * "Loading" says something untrue; a card loads as its own word filling.
  */
 const LOOK = [
-  '[&_.om-cta]:hidden! [&_.om-hint]:hidden! [&_.om-ring]:hidden! [&_.om-counter]:hidden! [&_.om-foot]:hidden! [&_.om-pill]:hidden! [&_.om-star]:hidden! [&_.om-rule]:hidden!',
-  '[&_.om-spot]:hidden! [&_.om-flash]:hidden! [&_.om-light]:hidden! [&_.om-sheen]:hidden!',
+  '[&_.om-cta]:hidden! [&_.om-hint]:hidden! [&_.om-ring]:hidden! [&_.om-counter]:hidden! [&_.om-foot]:hidden! [&_.om-pill]:hidden! [&_.om-rule]:hidden!',
   '[&_.om-chrome]:z-[6]!',
   '[&_.om-brand]:font-roman! [&_.om-brand]:text-[1.75rem]! [&_.om-brand]:not-italic! [&_.om-brand]:leading-none! [&_.om-brand]:tracking-[0.04em]! [&_.om-brand]:[color:var(--om-accent)]!',
   '[&_.om-eyebrow]:top-14! [&_.om-eyebrow]:[transform:translateX(-50%)]! [&_.om-eyebrow]:text-xs! [&_.om-eyebrow]:[color:var(--om-text)]! [&_.om-eyebrow]:leading-5! [&_.om-eyebrow]:tracking-[0.24em]! [&_.om-eyebrow]:w-max! [&_.om-eyebrow]:whitespace-pre-line! [&_.om-eyebrow]:text-center!',
   'max-sm:[&_.om-copy]:top-[7.25rem]! sm:[&_.om-copy]:top-[max(14%,6.5rem)]!',
   WORD_HALO,
+  LIGHT_SAFE,
   '[&_.om-tagline]:text-balance',
   '[&_.om-backdrop]:[filter:grayscale(1)_contrast(1.1)_brightness(0.32)_blur(6px)]!',
 ].join(' ')
@@ -137,24 +157,23 @@ const EDGES = [
 ].join(' ')
 
 /**
- * The entrance, from outside: while the wrapper's data-arrived is "false",
- * the flood and the backdrop are out (the flood a little low), the statue
- * stands low and unseen (at 1% rather than none, so the browser has drawn
- * its masked print before it is needed, and its rise doesn't wait on
- * that) and the tagline's words wait below their line; when
- * it turns "true" each comes in on its own timing, the flood welling up
- * from the floor (never opening like a spotlight). Only where the wrapper
- * carries data-arrived at all: with motion.
+ * The share of a card in view that starts its load: by then its word, which
+ * stands in the middle of the card through the load, is on screen, so the
+ * whole fill is seen. (Or the card fills the screen, where it is taller.)
  */
-const ARRIVAL = [
-  '[&_.om-flood]:[clip-path:none]! [&[data-arrived=false]_.om-flood]:opacity-0! [&[data-arrived=false]_.om-flood]:[transform:translate3d(0,10%,0)]! [&[data-arrived]_.om-flood]:[transition:opacity_0.9s_ease,transform_1.2s_cubic-bezier(0.16,1,0.3,1)]!',
-  '[&[data-arrived=false]_.om-backdrop]:opacity-0! [&[data-arrived]_.om-backdrop]:[transition:opacity_1.1s_ease_0.15s]!',
-  '[&[data-arrived=false]_.om-fig]:opacity-[0.01]! [&[data-arrived=false]_.om-fig]:[transform:translate3d(0,14%,0)]! [&[data-arrived]_.om-fig]:[transition:transform_1.1s_cubic-bezier(0.16,1,0.3,1)_0.1s,opacity_0.7s_ease_0.1s,filter_0.9s_ease]!',
-  '[&[data-arrived=false]_.om-tagline_span]:opacity-0! [&[data-arrived=false]_.om-tagline_span]:[transform:translate3d(0,14px,0)]! [&[data-arrived]_.om-tagline_span]:[transition:opacity_0.6s_ease_calc(0.3s+var(--i)*50ms),transform_0.7s_cubic-bezier(0.16,1,0.3,1)_calc(0.3s+var(--i)*50ms)]!',
-].join(' ')
+const ARRIVE_AT = 0.6
 
-/** The share of a card in view that brings its entrance in. */
-const ARRIVE_AT = 0.35
+/**
+ * The load: the word's outline is up well before the card arrives (it rises
+ * in over the first two seconds after mounting), so the load waits at least
+ * this long after mounting, for a card that mounts as it arrives (a fast
+ * scroll, a page opened there). Then it is handed its full progress and the
+ * component fills the word towards it, eased, within about 0.9 s.
+ */
+const OUTLINE_MS = 900
+
+/** After the photographs have loaded, a moment for the component to read their sizes. */
+const SETTLE_MS = 120
 
 /** Watches a media query; false on the server. */
 function useMedia(query: string): boolean {
@@ -204,40 +223,86 @@ export default function ProductStageCard({ product, index }: { product: Product;
     watch.observe(el)
     return () => watch.disconnect()
   }, [])
-  // The entrance waits for the card to arrive (once; it unmounts after leaving).
-  const arriving = !still
+  // Where the card is: on screen at all (its light runs only then), and
+  // arrived (its load starts, once; it unmounts after leaving).
+  const [onScreen, setOnScreen] = useState(false)
   const [arrived, setArrived] = useState(false)
   useEffect(() => {
     const el = box.current
-    if (!el || !arriving) return
+    if (!el) return
     const watch = new IntersectionObserver(
       (entries) => {
-        if (entries[entries.length - 1].intersectionRatio < ARRIVE_AT) return
-        setArrived(true)
-        watch.disconnect()
+        // The last entry is the card's current state.
+        const entry = entries[entries.length - 1]
+        setOnScreen(entry.isIntersecting)
+        const fills = entry.rootBounds ? entry.intersectionRect.height >= 0.9 * entry.rootBounds.height : false
+        if (entry.isIntersecting && (entry.intersectionRatio >= ARRIVE_AT || fills)) setArrived(true)
       },
-      { threshold: [0, ARRIVE_AT] },
+      { threshold: [0, 0.25, 0.5, ARRIVE_AT] },
     )
     watch.observe(el)
     return () => watch.disconnect()
-  }, [arriving])
+  }, [])
+  // Settled: the photographs' sizes place them (the component reads them as
+  // they load) and the card's width places a statue that reaches out. Until
+  // both are known a still card is not shown (it would land, then shift),
+  // and a playing card does not start its load (its unveil would show them
+  // moving into place).
+  const backdrop = product.preview?.desktop.src ?? null
+  const statue = STATUES[product.id]?.photo.src ?? null
+  const measured = stage.w > 0
+  const [settled, setSettled] = useState(false)
+  useEffect(() => {
+    if (!measured) return
+    let live = true
+    let timer = 0
+    const srcs = [statue, backdrop].filter((src): src is string => !!src)
+    const loaded = (src: string) =>
+      new Promise<void>((done) => {
+        const img = new Image()
+        img.onload = img.onerror = () => done()
+        img.src = src
+      })
+    Promise.all(srcs.map(loaded)).then(() => {
+      if (live) timer = window.setTimeout(() => setSettled(true), SETTLE_MS)
+    })
+    return () => {
+      live = false
+      clearTimeout(timer)
+    }
+  }, [measured, statue, backdrop])
+  // The load starts on arrival, settled, and never before the outline has had OUTLINE_MS.
+  const mountedAt = useRef(0)
+  useEffect(() => {
+    mountedAt.current = performance.now()
+  }, [])
+  const [loading, setLoading] = useState(false)
+  useEffect(() => {
+    if (!arrived || !settled || still || loading) return
+    const t = setTimeout(() => setLoading(true), Math.max(0, mountedAt.current + OUTLINE_MS - performance.now()))
+    return () => clearTimeout(t)
+  }, [arrived, settled, still, loading])
   const figure = titleCardFigure(product, index, phone, stage)
   const where = product.url ? domain(product.url) : 'Private'
   const n = toRoman(index + 1)
+  // The light (shafts and dust on the component's canvas) runs while the
+  // card is on screen; under reduced motion the component draws it once.
+  const lit = still || (arrived && onScreen)
   return (
-    <div ref={box} className={`h-full ${ARRIVAL}`} data-arrived={arriving ? String(arrived) : undefined}>
+    <div ref={box} className="h-full" data-load={still ? undefined : loading ? 'started' : 'held'} style={still && !settled ? { opacity: 0 } : undefined}>
       <OldMastersPreloader
+        // The load's progress is the card's own: nothing until it has
+        // arrived, then all of it, which the component fills towards.
+        progress={still ? undefined : loading ? 100 : 0}
+        durationMs={900}
+        minLoadMs={0}
         skippable={false}
-        skipIntro
+        skipIntro={still}
         figures={figure ? [figure] : []}
-        backdrop={product.preview?.desktop.src ?? null}
+        backdrop={backdrop}
         duotone
-        // No light of any kind: the card is lit by its flood and the
-        // statue's own print, never by shafts or the dust in them (Roman,
-        // 2026-11-01, of the hero's light: "not this like stage light look
-        // thingy").
-        rays={false}
-        dust={false}
+        rays={lit}
+        dust={lit}
         tone="noir"
         palette={IMPERIAL}
         fontHref={null}
