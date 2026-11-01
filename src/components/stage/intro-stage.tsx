@@ -65,7 +65,9 @@ const year = toRoman(new Date().getFullYear())
  * - the plate, small type that lands on marble, sits on an opaque label of
  *   the ground (a museum plate: its muted ink is 9.5:1 there, where a
  *   see-through label let the lit statue show behind its first letters),
- *   and the hint keeps a firmer dark halo than its own;
+ *   and the hint keeps a firmer dark halo than its own, in the text ink
+ *   (the muted ink is 4.9:1 on the flood's lit end, too near the floor
+ *   while the hint fades in; the text ink is 9.0:1);
  * - the word keeps a dark halo, so it reads over the marble behind it;
  * - the tagline's lines are balanced;
  * - on phones the component hides its nav's links but keeps the two <nav>s,
@@ -85,7 +87,7 @@ const LOOK = [
   'max-sm:[&_.om-bars]:hidden! max-sm:[&_.om-foot]:justify-end! [@media(max-height:480px)]:[&_.om-hint]:hidden!',
   'max-sm:[&_.om-star:not(.om-star-s)]:top-[max(15.5%,124px)]!',
   '[&_.om-plate]:rounded-[2px] [&_.om-plate]:bg-(--om-ground) [&_.om-plate]:px-2 [&_.om-plate]:py-1',
-  '[&_.om-hint]:[text-shadow:0_0_1px_var(--om-ground),0_0_4px_var(--om-ground),0_0_12px_var(--om-ground)]!',
+  '[&_.om-hint]:text-(--om-text)! [&_.om-hint]:[text-shadow:0_0_1px_var(--om-ground),0_0_4px_var(--om-ground),0_0_12px_var(--om-ground)]!',
   WORD_HALO,
   '[&_.om-tagline]:text-balance',
   'max-sm:[&_.om-top_nav]:hidden!',
