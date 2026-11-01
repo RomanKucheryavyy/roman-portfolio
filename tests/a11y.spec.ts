@@ -56,6 +56,10 @@ const ROUTES: { name: string; path: string; ready: (page: Page) => Promise<void>
       await gotoHome(page)
       await scrollThrough(page)
       // The badges have dropped (the About block's physics) and come to rest.
+      // They drop as the zone rises into the upper part of the screen; a
+      // wheel step of most of a screen can carry it straight past that, so
+      // the zone is brought into view before they are waited for.
+      await page.locator('#about [aria-label="Keywords"]').scrollIntoViewIfNeeded()
       await expect(page.locator('#about [aria-label="Keywords"] > div').first()).toBeVisible({ timeout: 15_000 })
       await page.waitForTimeout(2500)
     },

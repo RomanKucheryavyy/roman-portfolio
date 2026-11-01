@@ -162,10 +162,10 @@ test.describe('his Trailhead rank', () => {
     for (const use of ['{RANK.platform}', '{RANK.name}', '{RANK.standing}']) expect(read('src/components/stage/rank-honour.tsx'), use).toContain(use)
     for (const use of ['{RANK.platform}', '{RANK.name}', '{RANK.standing}']) expect(read('src/app/page.tsx'), use).toContain(use)
     for (const use of ['${RANK.platform}', '${RANK.name}', '${RANK.standing}']) expect(read('src/app/llms.txt/route.ts'), use).toContain(use)
-    // Act IV renders the honour before the frieze.
+    // Act IV renders the honour before the frieze (frieze.tsx, loaded after the page).
     const credentials = read('src/components/stage/credentials.tsx')
     expect(credentials.indexOf('<RankHonour')).toBeGreaterThan(credentials.indexOf('<SectionHeader'))
-    expect(credentials.indexOf('<RankHonour')).toBeLessThan(credentials.indexOf('{marquee}'))
+    expect(credentials.indexOf('<RankHonour')).toBeLessThan(credentials.indexOf('<Frieze'))
   })
 
   test('the JSON-LD Person names it as an award, and stays a Person with no job title and no ratings', () => {
