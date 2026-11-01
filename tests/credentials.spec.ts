@@ -275,13 +275,13 @@ test.describe('Act IV, the frieze', () => {
     await expect(friezeOf(page).locator('li')).toHaveCount(CERTIFICATIONS.length)
   })
 
-  test('from md: one slow row with no rules, no band and no discs, the laurel alone in gold, and an unboxed pause', async ({ page }) => {
+  test('from md: one slow row with no rules, no band and no discs, the laurel alone in gold, and an unboxed pause that says so', async ({ page }) => {
     test.skip(project() === 'mobile', 'the wide layout')
     await gotoHome(page)
     await bringFriezeIn(page)
     const frieze = friezeOf(page)
     const look = await frieze.evaluate((root) => {
-      const css = (el: Element) => getComputedStyle(el)
+      const css = (el: Element, pseudo?: string) => getComputedStyle(el, pseudo)
       const rowsBox = root.querySelector(':scope > div')!
       const rows = [...rowsBox.children]
       const edges = (el: Element) => ['Top', 'Right', 'Bottom', 'Left'].map((side) => parseFloat(css(el).getPropertyValue(`border-${side.toLowerCase()}-width`)))
@@ -298,8 +298,11 @@ test.describe('Act IV, the frieze', () => {
           background: css(button).backgroundColor,
           // Tailwind's shadow-none leaves a list of fully transparent shadows: none of them is drawn.
           shadow: css(button).boxShadow.split(/,(?![^(]*\))/).every((one) => one.trim() === 'none' || /rgba\(\d+, \d+, \d+, 0\)/.test(one)) ? 'none' : css(button).boxShadow,
-          width: Math.round(b.width),
+          wide: b.width >= 44,
           height: Math.round(b.height),
+          // Its word beside its icon, as Act II's Pause has (drawn, so the button keeps its own name).
+          word: css(button, '::after').content,
+          size: css(button).fontSize,
         },
       }
     })
@@ -309,7 +312,7 @@ test.describe('Act IV, the frieze', () => {
       band: false,
       discs: false,
       laurelGold: true,
-      button: { background: 'rgba(0, 0, 0, 0)', shadow: 'none', width: 44, height: 44 },
+      button: { background: 'rgba(0, 0, 0, 0)', shadow: 'none', wide: true, height: 44, word: '"Pause" / ""', size: '12px' },
     })
     // Every certification is written out once in the row (the copies after it are hidden from screen readers).
     const said = await frieze.evaluate((root) => [...root.querySelectorAll('div:not([aria-hidden]) > span > span + span')].map((el) => el.textContent))

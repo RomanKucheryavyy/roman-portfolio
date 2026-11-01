@@ -117,8 +117,9 @@ test.describe('the products act', () => {
     // In view, it plays; then off screen, it goes back to the start of its loop.
     await bringIn(figure)
     await expect.poll(() => states(figure)).toEqual(expect.arrayContaining(['running']))
-    await sleep(1500)
-    expect((await shots(figure)).filter((s) => s.shown).every((s) => s.time > 1000)).toBe(true)
+    // A second into its loop (polled: a title card landing nearby can hold the
+    // page's frames, and so the loop's clock, for a moment on a slow machine).
+    await expect.poll(async () => (await shots(figure)).filter((s) => s.shown).every((s) => s.time > 1000), { timeout: 6000 }).toBe(true)
     await page.evaluate(() => window.scrollTo({ top: 0, behavior: 'instant' }))
     await expect.poll(still).toEqual(['paused 0', 'paused 0'])
   })
@@ -213,9 +214,12 @@ test.describe('the products act', () => {
       await bringIn(figure)
       const group = figure.getByRole('group', { name: `The parts of ${product.title}` })
       await expect(group).toBeVisible()
-      // Every part's name and what it does, the product's own line, and the
-      // description's words that lead into a part, all on screen.
-      await expect(group.getByText(flow.hub, { exact: true })).toBeVisible()
+      // Every part's name and what it does, and the description's words that
+      // lead into a part, all on screen. A chain names the product among its
+      // steps, with its own line; a desk doesn't set its own line at all (the
+      // description beside it opens with it: nothing said twice on a screen).
+      if (isChain(flow)) await expect(group.getByText(flow.hub, { exact: true })).toBeVisible()
+      else await expect(group.getByText(flow.hub, { exact: true })).toHaveCount(0)
       for (const node of flow.nodes) {
         await expect(group.getByText(node.label, { exact: true })).toBeVisible()
         await expect(group.getByText(node.note, { exact: true })).toBeVisible()
@@ -245,10 +249,9 @@ test.describe('the products act', () => {
       await expect(group.locator('ul.sr-only li')).toHaveText(flow.links.map(([from, to]) => `From ${name(from)} to ${name(to)}`))
       // ...and the reading order follows them. A chain: each link's start
       // before its end, numbered I, II, III... in that order. A desk: the
-      // product's own line, then the parts that work into it, then what it
-      // works through.
+      // parts that work into it, then what it works through.
       const order = await group.evaluate((el) => (el as HTMLElement).innerText.toLowerCase())
-      const at = (id: string) => order.indexOf((id === product.id ? (isChain(flow) ? product.title : flow.hub) : flow.nodes.find((n) => n.id === id)!.label).toLowerCase())
+      const at = (id: string) => order.indexOf((id === product.id ? product.title : flow.nodes.find((n) => n.id === id)!.label).toLowerCase())
       if (isChain(flow)) {
         for (const [from, to] of flow.links) expect(at(from), `${product.id}: ${from} before ${to}`).toBeLessThan(at(to))
         await expect(group.locator('li > span[aria-hidden="true"]')).toHaveText(Array.from({ length: flow.links.length + 1 }, (_, i) => toRoman(i + 1)))
@@ -256,7 +259,6 @@ test.describe('the products act', () => {
         const into = flow.links.filter(([, to]) => to === product.id).map(([from]) => from)
         const out = flow.links.filter(([from]) => from === product.id).map(([, to]) => to)
         for (const part of into) {
-          expect(at(product.id), `${product.id}: the desk before ${part}`).toBeLessThan(at(part))
           for (const next of out) expect(at(part), `${product.id}: ${part} before ${next}`).toBeLessThan(at(next))
         }
       }
@@ -449,20 +451,17 @@ test.describe('the title cards', () => {
       expect(parseFloat(await eyebrow.evaluate((el) => getComputedStyle(el).fontSize))).toBeGreaterThanOrEqual(12)
       await expect(card.locator('.om-brand')).toHaveText(toRoman(PRODUCTS.indexOf(product) + 1))
       // No ornaments: no pills, no stars, no rules; and no stage light: no
-      // spotlight on the pointer...
-      for (const part of ['.om-pill', '.om-star', '.om-rule', '.om-spot']) {
+      // shafts or dust (the light's canvas), no spotlight on the pointer, no
+      // flash, no sheen sweeping the card.
+      for (const part of ['.om-pill', '.om-star', '.om-rule', '.om-light', '.om-spot', '.om-flash', '.om-sheen']) {
         const shown = await card.locator(part).evaluateAll((els) => els.filter((el) => el.getClientRects().length > 0 && getComputedStyle(el).display !== 'none').length)
         expect(shown, `${product.id}: ${part} shown`).toBe(0)
       }
-      // ...and no shafts from above: the light's canvas holds only its
-      // drifting dust (shafts would light a third of it).
-      const lit = await card.locator('canvas.om-light').evaluate((canvas: HTMLCanvasElement) => {
-        const data = canvas.getContext('2d')!.getImageData(0, 0, canvas.width, canvas.height).data
-        let n = 0
-        for (let i = 3; i < data.length; i += 4) if (data[i] > 0) n++
-        return n / (data.length / 4)
-      })
-      expect(lit, `${product.id}: share of the light's canvas lit`).toBeLessThan(0.03)
+      // Its flood wells up from the floor: never a widening circle (a spotlight's iris).
+      expect(await card.locator('.om-flood').evaluate((el) => getComputedStyle(el).clipPath), `${product.id}: the flood's clip`).toBe('none')
+      // No edges: its top and foot sink into the page's ground.
+      const veil = await card.locator('.om-stage').evaluate((el) => getComputedStyle(el, '::after').backgroundImage)
+      expect(veil, `${product.id}: the veil at its top and foot`).toMatch(/^linear-gradient/)
       const reachable = await card.evaluate((el) =>
         [...el.querySelectorAll<HTMLElement>('a, button, input, select, textarea, [tabindex]')]
           .filter((n) => n.tabIndex >= 0 && n.getClientRects().length > 0)
@@ -529,8 +528,7 @@ test.describe('the title cards', () => {
     expect(Math.max(...sizes) / Math.min(...sizes), `word sizes ${sizes.join(', ')}`).toBeLessThanOrEqual(1.4)
   })
 
-  test('on a phone a card scrolls in composed and lands within 1.5 s of arriving', async ({ page }) => {
-    test.skip(project() !== 'mobile', 'A phone mounts its card ahead and opens it on its landing.')
+  test('a card scrolls in composed (never a dark box with a word filling in) and lands soon after arriving (within 1.5 s on a phone)', async ({ page }) => {
     await gotoHome(page)
     const card = cardOf(page, PRODUCTS[2].id)
     // Just below the screen: already mounted, its word and its eyebrow up, its entrance held.
@@ -539,7 +537,7 @@ test.describe('the title cards', () => {
     await expect(card.locator('[data-arrived="false"]')).toBeAttached()
     await expect(card.locator('.om-root')).toHaveAttribute('data-phase', 'landing')
     await expect.poll(() => card.locator('.om-l').evaluateAll((els) => Math.min(...els.map((el) => Number(getComputedStyle(el).opacity))))).toBe(1)
-    // Arrived: the light, the statue and the tagline are all in within 1.5 s.
+    // Arrived: the flood, the statue and the tagline are all in within 1.5 s.
     await card.evaluate((el) => el.scrollIntoView({ block: 'center', behavior: 'instant' }))
     const t0 = Date.now()
     const landed = () =>
@@ -552,11 +550,16 @@ test.describe('the title cards', () => {
           Math.min(...op('.om-fig')) >= 0.99 &&
           Math.abs(new DOMMatrix(getComputedStyle(fig).transform).m42) < 2 &&
           Math.min(...op('.om-tagline span')) >= 0.99 &&
-          getComputedStyle(el.querySelector('.om-flood')!).clipPath.startsWith('circle(120%')
+          Math.min(...op('.om-flood')) >= 0.99 &&
+          getComputedStyle(el.querySelector('.om-flood')!).transform === 'none'
         )
       })
-    await expect.poll(landed, { timeout: 1500, intervals: [100] }).toBe(true)
-    expect(Date.now() - t0).toBeLessThanOrEqual(1700)
+    // A phone's card within 1.5 s; a wide screen's within 2.5 s: its first
+    // paint of a full-width card in the suite's software rasterizer holds the
+    // entrance back by about 0.7 s before it runs its 1.2 s.
+    const within = project() === 'mobile' ? 1500 : 2500
+    await expect.poll(landed, { timeout: within, intervals: [100] }).toBe(true)
+    expect(Date.now() - t0).toBeLessThanOrEqual(within + 200)
   })
 
   test('a swipe or wheel over a card scrolls the page, and the row below keeps the heading (for screen readers) and the link', async ({ page }) => {

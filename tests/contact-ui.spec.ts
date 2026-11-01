@@ -518,35 +518,28 @@ test.describe('the card', () => {
     expect(send.height).toBeGreaterThanOrEqual(44)
   })
 
-  test('the channels are plain lines: a label over each address, no icon tiles', async ({ page }) => {
+  test('the channels are plain lines: each address alone, no label and no icon tile', async ({ page }) => {
     await openBox(page)
     const channels = page.locator('#contact a[href^="mailto:"], #contact a[href*="linkedin.com"], #contact a[href*="github.com"]').filter({ hasNot: page.locator('[data-slot="button"]') })
     const lines = await channels.evaluateAll((links) =>
       links
         .filter((a) => !a.closest('footer') && !a.closest('form'))
         .map((a) => {
-          const tile = a.firstElementChild as HTMLElement
-          const label = tile.querySelector('span')!
-          const css = getComputedStyle(tile)
+          const tile = a.firstElementChild as HTMLElement | null
           return {
-            name: a.textContent?.replace(label.textContent ?? '', '').trim(),
-            label: label.textContent,
-            labelSize: getComputedStyle(label).fontSize,
-            addressSize: getComputedStyle(a).fontSize,
-            tile: css.borderTopWidth === '0px' && css.backgroundColor === 'rgba(0, 0, 0, 0)',
+            name: a.textContent?.trim(),
+            size: getComputedStyle(a).fontSize,
+            // The component's icon slot is left empty and its tile hidden.
+            tile: !tile || getComputedStyle(tile).display === 'none',
             svg: a.querySelectorAll('svg').length,
             height: a.getBoundingClientRect().height,
           }
         }),
     )
-    expect(lines.map((l) => [l.label, l.name])).toEqual([
-      ['Email', EMAIL],
-      ['LinkedIn', 'linkedin.com/in/romakuch'],
-      ['GitHub', 'github.com/RomanKucheryavyy'],
-    ])
+    expect(lines.map((l) => l.name)).toEqual([EMAIL, 'linkedin.com/in/romakuch', 'github.com/RomanKucheryavyy'])
     for (const line of lines) {
-      expect(line, String(line.label)).toMatchObject({ labelSize: '12px', addressSize: '16px', tile: true, svg: 0 })
-      expect(line.height, `${line.label}: a 44px target`).toBeGreaterThanOrEqual(44)
+      expect(line, String(line.name)).toMatchObject({ size: '16px', tile: true, svg: 0 })
+      expect(line.height, `${line.name}: a 44px target`).toBeGreaterThanOrEqual(44)
     }
   })
 

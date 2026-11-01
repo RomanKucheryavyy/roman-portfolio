@@ -252,7 +252,7 @@ test.describe('keyboard walk', () => {
     if (test.info().project.name === 'mobile') expect(stops.map((s) => s.what)).not.toContain(pause)
     else expect(stops.map((s) => s.what)).toContain(pause)
     // About's three links and Contact's three channels, each a stop of its own.
-    for (const link of [/^a "LinkedIn"$/, /^a "GitHub"$/, /^a "Email"$/, /^a "Email ?kucheryavyyroman@gmail\.com"$/, /^a "LinkedIn ?linkedin\.com\/in\/romakuch"$/, /^a "GitHub ?github\.com\/RomanKucheryavyy"$/]) {
+    for (const link of [/^a "LinkedIn"$/, /^a "GitHub"$/, /^a "Email"$/, /^a "kucheryavyyroman@gmail\.com"$/, /^a "linkedin\.com\/in\/romakuch"$/, /^a "github\.com\/RomanKucheryavyy"$/]) {
       expect(stops.some((s) => link.test(s.what)), String(link)).toBe(true)
     }
 

@@ -417,6 +417,19 @@ test.describe('act headers', () => {
     )
     expect(held).toBe(0)
   })
+
+  test('printed, or saved as a PDF, the page is whole: no entrance still waiting below the screen leaves its part blank', async ({ page }) => {
+    await gotoHome(page)
+    await expect(page.locator('#contact form')).toBeAttached({ timeout: 30_000 })
+    await expect(page.locator('[data-inscription]').first()).toBeAttached({ timeout: 30_000 })
+    const held = () =>
+      page.evaluate(() => [...document.querySelectorAll('main *')].filter((el) => el.getAnimations().some((a) => a.playState === 'paused') && Number(getComputedStyle(el).opacity) < 0.99).length)
+    // At the top of the page the acts below are held at their first frame...
+    await expect.poll(held).toBeGreaterThan(0)
+    // ...and printing lets every one of them go, whole.
+    await page.pdf({ path: test.info().outputPath('page.pdf') })
+    expect(await held()).toBe(0)
+  })
 })
 
 test.describe('other pages', () => {
