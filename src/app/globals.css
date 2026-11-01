@@ -13,6 +13,30 @@
 @source not "../../design-lab";
 
 @custom-variant dark (&:is(.dark *));
+/* Act I's stack (work.tsx), in three variants that between them cover
+   every screen once. stack-phone: a phone held upright, tall enough for a
+   card under the bar, and not asking for less motion (375px and up from
+   34rem tall, narrower from 38.5rem). stack: the phone stack, and from lg
+   the wide stack (which keeps sticking under reduced motion: that is
+   scroll position, not animation). flat: everything else (md to lg,
+   reduced motion on a phone, a phone too short or on its side), the plain
+   list. The block form, because the one-line form breaks on a media list
+   with commas. */
+@custom-variant stack-phone {
+  @media (width >= 23.4375rem) and (width < 48rem) and (height >= 34rem) and (prefers-reduced-motion: no-preference) { @slot; }
+  @media (width < 23.4375rem) and (height >= 38.5rem) and (prefers-reduced-motion: no-preference) { @slot; }
+}
+@custom-variant stack {
+  @media (width >= 23.4375rem) and (width < 48rem) and (height >= 34rem) and (prefers-reduced-motion: no-preference) { @slot; }
+  @media (width < 23.4375rem) and (height >= 38.5rem) and (prefers-reduced-motion: no-preference) { @slot; }
+  @media (width >= 64rem) { @slot; }
+}
+@custom-variant flat {
+  @media (width >= 48rem) and (width < 64rem) { @slot; }
+  @media (width < 48rem) and (prefers-reduced-motion: reduce) { @slot; }
+  @media (width >= 23.4375rem) and (width < 48rem) and (height < 34rem) { @slot; }
+  @media (width < 23.4375rem) and (height < 38.5rem) { @slot; }
+}
 
 @theme inline {
   --color-background: var(--background);
