@@ -6,36 +6,36 @@ import { CAST } from './cast'
 import { savesData } from './intro-gate'
 
 /**
- * The hero's painting: the intro's Old Masters staging
- * (old-masters-preloader) behind the name, on the curtain (Roman, on
- * 2026-10-31, of the new hero: "love it but the hero can still have the
- * painting thingy", then "make it epic"). The composition and the look are
- * hero-painting-stage.tsx's; this is the box, and when it plays.
+ * The hero's painting: the intro's Old Masters print (old-masters-preloader)
+ * on the hero's page, Hercules standing in it with the blurred David behind
+ * (Roman, 2026-10-31: "the hero can still have the painting thingy"; and on
+ * 2026-11-01, of the curtain it stood on: "i like the roman theme better").
+ * The composition and the look are hero-painting-stage.tsx's; this is the
+ * box, and when it plays.
  *
  * Decoration only: aria-hidden and inert, so nothing in it is read, takes
- * focus or catches the pointer (the curtain beneath still answers the
- * pointer). The hero's words are the page's, in its server HTML.
+ * focus or catches the pointer. The hero's words and its print's ground
+ * (the flood, the vignette, the grain) are the page's, in its server HTML.
  *
- * It loads after the page: the stage, the component and the statue are
- * fetched once the browser is idle after hydration (next/dynamic, no server
- * render), so the name is the first paint and the largest. The box is
- * absolute over the whole hero from the start, so nothing moves when the
+ * It loads after the page: the stage, the component and the two photographs
+ * are fetched once the browser is idle after hydration (next/dynamic, no
+ * server render), so the name is the first paint and the largest. The box
+ * is absolute over the whole hero from the start, so nothing moves when the
  * painting lands; the stage fades it in. It runs only while the hero is on
  * screen and the intro is not: while the intro is up (data-intro on <html>,
- * intro.tsx) it waits (the intro fetches the component itself, and on a
- * wide screen Hercules too), and mounts once the intro has lifted off, so
- * the visitor sees Hercules rise onto the page the intro has just revealed
- * and the two stages never draw at once; once the hero has left the screen
- * the stage unmounts (the component's light and frame loops stop with it),
- * and it comes back when the hero does.
+ * intro.tsx) it waits (the intro fetches the component itself, and the
+ * David, and on a wide screen Hercules too), and mounts once the intro has
+ * lifted off, so the visitor sees Hercules rise onto the page the intro has
+ * just revealed and the two stages never draw at once; once the hero has
+ * left the screen the stage unmounts (the component's frame loop stops with
+ * it), and it comes back when the hero does.
  *
- * Never at all (the hero is then the name on the curtain, as before) for a
+ * Never at all (the hero is then its print's ground and its words) for a
  * browser that asks to save data or reports a 2G connection (the intro's
- * own test: the stage and the statue are about 300 KB more), nor for one
- * with no WebGL: there the curtain is its flat ground, and the painting's
- * full-hero light, a canvas drawn every frame and blended over the hero,
- * would fall to a processor that cannot spare it (about 7 frames a second
- * at 1440 wide, against 60 without it).
+ * own test: the stage and the photographs are about 200 KB more), nor for
+ * one with no WebGL, the sign of a machine drawing every frame in software,
+ * where a full-screen blended print beneath the page would take frames the
+ * page needs.
  *
  * If the stage's chunk fails to load (a deploy that replaced it, a broken
  * connection, a blocker), the painting is simply not there: the failure
@@ -51,7 +51,7 @@ const IDLE_TIMEOUT_MS = 1500
 /** No intro on screen (none at all, or it has lifted off entirely). */
 const introClear = () => !document.documentElement.hasAttribute('data-intro')
 
-/** Whether this browser draws WebGL at all (the curtain's own test); the probe's context is let go at once. */
+/** Whether this browser draws WebGL at all; the probe's context is let go at once. */
 function drawsWebGL(): boolean {
   try {
     const gl = document.createElement('canvas').getContext('webgl')
@@ -93,10 +93,10 @@ export function HeroPainting() {
         return
       }
       idle = true
-      // The statue starts on its way with the stage's code, not after it.
-      // (While the intro is up it is already fetching both, and nothing
-      // here should compete with it.)
-      if (clear) new Image().src = CAST.hercules.src
+      // The photographs start on their way with the stage's code, not after
+      // it. (While the intro is up it is already fetching what it needs, and
+      // nothing here should compete with it.)
+      if (clear) for (const photo of [CAST.hercules, CAST.david]) new Image().src = photo.src
       update()
     }
     // Safari has no requestIdleCallback: a timeout stands in.
