@@ -495,7 +495,16 @@ test.describe('the title cards', () => {
     await expect(card.locator('.om-counter')).toBeHidden()
     expect(await card.evaluate((el) => el.getBoundingClientRect().height)).toBe(before)
     expect(await offset()).toBe(gapBefore)
-    // Gone from the screen: the stage unmounts.
+    // Far past it, it unmounts; scrolling back up, it is there again before
+    // it comes back on screen (it mounts ahead from above too), so it
+    // returns drawn, never as an empty box.
+    await card.evaluate((el) => window.scrollBy({ top: el.getBoundingClientRect().bottom + window.innerHeight * 1.5, behavior: 'instant' }))
+    await expect(card).toHaveAttribute('data-live', 'false')
+    await expect(card.locator('.om-root')).toHaveCount(0)
+    await card.evaluate((el) => window.scrollBy({ top: el.getBoundingClientRect().bottom + 60, behavior: 'instant' }))
+    await expect(card).toHaveAttribute('data-live', 'true')
+    await expect(card.locator('.om-root')).toBeAttached({ timeout: 20_000 })
+    // Far from the screen: the stage unmounts.
     await page.evaluate(() => window.scrollTo({ top: 0, behavior: 'instant' }))
     await expect(card).toHaveAttribute('data-live', 'false')
     await expect(card.locator('.om-root')).toHaveCount(0)
@@ -530,62 +539,75 @@ test.describe('the title cards', () => {
     expect(Math.max(...sizes) / Math.min(...sizes), `word sizes ${sizes.join(', ')}`).toBeLessThanOrEqual(1.4)
   })
 
-  test("a card scrolls in drawn, then opens as the component does when it arrives: its word fills, the flood opens as a circle with the flash and the sheen, and it lands", async ({ page }) => {
+  test("a card scrolled in at a reader's pace opens as the component does: drawn before it arrives, its word filling only once every letter is in, then the flood opens as a circle with the flash and the sheen, and it lands", async ({ page }) => {
     await gotoHome(page)
-    const card = cardOf(page, PRODUCTS[1].id)
-    const root = card.locator('.om-root')
-    // Just below the screen: mounted ahead, its load held at nothing, and
-    // never an empty box: its word drawn in outline, its eyebrow and number up.
-    await card.evaluate((el) => window.scrollBy({ top: el.getBoundingClientRect().top - window.innerHeight - 60, behavior: 'instant' }))
-    await expect(root).toBeAttached({ timeout: 20_000 })
-    await expect(root).toHaveAttribute('data-phase', 'load')
-    await expect(card.locator('[data-load="held"]')).toBeAttached()
-    const opacities = (sel: string) => card.locator(sel).evaluateAll((els) => els.map((el) => Number(getComputedStyle(el).opacity)))
-    await expect.poll(async () => Math.min(...(await opacities('.om-l, .om-eyebrow, .om-brand')))).toBe(1)
-    const outline = await card.locator('.om-l').first().evaluate((el) => getComputedStyle(el).getPropertyValue('-webkit-text-stroke-color'))
-    expect(outline, 'the outline of the word').not.toMatch(/^(transparent|rgba\(.*,\s*0\))$/)
-    expect(parseFloat(await card.locator('.om-word').evaluate((el) => (el as HTMLElement).style.getPropertyValue('--om-fill'))), 'nothing filled yet').toBe(0)
-    // Every frame from here: the phase, the fill, the flood's clip, the
-    // flash and the sheen, and the letters.
-    await card.evaluate((el) => {
-      const film: { t: number; phase: string; fill: number; clip: string; flash: boolean; sheen: boolean; letters: number; intro: number }[] = []
-      ;(window as unknown as { __cardFilm: typeof film }).__cardFilm = film
-      const running = (sel: string) => (el.querySelector(sel)?.getAnimations() ?? []).some((a) => a.playState === 'running')
-      const tick = () => {
-        const root = el.querySelector('.om-root')
-        if (!root) return
-        film.push({
-          t: performance.now(),
-          phase: root.getAttribute('data-phase') ?? '',
-          fill: parseFloat((el.querySelector('.om-word') as HTMLElement).style.getPropertyValue('--om-fill')) || 0,
-          clip: getComputedStyle(el.querySelector('.om-flood')!).clipPath,
-          flash: running('.om-flash'),
-          sheen: running('.om-sheen'),
-          letters: Math.min(...[...el.querySelectorAll('.om-l')].map((l) => Number(getComputedStyle(l).opacity))),
-          intro: [...el.querySelectorAll('.om-ring, .om-counter, .om-foot')].filter((n) => n.getClientRects().length > 0).length,
-        })
-        if (root.getAttribute('data-phase') !== 'landing') requestAnimationFrame(tick)
-      }
-      requestAnimationFrame(tick)
-    })
-    await card.evaluate((el) => el.scrollIntoView({ block: 'center', behavior: 'instant' }))
-    // A phone's card lands within about five seconds of arriving: its word
-    // filled within about a second, then the component's three-second
-    // unveil. A wide screen's runs the same, but the suite's software
-    // rasterizer paints a full-width card at a few frames a second, and the
-    // component's load counts frames, so there it is only required to land.
-    const mobile = project() === 'mobile'
-    await expect(root).toHaveAttribute('data-phase', 'landing', { timeout: mobile ? 8000 : 40_000 })
-    const film = await page.evaluate(() => (window as unknown as { __cardFilm: { t: number; phase: string; fill: number; clip: string; flash: boolean; sheen: boolean; letters: number; intro: number }[] }).__cardFilm)
-    const load = film.filter((f) => f.phase === 'load')
+    // The longest title: its letters take the longest to come in.
+    const product = [...PRODUCTS].sort((a, b) => b.title.length - a.title.length)[0]
+    const card = cardOf(page, product.id)
+    // Two screens and a half above it (further than it mounts ahead), then
+    // scrolled down at 700 px a second until it stands in the middle of the
+    // screen, filmed every frame until it lands.
+    await card.evaluate((el) => window.scrollBy({ top: el.getBoundingClientRect().top - window.innerHeight * 2.6, behavior: 'instant' }))
+    await expect(card).toHaveAttribute('data-live', 'false')
+    type Frame = { t: number; vis: number; mounted: boolean; phase: string; load: string; fill: number; clip: string; flash: boolean; sheen: boolean; letters: number; first: number; intro: number }
+    const film = await card.evaluate(
+      (el) =>
+        new Promise<Frame[]>((done) => {
+          const film: Frame[] = []
+          let last = performance.now()
+          const running = (sel: string) => (el.querySelector(sel)?.getAnimations() ?? []).some((a) => a.playState === 'running')
+          const opacity = (n: Element) => Number(getComputedStyle(n).opacity)
+          const tick = (now: number) => {
+            const dt = Math.min(250, now - last)
+            last = now
+            const r = el.getBoundingClientRect()
+            const ahead = r.top + r.height / 2 - innerHeight / 2
+            if (ahead > 0) window.scrollBy(0, Math.min(ahead, (700 * dt) / 1000))
+            const root = el.querySelector('.om-root')
+            const letters = [...el.querySelectorAll('.om-l')].map(opacity)
+            film.push({
+              t: now,
+              vis: Math.max(0, Math.min(r.bottom, innerHeight) - Math.max(r.top, 0)) / r.height,
+              mounted: !!root,
+              phase: root?.getAttribute('data-phase') ?? '',
+              load: el.querySelector('[data-load]')?.getAttribute('data-load') ?? '',
+              fill: parseFloat((el.querySelector('.om-word') as HTMLElement | null)?.style.getPropertyValue('--om-fill') ?? '') || 0,
+              clip: root ? getComputedStyle(el.querySelector('.om-flood')!).clipPath : '',
+              flash: running('.om-flash'),
+              sheen: running('.om-sheen'),
+              letters: letters.length ? Math.min(...letters) : -1,
+              first: letters.length ? letters[0] : -1,
+              intro: [...el.querySelectorAll('.om-ring, .om-counter, .om-foot')].filter((n) => n.getClientRects().length > 0).length,
+            })
+            if (film.at(-1)!.phase === 'landing' || now - film[0].t > 60_000) done(film)
+            else requestAnimationFrame(tick)
+          }
+          requestAnimationFrame(tick)
+        }),
+    )
+    expect(film.at(-1)!.phase, 'it lands').toBe('landing')
+    // Mounted ahead: before it comes on screen, and by then the component
+    // has begun drawing its word, so it never scrolls in as an empty box.
+    const mounts = film.findIndex((f) => f.mounted)
+    const enters = film.findIndex((f) => f.vis > 0)
+    expect(mounts, 'mounted').toBeGreaterThanOrEqual(0)
+    expect(mounts, 'mounted before it comes on screen').toBeLessThan(enters)
+    expect(film[enters].first, 'its word begun as it comes on screen').toBeGreaterThan(0)
+    // Held at nothing until its word is drawn; then every letter is in.
+    const starts = film.findIndex((f) => f.load === 'started')
+    expect(starts, 'the load starts').toBeGreaterThan(mounts)
+    for (const f of film.slice(mounts, starts)) expect(f.fill, 'nothing filled while it is held').toBe(0)
+    expect(film[starts].letters, 'every letter in when the word starts to fill').toBeGreaterThanOrEqual(0.99)
+    expect(film[starts].vis, 'it has arrived').toBeGreaterThanOrEqual(0.6)
+    // The load: the word filling from its foot, seen part-way and climbing
+    // for a second or more (the component's own surge and stall), never
+    // going back; none of the intro's ring, count, barcode or plate.
+    const load = film.slice(starts).filter((f) => f.phase === 'load')
     const unveil = film.filter((f) => f.phase === 'unveil')
-    expect(load.length, 'frames of the load').toBeGreaterThan(2)
-    expect(unveil.length, 'frames of the unveil').toBeGreaterThan(2)
-    // The load: the word drawn from its first frame, filling (seen part-way,
-    // never going back), none of the intro's ring, count, barcode or plate.
-    expect(Math.min(...load.map((f) => f.letters)), 'the word drawn through the load').toBe(1)
-    expect(load.some((f) => f.fill > 1 && f.fill < 99), 'the word seen filling').toBe(true)
+    expect(load.filter((f) => f.fill > 1 && f.fill < 99).length, 'the word seen filling').toBeGreaterThanOrEqual(2)
     for (let i = 1; i < load.length; i++) expect(load[i].fill).toBeGreaterThanOrEqual(load[i - 1].fill)
+    expect(unveil.length, 'frames of the unveil').toBeGreaterThan(2)
+    expect(unveil[0].t - film[starts].t, 'the climb').toBeGreaterThanOrEqual(1000)
     expect(Math.max(...film.map((f) => f.intro)), "the intro's loading on a card").toBe(0)
     // The unveil: the flood opens as a widening circle, the flash and the sheen run.
     const radii = unveil.map((f) => /^circle\(([\d.]+)%/.exec(f.clip)).filter(Boolean).map((m) => Number(m![1]))
@@ -593,10 +615,15 @@ test.describe('the title cards', () => {
     for (let i = 1; i < radii.length; i++) expect(radii[i]).toBeGreaterThanOrEqual(radii[i - 1])
     expect(unveil.some((f) => f.flash), 'the flash').toBe(true)
     expect(unveil.some((f) => f.sheen), 'the sheen').toBe(true)
-    if (mobile) {
-      const arrived = film[0].t
-      expect(unveil[0].t - arrived, 'from arriving to the unveil (the word filled)').toBeLessThanOrEqual(2500)
-      expect(film[film.length - 1].t - arrived, 'from arriving to the landing').toBeLessThanOrEqual(6500)
+    // A phone's card lands within about five seconds of arriving: its word
+    // filled within about two, then the component's three-second unveil. A
+    // wide screen's runs the same, but the suite's software rasterizer paints
+    // a full-width card at a few frames a second, and the component's load
+    // eases by the frame, so there it is only required to land.
+    if (project() === 'mobile') {
+      const arrived = film.find((f) => f.vis >= 0.6)!.t
+      expect(unveil[0].t - arrived, 'from arriving to the unveil (the word filled)').toBeLessThanOrEqual(3000)
+      expect(film.at(-1)!.t - arrived, 'from arriving to the landing').toBeLessThanOrEqual(6500)
     }
   })
 
@@ -622,7 +649,7 @@ test.describe('the title cards', () => {
     }
     await expect.poll(async () => Number(await light.evaluate((el) => getComputedStyle(el).opacity)), { timeout: 10_000 }).toBeGreaterThan(0.9)
     await expect.poll(moving, { timeout: 10_000 }).toBe(true)
-    // Just below the screen (still mounted, three quarters of a screen ahead): still.
+    // Just below the screen (still mounted, a screen and a half ahead): still.
     await card.evaluate((el) => window.scrollBy({ top: el.getBoundingClientRect().top - window.innerHeight - 40, behavior: 'instant' }))
     await expect(card.locator('.om-root')).toBeAttached()
     await expect.poll(moving, { timeout: 10_000, message: 'the light off screen' }).toBe(false)
