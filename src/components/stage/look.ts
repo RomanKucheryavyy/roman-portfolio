@@ -20,8 +20,9 @@ import { PALETTE } from './imperial'
  * - --primary / --primary-foreground: marble with ground ink, so a stock
  *   shadcn Button reads as the Stage's primary until it takes stageButton().
  * - --accent / --accent-foreground: an outline Button's hover, in the wash.
- * - --stage-wash: the wash, for light and glow (the curtain's lit fold, the
- *   glows behind things); a fill only at low alpha or graded into the ground.
+ * - --stage-wash: the wash, for light and glow (the print's flood in the
+ *   hero, the glows behind things); a fill only at low alpha or graded into
+ *   the ground.
  * - --stage-gold: gold, the one accent: act numerals, links' underline,
  *   small marks, the focus ring. Never a large fill.
  * - --stage-glow: the rare highlight (a primary button's hover, a link's).
@@ -57,9 +58,13 @@ export const STAGE_STYLE = {
 export const STAGE_FOCUS =
   '[&_:is(a,button):focus-visible]:outline-2 [&_:is(a,button):focus-visible]:outline-solid [&_:is(a,button):focus-visible]:outline-offset-4 [&_:is(a,button):focus-visible]:outline-gold'
 
-/** The stage's light for a page with no curtain (the 404, the error page): the wash falling from above, graded into the ground. */
+/**
+ * The wash for a page with no print (the 404, the error page): the print's
+ * flood, welling up from the floor as the hero's does and graded into the
+ * ground; never a light from above.
+ */
 export const WASH =
-  'pointer-events-none absolute inset-x-0 top-0 h-[70svh] bg-[radial-gradient(70%_60%_at_50%_0%,color-mix(in_oklab,var(--stage-wash)_85%,transparent),transparent)]'
+  'pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_90%_70%_at_50%_110%,color-mix(in_oklab,var(--stage-wash)_90%,transparent),transparent)]'
 
 /**
  * The kicker under the act's numeral: Geist capitals at 12px (the page's
@@ -86,10 +91,8 @@ export const INTRO = 'max-w-xl font-serif text-xl italic leading-snug text-muted
  * The Stage's button, the intro's ENTER: rectangular, a 1px edge, a 2px
  * radius, Geist capitals with wide tracking. `primary` is marble with ground
  * ink (glow on hover), the one filled button a screen holds ("See the
- * work", "Send"); every other action is a stageLink (below). `secondary`
- * (a gold edge on the dark) is the old second button, kept only until each
- * act's second actions have become stageLinks. `sm` is a smaller one,
- * still 12px. A class string
+ * work", "Send"); every other action is a stageLink (below), so it is the
+ * only kind. `sm` is a smaller one, still 12px. A class string
  * for a plain <a> or <button>, so the server-only 404 can use it too; the
  * focus ring is the wrapper's (STAGE_FOCUS).
  */
@@ -102,8 +105,6 @@ const BUTTON_SIZE = {
 const BUTTON_KIND = {
   primary:
     'border-foreground bg-foreground text-background hover:border-glow hover:bg-glow',
-  secondary:
-    'border-gold/70 bg-background/45 text-foreground hover:border-gold hover:bg-gold/12 hover:text-glow',
 } as const
 
 export function stageButton(kind: keyof typeof BUTTON_KIND = 'primary', size: keyof typeof BUTTON_SIZE = 'md'): string {

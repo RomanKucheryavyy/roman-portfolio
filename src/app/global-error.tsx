@@ -7,7 +7,7 @@ import { PALETTE } from '@/components/stage/imperial'
  * The last resort, when the root layout itself throws. It replaces the whole
  * document, so globals.css may not be there: every style is inline, in the
  * Stage's palette (imperial.ts, as look.ts uses it): the ground, the
- * wash's light, marble and the muted ink, the gold, the intro's
+ * wash's flood, marble and the muted ink, the gold, the intro's
  * rectangular button, the Stage's gold-underlined text link (look.ts
  * stageLink) and the page's gold focus ring. The type asks for the
  * Stage's faces by name (Cinzel for the heading, Cormorant Garamond for the
@@ -61,7 +61,7 @@ export default function GlobalError({
           minHeight: '100svh',
           display: 'flex',
           alignItems: 'center',
-          background: `radial-gradient(70% 60% at 50% 0%, ${PALETTE.wash}d9, transparent 70%) no-repeat, ${PALETTE.ground}`,
+          background: `radial-gradient(ellipse 90% 70% at 50% 110%, ${PALETTE.wash}e6, transparent) no-repeat, ${PALETTE.ground}`,
           color: PALETTE.marble,
           fontFamily: SANS,
           WebkitFontSmoothing: 'antialiased',
