@@ -1,6 +1,6 @@
 import { expect, test, type Page } from '@playwright/test'
-import { PALETTE } from '@/components/stage/imperial'
 import { RANK } from '@/lib/content'
+import { lightAtPeak } from './contrast'
 import { SECTION_IDS, collectConsole, collectCspReports, gotoHome, project, scrollThrough } from './helpers'
 
 /**
@@ -38,24 +38,6 @@ const REDIRECTS: [string, string][] = [
   ['/works/fubc-coffee-ios', '/#work'],
   ['/colophon', '/'],
 ]
-
-/**
- * Every shaft of the painting's light drawn at its peak: old-masters-preloader
- * draws each shaft as a gradient of its glow from an alpha that swings
- * between 0.7 and 1 of 0.055 (half that at 0.55 of its length), so pinning
- * those stops at their maximum is the light at its brightest.
- */
-async function lightAtPeak(page: Page) {
-  const glow = PALETTE.glow.match(/[0-9a-f]{2}/gi)!.map((h) => parseInt(h, 16)).join(', ')
-  await page.addInitScript((glow) => {
-    const add = CanvasGradient.prototype.addColorStop
-    CanvasGradient.prototype.addColorStop = function (offset: number, color: string) {
-      const m = new RegExp(`^rgba\\(${glow}, ([\\d.]+)\\)$`).exec(color)
-      if (m && Number(m[1]) < 0.06) color = `rgba(${glow}, ${offset === 0 ? 0.055 : offset < 0.6 ? 0.0275 : 0})`
-      return add.call(this, offset, color)
-    }
-  }, glow)
-}
 
 /** A short fingerprint of what the painting's light canvas holds (its pixels, as an image), and whether it holds anything. */
 const lightPrint = (page: Page) =>

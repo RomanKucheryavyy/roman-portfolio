@@ -3,6 +3,7 @@ import { isChain } from '@/components/stage/preview-box'
 import { PRODUCTS, type FlowNode } from '@/lib/content'
 import { toRoman } from '@/lib/roman'
 import { monthYear } from '@/lib/site-facts'
+import { glyphsOf, inkContrast, lightAtPeak, spotlightOn, wordBox, wordContrast } from './contrast'
 import { gotoHome, project, sleep } from './helpers'
 
 /**
@@ -657,6 +658,72 @@ test.describe('the title cards', () => {
     // Back on screen: it runs again.
     await card.evaluate((el) => el.scrollIntoView({ block: 'center', behavior: 'instant' }))
     await expect.poll(moving, { timeout: 10_000 }).toBe(true)
+  })
+
+  test("a card's words hold AA through its light: the word 3:1 as the flash and the sheen cross it, the eyebrow and the number 4.5:1 then and under the light at its peak", async ({ page }) => {
+    test.skip(project() === 'no-webgl', 'The cards draw no WebGL: the desktop project reads the same pixels.')
+    test.setTimeout(240_000)
+    await lightAtPeak(page)
+    await gotoHome(page)
+    // The public products: their own screenshots stand behind, the lightest backdrops.
+    for (const product of LIVE) {
+      const card = cardOf(page, product.id)
+      const root = card.locator('.om-root')
+      await card.evaluate((el) => el.scrollIntoView({ block: 'center', behavior: 'instant' }))
+      // At the unveil: everything on the stage held where it is, the stage
+      // held at its unveil, and whatever the unveil set going (the flood's
+      // circle, the flash, the sheen, the statue, the backdrop) stepped
+      // through its first 1.2 s together.
+      await expect
+        .poll(() => root.evaluate((r) => r.getAttribute('data-phase') === 'unveil' && r.getAnimations({ subtree: true }).some((a) => (a as CSSAnimation).animationName === 'om-sheen' && a.startTime !== null)), { timeout: 40_000, intervals: [16] })
+        .toBe(true)
+      const held = await root.evaluate((r) => {
+        const w = window as unknown as { held: Animation[]; pin: MutationObserver }
+        w.pin = new MutationObserver(() => {
+          if (r.getAttribute('data-phase') === 'landing') r.setAttribute('data-phase', 'unveil')
+        })
+        w.pin.observe(r, { attributes: true, attributeFilter: ['data-phase'] })
+        const all = r.getAnimations({ subtree: true })
+        all.forEach((a) => a.pause())
+        const sheen = all.find((a) => (a as CSSAnimation).animationName === 'om-sheen')!
+        w.held = all.filter((a) => a.startTime !== null && Math.abs(Number(a.startTime) - Number(sheen.startTime)) <= 60)
+        return w.held.map((a) => (a as CSSAnimation).animationName ?? (a as CSSTransition).transitionProperty)
+      })
+      expect(held, 'the unveil held').toEqual(expect.arrayContaining(['om-sheen', 'om-flash', 'clip-path']))
+      const labels = [card.locator('.om-eyebrow'), card.locator('.om-brand')]
+      const found = await Promise.all(labels.map((el) => glyphsOf(page, el)))
+      const green = `[data-title-card="${product.id}"] .om-l { background-image: linear-gradient(#00ff00, #00ff00) !important; -webkit-text-stroke-color: transparent !important; }`
+      const worst = { word: { ratio: 99, t: 0 }, eyebrow: { ratio: 99, t: 0 }, number: { ratio: 99, t: 0 } }
+      for (let t = 0; t <= 1200; t += 50) {
+        await page.evaluate((t) => (window as unknown as { held: Animation[] }).held.forEach((a) => (a.currentTime = t)), t)
+        const word = await wordContrast(page, await wordBox(card.locator('.om-word')), green)
+        if (word < worst.word.ratio) worst.word = { ratio: word, t }
+        for (const [k, key] of (['eyebrow', 'number'] as const).entries()) {
+          const { ratio } = await inkContrast(page, labels[k], found[k])
+          if (ratio < worst[key].ratio) worst[key] = { ratio, t }
+        }
+      }
+      expect(worst.word.ratio, `${product.id}: the word at ${worst.word.t} ms into the unveil (its halo kept)`).toBeGreaterThanOrEqual(3)
+      expect(worst.eyebrow.ratio, `${product.id}: the eyebrow at ${worst.eyebrow.t} ms into the unveil`).toBeGreaterThanOrEqual(4.5)
+      expect(worst.number.ratio, `${product.id}: the number at ${worst.number.t} ms into the unveil`).toBeGreaterThanOrEqual(4.5)
+      // Then its landing, under the light at its brightest (every shaft at
+      // its peak, lightAtPeak) with the spotlight brought to each in turn.
+      await root.evaluate((r) => {
+        const w = window as unknown as { held: Animation[]; pin: MutationObserver }
+        w.pin.disconnect()
+        r.getAnimations({ subtree: true }).forEach((a) => (a.effect?.getTiming().iterations === Infinity ? a.play() : a.finish()))
+        r.setAttribute('data-phase', 'landing')
+      })
+      await expect.poll(() => card.locator('.om-light').evaluate((el) => Number(getComputedStyle(el).opacity)), { timeout: 15_000 }).toBeGreaterThan(0.99)
+      await expect.poll(() => card.locator('.om-spot').evaluate((el) => Number(getComputedStyle(el).opacity)), { timeout: 15_000 }).toBeGreaterThan(0.99)
+      for (const [key, el] of [['eyebrow', labels[0]], ['number', labels[1]], ['tagline', card.locator('.om-tagline')]] as const) {
+        await spotlightOn(page, card.locator('.om-stage'), el)
+        const { ratio, count } = await inkContrast(page, el)
+        expect(count, `${product.id}: the ${key}'s glyphs found`).toBeGreaterThan(10)
+        expect(ratio, `${product.id}: the ${key} under the light at its peak, the spotlight on it`).toBeGreaterThanOrEqual(4.5)
+      }
+      await page.mouse.move(0, 0)
+    }
   })
 
   test('a swipe or wheel over a card scrolls the page, and the row below keeps the heading (for screen readers) and the link', async ({ page }) => {
