@@ -529,6 +529,106 @@ test.describe('what it says', () => {
     for (const [key, ratio] of worst) expect(ratio, `${key}: its worst moment under the sheen and the flash`).toBeGreaterThanOrEqual(4.5)
   })
 
+  test('at the unveil the sheen crosses the word behind its letters, never taking it under 3:1', async ({ page }) => {
+    test.setTimeout(150_000)
+    await openIntro(page)
+    await expect.poll(() => phase(page), { timeout: 20_000, intervals: [50] }).toBe('unveil')
+    // Everything on the stage held where it is (so the word stays put), the
+    // stage held at its unveil, and the sheen and the flash stepped through
+    // their run.
+    const held = await page.evaluate((sel) => {
+      const w = window as unknown as { held: Animation[]; pin: MutationObserver }
+      const root = document.querySelector(`${sel} .om-root`)!
+      w.pin = new MutationObserver(() => {
+        if (root.getAttribute('data-phase') === 'landing') root.setAttribute('data-phase', 'unveil')
+      })
+      w.pin.observe(root, { attributes: true, attributeFilter: ['data-phase'] })
+      const all = root.getAnimations({ subtree: true })
+      all.forEach((a) => a.pause())
+      w.held = all.filter((a) => ['om-sheen', 'om-flash'].includes((a as CSSAnimation).animationName))
+      return w.held.length
+    }, LAYER)
+    expect(held).toBe(2)
+    const box = await page.locator(`${LAYER} .om-word`).evaluate((el) => {
+      const r = [...el.querySelectorAll('.om-l, .om-init')].map((s) => s.getBoundingClientRect())
+      const x = Math.min(...r.map((q) => q.left)) - 8
+      const y = Math.min(...r.map((q) => q.top)) - 8
+      return { x: Math.max(0, x), y: Math.max(0, y), width: Math.min(innerWidth - Math.max(0, x), Math.max(...r.map((q) => q.right)) + 8 - x), height: Math.max(...r.map((q) => q.bottom)) + 8 - y }
+    })
+    const green = `${LAYER} :is(.om-l, .om-init) { background-image: linear-gradient(#00ff00, #00ff00) !important; -webkit-text-stroke-color: transparent !important; }`
+    let worst = { ratio: 99, t: 0 }
+    for (let t = 0; t <= 1200; t += 50) {
+      await page.evaluate((t) => (window as unknown as { held: Animation[] }).held.forEach((a) => (a.currentTime = t)), t)
+      const real = (await page.screenshot({ clip: box, animations: 'allow' })).toString('base64')
+      const tag = await page.addStyleTag({ content: green })
+      const mask = (await page.screenshot({ clip: box, animations: 'allow' })).toString('base64')
+      await tag.evaluate((el) => el.remove())
+      // The glyphs (the letters drawn solid green, their halo kept), then
+      // on the real shot: the darkest of their own pixels (5th percentile,
+      // a CSS pixel in from their edge) against the brightest of the ring
+      // 1 to 4 CSS pixels round them (95th percentile).
+      const ratio = await page.evaluate(
+        async ({ real, mask, dpr }) => {
+          const read = async (b64: string) => {
+            const img = new Image()
+            img.src = `data:image/png;base64,${b64}`
+            await img.decode()
+            const c = document.createElement('canvas')
+            c.width = img.width
+            c.height = img.height
+            const ctx = c.getContext('2d')!
+            ctx.drawImage(img, 0, 0)
+            return { d: ctx.getImageData(0, 0, c.width, c.height).data, w: c.width, h: c.height }
+          }
+          const lin = (v: number) => ((v /= 255) <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4)
+          const lum = (d: Uint8ClampedArray, i: number) => 0.2126 * lin(d[i]) + 0.7152 * lin(d[i + 1]) + 0.0722 * lin(d[i + 2])
+          const [a, m] = await Promise.all([read(real), read(mask)])
+          const { w, h } = m
+          const glyph = new Uint8Array(w * h)
+          for (let p = 0; p < w * h; p++) glyph[p] = m.d[p * 4 + 1] > 120 && m.d[p * 4 + 1] > 1.6 * Math.max(m.d[p * 4], m.d[p * 4 + 2]) ? 1 : 0
+          // A square max (dilate) or min (erode) filter of radius r, separable.
+          const morph = (src: Uint8Array, r: number, grow: boolean) => {
+            const pass = (s: Uint8Array, dx: number, dy: number) => {
+              const out = new Uint8Array(w * h)
+              for (let y = 0; y < h; y++)
+                for (let x = 0; x < w; x++) {
+                  let v = grow ? 0 : 1
+                  for (let k = -r; k <= r; k++) {
+                    const xx = x + k * dx
+                    const yy = y + k * dy
+                    const s1 = xx < 0 || yy < 0 || xx >= w || yy >= h ? 0 : s[yy * w + xx]
+                    v = grow ? v | s1 : v & s1
+                  }
+                  out[y * w + x] = v
+                }
+              return out
+            }
+            return pass(pass(src, 1, 0), 0, 1)
+          }
+          const core = morph(glyph, Math.round(dpr), false)
+          const inner = morph(glyph, Math.round(dpr), true)
+          const outer = morph(glyph, Math.round(4 * dpr), true)
+          const text: number[] = []
+          const ring: number[] = []
+          for (let p = 0; p < w * h; p++) {
+            if (core[p]) text.push(lum(a.d, p * 4))
+            else if (!inner[p] && outer[p]) ring.push(lum(a.d, p * 4))
+          }
+          text.sort((p, q) => p - q)
+          ring.sort((p, q) => p - q)
+          if (text.length < 50 || ring.length < 50) return 0
+          const L1 = text[Math.floor(0.05 * (text.length - 1))]
+          const L2 = ring[Math.floor(0.95 * (ring.length - 1))]
+          return (Math.max(L1, L2) + 0.05) / (Math.min(L1, L2) + 0.05)
+        },
+        { real, mask, dpr: await page.evaluate(() => devicePixelRatio) },
+      )
+      if (ratio < worst.ratio) worst = { ratio, t }
+    }
+    await page.evaluate(() => (window as unknown as { pin: MutationObserver }).pin.disconnect())
+    expect(worst.ratio, `the word at ${worst.t} ms into the sheen`).toBeGreaterThanOrEqual(3)
+  })
+
   test('Skip rushes the load', async ({ page }) => {
     await openIntro(page)
     await page.getByRole('button', { name: 'Skip' }).click()
