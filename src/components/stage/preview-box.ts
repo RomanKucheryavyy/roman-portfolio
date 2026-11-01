@@ -27,7 +27,7 @@ export const LIVE_BOX = 'aspect-[10/8] w-full md:aspect-[3/2]'
  * overflows at any width.
  */
 const FLOW_BOX = {
-  desk: 'h-[37.5rem] min-[375px]:h-[34.5rem] md:h-[38rem] lg:h-[40rem]',
+  desk: 'h-[30rem] min-[375px]:h-[27rem] md:h-[30rem] lg:h-[31rem]',
   chain: 'h-[25.5rem] min-[360px]:h-[23.5rem] md:h-[29.5rem] lg:h-[36rem]',
 }
 

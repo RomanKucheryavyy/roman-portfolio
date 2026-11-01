@@ -362,9 +362,10 @@ export function LivePreview({ product, flip }: { product: Product; flip: boolean
  * order alone (and listed for screen readers):
  *
  * - a desk (parts working into the product, the product working through
- *   another): the product's own line, then its parts, the counted one
- *   first and set large, then where it works through, after the
- *   description's own words that lead there;
+ *   another): its parts, the counted one first and set large, then where
+ *   it works through, after the description's own words that lead there
+ *   (the product's own line, the description's first sentence, is not set:
+ *   the description beside it opens with it);
  * - a chain (each part passing to the next): its steps numbered I, II, III
  *   in the links' order, the product among them with its own line.
  */
@@ -393,13 +394,10 @@ function Desk({ product, flow }: { product: Product; flow: NonNullable<Product['
   const parts = flow.nodes.filter(into)
   return (
     <div className="flex flex-col items-center text-center">
-      <p data-line="" className="max-w-[16ch] font-serif text-[1.75rem] italic leading-[1.12] text-foreground text-balance md:max-w-[22ch] md:text-[2.5rem] lg:text-[2.75rem]">
-        {flow.hub}
-      </p>
       {parts
         .filter((n) => n.count)
         .map((n) => (
-          <div key={n.id} data-line="" className="mt-9 md:mt-12">
+          <div key={n.id} data-line="">
             <p aria-hidden="true" data-strike="" className="font-roman text-[clamp(4.5rem,24vw,5.5rem)] font-medium leading-[0.86] tracking-[0.04em] text-gold md:text-[8rem] lg:text-[9rem]">
               {toRoman(n.count!.value)}
             </p>
@@ -487,10 +485,10 @@ function useEntrance(ref: RefObject<HTMLElement | null>, calm: boolean): boolean
       return () => cancelAnimationFrame(frame)
     }
     const lines = [...box.querySelectorAll<HTMLElement>('[data-line]')]
-    const anims = lines.map((el, i) => el.animate(RISE, { duration: 850, delay: i * 120, easing: RISE_EASE, fill: 'both' }))
+    const anims = lines.map((el, i) => el.animate(RISE, { duration: 800, delay: i * 90, easing: RISE_EASE, fill: 'both' }))
     lines.forEach((el, i) => {
       const numeral = el.querySelector<HTMLElement>('[data-strike]')
-      if (numeral) anims.push(numeral.animate(STRIKE, { duration: 1300, delay: i * 120 + 120, easing: RISE_EASE, fill: 'both' }))
+      if (numeral) anims.push(numeral.animate(STRIKE, { duration: 1200, delay: i * 90 + 90, easing: RISE_EASE, fill: 'both' }))
     })
     for (const a of anims) a.pause()
     Promise.all(anims.map((a) => a.finished)).then(
@@ -500,21 +498,22 @@ function useEntrance(ref: RefObject<HTMLElement | null>, calm: boolean): boolean
       },
       () => {},
     )
-    // It goes when its first line has come an eighth of the way up the
-    // screen (the block's own room above the words is no arrival), so the
-    // lines rise where they are seen; one jumped past is let go whole.
+    // It goes as its first line comes onto the screen (the block's own room
+    // above the words is no arrival), so the lines rise where they are seen,
+    // with no wait; one jumped past is let go whole.
     const io = new IntersectionObserver(
       (entries) => {
         const entry = entries[entries.length - 1]
         if (!entry.isIntersecting) return
         io.disconnect()
-        if (entry.boundingClientRect.bottom > 0) for (const a of anims) a.play()
+        // Passed unseen, or landed on by the intro's nav as it lifts: whole.
+        if (entry.boundingClientRect.bottom > 0 && !document.documentElement.hasAttribute('data-intro')) for (const a of anims) a.play()
         else {
           for (const a of anims) a.cancel()
           setOver(true)
         }
       },
-      { rootMargin: '100000px 0px -12% 0px' },
+      { rootMargin: '100000px 0px 0px 0px' },
     )
     io.observe(lines[0] ?? box)
     return () => {

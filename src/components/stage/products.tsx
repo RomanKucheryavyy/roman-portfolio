@@ -3,6 +3,7 @@
 import dynamic from 'next/dynamic'
 import { PRODUCTS, type Product } from '@/lib/content'
 import { cn } from '@/lib/utils'
+import { INTERPUNCT, INTERPUNCT_LIST } from './interpunct'
 import { stageLink } from './look'
 import { CAPTION_ROW, flowBox, isChain, LIVE_BOX } from './preview-box'
 import { ProductStage } from './product-stage'
@@ -14,9 +15,9 @@ const domain = (url: string) => url.replace(/^https?:\/\//, '').replace(/\/$/, '
 /**
  * The stack: an inscribed line, the names in the Stage's Geist capitals at
  * the page's label size, the interpunct between them (Act I's tags' own
- * divider): no rule, no marks.
+ * divider, interpunct.ts): no rule, no marks.
  */
-const STACK = 'flex flex-wrap items-center gap-x-2.5 gap-y-1 font-sans text-xs font-medium uppercase leading-5 tracking-[0.18em] text-muted-foreground'
+const STACK = `${INTERPUNCT_LIST} font-sans text-xs font-medium uppercase leading-5 tracking-[0.18em] text-muted-foreground`
 
 /**
  * The previews (the browser and phone frames, the screenshots that scroll in
@@ -82,15 +83,10 @@ function ProductRow({ product, index }: { product: Product; index: number }) {
 
         <div className={cn('flex flex-col items-start gap-6 lg:row-start-1 lg:self-center', text)}>
           <p className="max-w-xl text-[15px] leading-relaxed text-muted-foreground md:text-base">{product.description}</p>
-          <ul aria-label="Stack" className={cn('w-full max-w-xl', STACK)}>
-            {product.stack.map((item, i) => (
-              <li key={item} className="flex items-center gap-2.5">
+          <ul aria-label="Stack" className={cn('w-[calc(100%_+_1.5rem)] max-w-[calc(36rem_+_1.5rem)]', STACK)}>
+            {product.stack.map((item) => (
+              <li key={item} className={INTERPUNCT}>
                 {item}
-                {i < product.stack.length - 1 ? (
-                  <span aria-hidden="true" className="text-gold">
-                    ·
-                  </span>
-                ) : null}
               </li>
             ))}
           </ul>
@@ -113,15 +109,12 @@ function ProductRow({ product, index }: { product: Product; index: number }) {
  * browser and on a phone; the private ones, which have no public screens,
  * are set as inscriptions of their parts, in the description's own words.
  * Nothing takes over the scroll: the previews move by themselves, and only
- * while in view. The section clips sideways, for the glow behind the previews.
+ * while in view. The section clips sideways, for the glow behind the previews
+ * (each preview's own; there is no light over the act from above).
  */
 export function Products() {
   return (
     <section id="products" aria-labelledby="products-title" className="relative isolate scroll-mt-14 overflow-x-clip pt-20 md:pt-32">
-      <div
-        aria-hidden="true"
-        className="pointer-events-none absolute inset-x-0 top-0 -z-10 h-[40rem] bg-[radial-gradient(60%_50%_at_50%_0%,color-mix(in_oklab,var(--stage-wash)_70%,transparent),transparent)]"
-      />
       <Container>
         <SectionHeader
           id="products-title"
