@@ -61,6 +61,9 @@ const year = toRoman(new Date().getFullYear())
  *   the letters), with the barcode and the plate; on phones it takes the
  *   barcode's place, and the plate keeps the right; on a screen under 480px
  *   tall (a phone on its side) there is no room for it under the copy;
+ *   and the foot, a row as wide as the stage that holds nothing to press,
+ *   lets the pointer through (on a phone on its side it rises level with
+ *   ENTER, and took its taps);
  * - on short phones the two upper stars keep below the pills;
  * - everything else of the component's animation plays as published (Roman,
  *   2026-11-01, of the stage stripped of it: "but the animation from2 1st
@@ -104,7 +107,7 @@ const LOOK = [
   '[&_.om-chrome]:z-[6]!',
   'max-sm:[&_.om-copy]:top-[max(19%,146px)]! sm:[&_.om-copy]:top-[max(16.5%,138px)]! [&_.om-aside]:top-[27%]!',
   '[&_.om-hint]:bottom-[calc(var(--om-fs)*(var(--om-cap)+0.03)+1.4vh+18px)]!',
-  'max-sm:[&_.om-bars]:hidden! max-sm:[&_.om-foot]:justify-end! [@media(max-height:480px)]:[&_.om-hint]:hidden!',
+  'max-sm:[&_.om-bars]:hidden! max-sm:[&_.om-foot]:justify-end! [@media(max-height:480px)]:[&_.om-hint]:hidden! [&_.om-foot]:pointer-events-none!',
   'max-sm:[&_.om-star:not(.om-star-s)]:top-[max(15.5%,124px)]!',
   '[&_.om-eyebrow]:text-xs! [&_.om-eyebrow]:tracking-[0.26em]! [&_.om-pill]:text-xs! [&_.om-aside]:text-[13px]! [&_.om-aside_b]:text-xs! [&_.om-ratio]:text-xs! [&_.om-cta]:text-xs! [&_.om-skip]:text-xs! [&_.om-plate]:text-xs! [&_.om-hint]:text-xs!',
   'max-sm:[&_.om-pill]:px-[10px]! max-sm:[&_.om-pill]:tracking-[0.16em]!',
