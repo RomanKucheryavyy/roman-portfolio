@@ -5,6 +5,7 @@ import StackingCards, { StackingCardItem } from '@/components/ui/stacking-cards'
 import { Card } from '@/components/ui/card'
 import { PROJECTS, linkLabel, type Project } from '@/lib/content'
 import { toRoman } from '@/lib/roman'
+import { INTERPUNCT, INTERPUNCT_LIST } from './interpunct'
 import { stageLink } from './look'
 import { Container, SectionHeader } from './section-header'
 
@@ -14,17 +15,26 @@ const pad = (n: number) => String(n).padStart(2, '0')
  * Act I's own shape: each project a folio, a leaf of the book with its
  * plate. The site's screenshot is the plate, full-bleed at the leaf's head
  * (beside the words from lg), and the words are set on the page itself: no
- * border, no rule, no frame. The leaf is an opaque sheet of the ground, the
- * wash falling on it from above, so a folio sliding over another hides it;
- * its top edge catches the light, and it casts its shadow upward onto the
- * folio it covers, so the stacked edges read by tone alone.
+ * border, no rule, no frame, no panel. The leaf is an opaque sheet of the
+ * ground, so a folio sliding over another hides it: a tone of the wash at
+ * its head that sinks into the ground within a few lines, so its body is
+ * the page itself and none of its edges is drawn. It casts its shadow
+ * upward onto the folio it covers (softer on a phone), so where they stack
+ * the edges read by tone alone: the head's tone, which the plate's own head
+ * sinks into too (PLATE_HEAD), so what shows of a covered leaf is never a
+ * strip of a site's white header. (The tone is written out in each class,
+ * so Tailwind sees it.)
  */
 const FOLIO = [
   'relative mx-auto h-full w-full max-w-[1184px] gap-0 overflow-hidden rounded-[3px] border-0 py-0 text-foreground',
-  'bg-[linear-gradient(172deg,color-mix(in_oklab,var(--stage-wash)_55%,var(--background)),color-mix(in_oklab,var(--stage-wash)_32%,var(--background))_45%,color-mix(in_oklab,var(--stage-wash)_12%,var(--background)))]',
-  'shadow-[0_-4px_10px_-2px_color-mix(in_oklab,var(--stage-shadow)_90%,transparent),0_-18px_44px_-14px_color-mix(in_oklab,var(--stage-shadow)_95%,transparent)]',
-  'after:pointer-events-none after:absolute after:inset-0 after:rounded-[inherit] after:shadow-[inset_0_1px_0_color-mix(in_oklab,var(--foreground)_18%,transparent)]',
+  'bg-[linear-gradient(180deg,color-mix(in_oklab,var(--stage-wash)_45%,var(--background)),color-mix(in_oklab,var(--stage-wash)_18%,var(--background))_6rem,var(--background)_70%)]',
+  'shadow-[0_-4px_10px_-2px_color-mix(in_oklab,var(--stage-shadow)_90%,transparent),0_-12px_26px_-10px_color-mix(in_oklab,var(--stage-shadow)_95%,transparent)] lg:shadow-[0_-4px_10px_-2px_color-mix(in_oklab,var(--stage-shadow)_90%,transparent),0_-18px_44px_-14px_color-mix(in_oklab,var(--stage-shadow)_95%,transparent)]',
+  // Painted once and moved as one layer while it stacks (the scale runs every frame).
+  '[contain:paint]',
 ].join(' ')
+
+/** Where the folios stack, the plate's head sinks into the leaf's tone over the step a covered leaf shows, and a little more. */
+const PLATE_HEAD = "stack:after:pointer-events-none stack:after:absolute stack:after:inset-x-0 stack:after:top-0 stack:after:h-[calc(var(--stack-step)_+_1.5rem)] stack:after:content-[''] stack:after:bg-[linear-gradient(to_bottom,color-mix(in_oklab,var(--stage-wash)_45%,var(--background)),color-mix(in_oklab,var(--stage-wash)_45%,var(--background))_var(--stack-step),transparent)]"
 
 /**
  * The project's number as type: its place in his order in gold Cinzel, the
@@ -64,7 +74,7 @@ function ProjectCard({ project, index }: { project: Project; index: number }) {
         {/* The plate: the screenshot, edge to edge, at 16:10. On a stacking
             phone it gives way first when the leaf is short, cut from its
             foot (never under 7rem); from lg it fills its half, top to foot. */}
-        <div className="relative aspect-[16/10] overflow-hidden bg-background stack-phone:aspect-auto stack-phone:max-h-[calc((100vw_-_2rem)_*_0.625)] stack-phone:min-h-28 stack-phone:grow-[100] stack-phone:basis-0 lg:order-2 lg:aspect-auto">
+        <div className={`${PLATE_HEAD} relative aspect-[16/10] overflow-hidden bg-background stack-phone:aspect-auto stack-phone:max-h-[calc((100vw_-_2rem)_*_0.625)] stack-phone:min-h-28 stack-phone:grow-[100] stack-phone:basis-0 lg:order-2 lg:aspect-auto`}>
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src={project.image}
@@ -87,19 +97,14 @@ function ProjectCard({ project, index }: { project: Project; index: number }) {
           <p className="mt-3 text-[15px] leading-relaxed text-muted-foreground text-pretty stack-phone:mt-2 stack-phone:leading-normal lg:mt-4 xl:text-base lg:[@media(max-height:45rem)]:mt-3 xl:[@media(max-height:45rem)]:text-[15px]">
             {project.description}
           </p>
+          {/* The inscriptions' own word divider, the page's only one (interpunct.ts). */}
           <ul
-            className="mt-4 flex flex-wrap items-center gap-x-2.5 gap-y-1 font-sans text-xs font-medium uppercase leading-5 tracking-[0.18em] text-muted-foreground stack-phone:mt-3 stack-phone:tracking-[0.14em] lg:mt-5 lg:[@media(max-height:45rem)]:mt-4"
+            className={`mt-4 ${INTERPUNCT_LIST} font-sans text-xs font-medium uppercase leading-5 tracking-[0.18em] text-muted-foreground stack-phone:mt-3 stack-phone:tracking-[0.14em] lg:mt-5 lg:[@media(max-height:45rem)]:mt-4`}
             aria-label="Tags"
           >
-            {project.tags.map((tag, i) => (
-              <li key={tag} className="flex items-center gap-2.5">
+            {project.tags.map((tag) => (
+              <li key={tag} className={INTERPUNCT}>
                 {tag}
-                {/* The inscriptions' own word divider, the page's only one. */}
-                {i < project.tags.length - 1 ? (
-                  <span aria-hidden="true" className="text-gold">
-                    ·
-                  </span>
-                ) : null}
               </li>
             ))}
           </ul>
@@ -173,7 +178,8 @@ function useRiseIntoView(ref: React.RefObject<HTMLElement | null>) {
           if (!a || !entry.isIntersecting) continue
           io.unobserve(entry.target)
           held.delete(entry.target)
-          if (entry.boundingClientRect.bottom <= 0) a.cancel()
+          // Passed unseen, or landed on by the intro's nav as it lifts: whole.
+          if (entry.boundingClientRect.bottom <= 0 || document.documentElement.hasAttribute('data-intro')) a.cancel()
           else {
             // Folios arriving together (a row of two) follow one another.
             a.effect?.updateTiming({ delay: k++ * 90 })
@@ -253,7 +259,7 @@ export function Work() {
             // folio before it, so it lets the pointer through and only the
             // folio takes it (otherwise every link but the last folio's sits
             // under the next slot and cannot be clicked).
-            className="flat:static flat:h-auto flat:[&>div]:transform-none! motion-reduce:[&>div]:transform-none! stack:pointer-events-none stack:h-[calc(var(--card-h)_+_var(--stack-breath))]"
+            className="flat:static flat:h-auto flat:[&>div]:transform-none! motion-reduce:[&>div]:transform-none! stack:pointer-events-none stack:h-[calc(var(--card-h)_+_var(--stack-breath))] stack:[&>div]:will-change-transform"
           >
             <div className="md:h-full stack:pointer-events-auto stack:h-(--card-h)">
               <ProjectCard project={project} index={index} />
