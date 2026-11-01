@@ -364,8 +364,13 @@ test.describe('a proper modal', () => {
     }
     await audit('load')
     await expect(page.locator(`${LAYER} .om-root[data-phase="landing"]`)).toBeAttached({ timeout: 20_000 })
-    // Let the landing's copy finish fading in.
+    // Let the landing's copy finish fading in, and the scroll hint too (it
+    // waits 3 s, then fades in over 1 s: caught halfway, its ink is halfway
+    // to the ground, and axe reads that contrast).
     await sleep(3000)
+    await expect
+      .poll(() => page.locator(`${LAYER} .om-hint`).evaluate((el) => (getComputedStyle(el).display === 'none' ? '1' : getComputedStyle(el).opacity)), { timeout: 15_000 })
+      .toBe('1')
     await audit('landing')
   })
 
