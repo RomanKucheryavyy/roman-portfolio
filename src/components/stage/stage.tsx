@@ -27,9 +27,10 @@ import { HeroPainting } from './hero-painting'
  * Tabs to it; until then a block of the same height holds its place, so
  * nothing below moves when it lands. The sections, their ids and their
  * headers are the page's own HTML. The heights are the components' own,
- * measured at 390, 640, 768, 1024, 1152 (About's wide layout starts there),
- * 1280 and 1440 wide (exact there, and within a few lines of text between),
- * so a visitor who arrives at /#contact stays on it.
+ * measured from 320 to 1920 wide (each band where its text wraps alike;
+ * exact at the common phone widths, at 640, 768, 1024, 1152 (About's wide
+ * layout starts there), 1280 and 1440, and within a line or two of text
+ * between), so a visitor who arrives at /#contact stays on it.
  * Visitors without scripts get the page's <noscript> summary (app/page.tsx).
  */
 const hold = (className: string) =>
@@ -39,17 +40,17 @@ const hold = (className: string) =>
 
 const AboutTemplate = dynamic(() => import('./about'), {
   ssr: false,
-  loading: hold('h-[802px] sm:h-[640px] md:h-[606px] lg:h-[572px] min-[72rem]:h-[686px] xl:h-[637px]'),
+  loading: hold('h-[826px] max-[334px]:h-[908px] min-[335px]:max-[367px]:h-[878px] min-[368px]:max-[373px]:h-[848px] min-[417px]:max-[457px]:h-[796px] min-[458px]:max-[517px]:h-[766px] min-[518px]:max-[607px]:h-[736px] min-[608px]:max-[639px]:h-[706px] sm:h-[706px] min-[52rem]:h-[676px] min-[65rem]:h-[646px] min-[72rem]:h-[686px] min-[76rem]:h-[637px]'),
 })
 const ContactBlock = dynamic(() => import('./contact'), {
   ssr: false,
   // Its own height plus the mt-12 / md:mt-16 its CONTACT_LOOK gives it.
-  loading: hold('h-[1184px] sm:h-[1058px] md:h-[1090px] lg:h-[648px] min-[72rem]:h-[616px]'),
+  loading: hold('h-[1180px] max-[324px]:h-[1223px] min-[325px]:max-[372px]:h-[1203px] min-[438px]:max-[639px]:h-[1148px] sm:h-[1065px] min-[42rem]:h-[1042px] md:h-[1073px] lg:h-[611px]'),
 })
 const Footer = dynamic(() => import('./footer'), {
   ssr: false,
-  // With its wordmark hidden (footer.tsx), a fixed height at each width.
-  loading: hold('h-[813px] bg-background sm:h-[779px] md:h-[912px] lg:h-[581px]'),
+  // A colophon on a phone, two columns from lg (footer.tsx), a fixed height at each width.
+  loading: hold('h-[496px] bg-background max-[324px]:h-[529px] min-[392px]:max-[413px]:h-[452px] min-[414px]:max-[617px]:h-[418px] min-[618px]:max-[639px]:h-[385px] sm:h-[385px] md:h-[397px] min-[49rem]:h-[353px] lg:h-[452px]'),
 })
 
 /* ---------------------------------------------------------------- hero -- */
@@ -216,7 +217,7 @@ function Contact() {
 /* --------------------------------------------------------------- stage -- */
 
 /**
- * Direction C, "Stage": the page opens on a curtain, then the programme
+ * Direction C, "Stage": the page opens on a page of the Roman print, then the programme
  * (client work, own products), the career, the credentials, the performer in
  * his own words, and a way to get in touch. `children` lands at the end of
  * the page's <main> (app/page.tsx passes its <noscript> summary).
