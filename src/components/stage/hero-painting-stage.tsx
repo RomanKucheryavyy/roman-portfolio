@@ -10,7 +10,13 @@ import { IMPERIAL } from './imperial'
  * kedhareswer/old-masters-preloader as published, configured from outside,
  * painting the hero's page of the intro's print: the same pre-keyed
  * photographs, the same two-ink print of the marble in the palette, the
- * same blurred David behind (CAST.david, as the intro has him), still.
+ * same blurred David behind (CAST.david, as the intro has him), and the
+ * same living landing the intro lands on (Roman, 2026-11-01, of the page
+ * without it: "but the animation from2 1st dev for this roman theme is now
+ * gone"): its shafts of light and the dust drifting in them (its light
+ * canvas, at the intro's strength), its spotlight following the pointer,
+ * the figure breathing (its 9 s bob) and leaning and parting with the
+ * pointer (its parallax and tilt), and the grain moving.
  *
  * Its figure is Hercules, so the page never repeats the landing a visitor
  * may have just seen lift away (Apollo on a phone; Hercules and Apollo at the
@@ -24,17 +30,25 @@ import { IMPERIAL } from './imperial'
  *
  * Nothing of the component's own interface, loading or ornament: no word,
  * tagline, nav, pills, stars, asides, call to action, count, barcode or
- * plate (each emptied, and the interface hidden whole), no meander. No
- * light of any kind: no shafts, no dust, no spotlight, no flash. The
+ * plate (each emptied, and the interface hidden whole), no meander. The
  * flood, the vignette and the grain are the hero's own (stage.tsx), so they
  * are there before this lands and without it, and lie under and over it
- * exactly as the component's would. The landing is still (skipIntro): no
- * load, no unveil, and the figure does not bob.
+ * exactly as the component's would; while it is here the grain moves as
+ * the component's does (GRAIN_STEPS). It lands composed (skipIntro): the
+ * load and the unveil are the intro's, already played (or, without one, the
+ * page's first paint is the opening), so the hero opens on the living
+ * landing itself.
+ *
+ * The box is inert and takes no pointer, so the pointer is handed on to the
+ * component from the hero around it (its own handlers do the rest), and
+ * taken back when it leaves the hero or a finger lifts.
  *
  * It arrives once the statue has decoded: the first time, he rises from
  * below as it fades in (after the intro has lifted off, when there was one);
  * when the hero comes back on screen, it simply fades in. Under reduced
- * motion it only fades.
+ * motion it only fades, and stands still: the component draws its light
+ * once and holds the figure, the dust and its spotlight where they are, and
+ * the grain does not move.
  */
 
 const HERCULES = CAST.hercules
@@ -120,17 +134,30 @@ export function compose(w: number, h: number, { copy, name }: HeroWords): OldMas
  * From outside, by descendant classes (the component as published; its own
  * CSS is unlayered, so whatever it sets is overridden with !): its root and
  * stage transparent and its flood, vignette and grain hidden (the hero's
- * own are beneath and above); none of its interface, meander, word, flash,
- * spotlight or light canvas; no shadow under the figure (his feet are far
- * below the page); the figure still. The first time, he rises into place as
- * the box fades in (RISE).
+ * own are beneath and above); none of its interface, meander or word; no
+ * shadow under the figure (his feet are far below the page). Its light
+ * canvas, its spotlight and the figure's bob are its own, untouched. The
+ * first time, he rises into place as the box fades in (RISE).
  */
 const LOOK = [
   'bg-transparent! [&_.om-stage]:bg-transparent!',
   '[&_.om-flood]:hidden! [&_.om-vignette]:hidden! [&_.om-grain]:hidden!',
-  '[&_.om-ring]:hidden! [&_.om-wordlayer]:hidden! [&_.om-chrome]:hidden! [&_.om-flash]:hidden! [&_.om-spot]:hidden! [&_.om-light]:hidden! [&_.om-fig-shadow]:hidden!',
-  '[&_.om-fig-in]:animate-none!',
+  '[&_.om-ring]:hidden! [&_.om-wordlayer]:hidden! [&_.om-chrome]:hidden! [&_.om-fig-shadow]:hidden!',
 ].join(' ')
+
+/**
+ * The grain's flicker, as the component's own (its om-grain keyframes: a
+ * jump every eighth of a second, 0.5 s round), played on the hero's grain
+ * (stage.tsx, which lies over the painting as the component's lies over its
+ * cast) while the painting is here.
+ */
+const GRAIN_STEPS: Keyframe[] = [
+  { transform: 'translate(0, 0)', easing: 'steps(1)' },
+  { transform: 'translate(-16px, 9px)', easing: 'steps(1)' },
+  { transform: 'translate(11px, -14px)', easing: 'steps(1)' },
+  { transform: 'translate(-7px, -19px)', easing: 'steps(1)' },
+  { transform: 'translate(0, 0)' },
+]
 
 /**
  * The rise: the statue only (the backdrop is there already), from below,
@@ -209,6 +236,41 @@ export default function HeroPaintingStage() {
     return () => window.clearTimeout(t)
   }, [decoded, figure, shown])
 
+  // The pointer, handed on from the hero (the box is inert and takes none):
+  // each move as the component's own pointer move, and leaving the hero, or
+  // a finger lifting, as its pointer leaving. Under reduced motion the
+  // component follows no pointer, so none is handed on.
+  useEffect(() => {
+    const el = box.current
+    const hero = el?.closest('section')
+    if (!el || !hero || still) return
+    const root = () => el.querySelector('.om-root')
+    const onMove = (e: PointerEvent) => {
+      // Only the visitor's own moves (what is handed on bubbles back up here).
+      if (!e.isTrusted) return
+      root()?.dispatchEvent(new PointerEvent('pointermove', { bubbles: true, clientX: e.clientX, clientY: e.clientY, pointerType: e.pointerType }))
+    }
+    const onLeave = (e: PointerEvent) => {
+      if (!e.isTrusted || (e.type !== 'pointerleave' && e.pointerType === 'mouse')) return
+      root()?.dispatchEvent(new PointerEvent('pointerout', { bubbles: true, relatedTarget: hero }))
+    }
+    hero.addEventListener('pointermove', onMove, { passive: true })
+    for (const type of ['pointerleave', 'pointerup', 'pointercancel'] as const) hero.addEventListener(type, onLeave, { passive: true })
+    return () => {
+      hero.removeEventListener('pointermove', onMove)
+      for (const type of ['pointerleave', 'pointerup', 'pointercancel'] as const) hero.removeEventListener(type, onLeave)
+    }
+  }, [still])
+
+  // The grain moves while the painting is here, as the component's does
+  // over its own cast; it is still again when the painting goes.
+  useEffect(() => {
+    const grain = box.current?.closest('section')?.querySelector<HTMLElement>('[data-hero-grain]')
+    if (!shown || still || !grain?.animate) return
+    const flicker = grain.animate(GRAIN_STEPS, { duration: 500, iterations: Infinity })
+    return () => flicker.cancel()
+  }, [shown, still])
+
   const rising = rise && !still
   return (
     <div
@@ -229,11 +291,8 @@ export default function HeroPaintingStage() {
           figures={[figure]}
           backdrop={CAST.david.src}
           duotone
-          rays={false}
-          dust={false}
           tone="noir"
           palette={IMPERIAL}
-          tilt={0}
           fontHref={null}
           wordmark=""
           wordAs="p"

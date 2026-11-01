@@ -22,7 +22,11 @@ permissions:
 jobs:
   check:
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    # The whole job: install, build and the e2e suite. The suite took about
+    # 20 minutes until the title cards played their full opening again
+    # (#14: each card's load, unveil and landing is waited for), which took
+    # it past 30, where the job was cut off ten tests from the end.
+    timeout-minutes: 45
     steps:
       - uses: actions/checkout@v4
         with:

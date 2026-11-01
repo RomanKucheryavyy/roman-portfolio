@@ -3,6 +3,7 @@ import { isChain } from '@/components/stage/preview-box'
 import { PRODUCTS, type FlowNode } from '@/lib/content'
 import { toRoman } from '@/lib/roman'
 import { monthYear } from '@/lib/site-facts'
+import { glyphsOf, inkContrast, lightAtPeak, spotlightOn, wordBox, wordContrast } from './contrast'
 import { gotoHome, project, sleep } from './helpers'
 
 /**
@@ -450,15 +451,17 @@ test.describe('the title cards', () => {
       await expect(eyebrow).toContainText(product.status)
       expect(parseFloat(await eyebrow.evaluate((el) => getComputedStyle(el).fontSize))).toBeGreaterThanOrEqual(12)
       await expect(card.locator('.om-brand')).toHaveText(toRoman(PRODUCTS.indexOf(product) + 1))
-      // No ornaments: no pills, no stars, no rules; and no stage light: no
-      // shafts or dust (the light's canvas), no spotlight on the pointer, no
-      // flash, no sheen sweeping the card.
-      for (const part of ['.om-pill', '.om-star', '.om-rule', '.om-light', '.om-spot', '.om-flash', '.om-sheen']) {
-        const shown = await card.locator(part).evaluateAll((els) => els.filter((el) => el.getClientRects().length > 0 && getComputedStyle(el).display !== 'none').length)
-        expect(shown, `${product.id}: ${part} shown`).toBe(0)
-      }
-      // Its flood wells up from the floor: never a widening circle (a spotlight's iris).
-      expect(await card.locator('.om-flood').evaluate((el) => getComputedStyle(el).clipPath), `${product.id}: the flood's clip`).toBe('none')
+      const shown = (part: string) => card.locator(part).evaluateAll((els) => els.filter((el) => el.getClientRects().length > 0 && getComputedStyle(el).display !== 'none').length)
+      // None of the intro's loading (its meander ring, its count, its barcode
+      // and plate: a card loads as its own word filling), and none of the
+      // ornaments the page has dropped (the pills, the eyebrow's rules).
+      for (const part of ['.om-ring', '.om-counter', '.om-foot', '.om-pill', '.om-rule']) expect(await shown(part), `${product.id}: ${part} shown`).toBe(0)
+      // The component's own light and stars, as published (Roman, 2026-11-01:
+      // "the animation from2 1st dev for this roman theme is now gone"): its
+      // canvas of shafts and dust, the spotlight, the flash and the sheen.
+      for (const part of ['.om-light', '.om-spot', '.om-flash', '.om-sheen', '.om-star']) expect(await shown(part), `${product.id}: ${part} shown`).toBeGreaterThan(0)
+      // Its flood has opened as the component's circle.
+      expect(await card.locator('.om-flood').evaluate((el) => getComputedStyle(el).clipPath), `${product.id}: the flood's clip`).toMatch(/^circle\(120%/)
       // No edges: its top and foot sink into the page's ground.
       const veil = await card.locator('.om-stage').evaluate((el) => getComputedStyle(el, '::after').backgroundImage)
       expect(veil, `${product.id}: the veil at its top and foot`).toMatch(/^linear-gradient/)
@@ -493,7 +496,16 @@ test.describe('the title cards', () => {
     await expect(card.locator('.om-counter')).toBeHidden()
     expect(await card.evaluate((el) => el.getBoundingClientRect().height)).toBe(before)
     expect(await offset()).toBe(gapBefore)
-    // Gone from the screen: the stage unmounts.
+    // Far past it, it unmounts; scrolling back up, it is there again before
+    // it comes back on screen (it mounts ahead from above too), so it
+    // returns drawn, never as an empty box.
+    await card.evaluate((el) => window.scrollBy({ top: el.getBoundingClientRect().bottom + window.innerHeight * 1.5, behavior: 'instant' }))
+    await expect(card).toHaveAttribute('data-live', 'false')
+    await expect(card.locator('.om-root')).toHaveCount(0)
+    await card.evaluate((el) => window.scrollBy({ top: el.getBoundingClientRect().bottom + 60, behavior: 'instant' }))
+    await expect(card).toHaveAttribute('data-live', 'true')
+    await expect(card.locator('.om-root')).toBeAttached({ timeout: 20_000 })
+    // Far from the screen: the stage unmounts.
     await page.evaluate(() => window.scrollTo({ top: 0, behavior: 'instant' }))
     await expect(card).toHaveAttribute('data-live', 'false')
     await expect(card.locator('.om-root')).toHaveCount(0)
@@ -528,39 +540,190 @@ test.describe('the title cards', () => {
     expect(Math.max(...sizes) / Math.min(...sizes), `word sizes ${sizes.join(', ')}`).toBeLessThanOrEqual(1.4)
   })
 
-  test('a card scrolls in composed (never a dark box with a word filling in) and lands soon after arriving (within 1.5 s on a phone)', async ({ page }) => {
+  test("a card scrolled in at a reader's pace opens as the component does: drawn before it arrives, its word filling only once every letter is in, then the flood opens as a circle with the flash and the sheen, and it lands", async ({ page }) => {
     await gotoHome(page)
-    const card = cardOf(page, PRODUCTS[2].id)
-    // Just below the screen: already mounted, its word and its eyebrow up, its entrance held.
-    await card.evaluate((el) => window.scrollBy({ top: el.getBoundingClientRect().top - window.innerHeight - 60, behavior: 'instant' }))
-    await expect(card.locator('.om-root')).toBeAttached({ timeout: 20_000 })
-    await expect(card.locator('[data-arrived="false"]')).toBeAttached()
-    await expect(card.locator('.om-root')).toHaveAttribute('data-phase', 'landing')
-    await expect.poll(() => card.locator('.om-l').evaluateAll((els) => Math.min(...els.map((el) => Number(getComputedStyle(el).opacity))))).toBe(1)
-    // Arrived: the flood, the statue and the tagline are all in within 1.5 s.
+    // The longest title: its letters take the longest to come in.
+    const product = [...PRODUCTS].sort((a, b) => b.title.length - a.title.length)[0]
+    const card = cardOf(page, product.id)
+    // Two screens and a half above it (further than it mounts ahead), then
+    // scrolled down at 700 px a second until it stands in the middle of the
+    // screen, filmed every frame until it lands.
+    await card.evaluate((el) => window.scrollBy({ top: el.getBoundingClientRect().top - window.innerHeight * 2.6, behavior: 'instant' }))
+    await expect(card).toHaveAttribute('data-live', 'false')
+    type Frame = { t: number; vis: number; mounted: boolean; phase: string; load: string; fill: number; clip: string; flash: boolean; sheen: boolean; letters: number; first: number; intro: number }
+    const film = await card.evaluate(
+      (el) =>
+        new Promise<Frame[]>((done) => {
+          const film: Frame[] = []
+          let last = performance.now()
+          const running = (sel: string) => (el.querySelector(sel)?.getAnimations() ?? []).some((a) => a.playState === 'running')
+          const opacity = (n: Element) => Number(getComputedStyle(n).opacity)
+          const tick = (now: number) => {
+            const dt = Math.min(250, now - last)
+            last = now
+            const r = el.getBoundingClientRect()
+            const ahead = r.top + r.height / 2 - innerHeight / 2
+            if (ahead > 0) window.scrollBy(0, Math.min(ahead, (700 * dt) / 1000))
+            const root = el.querySelector('.om-root')
+            const letters = [...el.querySelectorAll('.om-l')].map(opacity)
+            film.push({
+              t: now,
+              vis: Math.max(0, Math.min(r.bottom, innerHeight) - Math.max(r.top, 0)) / r.height,
+              mounted: !!root,
+              phase: root?.getAttribute('data-phase') ?? '',
+              load: el.querySelector('[data-load]')?.getAttribute('data-load') ?? '',
+              fill: parseFloat((el.querySelector('.om-word') as HTMLElement | null)?.style.getPropertyValue('--om-fill') ?? '') || 0,
+              clip: root ? getComputedStyle(el.querySelector('.om-flood')!).clipPath : '',
+              flash: running('.om-flash'),
+              sheen: running('.om-sheen'),
+              letters: letters.length ? Math.min(...letters) : -1,
+              first: letters.length ? letters[0] : -1,
+              intro: [...el.querySelectorAll('.om-ring, .om-counter, .om-foot')].filter((n) => n.getClientRects().length > 0).length,
+            })
+            if (film.at(-1)!.phase === 'landing' || now - film[0].t > 60_000) done(film)
+            else requestAnimationFrame(tick)
+          }
+          requestAnimationFrame(tick)
+        }),
+    )
+    expect(film.at(-1)!.phase, 'it lands').toBe('landing')
+    // Mounted ahead: before it comes on screen, and by then the component
+    // has begun drawing its word, so it never scrolls in as an empty box.
+    const mounts = film.findIndex((f) => f.mounted)
+    const enters = film.findIndex((f) => f.vis > 0)
+    expect(mounts, 'mounted').toBeGreaterThanOrEqual(0)
+    expect(mounts, 'mounted before it comes on screen').toBeLessThan(enters)
+    expect(film[enters].first, 'its word begun as it comes on screen').toBeGreaterThan(0)
+    // Held at nothing until its word is drawn; then every letter is in.
+    const starts = film.findIndex((f) => f.load === 'started')
+    expect(starts, 'the load starts').toBeGreaterThan(mounts)
+    for (const f of film.slice(mounts, starts)) expect(f.fill, 'nothing filled while it is held').toBe(0)
+    expect(film[starts].letters, 'every letter in when the word starts to fill').toBeGreaterThanOrEqual(0.99)
+    expect(film[starts].vis, 'it has arrived').toBeGreaterThanOrEqual(0.6)
+    // The load: the word filling from its foot, seen part-way and climbing
+    // for a second or more (the component's own surge and stall), never
+    // going back; none of the intro's ring, count, barcode or plate.
+    const load = film.slice(starts).filter((f) => f.phase === 'load')
+    const unveil = film.filter((f) => f.phase === 'unveil')
+    expect(load.filter((f) => f.fill > 1 && f.fill < 99).length, 'the word seen filling').toBeGreaterThanOrEqual(2)
+    for (let i = 1; i < load.length; i++) expect(load[i].fill).toBeGreaterThanOrEqual(load[i - 1].fill)
+    expect(unveil.length, 'frames of the unveil').toBeGreaterThan(2)
+    expect(unveil[0].t - film[starts].t, 'the climb').toBeGreaterThanOrEqual(1000)
+    expect(Math.max(...film.map((f) => f.intro)), "the intro's loading on a card").toBe(0)
+    // The unveil: the flood opens as a widening circle, the flash and the sheen run.
+    const radii = unveil.map((f) => /^circle\(([\d.]+)%/.exec(f.clip)).filter(Boolean).map((m) => Number(m![1]))
+    expect(radii.some((r) => r > 0 && r < 120), 'the circle seen opening').toBe(true)
+    for (let i = 1; i < radii.length; i++) expect(radii[i]).toBeGreaterThanOrEqual(radii[i - 1])
+    expect(unveil.some((f) => f.flash), 'the flash').toBe(true)
+    expect(unveil.some((f) => f.sheen), 'the sheen').toBe(true)
+    // A phone's card lands within about five seconds of arriving: its word
+    // filled within about two, then the component's three-second unveil. A
+    // wide screen's runs the same, but the suite's software rasterizer paints
+    // a full-width card at a few frames a second, and the component's load
+    // eases by the frame, so there it is only required to land.
+    if (project() === 'mobile') {
+      const arrived = film.find((f) => f.vis >= 0.6)!.t
+      expect(unveil[0].t - arrived, 'from arriving to the unveil (the word filled)').toBeLessThanOrEqual(3000)
+      expect(film.at(-1)!.t - arrived, 'from arriving to the landing').toBeLessThanOrEqual(6500)
+    }
+  })
+
+  test('a landed card is lit while on screen: its light runs, and holds still once the card is off screen', async ({ page }) => {
+    await gotoHome(page)
+    const card = cardOf(page, PRODUCTS[0].id)
     await card.evaluate((el) => el.scrollIntoView({ block: 'center', behavior: 'instant' }))
-    const t0 = Date.now()
-    const landed = () =>
-      card.evaluate((el) => {
-        const op = (sel: string) => [...el.querySelectorAll(sel)].map((n) => Number(getComputedStyle(n).opacity))
-        const fig = el.querySelector('.om-fig')
-        return (
-          el.querySelector('[data-arrived="true"]') !== null &&
-          !!fig &&
-          Math.min(...op('.om-fig')) >= 0.99 &&
-          Math.abs(new DOMMatrix(getComputedStyle(fig).transform).m42) < 2 &&
-          Math.min(...op('.om-tagline span')) >= 0.99 &&
-          Math.min(...op('.om-flood')) >= 0.99 &&
-          getComputedStyle(el.querySelector('.om-flood')!).transform === 'none'
-        )
+    await expect(card.locator('.om-root[data-phase="landing"]')).toBeAttached({ timeout: 40_000 })
+    // The light's canvas (the shafts and the dust), read as a signature of its pixels.
+    const light = card.locator('.om-light')
+    const signature = () =>
+      light.evaluate((c) => {
+        const canvas = c as HTMLCanvasElement
+        const data = canvas.getContext('2d')!.getImageData(0, 0, canvas.width, canvas.height).data
+        let h = 0
+        for (let i = 0; i < data.length; i += 4 * 53) h = (h * 31 + data[i] + data[i + 1] + data[i + 3]) >>> 0
+        return h
       })
-    // A phone's card within 1.5 s. A wide screen's runs the same 1.2 s, but
-    // in the suite's software rasterizer its first paint of a full-width card
-    // holds the entrance back by 0.7 s alone and by seconds with the suite
-    // running beside it, so there it is only required to land.
-    const within = project() === 'mobile' ? 1500 : 6000
-    await expect.poll(landed, { timeout: within, intervals: [100] }).toBe(true)
-    expect(Date.now() - t0).toBeLessThanOrEqual(within + 200)
+    const moving = async () => {
+      const a = await signature()
+      await sleep(700)
+      return a !== (await signature())
+    }
+    await expect.poll(async () => Number(await light.evaluate((el) => getComputedStyle(el).opacity)), { timeout: 10_000 }).toBeGreaterThan(0.9)
+    await expect.poll(moving, { timeout: 10_000 }).toBe(true)
+    // Just below the screen (still mounted, a screen and a half ahead): still.
+    await card.evaluate((el) => window.scrollBy({ top: el.getBoundingClientRect().top - window.innerHeight - 40, behavior: 'instant' }))
+    await expect(card.locator('.om-root')).toBeAttached()
+    await expect.poll(moving, { timeout: 10_000, message: 'the light off screen' }).toBe(false)
+    expect(await moving(), 'the light off screen, still').toBe(false)
+    // Back on screen: it runs again.
+    await card.evaluate((el) => el.scrollIntoView({ block: 'center', behavior: 'instant' }))
+    await expect.poll(moving, { timeout: 10_000 }).toBe(true)
+  })
+
+  test("a card's words hold AA through its light: the word 3:1 as the flash and the sheen cross it, the eyebrow and the number 4.5:1 then and under the light at its peak", async ({ page }) => {
+    test.skip(project() === 'no-webgl', 'The cards draw no WebGL: the desktop project reads the same pixels.')
+    test.setTimeout(240_000)
+    await lightAtPeak(page)
+    await gotoHome(page)
+    // The public products: their own screenshots stand behind, the lightest backdrops.
+    for (const product of LIVE) {
+      const card = cardOf(page, product.id)
+      const root = card.locator('.om-root')
+      await card.evaluate((el) => el.scrollIntoView({ block: 'center', behavior: 'instant' }))
+      // At the unveil: everything on the stage held where it is, the stage
+      // held at its unveil, and whatever the unveil set going (the flood's
+      // circle, the flash, the sheen, the statue, the backdrop) stepped
+      // through its first 1.2 s together.
+      await expect
+        .poll(() => root.evaluate((r) => r.getAttribute('data-phase') === 'unveil' && r.getAnimations({ subtree: true }).some((a) => (a as CSSAnimation).animationName === 'om-sheen' && a.startTime !== null)), { timeout: 40_000, intervals: [16] })
+        .toBe(true)
+      const held = await root.evaluate((r) => {
+        const w = window as unknown as { held: Animation[]; pin: MutationObserver }
+        w.pin = new MutationObserver(() => {
+          if (r.getAttribute('data-phase') === 'landing') r.setAttribute('data-phase', 'unveil')
+        })
+        w.pin.observe(r, { attributes: true, attributeFilter: ['data-phase'] })
+        const all = r.getAnimations({ subtree: true })
+        all.forEach((a) => a.pause())
+        const sheen = all.find((a) => (a as CSSAnimation).animationName === 'om-sheen')!
+        w.held = all.filter((a) => a.startTime !== null && Math.abs(Number(a.startTime) - Number(sheen.startTime)) <= 60)
+        return w.held.map((a) => (a as CSSAnimation).animationName ?? (a as CSSTransition).transitionProperty)
+      })
+      expect(held, 'the unveil held').toEqual(expect.arrayContaining(['om-sheen', 'om-flash', 'clip-path']))
+      const labels = [card.locator('.om-eyebrow'), card.locator('.om-brand')]
+      const found = await Promise.all(labels.map((el) => glyphsOf(page, el)))
+      const green = `[data-title-card="${product.id}"] .om-l { background-image: linear-gradient(#00ff00, #00ff00) !important; -webkit-text-stroke-color: transparent !important; }`
+      const worst = { word: { ratio: 99, t: 0 }, eyebrow: { ratio: 99, t: 0 }, number: { ratio: 99, t: 0 } }
+      for (let t = 0; t <= 1200; t += 50) {
+        await page.evaluate((t) => (window as unknown as { held: Animation[] }).held.forEach((a) => (a.currentTime = t)), t)
+        const word = await wordContrast(page, await wordBox(card.locator('.om-word')), green)
+        if (word < worst.word.ratio) worst.word = { ratio: word, t }
+        for (const [k, key] of (['eyebrow', 'number'] as const).entries()) {
+          const { ratio } = await inkContrast(page, labels[k], found[k])
+          if (ratio < worst[key].ratio) worst[key] = { ratio, t }
+        }
+      }
+      expect(worst.word.ratio, `${product.id}: the word at ${worst.word.t} ms into the unveil (its halo kept)`).toBeGreaterThanOrEqual(3)
+      expect(worst.eyebrow.ratio, `${product.id}: the eyebrow at ${worst.eyebrow.t} ms into the unveil`).toBeGreaterThanOrEqual(4.5)
+      expect(worst.number.ratio, `${product.id}: the number at ${worst.number.t} ms into the unveil`).toBeGreaterThanOrEqual(4.5)
+      // Then its landing, under the light at its brightest (every shaft at
+      // its peak, lightAtPeak) with the spotlight brought to each in turn.
+      await root.evaluate((r) => {
+        const w = window as unknown as { held: Animation[]; pin: MutationObserver }
+        w.pin.disconnect()
+        r.getAnimations({ subtree: true }).forEach((a) => (a.effect?.getTiming().iterations === Infinity ? a.play() : a.finish()))
+        r.setAttribute('data-phase', 'landing')
+      })
+      await expect.poll(() => card.locator('.om-light').evaluate((el) => Number(getComputedStyle(el).opacity)), { timeout: 15_000 }).toBeGreaterThan(0.99)
+      await expect.poll(() => card.locator('.om-spot').evaluate((el) => Number(getComputedStyle(el).opacity)), { timeout: 15_000 }).toBeGreaterThan(0.99)
+      for (const [key, el] of [['eyebrow', labels[0]], ['number', labels[1]], ['tagline', card.locator('.om-tagline')]] as const) {
+        await spotlightOn(page, card.locator('.om-stage'), el)
+        const { ratio, count } = await inkContrast(page, el)
+        expect(count, `${product.id}: the ${key}'s glyphs found`).toBeGreaterThan(10)
+        expect(ratio, `${product.id}: the ${key} under the light at its peak, the spotlight on it`).toBeGreaterThanOrEqual(4.5)
+      }
+      await page.mouse.move(0, 0)
+    }
   })
 
   test('a swipe or wheel over a card scrolls the page, and the row below keeps the heading (for screen readers) and the link', async ({ page }) => {
@@ -623,20 +786,39 @@ test.describe('the products act, under reduced motion', () => {
     await expect(page.locator('#products').getByRole('button', { name: /^(Pause|Play) the / })).toHaveCount(0)
   })
 
-  test('a title card opens straight on its still landing', async ({ page }) => {
+  test('a title card opens straight on its still landing, whole and still', async ({ page }) => {
     await page.emulateMedia({ reducedMotion: 'reduce' })
     await gotoHome(page)
     const card = page.locator(`#products [data-title-card="${PRODUCTS[0].id}"]`)
     await card.evaluate((el) => el.scrollIntoView({ block: 'center', behavior: 'instant' }))
     const root = card.locator('.om-root')
     await expect(root).toBeAttached({ timeout: 20_000 })
-    // No load: it is on the landing within a moment of mounting (a playing
-    // card holds its load for 1.8 s at least). The intro's count, barcode and
-    // plate are the intro's alone: never shown on a card.
+    // No load and no unveil: it is on the landing within a moment of
+    // mounting (a playing card's load waits for it to arrive, and its
+    // unveil takes three seconds). The intro's count, barcode and plate are
+    // the intro's alone: never shown on a card.
     await expect(root).toHaveAttribute('data-phase', 'landing', { timeout: 600 })
     await expect(root).toHaveAttribute('aria-busy', 'false', { timeout: 600 })
     for (const part of ['.om-counter', '.om-bars', '.om-plate']) await expect(card.locator(part)).toBeHidden()
-    // A phone's entrance is not armed either: nothing is held back.
-    await expect(card.locator('[data-arrived]')).toHaveCount(0)
+    // Nothing is held back: no load armed, the word and the tagline whole.
+    await expect(card.locator('[data-load]')).toHaveCount(0)
+    await expect.poll(() => card.locator('.om-l, .om-tagline span').evaluateAll((els) => Math.min(...els.map((el) => Number(getComputedStyle(el).opacity))))).toBe(1)
+    // Still: nothing loops (the stars' twinkle, the statue's bob and the
+    // grain are the component's own, off under reduced motion), and its
+    // light is drawn once and holds.
+    await sleep(500)
+    const looping = await card.evaluate((el) => el.getAnimations({ subtree: true }).filter((a) => a.playState === 'running' && a.effect?.getTiming().iterations === Infinity).length)
+    expect(looping, 'animations looping in the card').toBe(0)
+    const signature = () =>
+      card.locator('.om-light').evaluate((c) => {
+        const canvas = c as HTMLCanvasElement
+        const data = canvas.getContext('2d')!.getImageData(0, 0, canvas.width, canvas.height).data
+        let h = 0
+        for (let i = 0; i < data.length; i += 4 * 53) h = (h * 31 + data[i] + data[i + 1] + data[i + 3]) >>> 0
+        return h
+      })
+    const first = await signature()
+    await sleep(700)
+    expect(await signature(), 'the light holds still').toBe(first)
   })
 })

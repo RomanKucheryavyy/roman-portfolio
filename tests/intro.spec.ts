@@ -2,6 +2,7 @@ import AxeBuilder from '@axe-core/playwright'
 import { expect, test, type BrowserContext, type Page } from '@playwright/test'
 import { CERTIFICATIONS, PERSON, PROJECTS, ROLES } from '@/lib/content'
 import { toRoman } from '@/lib/roman'
+import { inkContrast, lightAtPeak, spotlightOn, wordBox, wordContrast } from './contrast'
 import { collectConsole, collectCspReports, project, sleep } from './helpers'
 
 /**
@@ -69,6 +70,25 @@ async function swipeUp(context: BrowserContext, page: Page) {
 
 /** The stage's script chunks (not the stylesheet, which names the layer too). */
 const STAGE_SCRIPTS = /\/_next\/static\/chunks\/.*\.js(\?|$)/
+
+/** The names of the CSS animations the stage is running (or holding at their end) right now. */
+const runningAnimations = (page: Page) =>
+  page.evaluate((sel) => {
+    const layer = document.querySelector(sel)
+    return layer ? layer.getAnimations({ subtree: true }).map((a) => (a as CSSAnimation).animationName ?? '').filter(Boolean) : []
+  }, LAYER)
+
+/** A short fingerprint of what the light canvas holds (its pixels, as an image). */
+const lightPrint = (page: Page) =>
+  page.locator(`${LAYER} canvas.om-light`).evaluate((c: HTMLCanvasElement) => {
+    const url = c.toDataURL()
+    let h = 0
+    for (let i = 0; i < url.length; i++) h = (h * 31 + url.charCodeAt(i)) | 0
+    const blank = document.createElement('canvas')
+    blank.width = c.width
+    blank.height = c.height
+    return { hash: h, drawn: url !== blank.toDataURL(), size: [c.width, c.height] }
+  })
 
 const fromRoman = (s: string) => {
   if (s === '·') return 0
@@ -167,29 +187,31 @@ test.describe('what it says', () => {
     await expect(page.getByRole('button', { name: 'Enter' })).toBeVisible()
   })
 
-  test("no stage light and no ornaments: no shafts, dust, spotlight, flash or sheen; no rules, stars or outlined pills; nothing under 12px; ENTER the page's filled button", async ({ page }) => {
+  test('the published animation plays: the word fills, the rule draws in, the stars twinkle, the counts in their pills; nothing under 12px', async ({ page }) => {
     await openIntro(page)
     const root = page.locator(`${LAYER} .om-root`)
-    // Through the unveil (the flash and the sheen would run there) to the landing.
-    const seen = new Set<string>()
-    for (let i = 0; i < 80 && (await phase(page)) !== 'landing'; i++) {
-      const shown = await root.evaluate((el) =>
-        ['.om-light', '.om-spot', '.om-flash', '.om-sheen', '.om-rule', '.om-star']
-          .filter((sel) => [...el.querySelectorAll(sel)].some((n) => n.getClientRects().length > 0 && getComputedStyle(n).display !== 'none'))
-          .join(' '),
-      )
-      if (shown) seen.add(shown)
+    // The word fills from the floor as the load climbs.
+    const fills: number[] = []
+    for (let i = 0; i < 60 && (await phase(page)) === 'load'; i++) {
+      fills.push(parseFloat(await root.locator('.om-word').evaluate((w) => (w as HTMLElement).style.getPropertyValue('--om-fill') || '0')))
       await sleep(100)
     }
-    expect([...seen], 'light or ornament shown during the load or the unveil').toEqual([])
-    await expect(root).toHaveAttribute('data-phase', 'landing', { timeout: 20_000 })
-    for (const part of ['.om-light', '.om-spot', '.om-flash', '.om-sheen', '.om-rule', '.om-star', '.om-hint i']) {
-      await expect(page.locator(`${LAYER} ${part}`).first()).toBeHidden()
+    expect(new Set(fills).size, `the fill as it climbed: ${fills.join(' ')}`).toBeGreaterThan(3)
+    for (let i = 1; i < fills.length; i++) expect(fills[i], fills.join(' ')).toBeGreaterThanOrEqual(fills[i - 1])
+    // The rule beside the eyebrow is drawn in (its scale run out to 1), a line on each side of it.
+    await expect.poll(() => root.locator('.om-rule').evaluate((el) => getComputedStyle(el).transform)).toBe('matrix(1, 0, 0, 1, 0, 0)')
+    await expect(root.locator('.om-rule')).toBeVisible()
+    // The stars are out, and twinkle.
+    await expect.poll(() => root.locator('.om-star').evaluateAll((all) => all.filter((s) => Number(getComputedStyle(s).opacity) > 0.9).length)).toBeGreaterThanOrEqual(4)
+    expect(await runningAnimations(page)).toContain('om-twinkle')
+    // The counts stand in their pills: outlined in the rule's ink.
+    for (const pill of await root.locator('.om-pill').all()) {
+      const edge = await pill.evaluate((el) => ({ width: getComputedStyle(el).borderTopWidth, style: getComputedStyle(el).borderTopStyle, radius: parseFloat(getComputedStyle(el).borderTopLeftRadius) }))
+      expect(edge.width).toBe('1px')
+      expect(edge.style).toBe('solid')
+      expect(edge.radius).toBeGreaterThan(10)
     }
-    // The flood wells up from the floor: never a widening circle (a spotlight's iris).
-    expect(await root.locator('.om-flood').evaluate((el) => getComputedStyle(el).clipPath)).toBe('none')
-    // The counts are plain words, no outline.
-    for (const pill of await page.locator(`${LAYER} .om-pill`).all()) expect(await pill.evaluate((el) => getComputedStyle(el).borderTopWidth)).toBe('0px')
+    await expect(root).toHaveAttribute('data-phase', 'landing', { timeout: 20_000 })
     // Nothing shown under the page's 12px floor.
     const small = await root.evaluate((el) =>
       [...el.querySelectorAll<HTMLElement>('.om-chrome *')]
@@ -199,11 +221,238 @@ test.describe('what it says', () => {
         .map((n) => `${n.className}: ${getComputedStyle(n).fontSize}`),
     )
     expect(small).toEqual([])
-    // ENTER is the page's one filled button: marble, the ground's ink.
+    // ENTER as the component draws it: outlined in the text ink over a veil of the ground.
     const enter = page.getByRole('button', { name: 'Enter' })
     await expect(enter).toBeVisible()
-    const look = await enter.evaluate((el) => ({ fill: getComputedStyle(el).backgroundColor, ink: getComputedStyle(el).color }))
-    expect(look).toEqual({ fill: 'rgb(242, 236, 226)', ink: 'rgb(11, 8, 6)' })
+    const look = await enter.evaluate((el) => ({ edge: `${getComputedStyle(el).borderTopWidth} ${getComputedStyle(el).borderTopStyle} ${getComputedStyle(el).borderTopColor}`, fill: getComputedStyle(el).backgroundColor }))
+    expect(look).toEqual({ edge: '1px solid rgb(243, 238, 230)', fill: 'rgba(11, 8, 6, 0.3)' })
+    // The scroll hint's line falls, beside the word.
+    await expect(root.locator('.om-hint i')).toBeAttached()
+    expect(await runningAnimations(page)).toContain('om-hint')
+  })
+
+  test('the unveil plays: the flood opens as its circle, under the flash and the sheen; then the figures rise', async ({ page }) => {
+    await openIntro(page)
+    const root = page.locator(`${LAYER} .om-root`)
+    // Closed while it loads.
+    expect(await root.locator('.om-flood').evaluate((el) => getComputedStyle(el).clipPath)).toBe('circle(0% at 50% 56%)')
+    // From the moment of the unveil, the flood's clip read on every frame for 2.5 s.
+    await page.evaluate((sel) => {
+      const w = window as unknown as { flood: string[]; floodDone: boolean; unveiled: string[] }
+      const root = document.querySelector(`${sel} .om-root`)!
+      const flood = root.querySelector('.om-flood')!
+      w.flood = []
+      w.unveiled = []
+      const watch = new MutationObserver(() => {
+        if (root.getAttribute('data-phase') !== 'unveil') return
+        watch.disconnect()
+        // The flash and the sheen, as the unveil starts.
+        w.unveiled = root.getAnimations({ subtree: true }).map((a) => (a as CSSAnimation).animationName ?? '')
+        const start = performance.now()
+        const read = () => {
+          w.flood.push(`${getComputedStyle(flood).clipPath} ${getComputedStyle(flood).transitionProperty} ${getComputedStyle(flood).transitionDuration}`)
+          if (performance.now() - start < 2500) requestAnimationFrame(read)
+          else w.floodDone = true
+        }
+        read()
+      })
+      watch.observe(root, { attributes: true, attributeFilter: ['data-phase'] })
+    }, LAYER)
+    await expect.poll(() => page.evaluate(() => !!(window as unknown as { floodDone?: boolean }).floodDone), { timeout: 30_000 }).toBe(true)
+    const { flood, unveiled } = await page.evaluate(() => {
+      const w = window as unknown as { flood: string[]; unveiled: string[] }
+      return { flood: w.flood, unveiled: w.unveiled }
+    })
+    expect(unveiled).toContain('om-flash')
+    expect(unveiled).toContain('om-sheen')
+    // A circle from the middle of the stage, eased open (a transition, not a cut), never closing, to the whole stage.
+    const radii = flood.map((f) => {
+      expect(f).toMatch(/^circle\([\d.]+% at 50% 56%\) clip-path 1\.7s$/)
+      return parseFloat(f.slice('circle('.length))
+    })
+    for (let i = 1; i < radii.length; i++) expect(radii[i], radii.join(' ')).toBeGreaterThanOrEqual(radii[i - 1])
+    expect(radii[0], radii.join(' ')).toBeLessThan(60)
+    expect(radii.at(-1)!, radii.join(' ')).toBeGreaterThan(110)
+    // The figures rise into the light.
+    await expect.poll(() => root.locator('.om-fig').first().evaluate((el) => Number(getComputedStyle(el).opacity)), { timeout: 5000 }).toBeGreaterThan(0.9)
+  })
+
+  test('the landing lives: the light and its dust, the spotlight, the figures breathing, the grain moving', async ({ page }) => {
+    await openIntro(page)
+    const root = page.locator(`${LAYER} .om-root`)
+    await expect(root).toHaveAttribute('data-phase', 'landing', { timeout: 20_000 })
+    // The light: its canvas shown, drawn, and moving (the dust drifts).
+    const light = root.locator('canvas.om-light')
+    await expect(light).toBeVisible()
+    await expect.poll(() => light.evaluate((el) => Number(getComputedStyle(el).opacity)), { timeout: 6000 }).toBe(1)
+    const first = await lightPrint(page)
+    expect(first.drawn, 'the light canvas has drawn its shafts and dust').toBe(true)
+    // (Read until it differs: a busy machine painting the stage in software
+    // can go a few hundred milliseconds between frames.)
+    await expect.poll(async () => (await lightPrint(page)).hash, { message: 'the light canvas moves', timeout: 5000 }).not.toBe(first.hash)
+    // The spotlight is up, and follows the pointer.
+    await expect(root.locator('.om-spot')).toBeVisible()
+    await expect.poll(() => root.locator('.om-spot').evaluate((el) => Number(getComputedStyle(el).opacity)), { timeout: 6000 }).toBe(1)
+    await page.mouse.move(100, 100)
+    await page.mouse.move(page.viewportSize()!.width - 100, page.viewportSize()!.height - 100, { steps: 6 })
+    await expect.poll(() => root.evaluate((el) => parseFloat((el as HTMLElement).style.getPropertyValue('--om-sx')))).toBeGreaterThan(55)
+    // The figures breathe; the grain moves.
+    const names = await runningAnimations(page)
+    expect(names).toContain('om-bob')
+    expect(names).toContain('om-grain')
+  })
+
+  test('its words clear AA over the light at its brightest: every shaft at its peak, the spotlight under each', async ({ page }) => {
+    test.setTimeout(150_000)
+    await lightAtPeak(page)
+    await openIntro(page)
+    await expect(page.locator(`${LAYER} .om-root[data-phase="landing"]`)).toBeAttached({ timeout: 20_000 })
+    // The copy, the asides and the scroll hint have faded in.
+    await sleep(4500)
+    const labels = ['.om-brand', '.om-eyebrow', '.om-pill', '.om-tagline', '.om-cta', '.om-plate', '.om-hint span']
+    if (project() !== 'mobile') labels.push('.om-top a', '.om-aside b', '.om-aside p')
+    const seen: string[] = []
+    for (const sel of labels) {
+      for (const [k, el] of (await page.locator(`${LAYER} ${sel}`).all()).entries()) {
+        if (!(await el.isVisible())) continue
+        await spotlightOn(page, page.locator(`${LAYER} .om-stage`), el)
+        const { ratio, count } = await inkContrast(page, el)
+        seen.push(`${sel}[${k}] ${ratio.toFixed(2)}`)
+        expect(count, `${sel}[${k}]: glyph pixels found`).toBeGreaterThan(10)
+        expect(ratio, `${sel}[${k}] against the light behind it (5th percentile)`).toBeGreaterThanOrEqual(4.5)
+      }
+    }
+    expect(seen.length, seen.join(', ')).toBeGreaterThanOrEqual(project() === 'mobile' ? 7 : 12)
+  })
+
+  test('at the unveil the sheen and the flash pass beneath its words without taking them under AA', async ({ page }) => {
+    test.setTimeout(150_000)
+    await openIntro(page)
+    await expect.poll(() => phase(page), { timeout: 20_000, intervals: [50] }).toBe('unveil')
+    // The sheen and the flash held at each moment of their run in turn (Web
+    // Animations), and the stage held at its unveil while they are read (its
+    // timer would set the landing, and take them away, before the last).
+    const held = await page.evaluate((sel) => {
+      const w = window as unknown as { held: Animation[]; pin: MutationObserver }
+      const root = document.querySelector(`${sel} .om-root`)!
+      w.pin = new MutationObserver(() => {
+        if (root.getAttribute('data-phase') === 'landing') root.setAttribute('data-phase', 'unveil')
+      })
+      w.pin.observe(root, { attributes: true, attributeFilter: ['data-phase'] })
+      w.held = root.getAnimations({ subtree: true }).filter((a) => ['om-sheen', 'om-flash'].includes((a as CSSAnimation).animationName))
+      w.held.forEach((a) => a.pause())
+      return w.held.length
+    }, LAYER)
+    expect(held).toBe(2)
+    // The labels along the top of the stage, read together: their glyphs once
+    // (magenta, no halo), then what stands behind them (their ink made
+    // transparent, their halos kept) at each moment.
+    const labels = ['.om-brand', '.om-eyebrow', '.om-pill', '.om-top a'].map((sel) => `${LAYER} ${sel}`).join(', ')
+    const band = { x: 0, y: 0, width: page.viewportSize()!.width, height: 140 }
+    const ink = (css: string) =>
+      page.evaluate(
+        ({ labels, css }) => {
+          let tag = document.getElementById('ink-under-test')
+          if (!tag) document.head.append((tag = Object.assign(document.createElement('style'), { id: 'ink-under-test' })))
+          tag.textContent = css ? `:is(${labels}) { transition: none !important; ${css} }` : ''
+        },
+        { labels, css },
+      )
+    await ink('color: #ff00ff !important; text-shadow: none !important;')
+    const glyphs = (await page.screenshot({ clip: band, animations: 'allow' })).toString('base64')
+    const boxes = await page.evaluate(
+      (labels) =>
+        [...document.querySelectorAll<HTMLElement>(labels)]
+          .filter((el) => el.getClientRects().length > 0 && getComputedStyle(el).visibility !== 'hidden')
+          .map((el, k) => {
+            const r = el.getBoundingClientRect()
+            let alpha = 1
+            for (let n: Element | null = el; n; n = n.parentElement) alpha *= Number(getComputedStyle(n).opacity)
+            return { key: `${el.className.toString().split(' ')[0] || el.textContent}[${k}]`, x: r.left, y: r.top, w: r.width, h: r.height, alpha }
+          }),
+      labels,
+    )
+    await ink('')
+    const inks = await page.evaluate((labels) => [...document.querySelectorAll<HTMLElement>(labels)].filter((el) => el.getClientRects().length > 0 && getComputedStyle(el).visibility !== 'hidden').map((el) => getComputedStyle(el).color), labels)
+    expect(boxes.length).toBeGreaterThanOrEqual(project() === 'mobile' ? 4 : 8)
+    const worst = new Map<string, number>()
+    for (let t = 0; t <= 1200; t += 50) {
+      await page.evaluate((t) => (window as unknown as { held: Animation[] }).held.forEach((a) => (a.currentTime = t)), t)
+      await ink('color: transparent !important;')
+      const behind = (await page.screenshot({ clip: band, animations: 'allow' })).toString('base64')
+      await ink('')
+      const ratios = await page.evaluate(
+        async ({ behind, glyphs, boxes, inks, scale }) => {
+          const read = async (b64: string) => {
+            const img = new Image()
+            img.src = `data:image/png;base64,${b64}`
+            await img.decode()
+            const c = document.createElement('canvas')
+            c.width = img.width
+            c.height = img.height
+            const ctx = c.getContext('2d')!
+            ctx.drawImage(img, 0, 0)
+            return { d: ctx.getImageData(0, 0, c.width, c.height).data, w: c.width, h: c.height }
+          }
+          const lin = (v: number) => ((v /= 255) <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4)
+          const lum = (r: number, g: number, b: number) => 0.2126 * lin(r) + 0.7152 * lin(g) + 0.0722 * lin(b)
+          const [bg, mg] = await Promise.all([read(behind), read(glyphs)])
+          return boxes.map((b, k) => {
+            const [tr, tg, tb] = inks[k].match(/[\d.]+/g)!.map(Number)
+            const a = b.alpha
+            const rs: number[] = []
+            for (let y = Math.max(0, Math.floor(b.y * scale)); y < Math.min(mg.h, (b.y + b.h) * scale); y++)
+              for (let x = Math.max(0, Math.floor(b.x * scale)); x < Math.min(mg.w, (b.x + b.w) * scale); x++) {
+                const i = (y * mg.w + x) * 4
+                if (!(mg.d[i] > 200 && mg.d[i + 1] < 90 && mg.d[i + 2] > 200)) continue
+                const text = lum(a * tr + (1 - a) * bg.d[i], a * tg + (1 - a) * bg.d[i + 1], a * tb + (1 - a) * bg.d[i + 2])
+                const back = lum(bg.d[i], bg.d[i + 1], bg.d[i + 2])
+                rs.push((Math.max(text, back) + 0.05) / (Math.min(text, back) + 0.05))
+              }
+            rs.sort((p, q) => p - q)
+            return rs[Math.floor(rs.length * 0.05)] ?? 99
+          })
+        },
+        { behind, glyphs, boxes, inks, scale: await page.evaluate(() => devicePixelRatio) },
+      )
+      boxes.forEach((b, k) => worst.set(b.key, Math.min(worst.get(b.key) ?? 99, ratios[k])))
+    }
+    await page.evaluate(() => (window as unknown as { pin: MutationObserver }).pin.disconnect())
+    for (const [key, ratio] of worst) expect(ratio, `${key}: its worst moment under the sheen and the flash`).toBeGreaterThanOrEqual(4.5)
+  })
+
+  test('at the unveil the sheen crosses the word behind its letters, never taking it under 3:1', async ({ page }) => {
+    test.setTimeout(150_000)
+    await openIntro(page)
+    await expect.poll(() => phase(page), { timeout: 20_000, intervals: [50] }).toBe('unveil')
+    // Everything on the stage held where it is (so the word stays put), the
+    // stage held at its unveil, and the sheen and the flash stepped through
+    // their run.
+    const held = await page.evaluate((sel) => {
+      const w = window as unknown as { held: Animation[]; pin: MutationObserver }
+      const root = document.querySelector(`${sel} .om-root`)!
+      w.pin = new MutationObserver(() => {
+        if (root.getAttribute('data-phase') === 'landing') root.setAttribute('data-phase', 'unveil')
+      })
+      w.pin.observe(root, { attributes: true, attributeFilter: ['data-phase'] })
+      const all = root.getAnimations({ subtree: true })
+      all.forEach((a) => a.pause())
+      w.held = all.filter((a) => ['om-sheen', 'om-flash'].includes((a as CSSAnimation).animationName))
+      return w.held.length
+    }, LAYER)
+    expect(held).toBe(2)
+    const box = await wordBox(page.locator(`${LAYER} .om-word`))
+    const green = `${LAYER} :is(.om-l, .om-init) { background-image: linear-gradient(#00ff00, #00ff00) !important; -webkit-text-stroke-color: transparent !important; }`
+    let worst = { ratio: 99, t: 0 }
+    for (let t = 0; t <= 1200; t += 50) {
+      await page.evaluate((t) => (window as unknown as { held: Animation[] }).held.forEach((a) => (a.currentTime = t)), t)
+      // The letters drawn solid green (their halo kept) find them; then the
+      // word against the ring round it (wordContrast).
+      const ratio = await wordContrast(page, box, green)
+      if (ratio < worst.ratio) worst = { ratio, t }
+    }
+    await page.evaluate(() => (window as unknown as { pin: MutationObserver }).pin.disconnect())
+    expect(worst.ratio, `the word at ${worst.t} ms into the sheen`).toBeGreaterThanOrEqual(3)
   })
 
   test('Skip rushes the load', async ({ page }) => {
@@ -227,6 +476,20 @@ test.describe('the ways out', () => {
     await expectGone(page)
     await expect.poll(() => page.evaluate(() => document.activeElement?.id)).toBe('main')
     await expectScrolls(page)
+  })
+
+  test('on a phone held sideways ENTER takes the tap (the foot, level with it there, lets it through)', async ({ page }) => {
+    test.skip(project() !== 'mobile', 'a phone on its side')
+    await page.setViewportSize({ width: 844, height: 390 })
+    await openIntro(page)
+    const enter = page.getByRole('button', { name: 'Enter' })
+    await expect(page.locator(`${LAYER} .om-root[data-phase="landing"]`)).toBeAttached({ timeout: 20_000 })
+    await expect(enter).toBeVisible()
+    // What a tap in its middle lands on is ENTER itself.
+    const box = (await enter.boundingBox())!
+    expect(await page.evaluate(({ x, y }) => !!document.elementFromPoint(x, y)?.closest('.om-cta'), { x: box.x + box.width / 2, y: box.y + box.height / 2 })).toBe(true)
+    await enter.click()
+    await expectGone(page)
   })
 
   test('Escape during the load lifts it at once, without the unveil', async ({ page }) => {

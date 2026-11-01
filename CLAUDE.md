@@ -53,9 +53,19 @@ The same day, sent the hero (the kokonut curtain with Hercules painted on
 it) in five palettes: "i don’t like how your mixing our previous hero with
 this one, i like the roman theme better and not this like stage light look
 thingy", and "i actually hate it". So the curtain is deleted and the hero
-is a page of the intro's print (below), and nothing on the page is lit like
-a stage: no shafts, beams, spotlights or lit stage. Never bring the curtain
-or its light back.
+is a page of the intro's print (below). Never bring the curtain or its
+light back.
+
+That round (#13) had also read "stage light" as the Old Masters
+component's own light, and switched it off on the intro, the title cards
+and the hero's painting. With it live, Roman: "but the animation from2 1st
+dev for this roman theme is now gone". So the component's animation is
+part of the Roman theme and plays on every Old Masters stage, as
+published: the word filling in, the flood opening as its circle, the
+flash and the sheen, the figures rising, breathing and leaning with the
+pointer, the shafts of light and the dust in them, the spotlight on the
+pointer, the moving grain, the stars twinkling. What he hated was the
+curtain, never the component's light.
 
 ## Rules
 
@@ -88,16 +98,24 @@ or its light back.
   keeps its own Roman idea. The statues stand only in the intro, the
   hero's print and the four title cards; the meander ring draws only in the
   intro.
-- **No stage light** (Roman, 2026-11-01, above): no light shafts or beams
-  falling on things, no spotlight, no pool of light from above, no lit
-  stage, anywhere: not in the hero, not in the intro, not on the title
-  cards. On every old-masters stage the component's light is off from
-  outside (`rays={false}`, `dust={false}`; its spotlight, flash and sheen
-  hidden) and its flood wells up from the floor, never opening as a
-  widening circle. The wash is a print's flood welling up from the floor, a
-  soft glow behind a thing, or a tone (Act I's leaves' heads, the footer's
-  glass). Act IV's glory, fine gold rays round the laurel, still, is an
-  emblem struck in gold, not a light.
+- **No curtain; the component's light is its own** (Roman, 2026-11-01,
+  above): the old hero's curtain (kokonut's lit drapery) is gone and never
+  comes back, nor any lit drapery, nor a light of the page's own laid over
+  the print (shafts, beams or a spotlight the page draws itself, a pool of
+  light from above). The Old Masters component's own light is its
+  animation and stays on wherever it plays (the intro, the title cards,
+  the hero's painting): its shafts and the dust in them (`rays`, `dust`,
+  its light canvas), its spotlight on the pointer, the flash and the sheen
+  at the unveil, and its flood opening as its circle. Never switch them
+  off or hide them from outside where a stage plays them (the hero's
+  painting opens on its landing, so it has no unveil, and its flood,
+  vignette and grain are the hero's own, there before it lands); where
+  they pass under words, keep the words AA (a dark halo, the word in front
+  of the sheen), never by taking the light away. The page's own wash is a print's flood welling up from
+  the floor (the hero's ground, the 404's), a soft glow behind a thing, or
+  a tone (Act I's leaves' heads, the footer's glass). Act IV's glory, fine
+  gold rays round the laurel, still, is an emblem struck in gold, not a
+  light.
 
 ## The look: the Imperial Stage
 
@@ -151,15 +169,19 @@ or its light back.
   The only edges are ones that do a job: form fields, the gold focus ring,
   the device frames (safari, iphone), and the one filled button a screen
   holds; the only line is the gold mark under the top bar's current
-  section. Gone, and not to come back: the section headers' hairlines and
-  ✦ crest, ✦ stars (the intro's too), double frames, inner rules (the
-  intro's beside its eyebrow too), rivets, the tabula ansata, dashed boxes,
-  dotted grids, icon tiles, ringed discs, bands, the beam diagrams, Act
-  III's rail and ticks, a folio's lit top edge, the top bar's scroll
-  hairline, the footer's gilt edge and decorative pills (the intro's two
-  counts are plain words).
+  section. Gone from the page, and not to come back: the section headers'
+  hairlines and ✦ crest, ✦ stars, double frames, inner rules, rivets, the
+  tabula ansata, dashed boxes, dotted grids, icon tiles, ringed discs,
+  bands, the beam diagrams, Act III's rail and ticks, a folio's lit top
+  edge, the top bar's scroll hairline, the footer's gilt edge and
+  decorative pills. The Old Masters stages keep the component's own
+  ornament, which is part of its animation: in the intro its stars
+  twinkling, the rule drawing in beside its eyebrow, the scroll hint's
+  falling line, its two counts in their outlined pills and ENTER outlined;
+  on the title cards its stars (their pills and rules stay hidden).
 - **Shapes** (`look.ts`): `stageButton('primary', 'md' | 'sm')`, the intro's
-  ENTER (rectangular, a 2px radius, Geist capitals, marble fill), for a
+  ENTER filled (rectangular, a 2px radius, Geist capitals, marble fill; the
+  intro's own ENTER stays outlined, as the component draws it), for a
   screen's one primary action ("See the work", "Send": kokonut-undo-button's
   `radius`, a `[site edit]`); every other action is `stageLink()` or
   `stageLink('away')` (Geist 13px in marble under a gold line that thickens
@@ -206,12 +228,21 @@ or its light back.
   stands full-width in the intro and the hero already).
 - **Motion, on a phone as on desktop**, each section its own; every
   entrance plays once, only for what arrives from below the screen, and
-  nothing moves under reduced motion or without scripts: the hero's words set in as the page opens (the
-  name never moves) and Hercules rises once the intro has gone; every act
+  nothing moves under reduced motion or without scripts: the intro plays
+  the component's animation whole (the load, the unveil, the living
+  landing); the hero's words set in as the page opens (the
+  name never moves), Hercules rises once the intro has gone, and then the
+  painting lives as the intro's landing does while the hero is on screen
+  (the shafts and the dust drifting, the spotlight on the pointer, his
+  breathing and lean, the grain moving); every act
   header cuts itself in; Act I's folios stack (below); a title card mounts
-  early and lands composed at every width, then its flood wells up from
-  the floor, its backdrop surfaces and its statue and tagline come in; an
-  inscription rises line by line (Praxis's XVIII struck in) and the Alongside
+  early, the component drawing its word in outline letter by letter, and
+  once the word is on screen and drawn it opens as the component does: the
+  word fills,
+  surging and stalling, the flood opens as its
+  circle under the flash and the sheen, the statue rises and the backdrop
+  surfaces, and it lives on its landing (its light only while on screen);
+  an inscription rises line by line (Praxis's XVIII struck in) and the Alongside
   Brain's chain pulses down its steps while on screen (with a Pause); Act
   III's years rise out of their baselines, their words after; Act IV's rank
   grows and is written in, then its sheen comes round, and on a phone the
@@ -277,17 +308,17 @@ report-only; `next.config.ts` says what each source is for).
 
 | Spec | Covers |
 |---|---|
-| `smoke` | Every route and head file, the redirects, a clean console, no request off-origin, the CSP, the server HTML (the JSON-LD Person and its award, the `<noscript>` summary, the rank in llms.txt), the page without WebGL, the hero (the Roman print: no canvas and no light in it, before the painting or after; the name, his words and both ways in from the records; the first screen holding the name, his words, both ways in and his head at 390x844, 375x667 and 1440x900; the name AA where it meets the statue: the print behind its letters, without their halo, 3:1 or more), the hero's painting (aria-hidden, inert, nothing to focus, Hercules and the David, still once landed, the name the largest paint; never without WebGL or for a browser that saves data; its chunk failing leaves the page as it is), the act headers (the numeral alone and large in Cinzel, no rule; the entrance held below the screen and let go whole, never below full when the page lands on one, nothing held under reduced motion; printed as a PDF, nothing held) |
+| `smoke` | Every route and head file, the redirects, a clean console, no request off-origin, the CSP, the server HTML (the JSON-LD Person and its award, the `<noscript>` summary, the rank in llms.txt), the page without WebGL, the hero (the Roman print: no curtain, its only canvas the painting's 2D light canvas, none without WebGL; the name, his words and both ways in from the records; the first screen holding the name, his words, both ways in and his head at 390x844, 375x667 and 1440x900; the name AA where it meets the statue with the light at its brightest: the print behind its letters, without their halo, 3:1 or more), the hero's painting (aria-hidden, inert, nothing to focus, Hercules and the David, the name the largest paint; once landed the intro's living landing: its light and spotlight up, he breathes, the grain flickers, the light draws and moves, only while the hero is on screen; on the desktop the spotlight and the figure follow the pointer and come back to rest when it leaves the hero; still under reduced motion, its light drawn once; never without WebGL or for a browser that saves data; its chunk failing leaves the page as it is), the act headers (the numeral alone and large in Cinzel, no rule; the entrance held below the screen and let go whole, never below full when the page lands on one, nothing held under reduced motion; printed as a PDF, nothing held) |
 | `work` | Act I: the phone stack at nine phone sizes from 340x640 to 430x932 (each folio min(528, height − 90) tall and whole, its link clear of the foot, its plate between 112px and 16:10, pinned at 64 + min(i, 3) × 6, the last on screen once stacked), flat at 320x568, in landscape, on a tablet and under reduced motion (each folio below the screen rising once, none on screen ever hidden, none rising in a stack), a link's focus bringing its folio to the front, the wide stack's offsets and no scale under reduced motion, no frames (no border, rule, rivet, tablet or dashed box), the number as type, the link a text link, the status in italic, 12px and up, nothing shifting |
 | `a11y` | axe, any impact, on `/`, on `/` again after a reader's scroll once every entrance has played (nothing left below full), `/resume`, the 404 and the message box's sent and failure panels |
 | `keyboard-walk` | Every Tab stop visible, named, ringed, on screen, not under the top bar: the top bar's sections, "See the work" then "Get in touch", every folio's link, every product's preview, link and Pause (the Alongside Brain's pulse's too), About's links, Contact's channels, the frieze's Pause on desktop (none on a phone) and the message box's panels |
-| `intro` | The Roman intro: shows on a first visit, not again within 12 hours, again after them, with `?intro`, never with a hash, under reduced motion or without scripts; the page comes back at once if the stage's code fails, and at the 8 s fail-safe if it never arrives (and it never shows late); the count in Roman numerals; Skip (focus stays inside); the landing's words from the records; Enter (from the unveil on), Escape (straight to the exit), ArrowDown, PageDown, End, a wheel or swipe during the load and a nav link each lift it onto the page (focus on main, or the section; the page scrolls; the hero's words set in after the lift; the section a nav link lands on never drawn below full once the stage has gone); no light or ornament through the load, the unveil and the landing (no shafts, dust, spotlight, flash or sheen; no rules, stars or the hint's line), the flood never a circle, the counts unoutlined, nothing under 12px, ENTER the page's filled button; Tab stays inside and every stop shows, ringed; axe during the load and at the landing; a clean console, no CSP report, nothing off-origin; nothing off screen and no overlapping pills from 320 to 1920 |
-| `products` | Act II: each product's title card (its own words, aria-hidden, nothing to focus, images from this origin, mounting in view and unmounting after, nothing below moving, none of the intro's count, barcode or plate, no pills, stars or rules, no light (its light canvas, spotlight, flash and sheen hidden), the flood never a circle, the veil at its top and foot, the eyebrow 12px and up, the four words on one scale within 1.4x, a card at every width scrolling in composed and landing within 1.5 s of arriving, the still landing under reduced motion), the row not repeating it (its name, tagline, number and status for screen readers only), Roman's order, each public product's real screenshots loading (`naturalWidth`) with alt text naming the site, its browser and phone together at every width (the phone over the browser's lower corner on a phone), the preview playing only while most of it is in view (also when it arrives in view as it mounts), back to the top after leaving, its two shots on one loop, holding still on hover, focus and Pause, the private products' inscriptions (their descriptions' words only, a desk without its own line, a chain with the product's, the stated links listed for screen readers in reading order, no images, lines or edges; rising line by line as they arrive, the count struck in, whole when they arrive on screen; the chain's pulse running only on screen, passing down it and stopping on Pause), nothing below moving when the previews land, no sideways scroll and every inscription inside its block from 320 to 1920 wide, and nothing moving under reduced motion |
+| `intro` | The Roman intro: shows on a first visit, not again within 12 hours, again after them, with `?intro`, never with a hash, under reduced motion or without scripts; the page comes back at once if the stage's code fails, and at the 8 s fail-safe if it never arrives (and it never shows late); the count in Roman numerals; Skip (focus stays inside); the landing's words from the records; Enter (from the unveil on), Escape (straight to the exit), ArrowDown, PageDown, End, a wheel or swipe during the load and a nav link each lift it onto the page (focus on main, or the section; the page scrolls; the hero's words set in after the lift; the section a nav link lands on never drawn below full once the stage has gone); the component's animation, played: the load (the word filling as the count climbs, the rule drawing in, the stars out and twinkling, the counts in their outlined pills, ENTER outlined, the hint's line falling, nothing under 12px), the unveil (the flash and the sheen running, the flood opening as its circle, eased open, never closing, to the whole stage; the figures rising) and the living landing (the light canvas shown, drawn and moving, the spotlight up and following the pointer, the figures breathing, the grain moving); its words AA over the light at its brightest (every shaft at its peak, the spotlight under each label) and through the unveil (the sheen and the flash held at each 50 ms; the word 3:1 or more as the sheen crosses it); on a phone held sideways ENTER takes the tap; Tab stays inside and every stop shows, ringed; axe during the load and at the landing; a clean console, no CSP report, nothing off-origin; nothing off screen and no overlapping pills from 320 to 1920 |
+| `products` | Act II: each product's title card (its own words, aria-hidden, nothing to focus, images from this origin, mounting in view and unmounting after, nothing below moving, none of the intro's ring, count, barcode or plate, no pills or rules, the component's light canvas, spotlight, flash, sheen and stars present, the flood opened as its circle, the veil at its top and foot, the eyebrow 12px and up, the four words on one scale within 1.4x; the longest title scrolled in at 700 px a second: mounted before it comes on screen, its word begun, its load held at nothing until it has arrived and every letter is in, then the load (the word seen filling for a second or more, never going back), the unveil (the circle seen widening, the flash and the sheen running) and the landing: on a phone within 3 s to the unveil and 6.5 s to the landing, on a wide screen, which the test browser paints at a few frames a second, only required to land; mounted again before it comes back on screen from above; a landed card's light running while on screen and holding still once it is off screen; its words AA through the light (the unveil stepped every 50 ms: the word 3:1 or more, halo kept, the eyebrow and the number 4.5:1; at the landing, every shaft at its peak and the spotlight on each, the eyebrow, the number and the tagline 4.5:1); under reduced motion the still landing at once, nothing looping, its light drawn once), the row not repeating it (its name, tagline, number and status for screen readers only), Roman's order, each public product's real screenshots loading (`naturalWidth`) with alt text naming the site, its browser and phone together at every width (the phone over the browser's lower corner on a phone), the preview playing only while most of it is in view (also when it arrives in view as it mounts), back to the top after leaving, its two shots on one loop, holding still on hover, focus and Pause, the private products' inscriptions (their descriptions' words only, a desk without its own line, a chain with the product's, the stated links listed for screen readers in reading order, no images, lines or edges; rising line by line as they arrive, the count struck in, whole when they arrive on screen; the chain's pulse running only on screen, passing down it and stopping on Pause), nothing below moving when the previews land, no sideways scroll and every inscription inside its block from 320 to 1920 wide, and nothing moving under reduced motion |
 | `credentials` | Act IV's rank: its words from the record in reading order, none a heading (the act's one heading is its h2), no level pill and no rule, before and above the seals; the drawings silent, nothing to focus, no link, the laurel in its gold; the entrance held until it is in view, then letting go, the sheen running only on screen, the rays still; no entrance when the page lands on it (`/#credentials`: no word ever drawn below full); still and whole under reduced motion and without scripts; no sideways scroll, its words on screen, clear of the header and above the seals from 320 to 1920. The frieze: on a phone a still inscription of all eight in order (no marquee, no Pause, held until in view), from md one slow row with no rules, band or discs, the laurel alone in gold and an unboxed 44px Pause that says "Pause", two to a row and still under reduced motion; its placeholder the height it lands at from 320 to 1920 |
 | `contact-ui` | The suggestion, the undo window, the POST (intercepted), the sent panel (with and without a receipt), Send another, the failure panel, Try again, Edit message, Copy email, the 429 panel, the quote (Cormorant between drawn marks, no frame), each panel's one filled button and text links, 16px text on phones (landscape too); the card: no panel round the box, field edges 3:1 and more, Send the one filled button, the channels as addresses alone (no label, no icon tile), 44px, one heading on a phone ("Get in touch" for screen readers only) |
 | `contact-api` | The `/api/contact` contract with no Resend key: 400s, the honeypot, 502 when nothing delivered, 200 `delivered: ['forms']` with `receipt: false`, 429 |
 | `contact-email` | The email to Roman and the visitor's receipt (content, escaping, plain text, layout at 600 and 375 with long names and addresses), the first-name rule, `oneLine`, when receipts are on, and the route in Node with `fetch` faked: what it hands Resend, the receipt's headers, its per-address limit, no receipt without the email |
-| `touch` | Phone swipes that start on the badges, a folio (a pinned one too), a product's preview, inscription or title card, the timeline, the certifications or the globe scroll the page |
+| `touch` | Phone swipes that start on the badges, a folio (a pinned one too), a product's preview, inscription or title card (landed, and as it opens), the timeline, the certifications or the globe scroll the page |
 | `resume` | The PIN gate, the builder (mocked data) and its routes |
 | `data` | `toRoman`; the intro's and cards' words read from the records; the Trailhead rank (his words, nothing he didn't give, typed once, read by Act IV, the summary and llms.txt, the JSON-LD award); the cast's files (present, their declared sizes, small, credited in humans.txt); the records (the products' order, previews and flows included: a flow's words are its description's, a count's word and figure agree, its links only the stated ones, and they decide its inscription), the preview files' sizes, the owner-fixed copy, nothing private in the build |
 
@@ -444,14 +475,22 @@ every phase change while asked for, so a timer can't set the landing back).
   the page back after 8 s if the stage never mounts (a gold ring breathes on
   the dark until then). If the stage is taken down by an error, it gives the
   page back too.
-- What: ROMAN in Cinzel inside the gold meander, the count in Roman
-  numerals, then the flood of the wash (`imperial.ts`), welling up from the
-  floor at the unveil, and the cast: Hercules and Apollo, David blurred
-  behind. No light (`rays={false}`, `dust={false}`, its spotlight, flash
-  and sheen hidden from outside) and no ornament but the meander, the
-  count, the barcode and the plate: its rules, stars and the scroll hint's
-  line hidden, its two counts plain words, ENTER the page's filled button
-  (`stageButton('primary')`'s look), nothing under 12px. The
+- What: ROMAN in Cinzel inside the gold meander, filling in as the count
+  climbs in Roman numerals, the stars twinkling, the rule drawing in
+  beside the eyebrow, the two counts in their outlined pills; then the
+  unveil: the flood of the wash (`imperial.ts`) opening as its circle
+  under the flash and the sheen, and the cast rising (Hercules and Apollo,
+  David blurred behind); then the living landing: the shafts of light and
+  the dust in them, the spotlight on the pointer, the figures breathing
+  (the 9 s bob) and leaning with the pointer, the moving grain, the scroll
+  hint's falling line and ENTER outlined, all as published. From outside: nothing under 12px (on
+  a phone the pills hug their words a little closer, so they stand apart
+  from 360px wide); the labels the light passes under (the brand, the nav,
+  the eyebrow, the counts) and the hint keep a dark halo, and the word
+  stands in front of the sheen, so all of it stays AA at the light's
+  brightest and through the unveil; the plate on an opaque label of the
+  ground; the foot lets the pointer through to ENTER on a phone held
+  sideways. Under reduced motion it never shows (the gate). The
   words are the records': his tagline, "Prologue · " and the year in Roman
   numerals, his initials, his client projects and certifications counted in
   Roman numerals, and on wide screens his role ("By day") and his music
@@ -488,20 +527,31 @@ Cinzel, one statue (Apollo for Alongside Events and Sembly, the Hercules for
 Praxis and Alongside Brain, mirrored on the left-hand rows), and a public
 product's own screenshot blurred behind. The four words share one scale (a
 long title on two lines, at most 56px on a phone; a short one at most 1.3
-times that). No pills, stars or rules, and no light: no shafts and no dust
-(`rays={false}`, `dust={false}`), no spotlight, flash or sheen (hidden from
-outside). A veil of the ground over its top tenth and its foot, and the
-statue fading over the same stretches, so the card has no edges: light in
-the dark, never a panel. None of the intro's loading (the meander ring, the
-count, "Loading", the barcode, the plate): those are the intro's alone. At
-every width it mounts three quarters of a screen early on its finished
-landing (no load, no unveil: they took seconds over a dark box with an
-outlined word filling in), so it scrolls in composed, and once a third of
-it is in view its flood wells up from the floor (rising as it fades in,
-never a widening circle), its backdrop surfaces, the statue rises and the
-tagline comes in, within about 1.3 s; under reduced motion it stands on its
-still landing. It is aria-hidden with nothing to focus (the row below keeps
-the heading and the link); it unmounts once it has left the screen; its box
+times that). No pills or rules; its stars twinkle. A veil of the ground
+over its top tenth and its foot, and the statue fading over the same
+stretches, so the card has no edges: light in the dark, never a panel.
+None of the intro's loading (the meander ring, the count, "Loading", the
+barcode, the plate): those are the intro's alone. It opens as the
+component does, in the palette (`product-stage-card.tsx`): it mounts a
+screen and a half early from below and three quarters of one from above,
+and the component draws its word in outline letter by letter as it mounts
+(about 2.3 s for the longest title), with its number, its eyebrow and its
+stars, so it never scrolls in as an empty box; its load is held (the
+component's `progress` at 0) until its word is on screen (three fifths of
+the card in view, or the card filling the screen) and its last letter is
+in, so the word never fills ahead of its outline; then the word fills
+with marble from its foot over about a second and a half (the component's
+own surge and stall, run on the card's clock) and the unveil follows: the
+flood opens as its circle under the flash and the sheen, the statue rises
+and the backdrop surfaces; and it lives on its landing about five seconds
+after it arrived: the shafts and the dust (only while the card is on
+screen), the spotlight on the pointer, the statue's bob and parallax, the
+moving grain. The sheen fades out above the top third and passes behind
+the word, and the eyebrow and the number keep a dark halo, so the words
+stay AA through the light. Under reduced motion it opens on the
+component's still landing, shown once its photographs are placed. It is
+aria-hidden with nothing to focus (the row below keeps
+the heading and the link); it unmounts once it is that far off the screen; its box
 has a fixed height (30rem on a phone), so nothing below moves.
 
 The hero is a page of the same print (Roman, 2026-10-31: "the hero can
@@ -509,7 +559,9 @@ still have the painting thingy"; and 2026-11-01, of the curtain it had
 stood on: "i like the roman theme better"). The print's ground is the
 page's own server HTML (`stage.tsx`): the intro's flood (the wash welling up
 from the floor, the component's own gradient in the palette), its vignette
-and its still grain (an SVG noise, a `data:` image), so without the
+and its grain (an SVG noise, a `data:` image, a little larger than the
+hero so it can move: still on its own, flickering as the component's does
+while the painting is here), so without the
 painting (no scripts, no WebGL, a browser that saves data, a failed chunk)
 the hero is still a warm print. Over it, the name, one h1 in the server
 HTML: ROMAN in Cinzel filling the measure (capped at 36svh), KUCHERYAVYY
@@ -525,10 +577,17 @@ checks the LCP).
 The painting is `hero-painting.tsx` (the box, and when it plays) and
 `hero-painting-stage.tsx` (the component configured from outside, no
 `[site edit]`): Hercules standing in the print, the David blurred behind,
-the two-ink marble of the intro, the landing still (no load, no unveil, no
-bob). Nothing of the component's interface, loading or ornament, no
-meander, and no light of any kind: rays and dust off, the spotlight, flash
-and light canvas hidden. The component keys nothing more (`threshold: 0`):
+the two-ink marble of the intro, and the intro's living landing (no load,
+no unveil: the intro played them, or the page's first paint is the
+opening): the component's light canvas, its shafts and the dust drifting
+in them at the intro's strength, its spotlight following the pointer,
+Hercules breathing (the 9 s bob) and leaning and parting with the pointer
+(its parallax and tilt), and the grain moving. The box is inert and takes
+no pointer, so the hero hands the pointer's moves on to the component and
+takes them back when it leaves the hero or a finger lifts. Nothing of the
+component's interface, loading or ornament, no meander, and no light of
+the page's own; under reduced motion the component draws its light once
+and holds everything still. The component keys nothing more (`threshold: 0`):
 the file's filled outline stands, so his face prints as a face in shadow,
 not a hole onto the blurred backdrop (the intro and the title cards keep
 the component's key, as before). He is placed from where the hero's words are: on
@@ -543,7 +602,8 @@ below once the intro has gone (only a fade under reduced motion, and on a
 return to the hero); it unmounts when the hero leaves the screen. It never
 comes for a browser that asks to save data or reports 2G (the intro's own
 test, `savesData()` in `intro-gate.ts`), nor without WebGL, where a
-full-screen blended print beneath the page would take the frames it needs.
+full-screen blended print beneath the page, its light drawn anew every
+frame, would take the frames it needs.
 If its chunk fails to load, it is simply not there (as the intro's stage
 does), never the error page. A phone held sideways (under 500px tall, 3:2
 and wider: 667x375, 844x390) is laid out as a wide screen, his words at

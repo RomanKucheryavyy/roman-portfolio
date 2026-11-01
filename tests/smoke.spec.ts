@@ -1,5 +1,6 @@
-import { expect, test } from '@playwright/test'
+import { expect, test, type Page } from '@playwright/test'
 import { RANK } from '@/lib/content'
+import { lightAtPeak } from './contrast'
 import { SECTION_IDS, collectConsole, collectCspReports, gotoHome, project, scrollThrough } from './helpers'
 
 /**
@@ -37,6 +38,27 @@ const REDIRECTS: [string, string][] = [
   ['/works/fubc-coffee-ios', '/#work'],
   ['/colophon', '/'],
 ]
+
+/** A short fingerprint of what the painting's light canvas holds (its pixels, as an image), and whether it holds anything. */
+const lightPrint = (page: Page) =>
+  page.locator('[data-hero-painting] canvas.om-light').evaluate((c: HTMLCanvasElement) => {
+    const url = c.toDataURL()
+    let h = 0
+    for (let i = 0; i < url.length; i++) h = (h * 31 + url.charCodeAt(i)) | 0
+    const blank = document.createElement('canvas')
+    blank.width = c.width
+    blank.height = c.height
+    return { hash: h, drawn: url !== blank.toDataURL() }
+  })
+
+/** What is animating in the hero right now: the painting's CSS animations by name, and the grain's flicker. */
+const heroMotion = (page: Page) =>
+  page.locator('#top').evaluate((hero) =>
+    hero
+      .getAnimations({ subtree: true })
+      .filter((a) => a.playState === 'running')
+      .map((a) => ((a.effect as KeyframeEffect | null)?.target as HTMLElement | null)?.hasAttribute('data-hero-grain') ? 'grain' : ((a as CSSAnimation).animationName ?? 'transition')),
+  )
 
 test.describe('routes', () => {
   for (const { path, type } of OK_ROUTES) {
@@ -97,22 +119,30 @@ test.describe('the home page', () => {
     }
   })
 
-  test('the hero is the Roman print: no curtain, no stage light, the name, his words and the two ways in', async ({ page }) => {
+  test("the hero is the Roman print: no curtain, the name, his words and the two ways in; the painting's light is its only canvas", async ({ page }) => {
     await gotoHome(page)
     const hero = page.locator('#top')
-    // The curtain is gone: nothing in the hero draws on a canvas, before the painting or after.
-    const canvases = () => hero.locator('canvas').evaluateAll((all) => all.filter((c) => c.getBoundingClientRect().width > 0 && getComputedStyle(c).display !== 'none').length)
-    expect(await canvases(), 'canvases drawn in the hero').toBe(0)
+    // The curtain is gone: whatever the hero draws on a canvas is the painting's light, a 2D canvas, and nothing else.
+    const canvases = () =>
+      hero.locator('canvas').evaluateAll((all) =>
+        all
+          .filter((c) => c.getBoundingClientRect().width > 0 && getComputedStyle(c).display !== 'none')
+          .map((c) => (c.matches('[data-hero-painting] canvas.om-light') && (c as HTMLCanvasElement).getContext('2d') ? 'light' : c.outerHTML.slice(0, 80))),
+      )
+    for (const c of await canvases()) expect(c, 'a canvas drawn in the hero').toBe('light')
     await expect(page.locator('#hero-title')).toHaveText(/^Roman\s+Kucheryavyy$/)
     await expect(page.locator('#top h1')).toHaveCount(1)
     await expect(hero.locator('[data-hero-copy] p')).toHaveText('Salesforce engineer by day. Full-stack builder by nature. Conductor by calling.')
     await expect(hero.getByRole('link', { name: 'See the work' })).toHaveAttribute('href', '#work')
     await expect(hero.getByRole('link', { name: 'Get in touch' })).toHaveAttribute('href', '#contact')
-    if (project() !== 'no-webgl') {
+    if (project() === 'no-webgl') {
+      expect(await canvases(), 'canvases drawn in the hero without WebGL').toEqual([])
+    } else {
       await expect(page.locator('[data-hero-painting] [data-shown="true"] .om-fig img')).toBeAttached({ timeout: 30_000 })
-      expect(await canvases(), 'canvases drawn in the hero once the painting is in').toBe(0)
-      // No light of any kind: the component's shafts and dust, its spotlight and its flash are all off.
-      for (const part of ['.om-light', '.om-spot', '.om-flash']) await expect(page.locator(`[data-hero-painting] ${part}`)).toBeHidden()
+      expect(await canvases(), 'canvases drawn in the hero once the painting is in').toEqual(['light'])
+      // The intro's light: the component's shafts and dust and its spotlight are up; its flash belongs to an unveil the hero never plays.
+      for (const part of ['.om-light', '.om-spot']) await expect(page.locator(`[data-hero-painting] ${part}`)).toBeVisible()
+      expect(await page.locator('[data-hero-painting] .om-root').getAttribute('data-phase')).toBe('landing')
     }
   })
 
@@ -156,28 +186,80 @@ test.describe('the home page', () => {
         }).length,
       )
       expect(focusable, 'elements in the painting that took focus').toBe(0)
-      // Still: once he has risen, nothing in it moves (no light, no dust, no bob, no grain).
-      await expect
-        .poll(() => painting.evaluate((box) => box.getAnimations({ subtree: true }).filter((a) => a.playState === 'running').length), {
-          message: 'animations running in the painting once it has landed',
-          timeout: 15_000,
-        })
-        .toBe(0)
-      await page.waitForTimeout(1000)
-      expect(await painting.evaluate((box) => box.getAnimations({ subtree: true }).filter((a) => a.playState === 'running').length)).toBe(0)
+      // Living, as the intro's landing: once he has risen, he breathes (the
+      // bob), the grain flickers, and the light canvas draws its shafts and
+      // moves its dust.
+      await expect.poll(() => heroMotion(page), { message: 'what moves in the hero once the painting has landed', timeout: 15_000 }).toEqual(expect.arrayContaining(['om-bob', 'grain']))
+      const first = await lightPrint(page)
+      expect(first.drawn, 'the light canvas has drawn').toBe(true)
+      // (Read until it differs: a busy machine painting the hero in software
+      // can go a few hundred milliseconds between frames.)
+      await expect.poll(async () => (await lightPrint(page)).hash, { message: 'the light canvas moves (its dust drifts)', timeout: 5000 }).not.toBe(first.hash)
     }
     const lcp = await page.evaluate(() => (window as unknown as { __lcp: string[] }).__lcp)
     expect(lcp.at(-1), `largest paints: ${lcp.join(', ')}`).toBe('name')
+    if (project() === 'no-webgl') return
+    // Only on screen: with the hero scrolled away the painting is gone, its light and its loops with it, and the grain is still.
+    await page.evaluate(() => window.scrollTo(0, document.getElementById('work')!.offsetTop + 400))
+    await expect(painting.locator('*')).toHaveCount(0, { timeout: 10_000 })
+    expect(await heroMotion(page), 'what moves in the hero off screen').toEqual([])
+    // Back on screen, it comes back.
+    await page.evaluate(() => window.scrollTo(0, 0))
+    await expect(painting.locator('[data-shown="true"] canvas.om-light')).toBeAttached({ timeout: 15_000 })
   })
 
-  test('the name keeps AA where it meets the statue: the print behind its letters, without their halo, at 3:1 or more', async ({ page }) => {
+  test('under reduced motion the hero painting stands still: its light drawn once, nothing moving', async ({ page }) => {
     test.skip(project() === 'no-webgl', 'no painting without WebGL')
+    await page.emulateMedia({ reducedMotion: 'reduce' })
+    await gotoHome(page)
+    const painting = page.locator('[data-hero-painting]')
+    await expect(painting.locator('[data-shown="true"] .om-fig img')).toBeAttached({ timeout: 30_000 })
+    // Once it has faded in, nothing in the hero moves.
+    await expect.poll(() => heroMotion(page), { message: 'what moves in the hero under reduced motion', timeout: 15_000 }).toEqual([])
+    const first = await lightPrint(page)
+    expect(first.drawn, 'the light is drawn, once').toBe(true)
+    await page.mouse.move(300, 300)
+    await page.mouse.move(900, 500, { steps: 6 })
+    await page.waitForTimeout(1200)
+    expect((await lightPrint(page)).hash, 'the light holds still').toBe(first.hash)
+    expect(await heroMotion(page), 'what moves in the hero under reduced motion, the pointer moved').toEqual([])
+    expect(await painting.locator('.om-root').evaluate((el) => (el as HTMLElement).style.getPropertyValue('--om-px') || '0')).toBe('0')
+  })
+
+  test('the painting follows the pointer: its spotlight and its figure lean after it, and come back when it leaves the hero', async ({ page }) => {
+    test.skip(project() !== 'desktop', 'a pointer that hovers')
+    await gotoHome(page)
+    const root = page.locator('[data-hero-painting] [data-shown="true"] .om-root')
+    await expect(root).toBeAttached({ timeout: 30_000 })
+    const read = () => root.evaluate((el) => ({ px: parseFloat((el as HTMLElement).style.getPropertyValue('--om-px') || '0'), sx: parseFloat((el as HTMLElement).style.getPropertyValue('--om-sx') || '50') }))
+    await page.mouse.move(700, 450)
+    await page.mouse.move(1300, 450, { steps: 8 })
+    await expect.poll(async () => (await read()).px, { message: 'the parallax follows the pointer to the right' }).toBeGreaterThan(0.4)
+    expect((await read()).sx, 'the spotlight follows it').toBeGreaterThan(60)
+    // Onto the top bar: out of the hero, and the painting comes back to rest.
+    await page.mouse.move(700, 20, { steps: 4 })
+    await expect.poll(async () => Math.abs((await read()).px), { message: 'back at rest once the pointer has left the hero' }).toBeLessThan(0.1)
+  })
+
+  test('the name keeps AA where it meets the statue, with the light at its brightest: the print behind its letters, without their halo, at 3:1 or more', async ({ page }) => {
+    test.skip(project() === 'no-webgl', 'no painting without WebGL')
+    // With the painting's light at its brightest: every shaft at its peak...
+    await lightAtPeak(page)
     await gotoHome(page)
     await expect(page.locator('[data-hero-painting] [data-shown="true"] .om-fig img')).toBeAttached({ timeout: 30_000 })
     // Landed and risen.
     await page.waitForTimeout(3500)
     for (const line of ['#hero-title > span:first-child', '#hero-title > span:last-child']) {
       const el = page.locator(line)
+      // ...and its spotlight brought as near the line as it reaches (a glow at
+      // 50% + 24% of the pointer's x and 40% + 22% of its y, across a box 20%
+      // larger than the hero on every side; it eases after the pointer).
+      const at = (await el.boundingBox())!
+      const stage = (await page.locator('#top').boundingBox())!
+      const sy = (((at.y + at.height / 2 - stage.y) / stage.height + 0.2) / 1.4) * 100
+      const ty = Math.max(-1, Math.min(1, (sy - 40) / 22))
+      await page.mouse.move(stage.x + stage.width / 2, stage.y + (ty / 2 + 0.5) * stage.height, { steps: 4 })
+      await page.waitForTimeout(1500)
       const box = (await el.boundingBox())!
       const clip = { x: 0, y: Math.max(0, box.y), width: page.viewportSize()!.width, height: Math.min(box.height, page.viewportSize()!.height - box.y) }
       const ink = await el.evaluate((e) => getComputedStyle(e).color)

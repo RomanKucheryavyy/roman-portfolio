@@ -61,26 +61,41 @@ const year = toRoman(new Date().getFullYear())
  *   the letters), with the barcode and the plate; on phones it takes the
  *   barcode's place, and the plate keeps the right; on a screen under 480px
  *   tall (a phone on its side) there is no room for it under the copy;
- * - no light of any kind (Roman, 2026-11-01: "not this like stage light
- *   look thingy"): no shafts or dust (rays and dust off), and its spotlight
- *   on the pointer, the flash at the unveil and the sheen that sweeps the
- *   whole stage hidden; and its flood, which opened as a widening circle,
- *   wells up from the floor at the unveil instead (rising as it fades in),
- *   as the hero's print and the title cards' do;
- * - no lines and no ornaments, as everywhere on the page: the rules beside
- *   the eyebrow, the stars and the line beside the scroll hint hidden, the
- *   two counts' pills plain words (their outline gone, so no padding);
- * - ENTER is the page's one primary button (look.ts stageButton): marble
- *   with the ground's ink, a 2px radius, the glow on hover;
+ *   and the foot, a row as wide as the stage that holds nothing to press,
+ *   lets the pointer through (on a phone on its side it rises level with
+ *   ENTER, and took its taps);
+ * - on short phones the two upper stars keep below the pills;
+ * - everything else of the component's animation plays as published (Roman,
+ *   2026-11-01, of the stage stripped of it: "but the animation from2 1st
+ *   dev for this roman theme is now gone"): the word filling in, the
+ *   flood opening as its circle, the flash and the sheen at the unveil, the
+ *   figures rising and then breathing and leaning with the pointer, the
+ *   shafts of light and the dust in them, the spotlight on the pointer, the
+ *   moving grain, the stars twinkling, the rule drawing in, the scroll
+ *   hint's falling line, the counts in their pills and ENTER as it draws it
+ *   (outlined). Under reduced motion it holds all of it still itself;
  * - nothing under the page's 12px floor: the eyebrow, the counts, the
  *   asides, the count's ratio, ENTER, Skip, the plate and the scroll hint;
+ *   so that the two pills still stand apart on a phone (360px wide and
+ *   up; 12px set them 32px into each other there), they hug their words
+ *   a little closer;
  * - the plate, small type that lands on marble, sits on an opaque label of
  *   the ground (a museum plate: its muted ink is 9.5:1 there, where a
  *   see-through label let the lit statue show behind its first letters),
  *   and the hint keeps a firmer dark halo than its own, in the text ink
  *   (the muted ink is 4.9:1 on the flood's lit end, too near the floor
  *   while the hint fades in; the text ink is 9.0:1);
- * - the word keeps a dark halo, so it reads over the marble behind it;
+ * - the labels the light passes beneath keep the hint's dark halo too (the
+ *   brand, the nav, the eyebrow and the counts): the spotlight under the
+ *   muted eyebrow left it barely 4.5:1, and the sheen's bright core,
+ *   sweeping the stage at the unveil, left the counts and the nav near 2:1
+ *   for a moment (with the halo, 6.6:1 and more at the light's brightest;
+ *   the light itself is as published);
+ * - the word keeps a dark halo, so it reads over the marble behind it,
+ *   and stands in front of the sheen rather than under it (as on the
+ *   title cards): the band passes behind the letters, so it brightens
+ *   the stage round them but never washes out their halo (under it, the
+ *   word fell to 2.8:1 for a moment as the band crossed it on a phone);
  * - the tagline's lines are balanced;
  * - on phones the component hides its nav's links but keeps the two <nav>s,
  *   empty landmarks: they go too;
@@ -96,15 +111,15 @@ const LOOK = [
   '[&_.om-chrome]:z-[6]!',
   'max-sm:[&_.om-copy]:top-[max(19%,146px)]! sm:[&_.om-copy]:top-[max(16.5%,138px)]! [&_.om-aside]:top-[27%]!',
   '[&_.om-hint]:bottom-[calc(var(--om-fs)*(var(--om-cap)+0.03)+1.4vh+18px)]!',
-  'max-sm:[&_.om-bars]:hidden! max-sm:[&_.om-foot]:justify-end! [@media(max-height:480px)]:[&_.om-hint]:hidden!',
-  '[&_.om-spot]:hidden! [&_.om-flash]:hidden! [&_.om-light]:hidden! [&_.om-sheen]:hidden!',
-  '[&_.om-flood]:[clip-path:none]! [&[data-phase=load]_.om-flood]:opacity-0! motion-safe:[&[data-phase=load]_.om-flood]:[transform:translate3d(0,10%,0)]! [&:not([data-phase=load])_.om-flood]:[transition:opacity_1.4s_ease_0.15s,transform_1.8s_cubic-bezier(0.16,1,0.3,1)_0.15s]!',
-  '[&_.om-rule]:hidden! [&_.om-star]:hidden! [&_.om-hint_i]:hidden! [&_.om-pill]:border-0! [&_.om-pill]:p-0! [&_.om-pill]:tracking-[0.18em]!',
-  '[&_.om-cta]:rounded-[2px]! [&_.om-cta]:border-(--om-word)! [&_.om-cta]:bg-(--om-word)! [&_.om-cta]:text-(--om-ground)! [&_.om-cta:hover]:border-(--om-glow)! [&_.om-cta:hover]:bg-(--om-glow)!',
+  'max-sm:[&_.om-bars]:hidden! max-sm:[&_.om-foot]:justify-end! [@media(max-height:480px)]:[&_.om-hint]:hidden! [&_.om-foot]:pointer-events-none!',
+  'max-sm:[&_.om-star:not(.om-star-s)]:top-[max(15.5%,124px)]!',
   '[&_.om-eyebrow]:text-xs! [&_.om-eyebrow]:tracking-[0.26em]! [&_.om-pill]:text-xs! [&_.om-aside]:text-[13px]! [&_.om-aside_b]:text-xs! [&_.om-ratio]:text-xs! [&_.om-cta]:text-xs! [&_.om-skip]:text-xs! [&_.om-plate]:text-xs! [&_.om-hint]:text-xs!',
+  'max-sm:[&_.om-pill]:px-[10px]! max-sm:[&_.om-pill]:tracking-[0.16em]!',
   '[&_.om-plate]:rounded-[2px] [&_.om-plate]:bg-(--om-ground) [&_.om-plate]:px-2 [&_.om-plate]:py-1',
   '[&_.om-hint]:text-(--om-text)! [&_.om-hint]:[text-shadow:0_0_1px_var(--om-ground),0_0_4px_var(--om-ground),0_0_12px_var(--om-ground)]!',
+  '[&_:is(.om-brand,.om-top_a,.om-eyebrow,.om-pill)]:[text-shadow:0_0_1px_var(--om-ground),0_0_4px_var(--om-ground),0_0_12px_var(--om-ground)]',
   WORD_HALO,
+  '[&_.om-wordclip]:z-[1]',
   '[&_.om-tagline]:text-balance',
   'max-sm:[&_.om-top_nav]:hidden!',
   'focus-visible:outline focus-visible:outline-1 focus-visible:-outline-offset-8 focus-visible:outline-gold',
@@ -370,8 +385,6 @@ export default function IntroStage({ cast, onDone }: { cast: Promise<void>; onDo
         holdMs={0}
         lift={lift}
         onComplete={complete}
-        rays={false}
-        dust={false}
         figures={tall ? INTRO_FIGURES.tall : wideFigures(winW, winH)}
         backdrop={CAST.david.src}
         duotone

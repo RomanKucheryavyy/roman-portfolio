@@ -6,7 +6,8 @@ import { gotoHome, sleep } from './helpers'
  * pieces still scrolls the page: the About badges (matter-js, which a
  * sideways drag still throws), the client-work folios (StackingCards, which
  * stack on a phone held upright: one in the flow, and one pinned under the
- * top bar), the products' previews, inscriptions and title cards, the
+ * top bar), the products' previews, inscriptions and title cards (landed,
+ * and as they open), the
  * Experience timeline (Lifeline's phone list), Act IV's inscription of the
  * certifications and Contact's globe. Real touch
  * events through CDP, which the compositor scrolls with (a synthesized
@@ -56,14 +57,15 @@ const PIECES: [string, string, (page: Page) => Promise<void>][] = [
   // browser and the phone) and a private product's inscription of its parts.
   ['a product preview', '#products [data-preview="live"] a', async () => {}],
   ['a product inscription', '#products [data-preview="flow"] [role="group"]', async () => {}],
-  // A product's title card (the Roman staging above its row), once its stage is up.
+  // A product's title card (the Roman staging above its row), landed and
+  // lit: its light and dust running, the statue bobbing. (As it opens: below.)
   [
     'a product title card',
     '#products [data-title-card]',
     async (page) => {
       const card = page.locator('#products [data-title-card]').first()
       await card.evaluate((el) => el.scrollIntoView({ block: 'center', behavior: 'instant' }))
-      await expect(card.locator('.om-root')).toBeAttached({ timeout: 20_000 })
+      await expect(card.locator('.om-root[data-phase="landing"]')).toBeAttached({ timeout: 20_000 })
     },
   ],
   ['the Experience timeline', '#experience article', async () => {}],
@@ -101,6 +103,26 @@ test('a vertical swipe that starts on a pinned client-work folio scrolls the pag
   const box = (await folio.boundingBox())!
   const [x, y] = [Math.round(box.x + box.width / 2), Math.round(box.y + box.height / 2)]
   expect(await page.evaluate(([px, py]) => !!document.elementFromPoint(px, py)?.closest('[data-slot="card"]'), [x, y] as const), 'the swipe starts on the folio').toBe(true)
+  const before = await page.evaluate(() => window.scrollY)
+  await swipeUp(context, page, x, y)
+  await sleep(1200)
+  const after = await page.evaluate(() => window.scrollY)
+  expect(after - before, `scrollY ${before} -> ${after}`).toBeGreaterThan(200)
+})
+
+test('a vertical swipe that starts on a product title card as it opens scrolls the page', async ({ page, context }) => {
+  await gotoHome(page)
+  // Mounted just below the screen, its load held; then brought in, so the
+  // swipe starts on it during its load or its unveil.
+  const card = page.locator('#products [data-title-card]').nth(1)
+  await card.evaluate((el) => window.scrollBy({ top: el.getBoundingClientRect().top - window.innerHeight - 60, behavior: 'instant' }))
+  await expect(card.locator('[data-load="held"]')).toBeAttached({ timeout: 20_000 })
+  await card.evaluate((el) => el.scrollIntoView({ block: 'center', behavior: 'instant' }))
+  await sleep(300)
+  const box = (await card.boundingBox())!
+  const [x, y] = [Math.round(box.x + box.width / 2), Math.round(box.y + box.height / 2)]
+  expect(await page.evaluate(([px, py]) => !!document.elementFromPoint(px, py)?.closest('[data-title-card]'), [x, y] as const), 'the swipe starts on the card').toBe(true)
+  expect(await card.locator('.om-root').getAttribute('data-phase'), 'the card is opening').not.toBe('landing')
   const before = await page.evaluate(() => window.scrollY)
   await swipeUp(context, page, x, y)
   await sleep(1200)
