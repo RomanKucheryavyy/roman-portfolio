@@ -38,6 +38,17 @@ trailhead, the highest ranger status", and "And make it epic". Read as "I'm
 now": he is an All Star Ranger on Trailhead, the highest Ranger status. So
 Act IV opens on that rank as its crowning honour (below), from one record.
 
+On 2026-11-01, after seeing the hero's painting and the All Star Ranger
+laurel: "this looks well on desktop but not mobile", "alos idk if i like the
+purplish color etc... and the ai lines and squares etc...", "and mobile
+doesnt have any like motion or stacking animations etc...", "keep refining".
+So the palette became an Old Masters dark, **Chiaroscuro** (no purple, violet
+or lavender anywhere public); the lines, frames and boxes went (type is the
+ornament, light and space separate things, the interpunct is the one
+divider); and phones get the same craft as desktop, with motion of their
+own: every act header cuts itself in on entry, and each section moves in its
+own way.
+
 ## Rules
 
 - **Never push, merge or force-push `main`.** It auto-deploys production on
@@ -71,17 +82,25 @@ Act IV opens on that rank as its crowning honour (below), from one record.
 
 ## The look: the Imperial Stage
 
-- **Palette** (`imperial.ts` `PALETTE`, the one source; `look.ts`
-  `STAGE_STYLE` sets it as CSS variables on the Stage's wrapper): ground
-  `#07050f` (the page), imperial violet `#24115e` (washes, the curtain,
-  fills at low alpha), gold `#d6b25e` (the one accent: numerals, rules,
-  links' hover, the focus ring; never a large fill), glow `#ffdf9e` (rare),
-  marble `#f2ece2` (headings, primary text), lavender `#b6acd6` (secondary
-  text), rule `#4b3a8a` (borders, at 40-70%). In classes they are Tailwind
-  colours (`globals.css`): `text-gold`, `border-gold/40`, `bg-imperial/45`,
-  `hover:text-glow`, `border-rule/60`, with shadcn's `foreground` (marble),
-  `muted-foreground` (lavender) and `background` (ground). Every text colour
-  clears AA on what is behind it: check it, axe has no baseline.
+- **Palette**, Chiaroscuro (`imperial.ts` `PALETTE`, the one source, its
+  keys named for what each colour does; `look.ts` `STAGE_STYLE` sets it as
+  CSS variables on the Stage's wrapper, and `globals.css`'s `:root` repeats
+  the four that load first): ground `#0b0806` (the page), wash `#352114`
+  (light and glow: the curtain's lit fold, the intro's and title cards'
+  flood, glows behind things; never a large flat panel), gold `#d6b25e` (the
+  one accent: numerals, links' underline, the focus ring; never a large
+  fill), glow `#ffdf9e` (rare), marble `#f2ece2` (headings, primary text),
+  text `#f3eee6`, muted `#bfb19b` (secondary text), rule `#5e4630` (a
+  field's edge), highlight `#f0e2c8` (the print's lit marble), shadow
+  `#040302` (the deepest cast shadow). The variables: `--background`,
+  `--foreground`, `--muted-foreground`, `--stage-wash`, `--stage-gold`,
+  `--stage-glow`, `--stage-rule`, `--stage-text`, `--stage-shadow`. In
+  classes they are Tailwind colours (`globals.css`): `text-gold`,
+  `border-gold/40`, `bg-wash/45`, `hover:text-glow`, `border-rule/60`, with
+  shadcn's `foreground` (marble), `muted-foreground` (muted) and
+  `background` (ground). A new palette is a change to `imperial.ts` and
+  `globals.css`'s `:root` alone. Every text colour clears AA on what is
+  behind it: check it on the real pixels, axe has no baseline.
 - **Type** (`roman-type.ts`, the one place the faces are declared; on
   `<html>` from `layout.tsx`): Cinzel, `font-roman`, preloaded, for the
   hero's name, every h2, the top bar's brand, product and project titles and
@@ -94,25 +113,38 @@ Act IV opens on that rank as its crowning honour (below), from one record.
   inscription, in Cinzel. The faces are font bytes, not JS: Cinzel 25.9
   kB, Cormorant italic 39.3 kB; `display: swap`, so no heading is blank
   while its face loads (the intro and title cards wait for theirs).
-- **Shapes** (`look.ts`): `stageButton('primary' | 'secondary', 'md' |
-  'sm')`, the intro's ENTER (rectangular, a 2px radius, Geist capitals;
-  marble fill, or a gold edge), for every action, the message box's Send
-  included (kokonut-undo-button's `radius`, a `[site edit]`); pills are for
-  statuses only. `SectionHeader` (`section-header.tsx`) is every act's
-  header: the gold numeral and a hairline, the kicker in Geist capitals, the
-  h2 in Cinzel, the intro in Cormorant. `STAGE_FOCUS` is the one focus ring:
-  gold, 2px, offset 4.
-- **Each section's own idea:** the hero, the kokonut curtain dyed imperial
+- **No lines and boxes.** Type is the ornament (Cinzel inscriptions, Roman
+  numerals set large and alone, Cormorant for his voice); real imagery
+  carries the colour; light, shadow and space separate things; the
+  interpunct "·" is the one divider. The only edges are ones that do a job:
+  form fields, the gold focus ring, the device frames (safari, iphone), and
+  the one filled button a screen holds.
+- **Shapes** (`look.ts`): `stageButton('primary', 'md' | 'sm')`, the intro's
+  ENTER (rectangular, a 2px radius, Geist capitals, marble fill), for a
+  screen's one primary action ("See the work", "Send": kokonut-undo-button's
+  `radius`, a `[site edit]`); every other action is `stageLink()` or
+  `stageLink('away')` (Geist 13px in marble under a gold line that thickens
+  and brightens on hover, a gold ↗ for a link that leaves the site, 44px
+  tall). `stageButton('secondary')` (a gold edge) is the old second button,
+  on its way out. `SectionHeader` (`section-header.tsx`) is every act's
+  header: the numeral alone as the chapter mark (gold Cinzel, 64px on
+  phones, 112px from lg), then the kicker in Geist capitals, the h2 in
+  Cinzel, the intro in Cormorant; it cuts itself in once as it rises into
+  view (`reveal.ts`, loaded after the page; never for a header on screen as
+  the page starts, under reduced motion or without scripts, nor the hero's
+  h1). `STAGE_FOCUS` is the one focus ring: gold, 2px, offset 4.
+- **Each section's own idea:** the hero, the kokonut curtain dyed in the wash
   with the name in Cinzel; Act I, inscribed plaques (a gold edge, rivets,
   the number in a tabula ansata); Act II, the title cards, then rows that
   show the product itself (nothing the card above already says) and
-  gold-on-violet diagrams; Act III, a road of gold milestones; Act IV, his
+  gold-on-wash diagrams; Act III, a road of gold milestones; Act IV, his
   Trailhead rank first, the rank's name inside a laurel crown struck in gold
   (designali-in/award) on a glory of gold rays, then a frieze of laurel
   seals, all eight in one row on wide screens so
   none shows twice; About, the portrait in an arched niche and the skills as
-  marble tiles; Contact, the world in gold on a violet globe; the footer,
-  the fluted violet glass under a gilt edge, closing on his monogram and a
+  marble tiles; Contact, the world in gold on a globe of the wash; the
+  footer, the fluted glass over the ground with the wash falling into it as
+  light, closing on his monogram and a
   line in Cinzel (no giant wordmark: his name stands full-width in the
   intro and the hero already).
 
@@ -154,7 +186,7 @@ report-only; `next.config.ts` says what each source is for).
 
 | Spec | Covers |
 |---|---|
-| `smoke` | Every route and head file, the redirects, a clean console, no request off-origin, the CSP, the server HTML (the JSON-LD Person and its award, the `<noscript>` summary, the rank in llms.txt), the page without WebGL, the hero's painting (aria-hidden, inert, nothing to focus, one light, Hercules, his curls below the surname, the name the largest paint; never without WebGL or for a browser that saves data; its chunk failing leaves the page as it is) |
+| `smoke` | Every route and head file, the redirects, a clean console, no request off-origin, the CSP, the server HTML (the JSON-LD Person and its award, the `<noscript>` summary, the rank in llms.txt), the page without WebGL, the hero's painting (aria-hidden, inert, nothing to focus, one light, Hercules, his curls below the surname, the name the largest paint; never without WebGL or for a browser that saves data; its chunk failing leaves the page as it is), the act headers (the numeral alone and large in Cinzel, no rule; the entrance held below the screen and let go whole, never below full when the page lands on one, nothing held under reduced motion) |
 | `a11y` | axe, any impact, on `/`, `/resume`, the 404 and the message box's sent and failure panels |
 | `keyboard-walk` | Every Tab stop visible, named, ringed, on screen, not under the top bar, the message box's panels and every product's preview, link and Pause included |
 | `intro` | The Roman intro: shows on a first visit, not again within 12 hours, again after them, with `?intro`, never with a hash, under reduced motion or without scripts; the page comes back at once if the stage's code fails, and at the 8 s fail-safe if it never arrives (and it never shows late); the count in Roman numerals; Skip (focus stays inside); the landing's words from the records; Enter (from the unveil on), Escape (straight to the exit), ArrowDown, PageDown, End, a wheel or swipe during the load and a nav link each lift it onto the page (focus on main, or the section; the page scrolls); Tab stays inside and every stop shows, ringed; axe during the load and at the landing; a clean console, no CSP report, nothing off-origin; nothing off screen and no overlapping pills from 320 to 1920 |
@@ -183,7 +215,7 @@ move only in a commit that says why.
 | `/resume`, `/api/resume/*` | Roman's PIN-gated builder; its UI lives in `src/app/resume/_ui/` |
 | `/api/contact` | The message box's POST: Resend (an HTML and text email to `CONTACT_TO`, reply-to the visitor) and Netlify Forms together; then, when receipts are on and Resend took the email, a receipt to the visitor (marked automatic, one an hour per address) that repeats nothing they typed but a first name passing `src/lib/first-name.ts`. 200 `{ok, delivered, receipt}`, 502 when neither channel delivered (contract at the top of `route.ts`) |
 | `/api/csp-report` | Where CSP reports go (logged, 204) |
-| 404, `error.tsx`, `global-error.tsx` | The Stage's ground, violet wash, gold and Cinzel (`look.ts`), each with a way home |
+| 404, `error.tsx`, `global-error.tsx` | The Stage's ground, the wash's light, gold and Cinzel (`look.ts`), each with a way home: one button, then text links |
 | `/sitemap.xml`, `/robots.txt`, `/manifest.webmanifest`, `/llms.txt`, `/icon.svg`, `/apple-icon`, `/opengraph-image`, `/twitter-image`, `/humans.txt` | Generated from the same records |
 | `/credentials`, `/work`, `/products`, `/about`, `/contact`, `/works`, `/works/:slug`, `/colophon` | 307s to the Stage's sections, or `/` |
 
@@ -198,25 +230,28 @@ move only in a commit that says why.
 | The résumé's private data (server only) | `src/lib/resume-data.ts` |
 | Head and JSON-LD | `src/lib/seo.ts` (`pageMetadata`), `src/lib/structured-data.ts` |
 | API settings (server only) | `src/lib/env.ts`; routes never read `process.env` directly |
-| The page: sections, top bar, message box | `src/components/stage/` (`look.ts`: the palette's CSS variables, the button, the focus ring and the header type, which the 404 and error pages share; `section-header.tsx`: every act's header; `contact-card.tsx`: the contact card with the message box) |
+| The page: sections, top bar, message box | `src/components/stage/` (`look.ts`: the palette's CSS variables, the button, the text link, the focus ring and the header type, which the 404 and error pages share; `section-header.tsx`: every act's header, and `reveal.ts` its entrance; `stage.tsx`: the hero and the sections' shells; the glue that loads after the page with what it configures: `about.tsx`, `contact.tsx` around `contact-card.tsx` (the contact card with the message box), `footer.tsx`, `experience-road.tsx` (Act III's Lifeline), `frieze.tsx` (Act IV's seals)) |
 | Act II, his products: the rows, then the previews that load after the page, and the sizes both share | `src/components/stage/products.tsx`, `product-previews.tsx`, `preview-box.ts` |
 | The products' screenshots (WebP, desktop at 1280 wide, phone at 390 wide saved at 1.5x) and the script that takes them | `public/images/products/`, `scripts/capture-products.mjs` |
 | The contact emails (to Roman, and the visitor's receipt), server only | `src/lib/contact-email.ts`; the first-name rule they share with the message box is `src/lib/first-name.ts` |
 | The Roman intro: the gate (`intro.tsx`, `intro-gate.ts`), the stage (`intro-stage.tsx`), the cast (`cast.ts`); the palette (`imperial.ts`) and the faces (`roman-type.ts`), which the whole page uses | `src/components/stage/` |
 | The products' title cards | `src/components/stage/product-stage.tsx` (the box, and when it plays), `product-stage-card.tsx` (the stage) |
-| Act IV: the rank, then the seals | `src/components/stage/rank-honour.tsx` (designali-in/award configured, the platform's line, the glory and the entrance; the laurel's golds are `GILT` in `imperial.ts`), `src/components/ui/award.tsx` (the component), `credentials.tsx` (the act, and the frieze) |
+| Act IV: the rank, then the seals | `src/components/stage/rank-honour.tsx` (designali-in/award configured, the platform's line, the glory and the entrance; the laurel's golds are `GILT` in `imperial.ts`), `src/components/ui/award.tsx` (the component), `credentials.tsx` (the act), `frieze.tsx` (the seals, loaded after the page) |
 | The hero's painting | `src/components/stage/hero-painting.tsx` (the box, and when it plays), `hero-painting-stage.tsx` (the stage) |
 | Roman numerals | `src/lib/roman.ts` (`toRoman`: 1 to 3999, "·" for 0) |
 | The statues (WebP, the figures pre-keyed) and the script that makes them | `public/images/cast/`, `scripts/fetch-cast.mjs` |
 | The 21st.dev components and their `-utils` folders | `src/components/ui/` |
-| Theme | `src/app/globals.css`: shadcn's theme unmodified, the Roman faces' families, the Stage's inks as Tailwind colours, the intro's gate, then the résumé's own tokens |
+| Theme | `src/app/globals.css`: shadcn's theme unmodified, Act I's stack variants (`stack-phone`, `stack`, `flat`), the Roman faces' families, the palette's first four and the Stage's inks as Tailwind colours, the intro's gate, then the résumé's own tokens |
 | Share-card fonts | `src/app/_og/fonts/` (Geist, OFL) |
 
 The products' previews, the About template, the contact card (with the
-message box inside it: `contact-card.tsx`), the footer and the Experience
-timeline load after the page (`next/dynamic`, `ssr: false`) behind blocks
-of their own height, so the first screen is light and nothing moves when
-they land; the `<noscript>` summary covers visitors without scripts.
+message box inside it: `contact-card.tsx`), the footer, the Experience
+timeline and Act IV's frieze load after the page (`next/dynamic`, `ssr:
+false`), each with the glue that configures it (its class strings and
+logic, in its own module), behind blocks of their own height, so the first
+screen is light and nothing moves when they land; the sections, their ids
+and headers are the page's own HTML, and the `<noscript>` summary covers
+visitors without scripts.
 
 ### Act II, his products
 
@@ -268,7 +303,7 @@ capitals (a sheen parked off them), its rule in gold, his standing as its
 subtitle in Cormorant italic, the laurel filled with a gradient of the
 palette's golds, and no level pill (its word, "GOLD", is the component's,
 not the record's). "Trailhead" stands in the crown's opening, the page's
-own line, first in reading order; the page's own glory (a violet halo and
+own line, first in reading order; the page's own glory (a halo of the wash and
 fine gold rays, aria-hidden) is behind. All the words are `RANK`'s. From
 xl it stands beside the act's header, below xl between the header and the
 frieze. It plays once, when a third of it is in view: the glory, the laurel
@@ -303,7 +338,7 @@ every phase change while asked for, so a timer can't set the landing back).
   the dark until then). If the stage is taken down by an error, it gives the
   page back too.
 - What: ROMAN in Cinzel inside the gold meander, the count in Roman
-  numerals, then the imperial violet flood (`imperial.ts`) and the cast:
+  numerals, then the flood of the wash (`imperial.ts`) and the cast:
   Hercules and Apollo, David blurred behind. The
   words are the records': his tagline, "Prologue · " and the year in Roman
   numerals, his initials, his client projects and certifications counted in
@@ -357,8 +392,8 @@ his head at most 72% of the screen's width (on a phone the photograph
 stays near the intro's scale), his shoulders fading out below his beard,
 gone above the tagline, so the tagline and the buttons stand on the
 curtain. He stands in a niche of the page's dark: the print's shadows are
-keyed out of the photograph, and on the dark they read as shadow (on
-violet or on the curtain's folds his face broke up into fragments). The
+keyed out of the photograph, and on the dark they read as shadow (on the
+wash or on the curtain's folds his face broke up into fragments). The
 component's light is drawn twice as strong. So the hero is laid out as a
 poster: the name at the top, the tagline and the buttons at the foot, his
 room between. It is aria-hidden and inert; it loads after the page (once
