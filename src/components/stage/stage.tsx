@@ -100,9 +100,13 @@ const GRAIN = {
  * A dark halo keeps every letter's edge where the statue's marble stands
  * behind the name: tight to the letter, then soft, as the intro's word
  * keeps its own over the statues (imperial.ts WORD_HALO).
+ *
+ * On a phone held sideways (a screen under 500px tall) the name is held to
+ * a fifth of the height, so his words, both ways in and the whole name
+ * stand on the one screen.
  */
 const NAME =
-  'relative -mx-4 flex flex-col items-center font-roman font-medium uppercase text-foreground md:-mx-12 [--n:min(calc((100cqw-2rem)/4.151),36svh)] md:[--n:min(calc((100cqw-6rem)/4.151),36svh)]'
+  'relative -mx-4 flex flex-col items-center font-roman font-medium uppercase text-foreground md:-mx-12 [--n:min(calc((100cqw-2rem)/4.151),36svh)] md:[--n:min(calc((100cqw-6rem)/4.151),36svh)] [@media(max-height:500px)]:[--n:min(calc((100cqw-2rem)/4.151),20svh)]!'
 
 /**
  * Below the light, the print sinks into its shadow: from a little above the
@@ -122,17 +126,21 @@ const NAME_HALO =
  * statue on a phone or a tall screen; on a wide one they stand at the left
  * (on the page's column, under the top bar's name), the tagline a stanza of
  * its three sentences, and Hercules on the right.
+ * A phone held sideways (under 500px tall and at least 3:2) sets them as a
+ * wide screen does, at the left with Hercules beside them, since there is
+ * no room above the name for him under them.
  * They set in once as the page opens, as the intro's landing's words do (a
  * transition from their starting style; while the intro is up they are held
  * there, and let go as it lifts), never under reduced motion. The name never
  * moves: it is the first and largest paint.
  */
+/* A phone held sideways (the variant below, written out in full where it is used so Tailwind sees each class): short, and wide enough for his words and Hercules side by side. */
 const COPY =
-  'relative flex flex-col items-center text-center lg:[@media(min-aspect-ratio:5/4)]:items-start lg:[@media(min-aspect-ratio:5/4)]:ml-[max(0px,calc(50cqw-640px))] lg:[@media(min-aspect-ratio:5/4)]:self-start lg:[@media(min-aspect-ratio:5/4)]:text-left'
+  'relative flex flex-col items-center text-center lg:[@media(min-aspect-ratio:5/4)]:items-start lg:[@media(min-aspect-ratio:5/4)]:ml-[max(0px,calc(50cqw-640px))] lg:[@media(min-aspect-ratio:5/4)]:self-start lg:[@media(min-aspect-ratio:5/4)]:text-left [@media(max-height:500px)_and_(min-aspect-ratio:3/2)]:items-start [@media(max-height:500px)_and_(min-aspect-ratio:3/2)]:self-start [@media(max-height:500px)_and_(min-aspect-ratio:3/2)]:text-left'
 const SET_IN =
   'motion-safe:transition-[opacity,translate] motion-safe:duration-[1200ms] motion-safe:ease-[cubic-bezier(0.16,1,0.3,1)] motion-safe:starting:translate-y-4 motion-safe:starting:opacity-0 motion-safe:[html[data-intro]:not([data-intro=lift])_&]:translate-y-4 [html[data-intro]:not([data-intro=lift])_&]:opacity-0'
 const TAGLINE =
-  'max-w-[24em] font-serif text-[clamp(1.25rem,6cqw,1.625rem)] italic leading-[1.15] text-(--stage-text) text-balance md:text-[clamp(1.75rem,3.4cqw,2.5rem)] lg:[@media(min-aspect-ratio:5/4)]:text-[clamp(2rem,3.1cqw,3.25rem)] lg:[@media(min-aspect-ratio:5/4)]:leading-[1.12] [text-shadow:0_1px_24px_color-mix(in_srgb,var(--background)_60%,transparent)]'
+  'max-w-[24em] [@media(max-height:500px)_and_(min-aspect-ratio:3/2)]:max-w-[min(24em,56cqw)] font-serif text-[clamp(1.25rem,6cqw,1.625rem)] italic leading-[1.15] text-(--stage-text) text-balance md:text-[clamp(1.75rem,3.4cqw,2.5rem)] lg:[@media(min-aspect-ratio:5/4)]:text-[clamp(2rem,3.1cqw,3.25rem)] lg:[@media(min-aspect-ratio:5/4)]:leading-[1.12] [text-shadow:0_1px_24px_color-mix(in_srgb,var(--background)_60%,transparent)]'
 const SENTENCE = 'lg:[@media(min-aspect-ratio:5/4)]:block'
 
 /** The tagline's sentences, each with the space before it, so the words are the record's exactly. */
@@ -160,7 +168,7 @@ function Hero() {
               </span>
             ))}
           </p>
-          <div className={cn('mt-5 flex flex-wrap items-center justify-center gap-x-7 gap-y-1 md:mt-7 md:gap-x-9 lg:[@media(min-aspect-ratio:5/4)]:justify-start', SET_IN, 'motion-safe:delay-[400ms]')}>
+          <div className={cn('mt-5 flex flex-wrap items-center justify-center gap-x-7 gap-y-1 md:mt-7 md:gap-x-9 lg:[@media(min-aspect-ratio:5/4)]:justify-start [@media(max-height:500px)_and_(min-aspect-ratio:3/2)]:mt-4 [@media(max-height:500px)_and_(min-aspect-ratio:3/2)]:justify-start', SET_IN, 'motion-safe:delay-[400ms]')}>
             <a href="#work" className={stageButton('primary')}>
               See the work
             </a>
@@ -170,7 +178,7 @@ function Hero() {
           </div>
         </div>
         {/* Hercules's room (hero-painting-stage.tsx): at least this much between his words and his name. */}
-        <div aria-hidden="true" data-hero-room="" className="min-h-[max(8rem,24svh)] flex-1 lg:[@media(min-aspect-ratio:5/4)]:min-h-[6svh]" />
+        <div aria-hidden="true" data-hero-room="" className="min-h-[max(8rem,24svh)] flex-1 lg:[@media(min-aspect-ratio:5/4)]:min-h-[6svh] [@media(max-height:500px)]:min-h-[4svh]" />
       </div>
     </section>
   )

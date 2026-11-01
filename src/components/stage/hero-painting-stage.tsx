@@ -49,8 +49,14 @@ export const HEAD = { top: 0.046, chin: 0.44, left: 0.369, right: 0.594 } as con
 /** The middle of his head, curls and all, across the photograph. */
 const HEAD_X = (HEAD.left + HEAD.right) / 2
 
-/** The cast's files are pre-keyed (cast.ts): the component's own key only keeps their edge. */
-const KEY = { threshold: 0.08, softness: 0.08 } as const
+/**
+ * The file is pre-keyed and filled (scripts/fetch-cast.mjs): its alpha is
+ * his whole outline, his shadowed face included. So the component keys
+ * nothing more (no luminance reads as ground): his shadows print in the
+ * print's darkest ink rather than letting the backdrop through, and his
+ * face holds as a face in shadow, as the intro's Apollo's does.
+ */
+const KEY = { threshold: 0, softness: 0.02 } as const
 
 /** On a phone or a tall screen: his head and the chest under it take this share of his room; the rest of his chest stands behind the name. */
 const TALL_SHARE = 0.66
