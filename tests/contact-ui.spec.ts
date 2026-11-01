@@ -1,5 +1,5 @@
 import { expect, test, type Locator, type Page, type Request, type Route } from '@playwright/test'
-import { collectConsole, gotoHome } from './helpers'
+import { collectConsole, gotoHome, parseColor } from './helpers'
 
 /**
  * The message box in the contact card (src/components/stage/composer.tsx):
@@ -366,8 +366,50 @@ test.describe('sending', () => {
     )
     const contact = page.locator('#contact')
     await expect(contact).toContainText(EMAIL)
-    await expect(contact.getByRole('button', { name: 'Try again' })).toHaveAttribute('data-variant', 'outline')
+    // The mail app is the panel's one filled button; Try again a text link.
+    await expect(contact.getByRole('button', { name: 'Try again' })).toHaveAttribute('data-variant', 'link')
     await expect(contact.getByRole('link', { name: 'Open in your mail app' })).toHaveAttribute('data-variant', 'default')
+    log.expectClean()
+  })
+
+  test('each panel holds one filled button, every other action a text link, and the quote has no frame', async ({ page }) => {
+    const log = collectConsole(page, [/status of 502/])
+    await interceptContact(page, [refused, delivered(false)])
+    const f = await fill(page)
+    await pressSend(page, f.send)
+    await expect(panelHeading(page, FAILED)).toBeFocused({ timeout: 15_000 })
+    const contact = page.locator('#contact')
+    const kinds = () =>
+      contact.locator('[data-slot="button"]').evaluateAll((els) => els.map((el) => `${el.getAttribute('data-variant')} ${el.textContent?.trim()}`))
+    expect(await kinds()).toEqual(['default Try again', 'link Edit message', 'link Copy email', 'link Open in your mail app'])
+    // A text link: no box (no fill, no edge), underlined in gold.
+    const link = await contact.getByRole('button', { name: 'Edit message' }).evaluate((el) => {
+      const css = getComputedStyle(el)
+      return { fill: css.backgroundColor, edge: css.borderTopWidth, underline: css.textDecorationLine, height: el.getBoundingClientRect().height }
+    })
+    expect(link).toMatchObject({ fill: 'rgba(0, 0, 0, 0)', edge: '0px', underline: 'underline' })
+    expect(link.height, 'a 44px target').toBeGreaterThanOrEqual(44)
+    // Their words, quoted in Cormorant italic between drawn quotation marks, with no frame and no rule.
+    const quote = await contact.locator('figure').evaluate((figure) => {
+      const q = figure.querySelector('blockquote')!
+      const css = getComputedStyle(figure)
+      return {
+        edges: [css.borderTopWidth, css.borderRightWidth, css.borderBottomWidth, css.borderLeftWidth],
+        face: getComputedStyle(q).fontFamily,
+        italic: getComputedStyle(q).fontStyle,
+        open: getComputedStyle(q, '::before').content,
+        close: getComputedStyle(q, '::after').content,
+      }
+    })
+    expect(quote.edges).toEqual(['0px', '0px', '0px', '0px'])
+    expect(quote.face).toMatch(/cormorant/i)
+    expect(quote.italic).toBe('italic')
+    expect(quote.open).toContain('“')
+    expect(quote.close).toContain('”')
+
+    await contact.getByRole('button', { name: 'Try again' }).click()
+    await expect(panelHeading(page, 'Message sent')).toBeFocused({ timeout: 10_000 })
+    expect(await kinds()).toEqual(['link Send another message'])
     log.expectClean()
   })
 })
@@ -422,5 +464,96 @@ test.describe('a phone held sideways', () => {
   test('still gets 16px text, though it is wider than sm', async ({ page }, testInfo) => {
     test.skip(!testInfo.project.use.hasTouch, 'a touch screen only')
     expect(await expectPhoneText(page)).toBe('16px')
+  })
+})
+
+test.describe('the card', () => {
+  test('no panel round the box: the fields on the ground with edges of 3:1 and more, Send the one filled button', async ({ page }) => {
+    const f = await openBox(page)
+    const look = await f.box.evaluate((form) => {
+      const card = form.parentElement!
+      const css = getComputedStyle(card)
+      const before = getComputedStyle(card, '::before')
+      const ground = getComputedStyle(document.body.querySelector('main')!.parentElement!).backgroundColor
+      const name = form.querySelector('#c-name')!
+      // Colours as sRGB, whatever space the computed value is in (the edge is an oklab mix).
+      const srgb = (color: string) => {
+        const c = document.createElement('canvas').getContext('2d')!
+        c.fillStyle = color
+        c.fillRect(0, 0, 1, 1)
+        const [r, g, b, a] = c.getImageData(0, 0, 1, 1).data
+        return `rgba(${r}, ${g}, ${b}, ${a / 255})`
+      }
+      return {
+        cardEdge: css.borderTopWidth,
+        cardFill: css.backgroundImage === 'none' && css.backgroundColor === 'rgba(0, 0, 0, 0)',
+        goldLine: before.content !== 'none' && before.content !== 'normal',
+        fieldEdge: srgb(getComputedStyle(name).borderTopColor),
+        ground: srgb(ground),
+      }
+    })
+    expect(look).toMatchObject({ cardEdge: '0px', cardFill: true, goldLine: false })
+    const lum = ([r, g, b]: number[]) => {
+      const c = (v: number) => ((v /= 255) <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4)
+      return 0.2126 * c(r) + 0.7152 * c(g) + 0.0722 * c(b)
+    }
+    const [edge, ground] = [parseColor(look.fieldEdge), parseColor(look.ground)]
+    expect(edge[3], 'the edge is opaque').toBe(1)
+    const ratio = (lum(edge) + 0.05) / (lum(ground) + 0.05)
+    expect(ratio, `a field's edge against the ground (WCAG 1.4.11): ${ratio.toFixed(2)}:1`).toBeGreaterThanOrEqual(3)
+
+    // Filled in, Send is the Stage's primary: the marble, with the ground's ink.
+    await f.name.fill('Playwright')
+    await f.email.fill('e2e@example.com')
+    await f.message.fill(MESSAGE)
+    await expect(f.send).toBeEnabled()
+    const send = await f.send.evaluate((el) => {
+      const css = getComputedStyle(el)
+      return { fill: css.backgroundColor, ink: css.color, height: el.getBoundingClientRect().height }
+    })
+    const marble = await page.evaluate(() => getComputedStyle(document.querySelector('#hero-title')!).color)
+    expect(send.fill).toBe(marble)
+    expect(send.height).toBeGreaterThanOrEqual(44)
+  })
+
+  test('the channels are plain lines: a label over each address, no icon tiles', async ({ page }) => {
+    await openBox(page)
+    const channels = page.locator('#contact a[href^="mailto:"], #contact a[href*="linkedin.com"], #contact a[href*="github.com"]').filter({ hasNot: page.locator('[data-slot="button"]') })
+    const lines = await channels.evaluateAll((links) =>
+      links
+        .filter((a) => !a.closest('footer') && !a.closest('form'))
+        .map((a) => {
+          const tile = a.firstElementChild as HTMLElement
+          const label = tile.querySelector('span')!
+          const css = getComputedStyle(tile)
+          return {
+            name: a.textContent?.replace(label.textContent ?? '', '').trim(),
+            label: label.textContent,
+            labelSize: getComputedStyle(label).fontSize,
+            addressSize: getComputedStyle(a).fontSize,
+            tile: css.borderTopWidth === '0px' && css.backgroundColor === 'rgba(0, 0, 0, 0)',
+            svg: a.querySelectorAll('svg').length,
+            height: a.getBoundingClientRect().height,
+          }
+        }),
+    )
+    expect(lines.map((l) => [l.label, l.name])).toEqual([
+      ['Email', EMAIL],
+      ['LinkedIn', 'linkedin.com/in/romakuch'],
+      ['GitHub', 'github.com/RomanKucheryavyy'],
+    ])
+    for (const line of lines) {
+      expect(line, String(line.label)).toMatchObject({ labelSize: '12px', addressSize: '16px', tile: true, svg: 0 })
+      expect(line.height, `${line.label}: a 44px target`).toBeGreaterThanOrEqual(44)
+    }
+  })
+
+  test('one heading shows on a phone: "Get in touch" is kept for screen readers only', async ({ page }) => {
+    await openBox(page)
+    const heading = page.locator('#contact').getByRole('heading', { name: 'Get in touch', exact: true })
+    await expect(heading).toHaveCount(1)
+    const width = page.viewportSize()?.width ?? 0
+    const shown = await heading.evaluate((el) => el.getBoundingClientRect().width > 1 && getComputedStyle(el).clipPath === 'none' && getComputedStyle(el).position !== 'absolute')
+    expect(shown, `${width}px`).toBe(width >= 768)
   })
 })

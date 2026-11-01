@@ -1,6 +1,6 @@
 'use client'
 
-import { Check, CircleAlert, Copy, Mail, PenLine, RotateCw, Send } from 'lucide-react'
+import { Check, CircleAlert, Mail, RotateCw, Send } from 'lucide-react'
 import { useCallback, useEffect, useLayoutEffect, useRef, useState, type ReactNode, type RefObject } from 'react'
 import { Button } from '@/components/ui/button'
 import { AIAutocomplete } from '@/components/ui/kokonut-ai-autocomplete'
@@ -8,7 +8,7 @@ import UndoButton from '@/components/ui/kokonut-undo-button'
 import { PERSON } from '@/lib/content'
 import { firstName } from '@/lib/first-name'
 import { cn } from '@/lib/utils'
-import { KICKER, stageButton } from './look'
+import { KICKER, stageButton, stageLink } from './look'
 
 /**
  * Tactile's message box (direction A) in Stage's contact card: the
@@ -71,46 +71,59 @@ export function suggest(text: string): string | null {
 // offers Send for an address the route would refuse.
 const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/
 /**
- * The box in the Imperial Stage's dress (look.ts): a tablet of the wash
- * with a gilt top edge, the heading and the panels' headings in
- * Cinzel, labels in the Stage's Geist capitals, square-cornered fields that
- * take a gold edge on focus, the visitor's own words quoted back in
- * Cormorant italic, and the Stage's buttons. Every ink clears AA on the
- * wash: the text 13.2:1, the muted ink 7.2:1, gold 7.5:1.
+ * The box in the Imperial Stage's dress (look.ts), with no panel round it:
+ * the fields stand straight on the ground, each keeping the edge that
+ * shows where to type (a field's edge, 3:1 and more on the ground), gold
+ * when it has focus; the heading and the panels' headings in Cinzel,
+ * labels in the Stage's Geist capitals, the visitor's own words quoted
+ * back in Cormorant italic. Send is the one filled button, the Stage's
+ * primary; every other action is a text link (stageLink).
  *
  * The two kokonut parts inside (the autocomplete and the undo button) draw
- * in Tailwind's zinc greys; INKS re-points those greys on the card rather
+ * in Tailwind's zinc greys; INKS re-points those greys on the box rather
  * than editing the components: their light ink (zinc-100) becomes the
  * marble, their quiet one (zinc-400) the muted ink, the suggestion and the
- * placeholder (zinc-500) a dimmer muted ink (4.7:1 on the field), their lines
- * (zinc-800) the rule, their hover (zinc-900) a lit wash, and their
- * ground (zinc-950) the field's. SEND_INKS turns the Send button's edge
- * gold, the Stage's secondary button, square-cornered like the rest (the
- * undo button's `radius`, a [site edit], draws its countdown to match).
+ * placeholder (zinc-500) a dimmer muted ink (4.7:1 on the ground), their
+ * lines (zinc-800) the field's edge, their hover (zinc-900) a lit wash,
+ * and their ground (zinc-950) the page's. SEND_INKS re-points them again
+ * on the Send button alone, as the Stage's primary: marble (zinc-950, its
+ * face) with ground ink (zinc-100), the glow on hover (zinc-900), its edge
+ * the marble too (zinc-800), and its quiet ink (zinc-500 and -400) a
+ * ground-dark one for the undo window's words and count, 7:1 and more on
+ * the marble. Square-cornered like the rest: the undo button's `radius`, a
+ * [site edit], draws its countdown to match, in the ground ink along the
+ * marble's edge.
  */
+const EDGE = 'color-mix(in oklab, var(--stage-rule) 50%, var(--muted-foreground))'
 const INKS = {
   '--color-zinc-100': 'var(--foreground)',
   '--color-zinc-400': 'var(--muted-foreground)',
   '--color-zinc-500': 'color-mix(in oklab, var(--muted-foreground) 74%, var(--background))',
-  '--color-zinc-800': 'color-mix(in oklab, var(--stage-rule) 80%, transparent)',
+  '--color-zinc-800': EDGE,
   '--color-zinc-900': 'color-mix(in oklab, var(--stage-wash) 70%, var(--stage-rule))',
-  '--color-zinc-950': 'color-mix(in oklab, var(--background) 55%, transparent)',
+  '--color-zinc-950': 'var(--background)',
 } as React.CSSProperties
 const SEND_INKS = {
-  '--color-zinc-800': 'color-mix(in oklab, var(--stage-gold) 70%, transparent)',
-  '--color-zinc-900': 'color-mix(in oklab, var(--stage-gold) 14%, var(--background))',
+  '--color-zinc-950': 'var(--foreground)',
+  '--color-zinc-100': 'var(--background)',
+  '--color-zinc-900': 'var(--stage-glow)',
+  '--color-zinc-800': 'var(--foreground)',
+  '--color-zinc-500': 'color-mix(in oklab, var(--background) 72%, var(--foreground))',
+  '--color-zinc-400': 'color-mix(in oklab, var(--background) 72%, var(--foreground))',
 } as React.CSSProperties
-/** The Send button: the Stage's capitals; its focus is the page's gold ring, not a second one of its own. */
-const SEND = 'rounded-[2px] text-xs tracking-[0.2em] uppercase focus-visible:ring-0 focus-visible:ring-offset-0'
+/**
+ * The Send button: the Stage's primary (stageButton's capitals, 44px tall);
+ * its focus is the page's gold ring, not a second one of its own; its key
+ * hint at the page's 12px floor.
+ */
+const SEND = 'h-11 rounded-[2px] text-xs tracking-[0.2em] uppercase focus-visible:ring-0 focus-visible:ring-offset-0 [&_kbd]:text-xs [&_kbd]:tracking-normal'
 
-const CARD =
-  'relative flex flex-col rounded-[3px] border border-rule/75 bg-[linear-gradient(180deg,color-mix(in_oklab,var(--stage-wash)_56%,var(--background)),color-mix(in_oklab,var(--stage-wash)_28%,var(--background)))] p-6 before:pointer-events-none before:absolute before:inset-x-0 before:top-[-1px] before:h-px before:bg-linear-to-r before:from-transparent before:via-gold before:to-transparent sm:p-8'
+const CARD = 'relative flex flex-col'
 const TITLE = 'font-roman text-xl font-medium tracking-[0.02em] text-foreground sm:text-[1.375rem]'
 const NOTE = 'text-sm leading-relaxed text-muted-foreground'
 const LABEL = KICKER
-/** A field's frame: the rule on the ground, gold when it has focus. */
-const FIELD =
-  'rounded-[2px] border border-rule/85 bg-background/55'
+/** A field's frame: its edge on the ground, gold when it has focus. */
+const FIELD = 'rounded-[2px] border border-[color-mix(in_oklab,var(--stage-rule)_50%,var(--muted-foreground))] bg-background'
 /**
  * iOS Safari zooms the page into any field under 16px when it takes focus,
  * and a phone held sideways is wider than sm, so the fields drop to 14px
@@ -123,9 +136,10 @@ const INPUT = `w-full ${FIELD} px-4 py-2.5 text-base text-(--stage-text) caret-g
  * the mirror under it that carries the grey suggestion. For the same iOS
  * zoom, below sm and on any touch screen (pointer: coarse, so a phone in
  * landscape too) both layers go to 16px together, so the suggestion stays on
- * the caret's line; with a mouse from sm up they stay as published.
+ * the caret's line; with a mouse from sm up they stay as published. Its key
+ * hints (Tab, Esc and the arrow) are set at the page's 12px floor.
  */
-const BOX_TEXT = 'max-sm:[&_div:has(>textarea)>*]:text-[16px] pointer-coarse:[&_div:has(>textarea)>*]:text-[16px]'
+const BOX_TEXT = 'max-sm:[&_div:has(>textarea)>*]:text-[16px] pointer-coarse:[&_div:has(>textarea)>*]:text-[16px] [&_kbd]:text-xs'
 /**
  * The message box's frame, a field's: gold when anything in it has focus,
  * and, from the keyboard, the fields' gold outline round the whole box (its
@@ -135,21 +149,20 @@ const BOX_TEXT = 'max-sm:[&_div:has(>textarea)>*]:text-[16px] pointer-coarse:[&_
  */
 const BOX = `scroll-my-24 overflow-hidden ${FIELD} transition-[border-color,box-shadow] duration-200 focus-within:border-gold focus-within:ring-2 focus-within:ring-gold/18 has-[textarea:focus-visible]:outline-2 has-[textarea:focus-visible]:outline-solid has-[textarea:focus-visible]:outline-offset-2 has-[textarea:focus-visible]:outline-gold [&_textarea]:caret-gold! [&_textarea:focus-visible]:bg-gold/5 [&:has(textarea:focus-visible)_div.relative~div]:bg-gold/5`
 /**
- * The panels' buttons in the Stage's style (stageButton: the hero's and the
- * intro's ENTER), set on shadcn's Button over its variant: `default` is the
- * Stage's primary, `outline` its secondary. The rest undoes what the
+ * The panels' actions: one filled button, the Stage's primary (stageButton,
+ * set on shadcn's Button over its `default` variant), and the rest text
+ * links (stageLink, over its `link` variant). The rest undoes what the
  * variant would keep: its shadow, its own focus ring (the page's gold one
- * is the ring), its 16px icons, its padding beside an icon, and the
- * outline's dark-mode fills.
+ * is the ring), its height and padding, its 16px icons.
  */
-function panelButton(variant: 'default' | 'outline', size: 'md' | 'sm' = 'md'): string {
-  return cn(
-    stageButton(variant === 'default' ? 'primary' : 'secondary', size),
-    "shadow-none focus-visible:ring-0 [&_svg:not([class*='size-'])]:size-3.5",
-    size === 'md' ? 'has-[>svg]:px-5 sm:has-[>svg]:px-7' : 'has-[>svg]:px-4',
-    variant === 'outline' &&
-      'dark:border-gold/70 dark:bg-background/45 dark:hover:bg-gold/12',
-  )
+function panelButton(variant: 'default' | 'link', size: 'md' | 'sm' = 'md'): string {
+  return variant === 'default'
+    ? cn(
+        stageButton('primary', size),
+        "shadow-none focus-visible:ring-0 [&_svg:not([class*='size-'])]:size-3.5",
+        size === 'md' ? 'has-[>svg]:px-5 sm:has-[>svg]:px-7' : 'has-[>svg]:px-4',
+      )
+    : cn(stageLink(), 'h-auto rounded-none px-0 has-[>svg]:px-0 shadow-none focus-visible:ring-0 hover:underline')
 }
 /** A panel's heading takes focus when the panel appears; it is not a control, so no ring. */
 const PANEL_HEADING =
@@ -454,7 +467,7 @@ export function Composer() {
           </div>
 
           {phase === 'failed' && failure === 'incomplete' ? (
-            <p role="alert" className={`flex gap-2.5 ${FIELD} p-4 text-sm leading-relaxed text-(--stage-text)`}>
+            <p role="alert" className="flex gap-2.5 text-sm leading-relaxed text-(--stage-text)">
               <CircleAlert aria-hidden="true" className="mt-0.5 size-4 shrink-0 text-red-400" />
               <span>Add your name, a full email address and a message, then press Send again.</span>
             </p>
@@ -467,14 +480,10 @@ export function Composer() {
 
 /* -------------------------------------------------------------- panels -- */
 
-/** The ring round a panel's icon, a medallion: gold for sent, red for not. */
+/** A panel's mark: the icon alone, no ring: gold for sent, red for not. */
 function PanelIcon({ tone, children }: { tone: 'ok' | 'error'; children: ReactNode }) {
-  const ring =
-    tone === 'ok'
-      ? 'border-gold/45 bg-gold/12 text-gold shadow-[0_0_0_8px_color-mix(in_oklab,var(--stage-gold)_6%,transparent)]'
-      : 'border-red-400/40 bg-red-400/10 text-red-400 shadow-[0_0_0_8px_rgb(248_113_113/0.05)]'
   return (
-    <span aria-hidden="true" className={`flex size-14 shrink-0 items-center justify-center rounded-full border ${ring}`}>
+    <span aria-hidden="true" className={`flex shrink-0 items-center justify-center ${tone === 'ok' ? 'text-gold' : 'text-red-400'}`}>
       {children}
     </span>
   )
@@ -501,13 +510,12 @@ function Quote({ message }: { message: string }) {
     return () => observer.disconnect()
   }, [text])
   return (
-    <figure
-      className={`w-full ${FIELD} border-l-2 border-l-gold/65 px-5 py-4 text-left`}
-    >
+    <figure className="w-full text-center">
       <figcaption className={LABEL}>Your message</figcaption>
+      {/* Its quotation marks are drawn (CSS content), not typed: the quote is their words alone. */}
       <blockquote
         ref={ref}
-        className={`mt-2 max-h-[4lh] overflow-hidden whitespace-pre-line break-words font-serif text-lg italic leading-relaxed text-muted-foreground ${clipped ? '[mask-image:linear-gradient(to_bottom,#000_calc(100%_-_1.25lh),transparent)]' : ''}`}
+        className={`mt-3 max-h-[4lh] overflow-hidden whitespace-pre-line break-words font-serif text-xl italic leading-relaxed text-muted-foreground before:text-gold before:content-['“'_/_''] after:text-gold after:content-['”'_/_''] ${clipped ? '[mask-image:linear-gradient(to_bottom,#000_calc(100%_-_1.25lh),transparent)]' : ''}`}
       >
         {text}
       </blockquote>
@@ -534,7 +542,7 @@ function SentPanel({
   return (
     <div className="m-auto flex w-full max-w-md flex-col items-center gap-6 py-2 text-center">
       <PanelIcon tone="ok">
-        <Check className="size-6" strokeWidth={2.25} />
+        <Check className="size-8" strokeWidth={1.75} />
       </PanelIcon>
       <div className="flex flex-col gap-2">
         <h3 ref={headingRef} tabIndex={-1} aria-describedby={receipt ? 'c-sent-note c-sent-receipt' : 'c-sent-note'} className={PANEL_HEADING}>
@@ -551,8 +559,7 @@ function SentPanel({
         ) : null}
       </div>
       <Quote message={message} />
-      <Button type="button" variant="outline" className={panelButton('outline')} onClick={onAnother}>
-        <PenLine aria-hidden="true" />
+      <Button type="button" variant="link" className={panelButton('link')} onClick={onAnother}>
         Send another message
       </Button>
     </div>
@@ -605,7 +612,7 @@ function FailedPanel({
   return (
     <div className="m-auto flex w-full max-w-md flex-col items-center gap-6 py-2 text-center">
       <PanelIcon tone="error">
-        <CircleAlert className="size-6" strokeWidth={2} />
+        <CircleAlert className="size-8" strokeWidth={1.75} />
       </PanelIcon>
       <div className="flex flex-col gap-2">
         <h3 ref={headingRef} tabIndex={-1} aria-describedby="c-failed-note" className={PANEL_HEADING}>
@@ -621,38 +628,42 @@ function FailedPanel({
       </div>
 
       {/* While the box is pausing, Try again would only fail again, so writing directly leads instead. */}
-      <div className="flex flex-wrap items-center justify-center gap-3">
-        <Button
-          type="button"
-          variant={limited ? 'outline' : 'default'}
-          className={panelButton(limited ? 'outline' : 'default')}
-          aria-disabled={busy || undefined}
-          onClick={onRetry}
-        >
-          <RotateCw aria-hidden="true" className={busy ? 'motion-safe:animate-spin' : undefined} />
-          {busy ? 'Trying again…' : 'Try again'}
-        </Button>
-        <Button type="button" variant="outline" className={panelButton('outline')} aria-disabled={busy || undefined} onClick={busy ? undefined : onEdit}>
-          <PenLine aria-hidden="true" />
+      <div className="flex flex-wrap items-center justify-center gap-x-7 gap-y-2">
+        {limited ? (
+          <Button type="button" variant="link" className={panelButton('link')} aria-disabled={busy || undefined} onClick={onRetry}>
+            {busy ? 'Trying again…' : 'Try again'}
+          </Button>
+        ) : (
+          <Button type="button" variant="default" className={panelButton('default')} aria-disabled={busy || undefined} onClick={onRetry}>
+            <RotateCw aria-hidden="true" className={busy ? 'motion-safe:animate-spin' : undefined} />
+            {busy ? 'Trying again…' : 'Try again'}
+          </Button>
+        )}
+        <Button type="button" variant="link" className={panelButton('link')} aria-disabled={busy || undefined} onClick={busy ? undefined : onEdit}>
           Edit message
         </Button>
       </div>
 
-      <div className={`flex w-full flex-col items-center gap-3 ${FIELD} p-4`}>
+      <div className="flex w-full flex-col items-center gap-1">
         <span ref={addressRef} className="select-all break-words text-base font-medium text-foreground">
           {PERSON.links.email}
         </span>
-        <div className="flex flex-wrap items-center justify-center gap-2">
-          <Button type="button" variant="outline" size="sm" className={panelButton('outline', 'sm')} onClick={copy}>
-            {copied ? <Check aria-hidden="true" /> : <Copy aria-hidden="true" />}
+        <div className="flex flex-wrap items-center justify-center gap-x-7 gap-y-2">
+          <Button type="button" variant="link" className={panelButton('link')} onClick={copy}>
             {copied ? 'Copied' : 'Copy email'}
           </Button>
-          <Button asChild variant={limited ? 'default' : 'outline'} size="sm" className={panelButton(limited ? 'default' : 'outline', 'sm')}>
-            <a href={mailto}>
-              <Mail aria-hidden="true" />
-              Open in your mail app
-            </a>
-          </Button>
+          {limited ? (
+            <Button asChild variant="default" size="sm" className={panelButton('default', 'sm')}>
+              <a href={mailto}>
+                <Mail aria-hidden="true" />
+                Open in your mail app
+              </a>
+            </Button>
+          ) : (
+            <Button asChild variant="link" className={panelButton('link')}>
+              <a href={mailto}>Open in your mail app</a>
+            </Button>
+          )}
         </div>
         <span aria-live="polite" className="sr-only">
           {copied ? 'Email address copied.' : ''}
