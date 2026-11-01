@@ -30,28 +30,28 @@ import { ROMAN_FONTS } from './roman-type'
  *   nothing behind a private one.
  *
  * No ornaments: no pills, no stars, no rules; the type is the ornament.
- * No stage light: no shafts from above, no spotlight on the pointer; the
- * flood and the print light it. One word scale across the four cards: a long title
- * stands on two lines, a short one is held to at most 1.3 times its size,
- * so the four read as one series.
+ * No stage light (Roman, 2026-11-01: "not this like stage light look
+ * thingy"): no shafts and no dust (rays and dust off, the light's canvas
+ * hidden), no spotlight on the pointer, no flash, no sheen sweeping the
+ * card; the flood wells up from the floor and the print is lit by it. The
+ * card fades into the page's ground at its top and foot (EDGES), so it is
+ * light in the dark, never a panel with edges. One word scale across the four cards: a long
+ * title stands on two lines, a short one is held to at most 1.3 times its
+ * size, so the four read as one series.
  *
  * Nothing in it takes focus: no nav, no skip (`skippable={false}` also
  * keeps the root out of the tab order), and its call to action, which the
- * component renders by default, hidden. Under reduced motion it opens
- * straight on the still landing.
+ * component renders by default, hidden.
  *
- * On a phone it opens on its landing too (the component's load and unveil
- * take seconds a phone's scroll doesn't give), mounted ahead of the card
- * (product-stage.tsx) so it scrolls in composed: the number, the eyebrow and
- * the word. It holds three things back until a third of it has arrived,
- * then brings them in, all within about 1.3 s: the light floods out from
- * behind the word, the statue rises into it, the tagline follows word by
- * word, and a sheen crosses the word (ARRIVAL, below).
+ * At every width it opens on its landing (the component's load and unveil
+ * took seconds over a dark box, and a scroll doesn't wait for them),
+ * mounted ahead of the card (product-stage.tsx) so it scrolls in composed:
+ * the number, the eyebrow and the word. It holds four things back until a
+ * third of it has arrived, then brings them in, all within about 1.3 s: the
+ * flood wells up from the floor, the backdrop surfaces in it, the statue
+ * rises into it and the tagline follows word by word (ARRIVAL, below).
+ * Under reduced motion nothing is held: it stands on its still landing.
  */
-
-/** A reveal, not a wait. */
-const DURATION_MS = 2400
-const MIN_LOAD_MS = 1800
 
 /** The cast's files are pre-keyed (cast.ts): the component's own key only keeps their edge. */
 const KEY = { threshold: 0.08, softness: 0.08 } as const
@@ -81,7 +81,9 @@ const domain = (url: string) => url.replace(/^https?:\/\/(www\.)?/, '').replace(
  * with it; its pills, its stars and the rules beside its eyebrow hidden
  * (no lines, no ornaments); its spotlight that follows the pointer hidden
  * (no stage light; over a light site's screenshot it also took the eyebrow
- * under 3:1); its interface above the statue (as in the intro), so no
+ * under 3:1), and its flash, its light's canvas and its sheen (which swept
+ * a band of light across the whole card); its interface above the statue
+ * (as in the intro), so no
  * figure covers a word of it; the number in gold Cinzel; the eyebrow at the
  * page's 12px floor, in the body ink (the muted ink, over a light site's
  * blurred screenshot, measured under 4.5:1); the copy just under the
@@ -94,7 +96,8 @@ const domain = (url: string) => url.replace(/^https?:\/\/(www\.)?/, '').replace(
  * "Loading" says something untrue; a card opens on its own word.
  */
 const LOOK = [
-  '[&_.om-cta]:hidden! [&_.om-hint]:hidden! [&_.om-ring]:hidden! [&_.om-counter]:hidden! [&_.om-foot]:hidden! [&_.om-pill]:hidden! [&_.om-star]:hidden! [&_.om-rule]:hidden! [&_.om-spot]:hidden!',
+  '[&_.om-cta]:hidden! [&_.om-hint]:hidden! [&_.om-ring]:hidden! [&_.om-counter]:hidden! [&_.om-foot]:hidden! [&_.om-pill]:hidden! [&_.om-star]:hidden! [&_.om-rule]:hidden!',
+  '[&_.om-spot]:hidden! [&_.om-flash]:hidden! [&_.om-light]:hidden! [&_.om-sheen]:hidden!',
   '[&_.om-chrome]:z-[6]!',
   '[&_.om-brand]:font-roman! [&_.om-brand]:text-[1.75rem]! [&_.om-brand]:not-italic! [&_.om-brand]:leading-none! [&_.om-brand]:tracking-[0.04em]! [&_.om-brand]:[color:var(--om-accent)]!',
   '[&_.om-eyebrow]:top-14! [&_.om-eyebrow]:[transform:translateX(-50%)]! [&_.om-eyebrow]:text-xs! [&_.om-eyebrow]:[color:var(--om-text)]! [&_.om-eyebrow]:leading-5! [&_.om-eyebrow]:tracking-[0.24em]! [&_.om-eyebrow]:w-max! [&_.om-eyebrow]:whitespace-pre-line! [&_.om-eyebrow]:text-center!',
@@ -120,21 +123,37 @@ const WORD = {
 }
 
 /**
- * A phone's entrance, from outside: while the wrapper's data-arrived is
- * "false", the flood is closed, the statue stands low and unseen and the
- * tagline's words wait below their line; when it turns "true" each comes
- * in on its own timing, and a sheen (the component's own keyframes)
- * crosses the word once. Only where the wrapper carries data-arrived at
- * all: a phone, with motion.
+ * The card's top and foot sink into the page's ground, so it has no edge:
+ * a veil of the ground over its first tenth and its last sixth, above the
+ * flood, the backdrop, the vignette and the grain (all at the stage's own
+ * level) and below the statue, the word and the interface, and the statue
+ * itself fading out over the same stretches. The word and the interface
+ * stand clear of both.
  */
-const ARRIVAL = [
-  '[&[data-arrived=false]_.om-flood]:[clip-path:circle(0%_at_50%_70%)]! [&[data-arrived]_.om-flood]:[transition:clip-path_1.1s_cubic-bezier(0.16,1,0.3,1)]!',
-  '[&[data-arrived=false]_.om-fig]:opacity-0! [&[data-arrived=false]_.om-fig]:[transform:translate3d(0,14%,0)]! [&[data-arrived]_.om-fig]:[transition:transform_1.1s_cubic-bezier(0.16,1,0.3,1)_0.1s,opacity_0.7s_ease_0.1s,filter_0.9s_ease]!',
-  '[&[data-arrived=false]_.om-tagline_span]:opacity-0! [&[data-arrived=false]_.om-tagline_span]:[transform:translate3d(0,14px,0)]! [&[data-arrived]_.om-tagline_span]:[transition:opacity_0.6s_ease_calc(0.3s+var(--i)*50ms),transform_0.7s_cubic-bezier(0.16,1,0.3,1)_calc(0.3s+var(--i)*50ms)]!',
-  '[&[data-arrived=true]_.om-sheen]:[animation:om-sheen_1.1s_cubic-bezier(0.4,0,0.2,1)_0.45s_forwards]!',
+const EDGES = [
+  "[&_.om-stage]:after:pointer-events-none [&_.om-stage]:after:absolute [&_.om-stage]:after:inset-0 [&_.om-stage]:after:z-[1] [&_.om-stage]:after:content-['']",
+  '[&_.om-stage]:after:bg-[linear-gradient(to_bottom,var(--om-ground),transparent_10%,transparent_84%,var(--om-ground))]',
+  '[&_.om-cast]:[mask-image:linear-gradient(to_bottom,transparent,#000_10%,#000_84%,transparent)]',
 ].join(' ')
 
-/** The share of a phone's card in view that brings its entrance in. */
+/**
+ * The entrance, from outside: while the wrapper's data-arrived is "false",
+ * the flood and the backdrop are out (the flood a little low), the statue
+ * stands low and unseen (at 1% rather than none, so the browser has drawn
+ * its masked print before it is needed, and its rise doesn't wait on
+ * that) and the tagline's words wait below their line; when
+ * it turns "true" each comes in on its own timing, the flood welling up
+ * from the floor (never opening like a spotlight). Only where the wrapper
+ * carries data-arrived at all: with motion.
+ */
+const ARRIVAL = [
+  '[&_.om-flood]:[clip-path:none]! [&[data-arrived=false]_.om-flood]:opacity-0! [&[data-arrived=false]_.om-flood]:[transform:translate3d(0,10%,0)]! [&[data-arrived]_.om-flood]:[transition:opacity_0.9s_ease,transform_1.2s_cubic-bezier(0.16,1,0.3,1)]!',
+  '[&[data-arrived=false]_.om-backdrop]:opacity-0! [&[data-arrived]_.om-backdrop]:[transition:opacity_1.1s_ease_0.15s]!',
+  '[&[data-arrived=false]_.om-fig]:opacity-[0.01]! [&[data-arrived=false]_.om-fig]:[transform:translate3d(0,14%,0)]! [&[data-arrived]_.om-fig]:[transition:transform_1.1s_cubic-bezier(0.16,1,0.3,1)_0.1s,opacity_0.7s_ease_0.1s,filter_0.9s_ease]!',
+  '[&[data-arrived=false]_.om-tagline_span]:opacity-0! [&[data-arrived=false]_.om-tagline_span]:[transform:translate3d(0,14px,0)]! [&[data-arrived]_.om-tagline_span]:[transition:opacity_0.6s_ease_calc(0.3s+var(--i)*50ms),transform_0.7s_cubic-bezier(0.16,1,0.3,1)_calc(0.3s+var(--i)*50ms)]!',
+].join(' ')
+
+/** The share of a card in view that brings its entrance in. */
 const ARRIVE_AT = 0.35
 
 /** Watches a media query; false on the server. */
@@ -185,8 +204,8 @@ export default function ProductStageCard({ product, index }: { product: Product;
     watch.observe(el)
     return () => watch.disconnect()
   }, [])
-  // A phone's entrance waits for the card to arrive (once; it unmounts after leaving).
-  const arriving = phone && !still
+  // The entrance waits for the card to arrive (once; it unmounts after leaving).
+  const arriving = !still
   const [arrived, setArrived] = useState(false)
   useEffect(() => {
     const el = box.current
@@ -208,18 +227,17 @@ export default function ProductStageCard({ product, index }: { product: Product;
   return (
     <div ref={box} className={`h-full ${ARRIVAL}`} data-arrived={arriving ? String(arrived) : undefined}>
       <OldMastersPreloader
-        durationMs={DURATION_MS}
-        minLoadMs={MIN_LOAD_MS}
         skippable={false}
-        skipIntro={still || phone}
+        skipIntro
         figures={figure ? [figure] : []}
         backdrop={product.preview?.desktop.src ?? null}
         duotone
-        // No shafts of light from above: the card is lit by its flood and
-        // the statue's own print, never by stage beams (Roman, 2026-11-01,
-        // of the hero's light: "not this like stage light look thingy").
-        // The dust still drifts.
+        // No light of any kind: the card is lit by its flood and the
+        // statue's own print, never by shafts or the dust in them (Roman,
+        // 2026-11-01, of the hero's light: "not this like stage light look
+        // thingy").
         rays={false}
+        dust={false}
         tone="noir"
         palette={IMPERIAL}
         fontHref={null}
@@ -240,7 +258,7 @@ export default function ProductStageCard({ product, index }: { product: Product;
         plate=""
         loadingLabel="Loading"
         height="100%"
-        className={`${LOOK} ${product.title.length > LONG_TITLE ? WORD.long : WORD.short}`}
+        className={`${LOOK} ${EDGES} ${product.title.length > LONG_TITLE ? WORD.long : WORD.short}`}
       />
     </div>
   )
