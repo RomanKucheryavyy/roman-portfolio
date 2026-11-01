@@ -1,28 +1,26 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import ToolchainMarquee, { type ToolchainItem } from '@/components/ui/toolchain-marquee'
 import { CERTIFICATIONS } from '@/lib/content'
 import { cn } from '@/lib/utils'
 import { Container } from './section-header'
 
 /**
- * Act IV's frieze, configured: the eight certifications on the marquee,
- * with their own glue, in a module of their own so it loads after the
- * page with the component it styles (credentials.tsx loads it with
- * next/dynamic, ssr: false, behind RESERVE, a block of its height). The
- * marquee reads prefers-reduced-motion during its first render, so it is
- * drawn in the browser only: the server's HTML and the browser's would
- * disagree for anyone who has it on.
+ * Act IV's frieze, configured: the eight certifications, with their own
+ * glue, in a module of their own so it loads after the page with the
+ * component it styles (credentials.tsx loads it with next/dynamic, ssr:
+ * false, behind RESERVE, a block of its height). The marquee reads
+ * prefers-reduced-motion during its first render, so it is drawn in the
+ * browser only: the server's HTML and the browser's would disagree for
+ * anyone who has it on.
  */
 
-
 /**
- * Act IV's own Roman idea: each certification is a seal, a disc of the wash
- * ringed in gold with a laurel wreath (Rome's mark of an honour won)
- * struck in it, followed by its inscription. The left branch is drawn and
- * mirrored for the right. Decoration only: the marquee hides its icons
- * from screen readers, and the label says it all.
+ * Act IV's own Roman idea: each certification is an honour won, marked by
+ * a laurel wreath (Rome's mark of one) struck in gold before its
+ * inscription. The left branch is drawn and mirrored for the right.
+ * Decoration only: hidden from screen readers, and the words say it all.
  */
 const LAUREL_STEM = 'M10.2 19.7A7.6 7.6 0 0 1 6.9 6.7'
 const LAUREL_LEAVES =
@@ -37,9 +35,9 @@ function Branch() {
   )
 }
 
-function Laurel() {
+function Laurel({ className }: { className?: string }) {
   return (
-    <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+    <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" focusable="false" className={className}>
       <Branch />
       <g transform="matrix(-1 0 0 1 24 0)">
         <Branch />
@@ -48,56 +46,59 @@ function Laurel() {
   )
 }
 
-// One accent for every seal: these are all the same kind of thing.
+// One accent for every laurel: these are all the same kind of thing.
 const items: ToolchainItem[] = CERTIFICATIONS.map((c) => ({
   label: `${c.name} · ${c.date}`,
   icon: <Laurel />,
   accent: 'var(--stage-gold)',
 }))
 
-const chunk = (size: number) =>
-  Array.from({ length: Math.ceil(items.length / size) }, (_, i) => items.slice(i * size, i * size + size))
+const pairs = Array.from({ length: Math.ceil(items.length / 2) }, (_, i) => items.slice(i * 2, i * 2 + 2))
 
 /**
- * How the eight seals are laid out. Moving rows run full-bleed so the
- * module's own edge fade sits at the screen edge. Wide, all eight run in
- * one row: its track (about 2,700px) is wider than any screen up to 1920,
- * so no seal shows twice at once (three rows of two or three, each shorter
- * than the screen, wrote every one out two or three times over). On a
- * phone, four rows of two, each wider than the screen. Under reduced motion
- * the rows hold still and must show every seal without sideways scrolling,
- * so they sit in the page column with fewer seals per row.
+ * How the eight are laid out (RESERVE in credentials.tsx holds each one's
+ * height while this loads, so nothing moves when it arrives):
  *
- * RESERVE (credentials.tsx) holds each layout's rendered height while this
- * module loads, so nothing moves when it arrives: rows of 52px (a 36px
- * line for a seal and its inscription, 8px above and below), a 1px rule between rows
- * and one above and below them all (FRIEZE), and, for moving rows, the
- * pause control's row (a 12px gap and 32px). It says them in media queries,
- * so the server's HTML already holds the right one for the visitor's width
- * and motion setting (the layout itself is only known once the page runs).
- * Literal numbers, so Tailwind finds the classes.
+ * - `row`, from md: all eight run in one slow row, full-bleed so the
+ *   module's own edge fade sits at the screen edge. Its track (about
+ *   2,700px) is wider than any screen up to 1920, so none shows twice at
+ *   once. A 52px row (a 36px line, 8px above and below), then the pause
+ *   control, 44px, 12px below it: 108px.
+ * - `still`, from md under reduced motion: the marquee holding still, two
+ *   to a row in the page column, four rows: 208px.
+ * - `list`, below md, whatever the motion setting: no marquee (rows that
+ *   cut every inscription mid-word at both edges of a phone), but a still
+ *   inscription of all eight in the page column, each on its own line, so
+ *   nothing loops and no pause is needed.
  */
-const LAYOUTS = {
-  wide: { stacks: [items] },
-  narrow: { stacks: chunk(2) },
-  stillWide: { stacks: chunk(2) },
-  stillNarrow: { stacks: chunk(1) },
-  stillMid: { stacks: chunk(1) },
-} as const
-type Layout = keyof typeof LAYOUTS
+type Layout = 'row' | 'still' | 'list'
+
+const layoutNow = (): Layout =>
+  matchMedia('(max-width: 767.98px)').matches ? 'list' : matchMedia('(prefers-reduced-motion: reduce)').matches ? 'still' : 'row'
+
+function useLayout(): Layout {
+  // Drawn in the browser only (ssr: false), so the first render can ask.
+  const [layout, setLayout] = useState<Layout>(layoutNow)
+  useEffect(() => {
+    const reduce = window.matchMedia('(prefers-reduced-motion: reduce)')
+    const belowMd = window.matchMedia('(max-width: 767.98px)')
+    const update = () => setLayout(layoutNow())
+    update()
+    for (const q of [reduce, belowMd]) q.addEventListener('change', update)
+    return () => {
+      for (const q of [reduce, belowMd]) q.removeEventListener('change', update)
+    }
+  }, [])
+  return layout
+}
 
 /**
  * The marquee as a frieze, from outside (descendant classes; the module's
- * own CSS is unlayered, so whatever it sets is set here with `!`). The
- * rows are lines of an inscription between two gold rules, with a fainter
- * rule between them; each badge loses its box and becomes a seal
- * (FRIEZE_SEAL) and its words in Cinzel (FRIEZE_WORDS, 12px and closer set
- * below 360px wide so the longest fits a 320px phone's still list, 13px,
- * the most that fits the still list from 360px, then 15px from lg). The
- * pause control takes the Stage's square shape and a gold edge.
- *
- * Act I's projects are plaques (rectangles, rivets, Roman numerals); these
- * are round, struck, and unnumbered, so the two never read as one idea.
+ * own CSS is unlayered, so whatever it sets is set here with `!`). No
+ * rules, no band and no boxes: each badge loses its box and its icon's
+ * tile, leaving the gold laurel alone before its words in Cinzel (13px,
+ * 15px from lg), and space between one honour and the next. The pause
+ * control loses its disc: the gold icon alone, on a 44px target.
  *
  * The module's parts, from its root: `>div` the rows, `>div>div` each row,
  * `>div>div>div` a row's track and `>div>div>div>div` its groups;
@@ -105,109 +106,154 @@ type Layout = keyof typeof LAYOUTS
  * words, `span svg` the icon's drawing; `>button` the pause control.
  */
 const FRIEZE = [
-  '[&>div]:gap-0! [&>div]:border-y [&>div]:border-gold/40',
-  '[&>div>div]:py-2! [&>div>div+div]:border-t [&>div>div+div]:border-rule/60',
-  '[&_div>span]:h-9! [&_div>span]:gap-3! max-[359.98px]:[&_div>span]:gap-2.5! [&_div>span]:border-0! [&_div>span]:bg-transparent! [&_div>span]:pl-0! [&_div>span]:pr-7! [&_div>span]:shadow-none! [&_div>span]:backdrop-blur-none!',
-  '[&>button]:rounded-[2px]! [&>button]:text-gold! [&>button]:ring-1! [&>button]:ring-inset [&>button]:ring-gold/55',
+  'grid-cols-1! [&>div]:gap-0! [&>div>div]:py-2!',
+  '[&_div>span]:h-9! [&_div>span]:gap-3! [&_div>span]:rounded-none! [&_div>span]:border-0! [&_div>span]:bg-transparent! [&_div>span]:pl-0! [&_div>span]:pr-12! [&_div>span]:shadow-none! [&_div>span]:backdrop-blur-none! [&_div>span]:hover:transform-none!',
+  '[&_span[aria-hidden]]:size-6! [&_span[aria-hidden]]:rounded-none! [&_span[aria-hidden]]:bg-transparent! [&_span_svg]:size-6!',
+  '[&_span>span+span]:font-roman [&_span>span+span]:text-[13px] [&_span>span+span]:font-medium [&_span>span+span]:tracking-[0.05em] lg:[&_span>span+span]:text-[15px]',
+  '[&>button]:size-11! [&>button]:bg-transparent! [&>button]:text-gold! [&>button]:shadow-none! [&>button]:hover:text-glow! [&>button_svg]:size-3.5!',
 ].join(' ')
 
-/** The seal: a disc of the wash, a gold rim, a fine gold ring just inside it (an outline drawn inward), and the laurel in gold. */
-const FRIEZE_SEAL = [
-  '[&_span[aria-hidden]]:size-[34px]! max-[359.98px]:[&_span[aria-hidden]]:size-[30px]! [&_span[aria-hidden]]:rounded-full! [&_span[aria-hidden]]:bg-wash!',
-  '[&_span[aria-hidden]]:border [&_span[aria-hidden]]:border-gold/85 [&_span[aria-hidden]]:outline [&_span[aria-hidden]]:-outline-offset-4 [&_span[aria-hidden]]:outline-gold/30',
-  '[&_span_svg]:size-[23px]! max-[359.98px]:[&_span_svg]:size-5!',
-].join(' ')
-
-/** The inscription: Cinzel, in the module's ink (marble, below). */
-const FRIEZE_WORDS = [
-  '[&_span>span+span]:font-roman [&_span>span+span]:font-medium [&_span>span+span]:tracking-[0.05em] max-[359.98px]:[&_span>span+span]:tracking-[0.03em]',
-  '[&_span>span+span]:text-[12px] min-[360px]:[&_span>span+span]:text-[13px] lg:[&_span>span+span]:text-[15px]',
-].join(' ')
+/** Moving: the pause control under the row, its icon on the page column's right edge. */
+const FRIEZE_ROW = '[&>button]:justify-self-end [&>button]:mr-[max(2.0625rem,calc((100%_-_1280px)/2_+_2.0625rem))]'
 
 /**
- * One column in both (the module keeps a second for its control, and the
- * gap before it, even when there is no control). Moving, the pause control
- * drops under the rows, at the column's right edge, so the rows can run
- * the full width, on a band of the wash that fades out at either side.
+ * Still, two to a row in the page column: the second of each pair on one
+ * line down the middle (the module's 10px gap between the halves), and no
+ * trailing space on any, so nothing can scroll sideways.
  */
-const FRIEZE_MOVING = [
-  'grid-cols-1! [&>button]:mr-4 [&>button]:justify-self-end md:[&>button]:mr-[max(3rem,calc((100%_-_1280px)/2_+_3rem))]',
-  '[&>div]:bg-linear-to-r [&>div]:from-transparent [&>div]:via-wash/40 [&>div]:to-transparent',
-].join(' ')
+const FRIEZE_STILL =
+  '[&>div>div]:px-0! [&>div>div>div]:w-full! [&>div>div>div>div]:w-full! [&>div>div>div>div]:grid! [&>div>div>div>div]:grid-cols-2! [&>div>div>div>div]:pr-0! [&_div>span]:pr-0!'
 
 /**
- * Still, the rows are the column's own width (no inset, no band), and the
- * last seal of a row, and its group, keep no trailing space, so nothing can
- * scroll sideways.
+ * The inscription on a phone: each honour on its own line, the laurel in
+ * gold, the name in Cinzel at 15px (14px below 375px wide, so the longest
+ * still fits one line at 360), the date in Geist at 12px in the muted
+ * ink, set to the right as in a ledger. No rule between lines: space
+ * does it. A screen reader hears "Platform Developer I, Jul 2025".
  */
-const FRIEZE_STILL = 'grid-cols-1! [&>div>div]:px-0! [&>div>div>div>div]:pr-0! [&_div>span:last-child]:pr-0!'
+const LINE = 'grid grid-cols-[1.375rem_minmax(0,1fr)_auto] items-baseline gap-x-2.5 py-2.5'
+const NAME = 'font-roman text-[14px] font-medium leading-snug tracking-[0.04em] text-foreground min-[375px]:text-[15px]'
+const DATE = 'font-sans text-xs font-medium uppercase tabular-nums tracking-[0.08em] text-muted-foreground'
+
+const EASE = 'cubic-bezier(0.16, 1, 0.3, 1)'
 
 /**
- * Two to a row, still: the second seal of each row on one line down the
- * middle (the module's 10px gap between the halves, and no trailing space
- * on any seal, so the longest pair fits two halves of a 768px column).
+ * The list's own motion: as it rises into view its lines are set one after
+ * another, each laurel struck in (from a little larger, as a die strikes)
+ * and its words rising after it. Only lines below the screen when this
+ * runs are held; each animation ends where the markup stands and lets go,
+ * so under reduced motion, without scripts or if it is jumped past, the
+ * list is simply whole.
  */
-const FRIEZE_TWO_UP =
-  '[&>div>div>div]:w-full! [&>div>div>div>div]:w-full! [&>div>div>div>div]:grid! [&>div>div>div>div]:grid-cols-2! [&>div>div>div>div>span]:pr-0!'
-
-function useLayout(): Layout {
-  const [layout, setLayout] = useState<Layout>('wide')
-  useEffect(() => {
-    const reduce = window.matchMedia('(prefers-reduced-motion: reduce)')
-    const small = window.matchMedia('(max-width: 600px)')
-    const belowMd = window.matchMedia('(max-width: 767.98px)')
-    const update = () =>
-      setLayout(
-        reduce.matches
-          ? belowMd.matches
-            ? small.matches
-              ? 'stillNarrow'
-              : 'stillMid'
-            : 'stillWide'
-          : small.matches
-            ? 'narrow'
-            : 'wide',
-      )
-    update()
-    for (const q of [reduce, small, belowMd]) q.addEventListener('change', update)
-    return () => {
-      for (const q of [reduce, small, belowMd]) q.removeEventListener('change', update)
+function armLines(list: HTMLElement): () => void {
+  const reduce = matchMedia('(prefers-reduced-motion: reduce)')
+  if (reduce.matches) return () => {}
+  const held = new Map<Element, Animation[]>()
+  for (const li of list.querySelectorAll('li')) {
+    if (li.getBoundingClientRect().top < innerHeight) continue
+    const anims: Animation[] = []
+    const make = (el: Element | null, frames: Keyframe[], delay: number) => {
+      if (!el) return
+      const a = el.animate(frames, { duration: 800, delay, easing: EASE, fill: 'both' })
+      a.pause()
+      a.finished.then(() => a.cancel(), () => {})
+      anims.push(a)
     }
-  }, [])
-  return layout
+    make(li.querySelector('svg'), [{ opacity: 0, transform: 'scale(1.6) rotate(-8deg)' }, { opacity: 1, transform: 'none' }], 0)
+    for (const el of li.querySelectorAll(':scope > span:not([aria-hidden])')) make(el, [{ opacity: 0, transform: 'translateY(10px)' }, { opacity: 1, transform: 'none' }], 120)
+    held.set(li, anims)
+  }
+  if (!held.size) return () => {}
+
+  const io = new IntersectionObserver(
+    (entries) => {
+      let k = 0
+      for (const entry of entries) {
+        const anims = held.get(entry.target)
+        if (!anims || !entry.isIntersecting) continue
+        held.delete(entry.target)
+        io.unobserve(entry.target)
+        const passed = entry.boundingClientRect.bottom <= 0
+        for (const a of anims) {
+          if (passed) a.cancel()
+          else {
+            a.effect?.updateTiming({ delay: Number(a.effect.getTiming().delay ?? 0) + k * 90 })
+            a.play()
+          }
+        }
+        if (!passed) k++
+      }
+    },
+    { rootMargin: '100000px 0px -10% 0px' },
+  )
+  for (const li of held.keys()) io.observe(li)
+
+  const still = () => {
+    if (!reduce.matches) return
+    io.disconnect()
+    for (const anims of held.values()) for (const a of anims) a.cancel()
+    held.clear()
+  }
+  reduce.addEventListener('change', still)
+  return () => {
+    io.disconnect()
+    reduce.removeEventListener('change', still)
+    for (const anims of held.values()) for (const a of anims) a.cancel()
+  }
+}
+
+function Inscription() {
+  const ref = useRef<HTMLUListElement>(null)
+  useEffect(() => (ref.current ? armLines(ref.current) : undefined), [])
+  return (
+    <Container>
+      <div role="group" aria-label="Salesforce certifications">
+        <ul ref={ref}>
+          {CERTIFICATIONS.map((c) => (
+            <li key={c.id} className={LINE}>
+              <Laurel className="size-[22px] self-center text-gold" />
+              <span className={NAME}>{c.name}</span>
+              <span className={DATE}>
+                <span className="sr-only">, </span>
+                {c.date}
+              </span>
+            </li>
+          ))}
+        </ul>
+      </div>
+    </Container>
+  )
 }
 
 const INKS = {
   '--text': 'var(--foreground)',
-  '--surface': 'color-mix(in oklab, var(--stage-wash) 45%, var(--background))',
+  '--surface': 'var(--background)',
   '--focus-ring': 'var(--stage-gold)',
 } as React.CSSProperties
 
 /** The frieze: always mounted, off screen too (see credentials.tsx). */
 export default function Frieze() {
   const layout = useLayout()
-  const { stacks } = LAYOUTS[layout]
-  const still = layout.startsWith('still')
+  if (layout === 'list') return <Inscription />
 
+  const still = layout === 'still'
   const marquee = (
     <ToolchainMarquee
       role="group"
       aria-label="Salesforce certifications"
-      stacks={stacks.map((s) => [...s])}
-      rows={stacks.length}
-      // The module moves a row by its own width in `duration` seconds, so the
-      // one long row takes longer, to run at the pace the rows of two do
-      // (about 20-30px a second, slow enough to read).
-      duration={layout === 'wide' ? 90 : 34}
+      stacks={still ? pairs.map((s) => [...s]) : [items]}
+      rows={still ? pairs.length : 1}
+      // The module moves a row by its own width in `duration` seconds: the
+      // one long row at about 30px a second, slow enough to read.
+      duration={90}
       showControl
-      className={cn(FRIEZE, FRIEZE_SEAL, FRIEZE_WORDS, still ? FRIEZE_STILL : FRIEZE_MOVING, layout === 'stillWide' && FRIEZE_TWO_UP)}
+      className={cn(FRIEZE, still ? FRIEZE_STILL : FRIEZE_ROW)}
     />
   )
 
   return (
-    // The module's own inks, re-pointed at the Stage's: marble words, a
-    // dark surface of the wash (the pause control's fill) and the gold
-    // focus ring. (Its --muted only inks the control, which FRIEZE inks gold.)
+    // The module's own inks, re-pointed at the Stage's: marble words, the
+    // ground for its surface and the gold focus ring.
     <div style={INKS}>{still ? <Container>{marquee}</Container> : marquee}</div>
   )
 }

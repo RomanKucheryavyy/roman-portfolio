@@ -8,20 +8,21 @@ import { GILT, PALETTE } from './imperial'
 
 /**
  * Act IV's crowning honour: his Trailhead rank, before the frieze of
- * certification seals and above them in rank. designali-in/award's laurel
+ * certifications and above them in rank. designali-in/award's laurel
  * award, as published but for the element its title and subtitle are set
  * in (`[site edit]` titleAs and subtitleAs: the page has its h1, and the
  * act's h2 is its eight certifications, so the rank must not be filed
  * under that h2 as a heading of its own), configured by props and by
  * descendant classes from outside: the rank's name in the wreath in gold
- * Cinzel capitals, the component's rule in gold, then his standing in
- * Cormorant italic; the laurel struck in gold (a gradient of the palette's
- * golds, LAUREL); no level pill (its word, "GOLD", is the component's, not
- * the record's). The platform's name, "Trailhead", stands in the crown's
- * opening above the name, the page's own line. Behind it all, the page's
- * own glory: a halo of the wash and fine gold rays. The seals are small
- * discs with a laurel struck in them; Act I's plaques are rectangles with
- * rivets; this is the one gold wreath, and the largest mark in the act.
+ * Cinzel capitals, then his standing in Cormorant italic (the component's
+ * rule between them hidden: space and the change of face part them); the
+ * laurel struck in gold (a gradient of the palette's golds, LAUREL); no
+ * level pill (its word, "GOLD", is the component's, not the record's).
+ * The platform's name, "Trailhead", stands in the crown's opening above
+ * the name, the page's own line. Behind it all, the page's own glory: a
+ * halo of the wash and a still sunburst of fine gold rays. The frieze
+ * below marks each certification with a small laurel; this is the one
+ * great wreath, and the largest mark in the act.
  *
  * Its words are the record's (RANK, content.ts), real text in reading
  * order (the platform, the name, the standing), none of them a heading.
@@ -29,14 +30,14 @@ import { GILT, PALETTE } from './imperial'
  * hidden from screen readers here), and nothing in it takes focus.
  *
  * The entrance, once, when a third of it is in view: the glory, the laurel
- * growing up from its stems to the crown, the words one after another and
- * the rule drawn out between them, then a sheen of light across the name.
- * After that the rays turn slowly and the sheen comes round every few
- * seconds, only while it is on screen. If any of it is already on screen
- * when the page starts (a link to #credentials, a restored scroll), there
- * is no entrance: nothing seen is hidden to be brought in again. Under
- * reduced motion all of it stands still and whole, and so it does without
- * scripts: the server's HTML is the finished honour.
+ * growing up from its stems to the crown, the words one after another,
+ * then a sheen of light across the name. After that the sheen comes round
+ * every few seconds, only while it is on screen; the rays hold still. If
+ * any of it is already on screen when the page starts (a link to
+ * #credentials, a restored scroll), there is no entrance: nothing seen is
+ * hidden to be brought in again. Under reduced motion all of it stands
+ * still and whole, and so it does without scripts: the server's HTML is
+ * the finished honour.
  */
 
 /** The laurel's gold, the component's fill re-pointed at it from outside. */
@@ -48,7 +49,7 @@ const AWARD = 'rk-award'
 /**
  * The component's award, from outside. Its parts, from its root: `>svg`
  * the laurel (two branches, `path`s), `>div` the words: `>div>:nth-child(1)`
- * the level pill, `(2)` the title, `(3)` the rule, `(4)` the subtitle and
+ * the level pill, `(2)` the title, `(3)` the rule (hidden), `(4)` the subtitle and
  * `:last-child` the date (none given: empty). Its own classes are set here
  * with `!` where they collide.
  */
@@ -68,10 +69,10 @@ const AWARD_LOOK = cn(
   '[&>div>:nth-child(2)]:text-gold [&>div>:nth-child(2)]:bg-clip-text [&>div>:nth-child(2)]:[-webkit-text-fill-color:transparent]',
   '[&>div>:nth-child(2)]:[background-image:linear-gradient(100deg,var(--rk-gold)_0%,var(--rk-gold)_40%,var(--rk-sheen)_50%,var(--rk-gold)_60%,var(--rk-gold)_100%)] [&>div>:nth-child(2)]:[background-size:300%_100%] [&>div>:nth-child(2)]:[background-position:100%_0]',
   'forced-colors:[&>div>:nth-child(2)]:bg-none forced-colors:[&>div>:nth-child(2)]:[-webkit-text-fill-color:currentColor]',
-  // The rule in gold, shorter.
-  '[&>div>:nth-child(3)]:bg-gold/75! [&>div>:nth-child(3)]:my-3! [&>div>:nth-child(3)]:w-16! md:[&>div>:nth-child(3)]:my-4! md:[&>div>:nth-child(3)]:w-24!',
+  // No rule between the name and the standing: space and the change of face part them.
+  '[&>div>:nth-child(3)]:hidden!',
   // His standing: Cormorant italic, marble.
-  '[&>div>:nth-child(4)]:mb-0! [&>div>:nth-child(4)]:w-auto! [&>div>:nth-child(4)]:max-w-[13rem] [&>div>:nth-child(4)]:font-serif [&>div>:nth-child(4)]:font-normal! [&>div>:nth-child(4)]:italic [&>div>:nth-child(4)]:leading-snug [&>div>:nth-child(4)]:text-foreground/90 [&>div>:nth-child(4)]:text-balance',
+  '[&>div>:nth-child(4)]:mt-3 md:[&>div>:nth-child(4)]:mt-4 [&>div>:nth-child(4)]:mb-0! [&>div>:nth-child(4)]:w-auto! [&>div>:nth-child(4)]:max-w-[13rem] [&>div>:nth-child(4)]:font-serif [&>div>:nth-child(4)]:font-normal! [&>div>:nth-child(4)]:italic [&>div>:nth-child(4)]:leading-snug [&>div>:nth-child(4)]:text-foreground/90 [&>div>:nth-child(4)]:text-balance',
   '[&>div>:nth-child(4)]:text-[1.0625rem]! min-[360px]:[&>div>:nth-child(4)]:text-[1.1875rem]! md:[&>div>:nth-child(4)]:max-w-[16rem] md:[&>div>:nth-child(4)]:text-[1.375rem]!',
 )
 
@@ -97,7 +98,6 @@ export function RankHonour({ className }: { className?: string }) {
     const award = one(`.${AWARD}`)
     const laurel = award?.querySelector(':scope > svg') ?? null
     const name = award?.querySelector(':scope > div > :nth-child(2)') ?? null
-    const rule = award?.querySelector(':scope > div > :nth-child(3)') ?? null
     const standing = award?.querySelector(':scope > div > :nth-child(4)') ?? null
 
     // Already on screen as the page starts (a link to #credentials, a
@@ -125,11 +125,11 @@ export function RankHonour({ className }: { className?: string }) {
     word(one('[data-platform]'), 900)
     // No blur on the name: Chrome draws a filter on text-clipped type from its whole box.
     enter(name, [{ opacity: 0, transform: 'translateY(14px)' }, { opacity: 1, transform: 'none' }], 1150, 1100)
-    enter(rule, [{ opacity: 0, transform: 'scaleX(0)' }, { opacity: 1, transform: 'scaleX(1)' }], 1500, 900)
     word(standing, 1650)
 
-    // What keeps going while it is on screen: the glory turning, and the
-    // sheen coming round across the rank's name.
+    // What keeps going while it is on screen: only the sheen coming round
+    // across the rank's name. The glory holds still: a fine sunburst of
+    // gold behind the laurel, never a turning light.
     const loops: Animation[] = []
     const loop = (el: Element | null, frames: Keyframe[], options: KeyframeAnimationOptions) => {
       if (!el) return
@@ -137,7 +137,6 @@ export function RankHonour({ className }: { className?: string }) {
       a.pause()
       loops.push(a)
     }
-    loop(one('[data-rays]'), [{ transform: 'rotate(0deg)' }, { transform: 'rotate(360deg)' }], { duration: 160_000 })
     const cross = SHEEN_CROSS / SHEEN_EVERY
     loop(name, [
       { backgroundPosition: '100% 0', easing: 'cubic-bezier(0.45, 0, 0.3, 1)' },
@@ -199,7 +198,7 @@ export function RankHonour({ className }: { className?: string }) {
       </svg>
 
       {/* The glory behind the wreath: a halo of the wash, a gold core, and fine
-          gold rays fading out from it, centred on the wreath. Wider than the
+          gold rays fading out from it, still, centred on the wreath. Wider than the
           column, so it can spread; the section clips it, so the page never
           widens. */}
       <div
@@ -228,10 +227,12 @@ export function RankHonour({ className }: { className?: string }) {
       </div>
 
       {/* The platform, in the crown's opening (placed over the wreath's top,
-          first in reading order). */}
+          first in reading order), in the marble a little dimmed: the muted
+          ink was 4.2:1 on the glory's gold core behind it, this is 5:1 and
+          more. */}
       <p
         data-platform
-        className="absolute left-1/2 top-[7%] z-20 -translate-x-1/2 whitespace-nowrap font-serif text-[1.25rem] italic leading-none text-muted-foreground md:text-[1.5rem]"
+        className="absolute left-1/2 top-[7%] z-20 -translate-x-1/2 whitespace-nowrap font-serif text-[1.25rem] italic leading-none text-foreground/85 md:text-[1.5rem]"
       >
         {RANK.platform}
       </p>

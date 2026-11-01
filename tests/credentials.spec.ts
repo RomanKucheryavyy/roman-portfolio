@@ -1,12 +1,14 @@
 import { expect, test, type Page } from '@playwright/test'
-import { RANK } from '@/lib/content'
+import { CERTIFICATIONS, RANK } from '@/lib/content'
 import { gotoHome, project, sleep } from './helpers'
 
 /**
  * Act IV, Credentials: his Trailhead rank leads it as its crowning honour
  * (src/components/stage/rank-honour.tsx, on designali-in/award), then the
- * frieze of certification seals. Runs in all three projects; the width
- * sweep only on desktop, where the window can be resized.
+ * frieze of the eight certifications (frieze.tsx): one slow row with no
+ * rules, band or discs from md, a still inscription of all eight on a
+ * phone. Runs in all three projects; the width sweeps only on desktop,
+ * where the window can be resized.
  */
 
 const honourOf = (page: Page) => page.locator('section#credentials [data-rank]')
@@ -90,9 +92,11 @@ test.describe('Act IV, the rank', () => {
     // The laurel is gold (the page's gradient), not the component's own ink.
     const fill = await honour.locator('.rk-award > svg').evaluate((svg) => getComputedStyle(svg).fill)
     expect(fill).toContain('rk-laurel')
+    // No rule between the name and the standing: the component's is not drawn.
+    expect(await honour.locator('.rk-award > div > :nth-child(3)').evaluate((rule) => getComputedStyle(rule).display)).toBe('none')
   })
 
-  test('arrives once in view, comes to rest, and keeps its slow light going only while on screen', async ({ page }) => {
+  test('arrives once in view, comes to rest, and its sheen comes round only while on screen; the rays hold still', async ({ page }) => {
     await gotoHome(page)
     // Off screen as the page opens: the entrance is ready, its words held back.
     await expect.poll(() => motion(page).then((m) => m.entrance)).toBeGreaterThan(0)
@@ -103,14 +107,17 @@ test.describe('Act IV, the rank', () => {
     // The entrance plays and lets go of every element once done.
     await expect.poll(() => motion(page).then((m) => m.entrance), { timeout: 20_000 }).toBe(0)
     expect((await wordOpacities(page)).every((o) => o === 1), 'every word drawn in full').toBe(true)
-    // What keeps going while it is on screen: the rays, and the sheen across the name.
-    await expect.poll(() => motion(page)).toEqual({ total: 2, entrance: 0, running: 2 })
+    // What keeps going while it is on screen: the sheen across the name, and nothing else.
+    await expect.poll(() => motion(page)).toEqual({ total: 1, entrance: 0, running: 1 })
+    // The glory is a still sunburst: its rays never turn.
+    const rays = await honourOf(page).locator('[data-rays]').evaluate((el) => ({ animations: el.getAnimations().length, transform: getComputedStyle(el).transform }))
+    expect(rays).toEqual({ animations: 0, transform: 'none' })
 
     // Off screen, all of it holds still.
     await page.evaluate(() => window.scrollTo({ top: 0, behavior: 'instant' }))
     await expect.poll(() => motion(page).then((m) => m.running)).toBe(0)
     await bringIn(page)
-    await expect.poll(() => motion(page).then((m) => m.running)).toBe(2)
+    await expect.poll(() => motion(page).then((m) => m.running)).toBe(1)
   })
 
   test('opens finished when the page lands on it: nothing seen is hidden to be brought in again', async ({ page }) => {
@@ -139,8 +146,8 @@ test.describe('Act IV, the rank', () => {
     await sleep(2500)
     expect(await page.evaluate(() => (window as unknown as { __low: number[] }).__low), 'the lowest opacity of each word while on screen').toEqual([1, 1, 1])
     expect((await motion(page)).entrance, 'no entrance').toBe(0)
-    // Its light still goes round.
-    await expect.poll(() => motion(page).then((m) => m.running)).toBe(2)
+    // Its sheen still comes round.
+    await expect.poll(() => motion(page).then((m) => m.running)).toBe(1)
   })
 
   test('stands still and whole under reduced motion', async ({ page }) => {
@@ -189,6 +196,167 @@ test.describe('Act IV, the rank', () => {
         }
       })
       expect(fit, `${width}px`).toEqual({ sideways: 0, titleOverflow: 0, onScreen: true, clearOfHeader: true, aboveSeals: true })
+    }
+  })
+})
+
+/** The frieze: whatever is labelled as the eight certifications. */
+const friezeOf = (page: Page) => page.locator('section#credentials [aria-label="Salesforce certifications"]')
+
+/** Brings the frieze to the middle of the screen and lets any entrance play out. */
+async function bringFriezeIn(page: Page) {
+  await friezeOf(page).evaluate((el) => el.scrollIntoView({ block: 'center', behavior: 'instant' }))
+  await sleep(1500)
+}
+
+/** The animations on anything inside the frieze: all, and those that loop. */
+const friezeMotion = (page: Page) =>
+  friezeOf(page).evaluate((box) => {
+    const mine = document.getAnimations().filter((a) => {
+      const target = (a.effect as KeyframeEffect | null)?.target
+      return !!target && box.contains(target)
+    })
+    return { total: mine.length, looping: mine.filter((a) => a.effect?.getTiming().iterations === Infinity).length }
+  })
+
+test.describe('Act IV, the frieze', () => {
+  test('on a phone: a still inscription of all eight, no marquee and no pause, each line on the screen', async ({ page }) => {
+    test.skip(project() !== 'mobile', 'the phone layout')
+    await gotoHome(page)
+    // Held below the screen as the page opens: its lines wait to be set.
+    const held = await friezeOf(page).evaluate((box) => [...box.querySelectorAll('li > span')].some((el) => Number(getComputedStyle(el).opacity) < 1))
+    expect(held, 'the lines are held until the frieze is in view').toBe(true)
+    await bringFriezeIn(page)
+    const frieze = friezeOf(page)
+    // Set one after another, then let go: every line whole and in place.
+    await expect
+      .poll(() => frieze.evaluate((box) => [...box.querySelectorAll('li, li > *')].every((el) => Number(getComputedStyle(el).opacity) === 1 && getComputedStyle(el).transform === 'none')), { timeout: 8000 })
+      .toBe(true)
+    await expect(frieze).toHaveAttribute('role', 'group')
+    await expect(page.locator('section#credentials [data-slot="toolchain-marquee"]')).toHaveCount(0)
+    await expect(page.locator('section#credentials button')).toHaveCount(0)
+
+    const lines = await frieze.evaluate((box) =>
+      [...box.querySelectorAll('li')].map((li) => {
+        const [name, date] = [...li.querySelectorAll(':scope > span')] as HTMLElement[]
+        const r = li.getBoundingClientRect()
+        const font = (el: Element) => getComputedStyle(el).fontFamily.split(',')[0].replace(/["']/g, '')
+        return {
+          text: `${name.textContent} ${date.textContent?.replace(/^,\s*/, '')}`,
+          nameFont: font(name),
+          nameSize: parseFloat(getComputedStyle(name).fontSize),
+          dateSize: parseFloat(getComputedStyle(date).fontSize),
+          onScreen: r.left >= 0 && r.right <= innerWidth,
+          whole: [li, name, date, li.querySelector('svg')!].every((el) => Number(getComputedStyle(el).opacity) === 1 && getComputedStyle(el).transform === 'none'),
+          laurelHidden: !!li.querySelector('svg')?.closest('[aria-hidden="true"]') || li.querySelector('svg')?.getAttribute('aria-hidden') === 'true',
+        }
+      }),
+    )
+    expect(lines.map((l) => l.text)).toEqual(CERTIFICATIONS.map((c) => `${c.name} ${c.date}`))
+    for (const line of lines) {
+      expect(line, line.text).toMatchObject({ onScreen: true, whole: true, laurelHidden: true })
+      expect(line.nameFont, line.text).toMatch(/cinzel/i)
+      expect(line.nameSize, line.text).toBeGreaterThanOrEqual(14)
+      expect(line.dateSize, line.text).toBeGreaterThanOrEqual(12)
+    }
+    // Once set, nothing in it moves, and nothing loops.
+    expect(await friezeMotion(page)).toEqual({ total: 0, looping: 0 })
+    // A screen reader hears each as one line: the name, then the date.
+    await expect(frieze.locator('li').first()).toHaveText(`${CERTIFICATIONS[0].name}, ${CERTIFICATIONS[0].date}`)
+  })
+
+  test('on a phone under reduced motion: the same inscription, whole from the start', async ({ page }) => {
+    test.skip(project() !== 'mobile', 'the phone layout')
+    await page.emulateMedia({ reducedMotion: 'reduce' })
+    await gotoHome(page)
+    const whole = await friezeOf(page).evaluate((box) => [...box.querySelectorAll('li, li *')].every((el) => Number(getComputedStyle(el).opacity) === 1))
+    expect(whole).toBe(true)
+    expect(await friezeMotion(page)).toEqual({ total: 0, looping: 0 })
+    await expect(friezeOf(page).locator('li')).toHaveCount(CERTIFICATIONS.length)
+  })
+
+  test('from md: one slow row with no rules, no band and no discs, the laurel alone in gold, and an unboxed pause', async ({ page }) => {
+    test.skip(project() === 'mobile', 'the wide layout')
+    await gotoHome(page)
+    await bringFriezeIn(page)
+    const frieze = friezeOf(page)
+    const look = await frieze.evaluate((root) => {
+      const css = (el: Element) => getComputedStyle(el)
+      const rowsBox = root.querySelector(':scope > div')!
+      const rows = [...rowsBox.children]
+      const edges = (el: Element) => ['Top', 'Right', 'Bottom', 'Left'].map((side) => parseFloat(css(el).getPropertyValue(`border-${side.toLowerCase()}-width`)))
+      const icons = [...root.querySelectorAll('span[aria-hidden="true"]')]
+      const button = root.querySelector(':scope > button')!
+      const b = button.getBoundingClientRect()
+      return {
+        rows: rows.length,
+        ruled: [rowsBox, ...rows].some((el) => edges(el).some((w) => w > 0)),
+        band: [rowsBox, ...rows].some((el) => css(el).backgroundImage !== 'none' || css(el).backgroundColor !== 'rgba(0, 0, 0, 0)'),
+        discs: icons.some((el) => css(el).backgroundColor !== 'rgba(0, 0, 0, 0)' || edges(el).some((w) => w > 0) || css(el).outlineStyle !== 'none'),
+        laurelGold: icons.every((el) => css(el).color === css(document.querySelector('#credentials-title')!.parentElement!.querySelector('[data-reveal="numeral"]')!).color),
+        button: {
+          background: css(button).backgroundColor,
+          // Tailwind's shadow-none leaves a list of fully transparent shadows: none of them is drawn.
+          shadow: css(button).boxShadow.split(/,(?![^(]*\))/).every((one) => one.trim() === 'none' || /rgba\(\d+, \d+, \d+, 0\)/.test(one)) ? 'none' : css(button).boxShadow,
+          width: Math.round(b.width),
+          height: Math.round(b.height),
+        },
+      }
+    })
+    expect(look).toEqual({
+      rows: 1,
+      ruled: false,
+      band: false,
+      discs: false,
+      laurelGold: true,
+      button: { background: 'rgba(0, 0, 0, 0)', shadow: 'none', width: 44, height: 44 },
+    })
+    // Every certification is written out once in the row (the copies after it are hidden from screen readers).
+    const said = await frieze.evaluate((root) => [...root.querySelectorAll('div:not([aria-hidden]) > span > span + span')].map((el) => el.textContent))
+    expect(said).toEqual(CERTIFICATIONS.map((c) => `${c.name} · ${c.date}`))
+    // It moves, and the pause holds it.
+    expect((await friezeMotion(page)).total).toBe(0) // framer-motion writes transforms, not Web Animations
+    const at = () => frieze.evaluate((root) => getComputedStyle(root.querySelector(':scope > div > div > div')!).transform)
+    const first = await at()
+    await sleep(600)
+    expect(await at(), 'the row runs').not.toBe(first)
+    await page.getByRole('button', { name: 'Pause tool animation' }).click()
+    const paused = await at()
+    await sleep(600)
+    expect(await at(), 'paused, it holds').toBe(paused)
+  })
+
+  test('from md under reduced motion: the eight standing still in the page column, two to a row, no pause', async ({ page }) => {
+    test.skip(project() === 'mobile', 'the wide layout')
+    await page.emulateMedia({ reducedMotion: 'reduce' })
+    await gotoHome(page)
+    await bringFriezeIn(page)
+    const frieze = friezeOf(page)
+    await expect(frieze.locator('button')).toHaveCount(0)
+    const fit = await frieze.evaluate((root) => {
+      const words = [...root.querySelectorAll('span > span + span')]
+      return { count: words.length, onScreen: words.every((el) => { const r = el.getBoundingClientRect(); return r.left >= 0 && r.right <= innerWidth }) }
+    })
+    expect(fit).toEqual({ count: CERTIFICATIONS.length, onScreen: true })
+  })
+
+  test('holds its place while it loads: nothing below moves when it lands, from 320 to 1920', async ({ page }) => {
+    test.skip(project() !== 'desktop', 'resizes the window')
+    await gotoHome(page)
+    for (const width of [320, 335, 336, 340, 343, 360, 390, 600, 767, 768, 1024, 1440, 1920]) {
+      await page.setViewportSize({ width, height: 900 })
+      await sleep(250)
+      const fit = await page.evaluate(() => {
+        const box = document.querySelector('#credentials > div:last-child')!
+        const frieze = box.firstElementChild!
+        return {
+          reserve: Math.round(parseFloat(getComputedStyle(box).minHeight)),
+          drawn: Math.round(frieze.getBoundingClientRect().height),
+          sideways: document.documentElement.scrollWidth - innerWidth,
+        }
+      })
+      expect(fit.sideways, `${width}px`).toBe(0)
+      expect(fit.drawn, `${width}px: the reserve holds the frieze's height`).toBe(fit.reserve)
     }
   })
 })
