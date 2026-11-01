@@ -23,9 +23,11 @@ const RESERVE = [
   '[@media(prefers-reduced-motion:no-preference)_and_(min-width:768px)]:min-h-[108px]',
   // still, from md under reduced motion: four rows of two, 52px each.
   '[@media(prefers-reduced-motion:reduce)_and_(min-width:768px)]:min-h-[208px]',
-  // list, below md: eight lines of 42px, and 17px more for each name that
-  // takes a second line (one below 343px wide, two at 336px, three below).
-  'max-[767.98px]:min-h-[336px] max-[342.98px]:min-h-[353px] max-[336.98px]:min-h-[369px] max-[335.98px]:min-h-[386px]',
+  // list, below md: eight lines of 42px; below 360px wide, where each date
+  // stands under its name, eight of 60px (no name wraps in either: the
+  // longest keeps 17px and more to spare beside its date from 360, 51px
+  // and more above it below 360).
+  'max-[767.98px]:min-h-[336px] max-[359.98px]:min-h-[480px]',
 ].join(' ')
 
 /**

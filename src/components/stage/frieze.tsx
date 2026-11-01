@@ -132,14 +132,20 @@ const FRIEZE_STILL =
 
 /**
  * The inscription on a phone: each honour on its own line, the laurel in
- * gold, the name in Cinzel at 15px (14px below 375px wide, so the longest
- * still fits one line at 360), the date in Geist at 12px in the muted
- * ink, set to the right as in a ledger. No rule between lines: space
- * does it. A screen reader hears "Platform Developer I, Jul 2025".
+ * gold, the name in Cinzel at 15px (14px below 375px wide), the date in
+ * Geist at 12px in the muted ink, set to the right as in a ledger. Below
+ * 360px wide the date stands under its name instead: beside it, the
+ * longest names wrapped onto a second line at widths that moved with the
+ * browser's text rendering by a pixel or two, so the list's height (which
+ * credentials.tsx holds while it loads) could not be known; one name line
+ * and one date line each, it always can. From 360 the longest name still
+ * has more than 15px to spare beside its date. No rule between lines:
+ * space does it. A screen reader hears "Platform Developer I, Jul 2025".
  */
-const LINE = 'grid grid-cols-[1.375rem_minmax(0,1fr)_auto] items-baseline gap-x-2.5 py-2.5'
+const LINE =
+  'grid grid-cols-[1.375rem_minmax(0,1fr)_auto] items-baseline gap-x-2.5 py-2.5 max-[359.98px]:grid-cols-[1.375rem_minmax(0,1fr)] max-[359.98px]:gap-y-0.5'
 const NAME = 'font-roman text-[14px] font-medium leading-snug tracking-[0.04em] text-foreground min-[375px]:text-[15px]'
-const DATE = 'font-sans text-xs font-medium uppercase tabular-nums tracking-[0.08em] text-muted-foreground'
+const DATE = 'font-sans text-xs font-medium uppercase tabular-nums tracking-[0.08em] text-muted-foreground max-[359.98px]:col-start-2'
 
 const EASE = 'cubic-bezier(0.16, 1, 0.3, 1)'
 

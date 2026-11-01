@@ -346,7 +346,7 @@ test.describe('Act IV, the frieze', () => {
   test('holds its place while it loads: nothing below moves when it lands, from 320 to 1920', async ({ page }) => {
     test.skip(project() !== 'desktop', 'resizes the window')
     await gotoHome(page)
-    for (const width of [320, 335, 336, 340, 343, 360, 390, 600, 767, 768, 1024, 1440, 1920]) {
+    for (const width of [320, 335, 336, 340, 343, 359, 360, 375, 390, 600, 767, 768, 1024, 1440, 1920]) {
       await page.setViewportSize({ width, height: 900 })
       await sleep(250)
       const fit = await page.evaluate(() => {
