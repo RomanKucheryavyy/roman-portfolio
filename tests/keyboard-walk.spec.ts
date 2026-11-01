@@ -246,6 +246,15 @@ test.describe('keyboard walk', () => {
       ...(p.flow && isChain(p.flow) ? [`button "Pause the ${p.title} pulse"`] : []),
     ])
     for (const stop of productStops) expect(stops.map((s) => s.what), stop).toContain(stop)
+    // Act IV's frieze has a pause only where it moves (from md); a phone's
+    // still inscription has nothing to stop, so nothing to focus.
+    const pause = 'button "Pause tool animation"'
+    if (test.info().project.name === 'mobile') expect(stops.map((s) => s.what)).not.toContain(pause)
+    else expect(stops.map((s) => s.what)).toContain(pause)
+    // About's three links and Contact's three channels, each a stop of its own.
+    for (const link of [/^a "LinkedIn"$/, /^a "GitHub"$/, /^a "Email"$/, /^a "Email ?kucheryavyyroman@gmail\.com"$/, /^a "LinkedIn ?linkedin\.com\/in\/romakuch"$/, /^a "GitHub ?github\.com\/RomanKucheryavyy"$/]) {
+      expect(stops.some((s) => link.test(s.what)), String(link)).toBe(true)
+    }
 
     // Send is disabled until the box holds a name, an address and a message,
     // so the empty page's walk passes it by. Filled in, it is the stop after

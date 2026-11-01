@@ -6,8 +6,9 @@ import { gotoHome, sleep } from './helpers'
  * pieces still scrolls the page: the About badges (matter-js, which a
  * sideways drag still throws), the client-work folios (StackingCards, which
  * stack on a phone held upright: one in the flow, and one pinned under the
- * top bar), the products' previews, inscriptions and title cards, and the Experience
- * timeline (Lifeline's phone list). Real touch
+ * top bar), the products' previews, inscriptions and title cards, the
+ * Experience timeline (Lifeline's phone list), Act IV's inscription of the
+ * certifications and Contact's globe. Real touch
  * events through CDP, which the compositor scrolls with (a synthesized
  * scroll gesture does not scroll anything in headless Chromium).
  */
@@ -66,6 +67,9 @@ const PIECES: [string, string, (page: Page) => Promise<void>][] = [
     },
   ],
   ['the Experience timeline', '#experience article', async () => {}],
+  // Act IV's still inscription of the certifications, and Contact's globe.
+  ['the certifications', '#credentials [aria-label="Salesforce certifications"] li', async () => {}],
+  ['the contact globe', '#contact .h-52', async () => {}],
 ]
 
 for (const [what, selector, ready] of PIECES) {
