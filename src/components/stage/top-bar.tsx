@@ -59,7 +59,10 @@ function useCurrentSection(): string | null {
   return current
 }
 
-/** A fixed bar that is clear over the curtain and takes the ground's glass once the page moves. */
+/**
+ * A fixed bar that is clear over the curtain and takes the ground's glass
+ * once the page moves, with a soft shadow under it rather than a line.
+ */
 export function TopBar() {
   const [scrolled, setScrolled] = useState(false)
   const current = useCurrentSection()
@@ -74,10 +77,10 @@ export function TopBar() {
   return (
     <header
       className={cn(
-        'fixed inset-x-0 top-0 z-50 border-b transition-[background-color,border-color] duration-500',
+        'fixed inset-x-0 top-0 z-50 transition-[background-color,box-shadow] duration-500',
         scrolled
-          ? 'border-border bg-background/78 backdrop-blur-md'
-          : 'border-transparent bg-transparent',
+          ? 'bg-background/78 shadow-[0_12px_32px_-14px_color-mix(in_oklab,var(--stage-shadow)_85%,transparent)] backdrop-blur-md'
+          : 'bg-transparent',
       )}
     >
       {/* The skip link sits in the root layout (it serves every route), drawn
@@ -100,13 +103,13 @@ export function TopBar() {
           </span>
           <span className="max-sm:sr-only">{PERSON.name}</span>
         </a>
-        {/* The links in the intro's own nav type (Geist capitals: from xl
-            its 12px and 0.16em, below it a little smaller and closer, so
+        {/* The links in the intro's own nav type (Geist capitals at 12px,
+            the page's floor: from xl at 0.16em, below it a little closer, so
             five links and the mail icon fit a 768px bar and six and the
             address a 1024px one), so the bar keeps its face when the intro
             lifts. */}
-        <nav aria-label="Sections" className="flex items-center gap-3 md:gap-4 lg:gap-5 xl:gap-7">
-          <ul className="flex items-center gap-3 text-[11px] font-medium uppercase tracking-[0.14em] text-muted-foreground md:gap-4 lg:gap-5 xl:gap-7 xl:text-xs xl:tracking-[0.16em]">
+        <nav aria-label="Sections" className="flex items-center gap-3 md:gap-4 xl:gap-7">
+          <ul className="flex items-center gap-3 text-xs font-medium uppercase tracking-[0.12em] text-muted-foreground lg:gap-4 xl:gap-7 xl:tracking-[0.16em]">
             {SECTIONS.map((s) => (
               <li key={s.id} className={SHOW[s.from]}>
                 <a

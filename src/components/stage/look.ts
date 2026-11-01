@@ -61,12 +61,19 @@ export const STAGE_FOCUS =
 export const WASH =
   'pointer-events-none absolute inset-x-0 top-0 h-[70svh] bg-[radial-gradient(70%_60%_at_50%_0%,color-mix(in_oklab,var(--stage-wash)_85%,transparent),transparent)]'
 
-/** The small line above every heading, after the act's numeral: Geist capitals, muted. */
+/**
+ * The kicker under the act's numeral: Geist capitals at 12px (the page's
+ * floor for anything read), muted.
+ */
 export const KICKER = 'font-sans text-xs font-medium uppercase tracking-[0.24em] text-muted-foreground'
 
-/** The act's numeral, in gold Cinzel ("II"), and the short gold hairline after it. */
-export const NUMERAL = 'font-roman text-[2rem] font-medium leading-none tracking-[0.04em] text-gold md:text-[2.5rem]'
-export const HAIRLINE = 'h-px w-10 shrink-0 bg-gold/65 md:w-14'
+/**
+ * The act's numeral, the chapter mark: gold Cinzel set large and alone on
+ * its line ("II"), about 64px on phones and 112px from lg. No rule beside
+ * it: the type is the ornament. Block, so its entrance (reveal.ts) can move
+ * it.
+ */
+export const NUMERAL = 'block font-roman text-[4rem] font-medium leading-[0.86] tracking-[0.04em] text-gold md:text-[5.5rem] lg:text-[7rem]'
 
 /** Every section heading's display type: Cinzel, marble (lowercase draws as small capitals). */
 export const DISPLAY =
@@ -78,16 +85,19 @@ export const INTRO = 'max-w-xl font-serif text-xl italic leading-snug text-muted
 /**
  * The Stage's button, the intro's ENTER: rectangular, a 1px edge, a 2px
  * radius, Geist capitals with wide tracking. `primary` is marble with ground
- * ink (glow on hover); `secondary` is a gold edge on the dark. `sm` is for a
- * row's own link. A class string for a plain <a> or <button>, so the
- * server-only 404 can use it too; the focus ring is the wrapper's
- * (STAGE_FOCUS).
+ * ink (glow on hover), the one filled button a screen holds ("See the
+ * work", "Send"); every other action is a stageLink (below). `secondary`
+ * (a gold edge on the dark) is the old second button, kept only until each
+ * act's second actions have become stageLinks. `sm` is a smaller one,
+ * still 12px. A class string
+ * for a plain <a> or <button>, so the server-only 404 can use it too; the
+ * focus ring is the wrapper's (STAGE_FOCUS).
  */
 const BUTTON_BASE =
   'inline-flex shrink-0 items-center justify-center gap-2.5 whitespace-nowrap rounded-[2px] border font-sans font-medium uppercase transition-[background-color,border-color,color] duration-300 [&_svg]:pointer-events-none [&_svg]:shrink-0'
 const BUTTON_SIZE = {
   md: 'h-11 px-5 text-xs tracking-[0.2em] sm:px-7 sm:tracking-[0.24em] [&_svg]:size-3.5',
-  sm: 'h-9 px-4 text-[11px] tracking-[0.2em] [&_svg]:size-3',
+  sm: 'h-9 px-4 text-xs tracking-[0.18em] [&_svg]:size-3',
 } as const
 const BUTTON_KIND = {
   primary:
@@ -98,4 +108,24 @@ const BUTTON_KIND = {
 
 export function stageButton(kind: keyof typeof BUTTON_KIND = 'primary', size: keyof typeof BUTTON_SIZE = 'md'): string {
   return `${BUTTON_BASE} ${BUTTON_SIZE[size]} ${BUTTON_KIND[kind]}`
+}
+
+/**
+ * The Stage's text link, for every action but a screen's one primary
+ * button (the hero's "Get in touch", a row's domain, the App Store, a
+ * panel's second action): Geist at 13px in marble, under a gold line that
+ * thickens and brightens to the glow on hover. `away` (a link that leaves
+ * the site) adds a gold ↗ after the words, drawn by CSS with empty
+ * alternative text, so a screen reader reads the link's words alone. An
+ * inline block 44px tall (12px above and below a 20px line), the tap
+ * target; the arrow is an inline block of its own, so the line stops at
+ * the words. A class string, like stageButton's; the ring is the
+ * wrapper's (STAGE_FOCUS).
+ */
+const LINK_BASE =
+  'inline-block py-3 font-sans text-[13px] font-medium leading-5 text-foreground underline decoration-gold/70 decoration-1 underline-offset-[5px] transition-[color,text-decoration-color,text-decoration-thickness] duration-300 hover:text-glow hover:decoration-glow hover:decoration-2'
+const LINK_AWAY = "after:ml-1.5 after:inline-block after:text-gold after:transition-colors after:duration-300 after:content-['↗'_/_''] hover:after:text-glow"
+
+export function stageLink(where: 'here' | 'away' = 'here'): string {
+  return where === 'away' ? `${LINK_BASE} ${LINK_AWAY}` : LINK_BASE
 }

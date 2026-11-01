@@ -8,7 +8,7 @@ import type { PortfolioBadge } from '@/components/ui/portfolio-hero-physics'
 import { PERSON, ROLES, SKILLS } from '@/lib/content'
 import { cn } from '@/lib/utils'
 import { TopBar, SECTIONS } from './top-bar'
-import { Container, Ornament, SectionHeader } from './section-header'
+import { Container, SectionHeader } from './section-header'
 import { Work } from './work'
 import { Products } from './products'
 import { Experience } from './experience'
@@ -71,7 +71,7 @@ const DRAPE_LOOK = cn(
 
 /**
  * The intro's landing, lifted onto the page: the curtain in the wash,
- * lit warm from above as its stage is; a small gold crest; the name in
+ * lit warm from above as its stage is; the name in
  * Cinzel capitals, ROMAN large as the intro sets it and the surname spaced
  * out beneath to the same measure, as an inscription; the tagline in
  * Cormorant italic, as the intro sets it; and its ENTER button's style for
@@ -105,7 +105,6 @@ function Hero() {
         />
         <HeroPainting />
         <div className="relative z-[1] mx-auto flex min-h-svh w-full max-w-[1280px] flex-col items-center px-4 pb-8 pt-20 text-center md:px-12">
-          <Ornament />
           <h1 id="hero-title" className={cn('mt-6 font-roman font-medium uppercase text-foreground', NAME_HALO)}>
             <span className="block text-[clamp(3.5rem,min(18.5vw,22vh),12rem)] leading-[0.92] tracking-[0.05em] [padding-left:0.05em]">
               {PERSON.first}
@@ -404,7 +403,7 @@ function Contact() {
  */
 const FOOTER_LOOK = cn(
   'bg-background [&_.max-w-7xl]:px-4 md:[&_.max-w-7xl]:px-12',
-  '[&>div:nth-child(2)]:bg-[radial-gradient(60%_42%_at_50%_0%,color-mix(in_oklab,var(--stage-gold)_10%,transparent),transparent),radial-gradient(90%_75%_at_50%_0%,color-mix(in_oklab,var(--stage-wash)_85%,transparent),transparent)]',
+  '[&>div:nth-child(2)]:bg-[linear-gradient(var(--background),transparent_28%),radial-gradient(60%_42%_at_50%_12%,color-mix(in_oklab,var(--stage-gold)_10%,transparent),transparent),radial-gradient(90%_70%_at_50%_14%,color-mix(in_oklab,var(--stage-wash)_85%,transparent),transparent)]',
   '[&_.max-w-sm]:max-w-md',
   '[&_h2]:font-serif [&_h2]:text-[1.75rem] [&_h2]:font-normal [&_h2]:italic [&_h2]:leading-[1.2] [&_h2]:text-foreground [&_h2]:text-pretty md:[&_h2]:text-[2rem]',
   '[&_h3]:text-xs [&_h3]:font-medium [&_h3]:uppercase [&_h3]:tracking-[0.24em] [&_h3]:text-gold md:[&_h3]:text-xs',

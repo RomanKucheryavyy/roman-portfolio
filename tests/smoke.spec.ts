@@ -217,6 +217,108 @@ test.describe('the home page', () => {
   })
 })
 
+/**
+ * Every act header's entrance (section-header.tsx, reveal.ts): the numeral
+ * alone as the chapter mark, then the kicker, the h2 and the intro, each
+ * part held only while the header waits below the screen, played once as
+ * it rises into view, then let go. Never for a header on screen as the page
+ * starts, never under reduced motion, never the hero's h1.
+ */
+test.describe('act headers', () => {
+  const PARTS = ['numeral', 'kicker', 'title', 'intro'] as const
+
+  test('the chapter mark: the numeral alone on its line, gold Cinzel, then the kicker, then the h2; no rule beside it', async ({ page }) => {
+    await gotoHome(page)
+    const header = page.locator('#credentials-title').locator('xpath=..')
+    const shape = await header.evaluate((box) => {
+      const part = (name: string) => box.querySelector<HTMLElement>(`[data-reveal="${name}"]`)!
+      // Layout boxes (offsets), so a part still held at its first frame reads where it stands.
+      const at = (el: HTMLElement) => ({ top: el.offsetTop, bottom: el.offsetTop + el.offsetHeight })
+      const numeral = at(part('numeral'))
+      const kicker = at(part('kicker'))
+      const title = at(part('title'))
+      const style = getComputedStyle(part('numeral'))
+      return {
+        firstLine: box.querySelector('p')!.textContent,
+        alone: kicker.top >= numeral.bottom - 1 && title.top >= kicker.bottom - 1,
+        size: parseFloat(style.fontSize),
+        family: style.fontFamily,
+        // Nothing drawn as a line: no element in the header a few px tall with a fill.
+        lines: [...box.querySelectorAll('*')].filter((el) => {
+          const r = el.getBoundingClientRect()
+          return r.height > 0 && r.height <= 2 && r.width > 8 && getComputedStyle(el).backgroundColor !== 'rgba(0, 0, 0, 0)'
+        }).length,
+      }
+    })
+    expect(shape.firstLine?.replace(/\s+/g, ' ').trim()).toBe('Act IV, Credentials')
+    expect(shape.alone, 'numeral, kicker and title each on a line of their own').toBe(true)
+    expect(shape.size).toBeGreaterThanOrEqual(project() === 'mobile' ? 60 : 108)
+    expect(shape.family).toMatch(/Cinzel/i)
+    expect(shape.lines, 'rules drawn in the header').toBe(0)
+  })
+
+  test('a header below the screen is held, rises into view once, and is let go whole', async ({ page }) => {
+    await gotoHome(page)
+    const header = page.locator('#experience-title').locator('xpath=..')
+    const read = () =>
+      header.evaluate((box, parts) => {
+        const els = parts.map((p) => box.querySelector<HTMLElement>(`[data-reveal="${p}"]`)).filter((el): el is HTMLElement => !!el)
+        return {
+          opacity: els.map((el) => Number(getComputedStyle(el).opacity)),
+          animations: els.flatMap((el) => el.getAnimations()).length,
+        }
+      }, PARTS as unknown as string[])
+    // Held at its first frame while it waits below.
+    await expect.poll(async () => (await read()).opacity[0]).toBe(0)
+    await header.evaluate((el) => el.scrollIntoView({ block: 'center', behavior: 'instant' }))
+    // Played, then let go: whole, with nothing left on it. (The observer's
+    // word can take a few seconds on a machine drawing four WebGL pages in
+    // software at once.)
+    await expect
+      .poll(async () => {
+        const now = await read()
+        return now.animations === 0 && now.opacity.length >= 3 && now.opacity.every((o) => o === 1)
+      }, { timeout: 15_000 })
+      .toBe(true)
+    // The hero's name never takes part.
+    expect(await page.locator('#hero-title').evaluate((h1) => [h1, ...h1.querySelectorAll('*')].flatMap((el) => el.getAnimations()).length)).toBe(0)
+  })
+
+  test('a header on screen as the page starts is never drawn below full', async ({ page }) => {
+    await page.addInitScript(() => {
+      const low = [1, 1, 1, 1]
+      ;(window as unknown as { __low: number[] }).__low = low
+      const start = performance.now()
+      const look = () => {
+        const box = document.getElementById('credentials-title')?.parentElement
+        if (box) {
+          const r = box.getBoundingClientRect()
+          if (r.top < innerHeight && r.bottom > 0)
+            ['numeral', 'kicker', 'title', 'intro'].forEach((name, i) => {
+              const el = box.querySelector(`[data-reveal="${name}"]`)
+              if (el) low[i] = Math.min(low[i], Number(getComputedStyle(el).opacity))
+            })
+        }
+        if (performance.now() - start < 6000) requestAnimationFrame(look)
+      }
+      requestAnimationFrame(look)
+    })
+    await gotoHome(page, '/#credentials')
+    await page.waitForTimeout(2000)
+    expect(await page.evaluate(() => (window as unknown as { __low: number[] }).__low)).toEqual([1, 1, 1, 1])
+  })
+
+  test('under reduced motion every header stands whole, and nothing is held', async ({ page }) => {
+    await page.emulateMedia({ reducedMotion: 'reduce' })
+    await gotoHome(page)
+    await page.waitForTimeout(1000)
+    const held = await page.evaluate(() =>
+      [...document.querySelectorAll<HTMLElement>('[data-reveal]')].filter((el) => Number(getComputedStyle(el).opacity) < 1 || el.getAnimations().length > 0).length,
+    )
+    expect(held).toBe(0)
+  })
+})
+
 test.describe('other pages', () => {
   test('/resume loads with no unexpected console output', async ({ page }) => {
     const log = collectConsole(page)

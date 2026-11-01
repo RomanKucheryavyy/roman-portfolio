@@ -142,9 +142,9 @@ function Glow({ className }: { className?: string }) {
 }
 
 /**
- * A caption's words, after a short gold hairline (the section headers' own,
- * look.ts HAIRLINE, in small): from sm, where the line has room for it
- * beside Pause without the words taking a third line.
+ * A caption's words, after a short gold hairline (what the section headers
+ * drew before they lost theirs, in small): from sm, where the line has room
+ * for it beside Pause without the words taking a third line.
  */
 const CAPTION_TEXT = 'flex min-w-0 items-center gap-3'
 const CAPTION_RULE = 'hidden h-px w-6 shrink-0 bg-gold/65 sm:block'
